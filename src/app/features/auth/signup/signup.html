@@ -1,1 +1,101 @@
-<p>signup works!</p>
+<div class="auth-page">
+  <section class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">DU</div>
+
+      <div>
+        <h1>Create account</h1>
+        <p>Register a new CRM user workspace.</p>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Username
+        <input
+          type="text"
+          formControlName="username"
+          placeholder="deolindapereira"
+        />
+      </label>
+
+      <label>
+        Name
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Deolinda Pereira"
+        />
+      </label>
+
+      <label>
+        Email
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="geral@empresa.com"
+        />
+      </label>
+
+      <label>
+        Phone
+        <input
+          type="tel"
+          formControlName="phone"
+          placeholder="912345678"
+        />
+      </label>
+
+      <label>
+        Password
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="Pedro123!"
+        />
+      </label>
+
+<div
+  class="password-rules"
+  *ngIf="
+    form.controls.password.touched &&
+    (
+      !passwordChecks.minLength ||
+      !passwordChecks.uppercase ||
+      !passwordChecks.number ||
+      !passwordChecks.special
+    )
+  "
+>
+  <div class="rule" [class.valid]="passwordChecks.minLength">
+    <span>{{ passwordChecks.minLength ? '✓' : '•' }}</span>
+    At least 7 characters
+  </div>
+
+  <div class="rule" [class.valid]="passwordChecks.uppercase">
+    <span>{{ passwordChecks.uppercase ? '✓' : '•' }}</span>
+    1 uppercase letter
+  </div>
+
+  <div class="rule" [class.valid]="passwordChecks.number">
+    <span>{{ passwordChecks.number ? '✓' : '•' }}</span>
+    1 number
+  </div>
+
+  <div class="rule" [class.valid]="passwordChecks.special">
+    <span>{{ passwordChecks.special ? '✓' : '•' }}</span>
+    1 special character
+  </div>
+</div>
+
+      <button type="submit">
+        Create account
+      </button>
+    </form>
+
+    <p class="switch">
+      Already have an account?
+      <a routerLink="/login">Sign in</a>
+    </p>
+  </section>
+</div>
