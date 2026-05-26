@@ -1,59 +1,67 @@
-# DuCrmApp
+# DU CRM App
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.12.
+<p align="center">
+  <img src="https://img.shields.io/badge/Angular-20-red?style=for-the-badge&logo=angular" />
+  <img src="https://img.shields.io/badge/TypeScript-Enterprise-blue?style=for-the-badge&logo=typescript" />
+  <img src="https://img.shields.io/badge/Node.js-Backend-green?style=for-the-badge&logo=node.js" />
+  <img src="https://img.shields.io/badge/MongoDB-Database-darkgreen?style=for-the-badge&logo=mongodb" />
+</p>
 
-## Development server
+<h1 align="center">
+  DU CRM
+</h1>
 
-To start a local development server, run:
+<p align="center">
+  Modern enterprise CRM platform focused on scalability, productivity, and real-time business management.
+</p>
 
-```bash
-ng serve
-```
+---
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Overview
 
-## Code scaffolding
+DU CRM is a modern CRM ecosystem designed to centralize customer management, communication, internal workflows, and business operations inside a single platform.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+The project aims to deliver a clean and scalable enterprise architecture using Angular for the frontend and Node.js + MongoDB for the backend infrastructure.
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Main Goals
 
-```bash
-ng generate --help
-```
+- Enterprise-ready CRM architecture
+- Real-time email synchronization
+- Team and user management
+- Ticketing and support system
+- Dashboard and analytics
+- Meeting and calendar integration
+- Scalable modular frontend
+- Secure JWT authentication
+- Clean and maintainable codebase
 
-## Building
+---
 
-To build the project run:
+# Tech Stack
 
-```bash
-ng build
-```
+## Frontend
+- Angular
+- TypeScript
+- SCSS
+- RxJS
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Backend
+- Node.js
+- Express
+- TypeScript
+- MongoDB
 
-## Running unit tests
+---
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+# Architecture
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```txt
+Angular Frontend
+       ↓
+Node.js REST API
+       ↓
+MongoDB Database
+       ↓
+Email Providers / External Services
