@@ -35,7 +35,7 @@ export class Auth {
   private readonly tokenKey = 'token';
 
   login(data: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(environment.apiUrl + '/auth/signin', data).pipe(
+    return this.http.post<AuthResponse>(environment.apiUrl + '/api/auth/signin', data).pipe(
       tap((response) => {
         localStorage.setItem(this.tokenKey, response.token);
         localStorage.setItem('user', JSON.stringify(response.user));

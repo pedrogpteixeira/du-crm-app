@@ -4,20 +4,20 @@
       <div class="brand-icon">DU</div>
 
       <div>
-        <h1>Welcome back</h1>
-        <p>Sign in to access your CRM workspace.</p>
+        <h1>Bem-vindo de volta</h1>
+        <p>Inicie sessão para aceder ao seu espaço de trabalho no CRM.</p>
       </div>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
-        Username
-        <input type="text" placeholder="Username" formControlName="username" />
+        Nome de utilizador
+        <input type="text" placeholder="Nome de utilizador" formControlName="username" />
       </label>
 
       <label>
-        Password
-        <input type="password" placeholder="Enter your password" formControlName="password" />
+        Palavra-passe
+        <input type="password" placeholder="Digite a sua palavra-passe" formControlName="password" />
       </label>
 
       <p class="error-message" *ngIf="errorMessage">
@@ -25,13 +25,13 @@
       </p>
 
       <button type="submit" [disabled]="isLoading">
-        {{ isLoading ? 'Signing in...' : 'Sign in' }}
+        {{ isLoading ? 'A iniciar sessão...' : 'Iniciar sessão' }}
       </button>
     </form>
 
     <p class="switch">
-      Don’t have an account?
-      <a routerLink="/signup">Create account</a>
+      Não tem uma conta?
+      <a routerLink="/signup">Criar conta</a>
     </p>
   </section>
 </div>

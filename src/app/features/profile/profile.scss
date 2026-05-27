@@ -1,0 +1,160 @@
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+h1 {
+  color: #243646;
+  font-size: 32px;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+button,
+.upload-btn {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 270px;
+  gap: 18px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.main-card,
+.access-card {
+  grid-column: 1;
+}
+
+.photo-card {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  height: fit-content;
+}
+
+.section-title {
+  color: #243646;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px 42px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+strong {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+input,
+select {
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
+  color: #243646;
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #00a0c6;
+  box-shadow: 0 0 0 4px rgba(0, 160, 198, 0.12);
+}
+
+.avatar-large {
+  width: 128px;
+  height: 128px;
+  border-radius: 24px;
+  background: #2f4050;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 800;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-btn {
+  display: inline-flex;
+  margin-bottom: 24px;
+}
+
+.meta {
+  display: grid;
+  gap: 6px;
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 10px;
+  }
+
+  strong {
+    color: #243646;
+  }
+
+  .checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #008db1;
+  }
+}

@@ -5,7 +5,7 @@
 
   <div class="brand">
     <div class="brand-icon">DU</div>
-    <span>DU CRM</span>
+    <span>CRM</span>
   </div>
 
   <nav>
@@ -31,9 +31,17 @@
   </nav>
 
   <a class="profile-card" routerLink="/home/profile">
-    <div class="avatar">
+  <div class="avatar">
+    <img
+      *ngIf="profilePictureUrl; else initials"
+      [src]="profilePictureUrl"
+      [alt]="user?.name"
+    />
+
+    <ng-template #initials>
       {{ userInitial }}
-    </div>
+    </ng-template>
+  </div>
 
     <div class="profile-info">
       <strong>{{ user?.name || 'Unknown User' }}</strong>

@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { environment } from '../../../../environments/environment.development';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -29,5 +31,13 @@ export class Sidebar {
     }
 
     return this.user.name.charAt(0).toUpperCase();
+  }
+
+  get profilePictureUrl(): string | null {
+    if (!this.user?.profilePicture) {
+      return null;
+    }
+
+    return environment.apiUrl + this.user.profilePicture;
   }
 }

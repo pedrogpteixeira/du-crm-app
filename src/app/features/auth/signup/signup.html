@@ -4,27 +4,27 @@
       <div class="brand-icon">DU</div>
 
       <div>
-        <h1>Create account</h1>
-        <p>Register a new CRM user workspace.</p>
+        <h1>Registar conta</h1>
+        <p>Registe uma nova conta no CRM.</p>
       </div>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
-        Username
+        Nome de utilizador
         <input
           type="text"
           formControlName="username"
-          placeholder="deolindapereira"
+          placeholder="Nome de utilizador"
         />
       </label>
 
       <label>
-        Name
+        Nome
         <input
           type="text"
           formControlName="name"
-          placeholder="Deolinda Pereira"
+          placeholder="O seu nome"
         />
       </label>
 
@@ -33,25 +33,25 @@
         <input
           type="email"
           formControlName="email"
-          placeholder="geral@empresa.com"
+          placeholder="O seu email"
         />
       </label>
 
       <label>
-        Phone
+        Telefone
         <input
           type="tel"
           formControlName="phone"
-          placeholder="912345678"
+          placeholder="O seu número de telefone"
         />
       </label>
 
       <label>
-        Password
+        Palavra-passe
         <input
           type="password"
           formControlName="password"
-          placeholder="Pedro123!"
+          placeholder="Escolha uma palavra-passe forte"
         />
       </label>
 
@@ -69,33 +69,33 @@
 >
   <div class="rule" [class.valid]="passwordChecks.minLength">
     <span>{{ passwordChecks.minLength ? '✓' : '•' }}</span>
-    At least 7 characters
+    Pelo menos 7 caracteres
   </div>
 
   <div class="rule" [class.valid]="passwordChecks.uppercase">
     <span>{{ passwordChecks.uppercase ? '✓' : '•' }}</span>
-    1 uppercase letter
+    1 letra maiúscula
   </div>
 
   <div class="rule" [class.valid]="passwordChecks.number">
     <span>{{ passwordChecks.number ? '✓' : '•' }}</span>
-    1 number
+    1 número
   </div>
 
   <div class="rule" [class.valid]="passwordChecks.special">
     <span>{{ passwordChecks.special ? '✓' : '•' }}</span>
-    1 special character
+    1 caracter especial
   </div>
 </div>
 
       <button type="submit">
-        Create account
+        Registar
       </button>
     </form>
 
     <p class="switch">
-      Already have an account?
-      <a routerLink="/login">Sign in</a>
+      Já tem uma conta?
+      <a routerLink="/login">Iniciar sessão</a>
     </p>
   </section>
 </div>

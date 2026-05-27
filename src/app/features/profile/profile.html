@@ -1,0 +1,119 @@
+<section class="profile-page">
+  <header class="profile-header">
+    <div>
+      <span class="breadcrumb">Users ›</span>
+      <h1>{{ user.name }}</h1>
+    </div>
+
+    <div class="actions">
+      <button *ngIf="!isEditing" type="button" (click)="toggleEdit()">Edit</button>
+      <button *ngIf="isEditing" type="button" class="secondary" (click)="cancelEdit()">Cancel</button>
+      <button *ngIf="isEditing" type="button" (click)="save()">Save</button>
+    </div>
+  </header>
+
+  <div class="profile-grid">
+    <article class="card main-card">
+      <div class="section-title">Personal Information</div>
+
+      <div class="info-grid">
+        <label>
+          Username
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.username" />
+          <strong *ngIf="!isEditing">{{ user.username }}</strong>
+        </label>
+
+        <label>
+          Name
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.name" />
+          <strong *ngIf="!isEditing">{{ user.name }}</strong>
+        </label>
+
+        <label>
+          Email
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.email" />
+          <strong *ngIf="!isEditing">{{ user.email }}</strong>
+        </label>
+
+        <label>
+          Phone
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.phone" />
+          <strong *ngIf="!isEditing">{{ user.phone }}</strong>
+        </label>
+
+        <label>
+          Role
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.role" />
+          <strong *ngIf="!isEditing">{{ user.role }}</strong>
+        </label>
+
+        <label>
+          Default Team
+          <input *ngIf="isEditing" [(ngModel)]="editableUser.defaultTeam" />
+          <strong *ngIf="!isEditing">{{ user.defaultTeam }}</strong>
+        </label>
+      </div>
+    </article>
+
+    <aside class="card photo-card">
+      <div class="section-title">Photo</div>
+
+      <div class="avatar-large">
+        <img
+          *ngIf="profilePictureUrl; else initials"
+          [src]="profilePictureUrl"
+          [alt]="user.name"
+        />
+
+        <ng-template #initials>
+          {{ userInitial }}
+        </ng-template>
+      </div>
+
+      <label *ngIf="isEditing" class="upload-btn">
+        Change photo
+        <input type="file" hidden />
+      </label>
+
+      <div class="meta">
+        <span>Created at</span>
+        <strong>{{ user.createdAt || 'Not available' }}</strong>
+
+        <span>Last access</span>
+        <strong>{{ user.lastAccess || 'Not available' }}</strong>
+      </div>
+    </aside>
+
+    <article class="card access-card">
+      <div class="section-title">Teams and Access Control</div>
+
+      <div class="info-grid">
+        <label>
+          Active
+          <input
+            *ngIf="isEditing"
+            type="checkbox"
+            class="checkbox"
+            [(ngModel)]="editableUser.active"
+          />
+
+          <strong *ngIf="!isEditing">
+            {{ user.active ? 'Active' : 'Inactive' }}
+          </strong>
+        </label>
+
+        <label>
+          Default Team
+          <input
+            *ngIf="isEditing"
+            [(ngModel)]="editableUser.defaultTeam"
+          />
+
+          <strong *ngIf="!isEditing">
+            {{ user.defaultTeam }}
+          </strong>
+        </label>
+      </div>
+    </article>
+  </div>
+</section>
