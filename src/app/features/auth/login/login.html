@@ -9,18 +9,24 @@
       </div>
     </div>
 
-    <form>
+    <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
         Username
-        <input type="text" placeholder="Username" />
+        <input type="text" placeholder="Username" formControlName="username" />
       </label>
 
       <label>
         Password
-        <input type="password" placeholder="Enter your password" />
+        <input type="password" placeholder="Enter your password" formControlName="password" />
       </label>
 
-      <button type="submit">Sign in</button>
+      <p class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </p>
+
+      <button type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Signing in...' : 'Sign in' }}
+      </button>
     </form>
 
     <p class="switch">
