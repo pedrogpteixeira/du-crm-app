@@ -1,4 +1,8 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.collapsed]="collapsed">
+  <button class="toggle-btn" type="button" (click)="toggle.emit()">
+    ☰
+  </button>
+
   <div class="brand">
     <div class="brand-icon">DU</div>
     <span>DU CRM</span>
@@ -6,19 +10,24 @@
 
   <nav>
     <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-      Dashboard
+      <span class="icon">▦</span>
+      <span class="label">Dashboard</span>
     </a>
 
     <a routerLink="/home/users" routerLinkActive="active">
-      Users
+      <span class="icon">●</span>
+      <span class="label">Users</span>
     </a>
 
     <a routerLink="/home/teams" routerLinkActive="active">
-      Teams
+      <span class="icon">▦</span>
+      <span class="label">Teams</span>
     </a>
 
     <a routerLink="/home/emails" routerLinkActive="active">
-      Emails
+      <span class="icon">✉</span>
+      <span class="label">Emails</span>
     </a>
   </nav>
+
 </aside>

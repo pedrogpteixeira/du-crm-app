@@ -1,5 +1,8 @@
-<div class="home-layout">
-  <app-sidebar />
+<div class="home-layout" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <app-sidebar
+    [collapsed]="isSidebarCollapsed"
+    (toggle)="toggleSidebar()"
+  />
 
   <main class="content">
     <router-outlet />

@@ -8,4 +8,10 @@ import { Sidebar } from '../../shared/components/sidebar/sidebar';
   templateUrl: './home-layout.html',
   styleUrl: './home-layout.scss',
 })
-export class HomeLayout {}
+export class HomeLayout {
+  isSidebarCollapsed = false;
+
+  toggleSidebar(): void {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  }
+}

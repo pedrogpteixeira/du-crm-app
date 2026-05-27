@@ -1,30 +1,86 @@
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
+
   width: 260px;
+  height: 100vh;
+
   background: #2f4050;
   color: #ffffff;
-  padding: 26px 18px;
+
+  padding: 18px;
+
+  overflow: hidden;
+
+  transition:
+    width 0.25s ease,
+    padding 0.25s ease;
+}
+
+.toggle-btn {
+  width: 44px;
+  height: 44px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  font-size: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 28px;
+
+  transition:
+    transform 0.25s ease,
+    background 0.2s ease,
+    margin 0.25s ease;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
+
   margin-bottom: 36px;
+
   font-weight: 800;
   font-size: 20px;
+
+  white-space: nowrap;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s ease;
 }
 
 .brand-icon {
-  width: 46px;
-  height: 46px;
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+
   border-radius: 14px;
+
   background: #ffffff;
   color: #2f4050;
+
   display: grid;
   place-items: center;
+
   font-weight: 800;
+
+  flex-shrink: 0;
 }
 
 nav {
@@ -34,15 +90,82 @@ nav {
 }
 
 a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
   color: #dbeafe;
+
   text-decoration: none;
-  padding: 13px 16px;
+
+  padding: 13px 14px;
+
   border-radius: 12px;
+
   font-weight: 600;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    padding 0.25s ease;
+}
+
+.icon {
+  min-width: 22px;
+
+  text-align: center;
+
+  font-size: 18px;
+
+  flex-shrink: 0;
+}
+
+.label {
+  transition:
+    opacity 0.2s ease,
+    width 0.2s ease;
 }
 
 a:hover,
 a.active {
   background: #243646;
   color: #ffffff;
+}
+
+.sidebar.collapsed {
+  width: 72px;
+  padding: 16px 8px;
+
+  .brand {
+    display: none;
+  }
+
+  nav {
+    align-items: center;
+  }
+
+  a {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .icon {
+    min-width: auto;
+    width: 100%;
+    text-align: center;
+  }
+
+  .label {
+    display: none;
+  }
+
+  .toggle-btn {
+    margin-left: 4px;
+    transform: none;
+  }
 }
