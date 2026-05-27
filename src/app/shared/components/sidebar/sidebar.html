@@ -30,4 +30,18 @@
     </a>
   </nav>
 
+  <a class="profile-card" routerLink="/home/profile">
+    <div class="avatar">
+      {{ userInitial }}
+    </div>
+
+    <div class="profile-info">
+      <strong>{{ user?.name || 'Unknown User' }}</strong>
+
+      <span>
+        {{ user?.role || 'No role assigned' }}
+      </span>
+    </div>
+  </a>
+
 </aside>
