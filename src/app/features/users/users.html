@@ -1,0 +1,67 @@
+<section class="users-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">CRM ›</span>
+      <h1>Utilizadores</h1>
+      <p>Consulta os utilizadores registados no CRM.</p>
+    </div>
+
+    <button type="button" (click)="loadUsers()">Atualizar</button>
+  </header>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <div class="card">
+    <div class="table-header">
+      <span>Utilizador</span>
+      <span>Role</span>
+      <span>Equipa por defeito</span>
+      <span>Estado</span>
+    </div>
+
+    <p class="loading" *ngIf="isLoading">A carregar utilizadores...</p>
+
+    <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
+      <a
+        class="user-row"
+        *ngFor="let user of users"
+        [routerLink]="user.id === currentUserId ? '/home/profile' : ['/home/users', user.id]"
+      >
+        <div class="user-cell">
+          <div class="avatar">
+            <img
+              *ngIf="getProfilePictureUrl(user); else initials"
+              [src]="getProfilePictureUrl(user)"
+              [alt]="user.name"
+            />
+
+            <ng-template #initials>
+              {{ getInitial(user.name) }}
+            </ng-template>
+          </div>
+
+          <div>
+            <strong>{{ user.name }}</strong>
+            <span>{{ user.email }}</span>
+          </div>
+        </div>
+
+        <span class="muted">{{ user.role }}</span>
+
+        <span class="muted">
+          {{ user.defaultTeam?.name || 'Sem equipa' }}
+        </span>
+
+        <span
+          class="status-badge"
+          [class.is-online]="isOnline(user.id, onlineUsers)"
+        >
+          <span></span>
+          {{ isOnline(user.id, onlineUsers) ? 'Online' : 'Offline' }}
+        </span>
+      </a>
+    </ng-container>
+  </div>
+</section>

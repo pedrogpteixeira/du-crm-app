@@ -251,3 +251,51 @@ button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
+
+strong.online {
+  color: #16a34a;
+}
+
+strong.offline {
+  color: #dc2626;
+}
+
+.online-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 18px;
+
+  p {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 800;
+
+  span {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    border-radius: 50%;
+    background: #dc2626;
+  }
+
+  &.is-online {
+    color: #16a34a;
+
+    span {
+      background: #16a34a;
+    }
+  }
+}

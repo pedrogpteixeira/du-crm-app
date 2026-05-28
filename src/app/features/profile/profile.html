@@ -155,6 +155,13 @@
           {{ formatLastAccess(user.lastAccess) }}
         </strong>
       </div>
+
+      <div class="online-section">
+        <span class="status-badge" [class.is-online]="isCurrentUserOnline$ | async">
+          <span></span>
+          {{ (isCurrentUserOnline$ | async) ? 'Online' : 'Offline' }}
+        </span>
+      </div>
     </aside>
 
     <!-- ACCESS CONTROL -->

@@ -4,6 +4,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
+import { SocketService } from './socket';
 
 interface LoginRequest {
   username: string;
@@ -18,6 +19,7 @@ interface AuthUser {
   email: string;
   phone: string;
   active: boolean;
+  online?: boolean;
   defaultTeam: string;
 }
 
@@ -31,6 +33,7 @@ interface AuthResponse {
 })
 export class Auth {
   private readonly http = inject(HttpClient);
+  private readonly socketService = inject(SocketService);
 
   private readonly tokenKey = 'token';
 
@@ -39,6 +42,8 @@ export class Auth {
       tap((response) => {
         localStorage.setItem(this.tokenKey, response.token);
         localStorage.setItem('user', JSON.stringify(response.user));
+
+        this.socketService.connect(response.token);
       }),
     );
   }
@@ -46,6 +51,7 @@ export class Auth {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem('user');
+    this.socketService.disconnect();
   }
 
   getToken(): string | null {

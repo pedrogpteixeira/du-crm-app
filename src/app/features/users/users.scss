@@ -1,0 +1,159 @@
+.users-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h1 {
+    color: #243646;
+    font-size: 32px;
+    margin-top: 4px;
+  }
+
+  p {
+    color: #64748b;
+    margin-top: 6px;
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #243646;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.table-header,
+.user-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.8fr) minmax(180px, 1.1fr) minmax(180px, 1fr) 120px;
+  gap: 18px;
+  align-items: center;
+}
+
+.table-header {
+  padding: 0 14px 14px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.user-row {
+  min-height: 74px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+.user-row:hover {
+  background: #eef6fa;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  strong {
+    display: block;
+    color: #243646;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.muted {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 800;
+
+  span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #dc2626;
+  }
+
+  &.is-online {
+    color: #16a34a;
+
+    span {
+      background: #16a34a;
+    }
+  }
+}
+
+.loading,
+.error-message {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.error-message {
+  color: #dc2626;
+}

@@ -2,10 +2,13 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
 import { Auth } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
+
+import { SocketService } from '../../core/services/socket';
 
 import {
   ImageCropperComponent,
@@ -30,6 +33,7 @@ interface ProfileUser {
   profilePicture?: string;
   createdAt?: string;
   lastAccess?: string;
+  online?: boolean;
 }
 
 @Component({
@@ -43,6 +47,8 @@ export class Profile implements OnInit {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
   private messageTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  private readonly socketService = inject(SocketService);
 
   isEditing = false;
   isUploadingPhoto = false;
@@ -58,8 +64,12 @@ export class Profile implements OnInit {
   croppedImageBlob: Blob | null = null;
   showImageCropper = false;
 
+  isCurrentUserOnline$!: Observable<boolean>;
+
   ngOnInit(): void {
     this.loadFreshUserProfile();
+
+    this.isCurrentUserOnline$ = this.socketService.isOnline$(this.user.id);
   }
 
   private loadFreshUserProfile(): void {

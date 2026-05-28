@@ -49,6 +49,10 @@ export class UserService {
     );
   }
 
+  getUsers(): Observable<ProfileUser[]> {
+    return this.http.get<ProfileUser[]>(this.apiUrl);
+  }
+
   updateProfilePicture(userId: string, file: File): Observable<UpdateProfilePictureResponse> {
     const formData = new FormData();
     formData.append('profilePicture', file);
