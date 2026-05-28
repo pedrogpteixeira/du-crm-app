@@ -48,7 +48,7 @@
           </div>
         </div>
 
-        <span class="muted">{{ user.role }}</span>
+        <span class="muted">{{ user.role || 'Sem cargo selecionado' }}</span>
 
         <span class="muted">
           {{ user.defaultTeam?.name || 'Sem equipa' }}
