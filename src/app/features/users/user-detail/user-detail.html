@@ -1,0 +1,112 @@
+<section class="user-detail-page">
+  <header class="profile-header">
+    <div>
+      <a class="breadcrumb" routerLink="/home/users">Utilizadores ›</a>
+      <h1>{{ user?.name || 'Utilizador' }}</h1>
+    </div>
+  </header>
+
+  <p class="loading" *ngIf="isLoading">A carregar utilizador...</p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <div class="profile-grid" *ngIf="user">
+    <article class="card main-card">
+      <div class="section-title">Informação pessoal</div>
+
+      <div class="info-grid">
+        <label>
+          Nome de utilizador
+          <strong>{{ user.username }}</strong>
+        </label>
+
+        <label>
+          Nome
+          <strong>{{ user.name }}</strong>
+        </label>
+
+        <label>
+          Email
+          <strong>{{ user.email }}</strong>
+        </label>
+
+        <label>
+          Telefone
+          <strong>{{ user.phone }}</strong>
+        </label>
+      </div>
+    </article>
+
+    <aside class="card photo-card">
+      <div class="section-title">Foto</div>
+
+      <div class="avatar-large">
+        <img
+          *ngIf="profilePictureUrl; else initials"
+          [src]="profilePictureUrl"
+          [alt]="user.name"
+        />
+
+        <ng-template #initials>
+          {{ userInitial }}
+        </ng-template>
+      </div>
+
+      <div class="meta">
+        <span>Criado em</span>
+        <strong>{{ formatCreatedAt(user.createdAt) }}</strong>
+
+        <span>Último acesso</span>
+        <strong>{{ formatLastAccess(user.lastAccess) }}</strong>
+      </div>
+
+      <div class="online-section">
+        <p>Online</p>
+
+        <span class="status-badge" [class.is-online]="isUserOnline$ | async">
+          <span></span>
+          {{ (isUserOnline$ | async) ? 'Online' : 'Offline' }}
+        </span>
+      </div>
+    </aside>
+
+    <article class="card access-card">
+      <div class="section-title">Equipas e Controlo de Acesso</div>
+
+      <div class="info-grid">
+        <label>
+          Estado
+          <strong>{{ user.active ? 'Ativo' : 'Inativo' }}</strong>
+        </label>
+
+        <label>
+          Cargo
+            <strong>
+                {{ user.role || 'Sem cargo selecionado' }}
+            </strong>
+        </label>
+
+        <label>
+          Equipas
+
+          <div class="teams-stack" *ngIf="user.teams.length; else noTeams">
+            <div class="team-name" *ngFor="let team of user.teams">
+              {{ team.name }}
+            </div>
+          </div>
+
+          <ng-template #noTeams>
+            <strong>Nenhuma equipa atribuída</strong>
+          </ng-template>
+        </label>
+
+        <label>
+          Equipa por defeito
+          <strong>{{ user.defaultTeam?.name || 'Nenhuma equipa por defeito' }}</strong>
+        </label>
+      </div>
+    </article>
+  </div>
+</section>

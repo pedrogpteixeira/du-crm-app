@@ -30,6 +30,11 @@ export const routes: Routes = [
           import('./features/users/users').then((m) => m.Users),
       },
       {
+        path: 'users/:id',
+        loadComponent: () =>
+          import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

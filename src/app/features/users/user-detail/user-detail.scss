@@ -1,0 +1,175 @@
+.user-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+h1 {
+  color: #243646;
+  font-size: 32px;
+  margin-top: 4px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.main-card,
+.access-card {
+  grid-column: 1;
+}
+
+.photo-card {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  height: fit-content;
+}
+
+.section-title {
+  color: #243646;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px 42px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+strong {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.avatar-large {
+  width: 150px;
+  height: 150px;
+  border-radius: 26px;
+  background: #2f4050;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  font-weight: 800;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meta {
+  display: grid;
+  gap: 6px;
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 10px;
+  }
+
+  strong {
+    color: #243646;
+  }
+}
+
+.online-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 18px;
+
+  p {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 800;
+
+  span {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    border-radius: 50%;
+    background: #dc2626;
+  }
+
+  &.is-online {
+    color: #16a34a;
+
+    span {
+      background: #16a34a;
+    }
+  }
+}
+
+.teams-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-name {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.loading,
+.error-message {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.error-message {
+  color: #dc2626;
+}
