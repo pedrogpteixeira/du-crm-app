@@ -6,57 +6,113 @@
     </div>
 
     <div class="actions">
-      <button *ngIf="!isEditing" type="button" (click)="toggleEdit()">Edit</button>
-      <button *ngIf="isEditing" type="button" class="secondary" (click)="cancelEdit()">Cancel</button>
-      <button *ngIf="isEditing" type="button" (click)="save()">Save</button>
+      <button
+        *ngIf="!isEditing"
+        type="button"
+        (click)="toggleEdit()"
+      >
+        Editar dados
+      </button>
+
+      <button
+        *ngIf="isEditing"
+        type="button"
+        class="secondary"
+        (click)="cancelEdit()"
+      >
+        Cancel
+      </button>
+
+      <button *ngIf="isEditing" type="button" (click)="save()" [disabled]="isSaving">
+        {{ isSaving ? 'A guardar...' : 'Guardar' }}
+      </button>
+
+      <button
+        type="button"
+        class="danger logout-btn"
+        (click)="logout()"
+      >
+        Terminar sessão
+      </button>
     </div>
   </header>
 
+  <p class="loading-profile" *ngIf="isLoadingProfile">
+    A atualizar informação do perfil...
+  </p>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
   <div class="profile-grid">
+    <!-- PERSONAL INFORMATION -->
+
     <article class="card main-card">
-      <div class="section-title">Personal Information</div>
+      <div class="section-title">
+        Informação pessoal
+      </div>
 
       <div class="info-grid">
         <label>
-          Username
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.username" />
-          <strong *ngIf="!isEditing">{{ user.username }}</strong>
+          Nome de utilizador
+
+          <strong>
+            {{ user.username }}
+          </strong>
         </label>
 
         <label>
-          Name
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.name" />
-          <strong *ngIf="!isEditing">{{ user.name }}</strong>
+          Nome
+
+          <input
+            *ngIf="isEditing"
+            [(ngModel)]="editableUser.name"
+          />
+
+          <strong *ngIf="!isEditing">
+            {{ user.name }}
+          </strong>
         </label>
 
         <label>
           Email
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.email" />
-          <strong *ngIf="!isEditing">{{ user.email }}</strong>
+
+          <input
+            *ngIf="isEditing"
+            [(ngModel)]="editableUser.email"
+          />
+
+          <strong *ngIf="!isEditing">
+            {{ user.email }}
+          </strong>
         </label>
 
         <label>
-          Phone
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.phone" />
-          <strong *ngIf="!isEditing">{{ user.phone }}</strong>
-        </label>
+          Telefone
 
-        <label>
-          Role
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.role" />
-          <strong *ngIf="!isEditing">{{ user.role }}</strong>
-        </label>
+          <input
+            *ngIf="isEditing"
+            [(ngModel)]="editableUser.phone"
+          />
 
-        <label>
-          Default Team
-          <input *ngIf="isEditing" [(ngModel)]="editableUser.defaultTeam" />
-          <strong *ngIf="!isEditing">{{ user.defaultTeam }}</strong>
+          <strong *ngIf="!isEditing">
+            {{ user.phone }}
+          </strong>
         </label>
       </div>
     </article>
 
+    <!-- PHOTO -->
+
     <aside class="card photo-card">
-      <div class="section-title">Photo</div>
+      <div class="section-title">
+        Foto
+      </div>
 
       <div class="avatar-large">
         <img
@@ -70,50 +126,136 @@
         </ng-template>
       </div>
 
-      <label *ngIf="isEditing" class="upload-btn">
-        Change photo
-        <input type="file" hidden />
+      <label class="upload-btn">
+        {{
+          isUploadingPhoto
+            ? 'A carregar...'
+            : 'Mudar foto de perfil'
+        }}
+
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          [disabled]="isUploadingPhoto"
+          (change)="onProfilePictureSelected($event)"
+        />
       </label>
 
       <div class="meta">
-        <span>Created at</span>
-        <strong>{{ user.createdAt || 'Not available' }}</strong>
+        <span>Criado em</span>
 
-        <span>Last access</span>
-        <strong>{{ user.lastAccess || 'Not available' }}</strong>
+        <strong>
+          {{ formatCreatedAt(user.createdAt) }}
+        </strong>
+
+        <span>Último acesso</span>
+
+        <strong>
+          {{ formatLastAccess(user.lastAccess) }}
+        </strong>
       </div>
     </aside>
 
+    <!-- ACCESS CONTROL -->
+
     <article class="card access-card">
-      <div class="section-title">Teams and Access Control</div>
+      <div class="section-title">
+        Equipas e Controlo de Acesso
+      </div>
 
       <div class="info-grid">
         <label>
-          Active
-          <input
-            *ngIf="isEditing"
-            type="checkbox"
-            class="checkbox"
-            [(ngModel)]="editableUser.active"
-          />
+          Estado
 
-          <strong *ngIf="!isEditing">
-            {{ user.active ? 'Active' : 'Inactive' }}
+          <strong>
+            {{user.active? 'Ativo': 'Inativo'}}
           </strong>
         </label>
 
         <label>
-          Default Team
-          <input
+          Cargo
+
+          <strong>
+            {{ user.role }}
+          </strong>
+        </label>
+
+        <label>
+          Equipas
+
+          <div
+            class="teams-stack"
+            *ngIf="user.teams.length; else noTeams"
+          >
+            <div class="team-name" *ngFor="let team of user.teams">
+              {{ team.name }}
+            </div>
+          </div>
+
+          <ng-template #noTeams>
+            <strong>Nenhuma equipa atribuída</strong>
+          </ng-template>
+        </label>
+
+        <label>
+          Equipa por defeito
+
+          <select
             *ngIf="isEditing"
             [(ngModel)]="editableUser.defaultTeam"
-          />
+          >
+            <option
+              *ngFor="let team of user.teams"
+              [ngValue]="team"
+            >
+              {{ team.name }}
+            </option>
+          </select>
 
           <strong *ngIf="!isEditing">
-            {{ user.defaultTeam }}
+            {{ user.defaultTeam?.name || 'Nenhuma equipa por defeito' }}
           </strong>
         </label>
       </div>
     </article>
+  </div>
+
+  <!-- IMAGE CROPPER -->
+
+  <div
+    class="cropper-modal"
+    *ngIf="showImageCropper"
+  >
+    <div class="cropper-card">
+      <h3>Cortar foto</h3>
+
+      <image-cropper
+        [imageChangedEvent]="selectedImageEvent"
+        [maintainAspectRatio]="true"
+        [aspectRatio]="1 / 1"
+        [resizeToWidth]="512"
+        format="png"
+        (imageCropped)="onImageCropped($event)"
+      >
+      </image-cropper>
+
+      <div class="cropper-actions">
+        <button
+          type="button"
+          class="secondary"
+          (click)="showImageCropper = false"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          (click)="uploadCroppedImage()"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
   </div>
 </section>
