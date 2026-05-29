@@ -1,0 +1,118 @@
+.knowledge-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  background: #edf2f7;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h1 {
+    color: #243646;
+    font-size: 32px;
+  }
+
+  p {
+    color: #64748b;
+    margin-top: 6px;
+  }
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #243646;
+}
+
+.toolbar {
+  max-width: 760px;
+  display: grid;
+  grid-template-columns: 120px 1fr 56px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+
+  select,
+  input,
+  button {
+    height: 46px;
+    border: 0;
+    outline: none;
+    font-family: inherit;
+  }
+
+  select {
+    padding: 0 12px;
+    color: #64748b;
+    border-right: 1px solid #cbd5e1;
+  }
+
+  input {
+    padding: 0 14px;
+    color: #243646;
+  }
+
+  button {
+    border-radius: 0;
+    padding: 0;
+  }
+}
+
+.folders-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.folder-card {
+    min-height: 82px;
+    min-width: 240px;
+    max-width: 310px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: #243646;
+    text-decoration: none;
+
+    padding: 16px 18px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #008db1;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    border-radius: 16px;
+
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease;
+}
+
+.folder-card:hover {
+  background: #eef6fa;
+  transform: translateY(-2px);
+}
+
+.folder-icon {
+  color: #008db1;
+  font-size: 20px;
+}
+
+strong {
+  font-size: 14px;
+  font-weight: 800;
+}

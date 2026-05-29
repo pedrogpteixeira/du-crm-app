@@ -1,1 +1,31 @@
-<p>knowledge-base-home works!</p>
+<section class="knowledge-page">
+  <header class="page-header">
+    <div>
+      <h1>Base de Conhecimento</h1>
+      <p>Consulta pastas, artigos e documentação interna.</p>
+    </div>
+
+    <button type="button">+ Criar artigo</button>
+  </header>
+
+  <div class="toolbar">
+    <select>
+      <option>Todos</option>
+    </select>
+
+    <input type="text" placeholder="Pesquisar..." />
+
+    <button type="button">🔍</button>
+  </div>
+
+  <div class="folders-grid">
+    <a
+      class="folder-card"
+      *ngFor="let folder of folders"
+      [routerLink]="['/home/knowledge-base/folders', folder.id]"
+    >
+      <span class="folder-icon">▰</span>
+      <strong>{{ folder.name }}</strong>
+    </a>
+  </div>
+</section>

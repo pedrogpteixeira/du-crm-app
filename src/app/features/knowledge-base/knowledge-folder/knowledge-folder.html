@@ -1,1 +1,62 @@
-<p>knowledge-folder works!</p>
+<section class="knowledge-folder-page">
+  <header class="page-header">
+    <div>
+      <a class="breadcrumb" routerLink="/home/knowledge-base">
+        Base de Conhecimento ›
+      </a>
+
+      <h1>{{ folderName }}</h1>
+    </div>
+
+    <button type="button">+ Criar artigo</button>
+  </header>
+
+  <div class="toolbar">
+    <select>
+      <option>Todos</option>
+    </select>
+
+    <input type="text" placeholder="Pesquisar artigos..." />
+
+    <button type="button">🔍</button>
+  </div>
+
+    <div class="subfolders-section" *ngIf="subfolders.length">
+        <h2>Subpastas</h2>
+
+        <div class="subfolders-grid">
+            <a
+            class="subfolder-card"
+            *ngFor="let subfolder of subfolders"
+            [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
+            >
+            <span class="folder-icon">▰</span>
+
+            <div>
+                <strong>{{ subfolder.name }}</strong>
+                <small>{{ subfolder.articlesCount }} artigos</small>
+            </div>
+            </a>
+        </div>
+    </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <span>Nome</span>
+      <span>Fornecedor</span>
+      <span>Estado</span>
+      <span>Criado em</span>
+    </div>
+
+    <a
+      class="article-row"
+      *ngFor="let article of articles"
+      [routerLink]="['/home/knowledge-base/articles', article.id]"
+    >
+      <strong>{{ article.name }}</strong>
+      <span>{{ article.provider }}</span>
+      <span>{{ article.status }}</span>
+      <span>{{ article.createdAt }}</span>
+    </a>
+  </div>
+</section>
