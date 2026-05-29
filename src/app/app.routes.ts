@@ -39,6 +39,24 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),
       },
+      {
+        path: 'knowledge-base',
+        loadComponent: () =>
+          import('./features/knowledge-base/knowledge-base-home/knowledge-base-home')
+            .then((m) => m.KnowledgeBaseHome),
+      },
+      {
+        path: 'knowledge-base/folders/:id',
+        loadComponent: () =>
+          import('./features/knowledge-base/knowledge-folder/knowledge-folder')
+            .then((m) => m.KnowledgeFolder),
+      },
+      {
+        path: 'knowledge-base/articles/:id',
+        loadComponent: () =>
+          import('./features/knowledge-base/knowledge-article/knowledge-article')
+            .then((m) => m.KnowledgeArticle),
+      },
     ],
   },
   {
