@@ -184,3 +184,18 @@ button:hover {
   color: #008db1;
   font-size: 20px;
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+button.secondary:hover {
+  background: #cbd5e1;
+}

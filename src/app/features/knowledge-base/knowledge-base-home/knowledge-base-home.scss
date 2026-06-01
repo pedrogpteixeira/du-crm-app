@@ -116,3 +116,17 @@ strong {
   font-size: 14px;
   font-weight: 800;
 }
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+button.secondary:hover {
+  background: #cbd5e1;
+}
