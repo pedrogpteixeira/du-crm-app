@@ -42,6 +42,7 @@
         class="folder-card"
         *ngFor="let folder of folders"
         [routerLink]="['/home/knowledge-base/folders', folder.id]"
+        [queryParams]="{ name: folder.name }"
       >
         <span class="folder-icon">▰</span>
 

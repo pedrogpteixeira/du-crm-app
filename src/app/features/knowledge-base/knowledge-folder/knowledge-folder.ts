@@ -22,6 +22,7 @@ export class KnowledgeFolder implements OnInit {
 
   subfolders: KnowledgeFolderModel[] = [];
   articles: KnowledgeArticle[] = [];
+  folderName = 'Pasta';
 
   isLoading = false;
   errorMessage = '';
@@ -29,6 +30,7 @@ export class KnowledgeFolder implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
+      this.folderName = this.route.snapshot.queryParamMap.get('name') || 'Pasta';
 
       if (this.folderId) {
         this.loadFolderContents(this.folderId);
@@ -52,12 +54,6 @@ export class KnowledgeFolder implements OnInit {
         this.isLoading = false;
       },
     });
-  }
-
-  get folderName(): string {
-    return this.subfolders[0]?.parentFolder === this.folderId
-      ? 'Pasta'
-      : 'Pasta';
   }
 
   getStatusLabel(status: string): string {
