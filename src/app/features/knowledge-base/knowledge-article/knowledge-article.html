@@ -1,1 +1,89 @@
-<p>knowledge-article works!</p>
+<section class="article-page">
+  <header class="article-header">
+    <div>
+      <a
+        class="breadcrumb"
+        routerLink="/home/knowledge-base/folders/repsol-campanhas"
+      >
+        Base de Conhecimento › {{ article.folderName }}
+      </a>
+
+      <h1>{{ article.title }}</h1>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="secondary">Editar</button>
+      <button type="button">Novo artigo</button>
+    </div>
+  </header>
+
+  <div class="article-layout">
+    <article class="content-card">
+      <div class="article-status">
+        <span>{{ article.provider }}</span>
+        <strong>{{ article.status }}</strong>
+      </div>
+
+      <div class="article-body">
+        <p *ngFor="let paragraph of article.body.split('\n')">
+          {{ paragraph }}
+        </p>
+      </div>
+
+      <div class="attachments" *ngIf="article.attachments.length">
+        <div class="section-title">Anexos</div>
+
+        <div class="attachments-grid">
+            <a
+            class="attachment-item"
+            *ngFor="let attachment of article.attachments"
+            [href]="attachment.url"
+            >
+            <div class="file-icon">📎</div>
+
+            <div>
+                <strong>{{ attachment.originalName }}</strong>
+                <span>{{ attachment.size }}</span>
+            </div>
+            </a>
+        </div>
+      </div>
+    </article>
+
+    <aside class="details-card">
+      <div class="section-title">Detalhes</div>
+
+      <div class="details-list">
+        <div>
+          <span>Fornecedor</span>
+          <strong>{{ article.provider }}</strong>
+        </div>
+
+        <div>
+          <span>Estado</span>
+          <strong>{{ article.status }}</strong>
+        </div>
+
+        <div>
+          <span>Pasta</span>
+          <strong>{{ article.folderName }}</strong>
+        </div>
+
+        <div>
+          <span>Criado por</span>
+          <strong>{{ article.createdBy }}</strong>
+        </div>
+
+        <div>
+          <span>Criado em</span>
+          <strong>{{ article.createdAt }}</strong>
+        </div>
+
+        <div>
+          <span>Atualizado em</span>
+          <strong>{{ article.updatedAt }}</strong>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
