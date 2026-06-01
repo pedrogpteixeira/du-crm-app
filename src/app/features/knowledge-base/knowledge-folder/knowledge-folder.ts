@@ -2,19 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-interface KnowledgeArticle {
-  id: string;
-  name: string;
-  provider: string;
-  status: string;
-  createdAt: string;
-}
-
-interface KnowledgeSubfolder {
-  id: string;
-  name: string;
-  articlesCount: number;
-}
+import {
+  KnowledgeArticle,
+  KnowledgeBaseService,
+  KnowledgeFolder as KnowledgeFolderModel,
+} from '../../../core/services/knowledge-base';
 
 @Component({
   selector: 'app-knowledge-folder',
@@ -24,51 +16,68 @@ interface KnowledgeSubfolder {
 })
 export class KnowledgeFolder implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly knowledgeBaseService = inject(KnowledgeBaseService);
 
   folderId: string | null = null;
 
-  folderName = 'Repsol - Campanhas & Formulários';
+  subfolders: KnowledgeFolderModel[] = [];
+  articles: KnowledgeArticle[] = [];
 
-  subfolders: KnowledgeSubfolder[] = [
-    {
-      id: 'sub-1',
-      name: 'Contratos',
-      articlesCount: 4,
-    },
-    {
-      id: 'sub-2',
-      name: 'Formulários',
-      articlesCount: 7,
-    },
-  ];
-
-  articles: KnowledgeArticle[] = [
-    {
-      id: 'art-1',
-      name: 'Acesso App My Repsol',
-      provider: 'Repsol',
-      status: 'Campanha Ativa',
-      createdAt: '05 nov, 2025 12:31',
-    },
-    {
-      id: 'art-2',
-      name: 'Formação SVA',
-      provider: 'Repsol',
-      status: 'Campanha Ativa',
-      createdAt: '05 nov, 2025 12:30',
-    },
-    {
-      id: 'art-3',
-      name: 'Formação CE',
-      provider: 'Repsol',
-      status: 'Campanha Ativa',
-      createdAt: '31 out, 2025 11:32',
-    },
-  ];
+  isLoading = false;
+  errorMessage = '';
 
   ngOnInit(): void {
-    this.folderId = this.route.snapshot.paramMap.get('id');
+    this.route.paramMap.subscribe((params) => {
+      this.folderId = params.get('id');
 
-    console.log('Folder ID:', this.folderId);
+      if (this.folderId) {
+        this.loadFolderContents(this.folderId);
+      }
+    });
+  }
+
+  loadFolderContents(folderId: string): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService.getFolderContents(folderId).subscribe({
+      next: (contents) => {
+        this.subfolders = contents.folders;
+        this.articles = contents.articles;
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível carregar o conteúdo da pasta.';
+      },
+      complete: () => {
+        this.isLoading = false;
+      },
+    });
+  }
+
+  get folderName(): string {
+    return this.subfolders[0]?.parentFolder === this.folderId
+      ? 'Pasta'
+      : 'Pasta';
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      campaign_active: 'Campanha ativa',
+      campaign_inactive: 'Campanha inativa',
+      draft: 'Rascunho',
+      archived: 'Arquivado',
+    };
+
+    return labels[status] || status;
+  }
+
+  formatDate(date: string): string {
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
   }
 }

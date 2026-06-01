@@ -26,14 +26,64 @@
     <button type="button">🔍</button>
   </div>
 
-  <div class="folders-grid">
-    <a
-      class="folder-card"
-      *ngFor="let folder of folders"
-      [routerLink]="['/home/knowledge-base/folders', folder.id]"
-    >
-      <span class="folder-icon">▰</span>
-      <strong>{{ folder.name }}</strong>
-    </a>
-  </div>
+  <p class="loading" *ngIf="isLoading">
+    A carregar base de conhecimento...
+  </p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <section class="content-section" *ngIf="folders.length">
+    <h2>Pastas</h2>
+
+    <div class="folders-grid">
+      <a
+        class="folder-card"
+        *ngFor="let folder of folders"
+        [routerLink]="['/home/knowledge-base/folders', folder.id]"
+      >
+        <span class="folder-icon">▰</span>
+
+        <div>
+          <strong>{{ folder.name }}</strong>
+          <small>{{ folder.description }}</small>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="content-section" *ngIf="articles.length">
+    <h2>Artigos</h2>
+
+    <div class="articles-card">
+      <div class="table-header">
+        <span>Nome</span>
+        <span>Fornecedor</span>
+        <span>Estado</span>
+        <span>Criado em</span>
+      </div>
+
+      <a
+        class="article-row"
+        *ngFor="let article of articles"
+        [routerLink]="['/home/knowledge-base/articles', article.id]"
+      >
+        <strong>{{ article.name }}</strong>
+
+        <span>{{ article.supplier }}</span>
+
+        <span>{{ getStatusLabel(article.status) }}</span>
+
+        <span>{{ formatDate(article.createdAt) }}</span>
+      </a>
+    </div>
+  </section>
+
+  <p
+    class="empty-state"
+    *ngIf="!isLoading && !folders.length && !articles.length"
+  >
+    Ainda não existem pastas ou artigos nesta base de conhecimento.
+  </p>
 </section>

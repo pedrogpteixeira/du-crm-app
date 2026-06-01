@@ -5,7 +5,7 @@
         Base de Conhecimento ›
       </a>
 
-      <h1>{{ folderName }}</h1>
+      <h1>{{ folderId }}</h1>
     </div>
 
     <div class="actions">
@@ -24,47 +24,66 @@
       <option>Todos</option>
     </select>
 
-    <input type="text" placeholder="Pesquisar artigos..." />
+    <input type="text" placeholder="Pesquisar..." />
 
     <button type="button">🔍</button>
   </div>
 
-    <div class="subfolders-section" *ngIf="subfolders.length">
-        <h2>Subpastas</h2>
+  <p class="loading" *ngIf="isLoading">
+    A carregar conteúdo da pasta...
+  </p>
 
-        <div class="subfolders-grid">
-            <a
-            class="subfolder-card"
-            *ngFor="let subfolder of subfolders"
-            [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
-            >
-            <span class="folder-icon">▰</span>
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
 
-            <div>
-                <strong>{{ subfolder.name }}</strong>
-                <small>{{ subfolder.articlesCount }} artigos</small>
-            </div>
-            </a>
+  <section class="subfolders-section" *ngIf="subfolders.length">
+    <h2>Subpastas</h2>
+
+    <div class="subfolders-grid">
+      <a
+        class="subfolder-card"
+        *ngFor="let subfolder of subfolders"
+        [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
+      >
+        <span class="folder-icon">▰</span>
+
+        <div>
+          <strong>{{ subfolder.name }}</strong>
+          <small>{{ subfolder.description || 'Sem descrição' }}</small>
         </div>
+      </a>
     </div>
+  </section>
 
-  <div class="table-card">
-    <div class="table-header">
-      <span>Nome</span>
-      <span>Fornecedor</span>
-      <span>Estado</span>
-      <span>Criado em</span>
+  <section class="articles-section" *ngIf="articles.length">
+    <h2>Artigos</h2>
+
+    <div class="table-card">
+      <div class="table-header">
+        <span>Nome</span>
+        <span>Fornecedor</span>
+        <span>Estado</span>
+        <span>Criado em</span>
+      </div>
+
+      <a
+        class="article-row"
+        *ngFor="let article of articles"
+        [routerLink]="['/home/knowledge-base/articles', article.id]"
+      >
+        <strong>{{ article.name }}</strong>
+        <span>{{ article.supplier }}</span>
+        <span>{{ getStatusLabel(article.status) }}</span>
+        <span>{{ formatDate(article.createdAt) }}</span>
+      </a>
     </div>
+  </section>
 
-    <a
-      class="article-row"
-      *ngFor="let article of articles"
-      [routerLink]="['/home/knowledge-base/articles', article.id]"
-    >
-      <strong>{{ article.name }}</strong>
-      <span>{{ article.provider }}</span>
-      <span>{{ article.status }}</span>
-      <span>{{ article.createdAt }}</span>
-    </a>
-  </div>
+  <p
+    class="empty-state"
+    *ngIf="!isLoading && !subfolders.length && !articles.length"
+  >
+    Esta pasta ainda não tem subpastas ou artigos.
+  </p>
 </section>

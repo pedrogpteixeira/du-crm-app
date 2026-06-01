@@ -23,6 +23,12 @@
   text-decoration: none;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 button {
   border: 0;
   border-radius: 12px;
@@ -31,10 +37,26 @@ button {
   padding: 11px 18px;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
 }
 
 button:hover {
   background: #243646;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+button.secondary:hover {
+  background: #cbd5e1;
 }
 
 .toolbar {
@@ -70,6 +92,73 @@ button:hover {
     border-radius: 0;
     padding: 0;
   }
+}
+
+.subfolders-section,
+.articles-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  h2 {
+    color: #243646;
+    font-size: 18px;
+    font-weight: 800;
+  }
+}
+
+.subfolders-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.subfolder-card {
+  min-width: 240px;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #008db1;
+  border-radius: 16px;
+  color: #243646;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background: #eef6fa;
+    transform: translateY(-2px);
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    display: block;
+    color: #243646;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.folder-icon {
+  color: #008db1;
+  font-size: 20px;
 }
 
 .table-card {
@@ -113,89 +202,21 @@ button:hover {
     font-size: 14px;
     font-weight: 600;
   }
-}
-
-.article-row:hover {
-  background: #eef6fa;
-}
-
-.subfolders-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-
-  h2 {
-    color: #243646;
-    font-size: 18px;
-    font-weight: 800;
-  }
-}
-
-.subfolders-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.subfolder-card {
-  min-width: 220px;
-
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  padding: 14px 16px;
-
-  background: #ffffff;
-
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #008db1;
-  border-radius: 16px;
-
-  color: #243646;
-  text-decoration: none;
-
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
-
-  transition:
-    background 0.2s ease,
-    transform 0.15s ease;
 
   &:hover {
     background: #eef6fa;
-    transform: translateY(-2px);
-  }
-
-  strong {
-    display: block;
-    color: #243646;
-    font-size: 14px;
-    font-weight: 800;
-  }
-
-  small {
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 600;
   }
 }
 
-.folder-icon {
-  color: #008db1;
-  font-size: 20px;
+.loading,
+.empty-state {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-button.secondary {
-  background: #e2e8f0;
-  color: #243646;
-}
-
-button.secondary:hover {
-  background: #cbd5e1;
+.error-message {
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
 }
