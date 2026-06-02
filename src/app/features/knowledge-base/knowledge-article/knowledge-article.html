@@ -88,6 +88,22 @@
           </div>
 
           <div>
+            <span>Criado por</span>
+
+            <a
+              *ngIf="article.createdBy; else noCreatedBy"
+              class="user-link"
+              [routerLink]="['/home/users', article.createdBy.id]"
+            >
+              {{ article.createdBy.name }}
+            </a>
+
+            <ng-template #noCreatedBy>
+              <strong>Sem autor associado</strong>
+            </ng-template>
+          </div>
+
+          <div>
             <span>Criado em</span>
             <strong>
               {{ formatDate(article.createdAt) }}

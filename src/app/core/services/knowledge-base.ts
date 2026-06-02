@@ -32,6 +32,7 @@ export interface KnowledgeArticle {
   message: string;
   attachments: KnowledgeAttachment[];
   active: boolean;
+  createdBy: KnowledgeCreatedBy | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +41,11 @@ export interface KnowledgeFolderContents {
   folderId: string;
   folders: KnowledgeFolder[];
   articles: KnowledgeArticle[];
+}
+
+export interface KnowledgeCreatedBy {
+  id: string;
+  name: string;
 }
 
 @Injectable({

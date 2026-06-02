@@ -202,3 +202,14 @@ button.secondary {
   flex-wrap: wrap;
   gap: 12px;
 }
+
+.user-link {
+  color: #008db1;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.user-link:hover {
+  text-decoration: underline;
+}
