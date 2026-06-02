@@ -17,10 +17,34 @@
 }
 
 .breadcrumb {
-  color: #008db1;
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  a,
+  span,
+  strong {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  a {
+    color: #008db1;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  span {
+    color: #94a3b8;
+  }
+
+  strong {
+    color: #243646;
+  }
 }
 
 .actions {

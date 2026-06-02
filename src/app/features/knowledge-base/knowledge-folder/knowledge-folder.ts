@@ -17,6 +17,7 @@ import {
 export class KnowledgeFolder implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
+  // readonly breadcrumbService = inject(KnowledgeBreadcrumbService);
 
   folderId: string | null = null;
 

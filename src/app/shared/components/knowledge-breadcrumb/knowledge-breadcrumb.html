@@ -1,0 +1,17 @@
+<nav class="knowledge-breadcrumb">
+  <ng-container *ngFor="let item of breadcrumbService.path$ | async; let last = last; let i = index">
+    <a
+      *ngIf="!last"
+      [routerLink]="item.url"
+      (click)="breadcrumbService.navigateTo(i)"
+    >
+      {{ item.name }}
+    </a>
+
+    <strong *ngIf="last">
+      {{ item.name }}
+    </strong>
+
+    <span *ngIf="!last">›</span>
+  </ng-container>
+</nav>

@@ -38,12 +38,14 @@
     <h2>Pastas</h2>
 
     <div class="folders-grid">
-      <a
-        class="folder-card"
-        *ngFor="let folder of folders"
-        [routerLink]="['/home/knowledge-base/folders', folder.id]"
-        [queryParams]="{ name: folder.name }"
-      >
+        <a
+          class="folder-card"
+          *ngFor="let folder of folders"
+          [routerLink]="['/home/knowledge-base/folders', folder.id]"
+          [queryParams]="{
+            name: folder.name
+          }"
+        >
         <span class="folder-icon">▰</span>
 
         <div>

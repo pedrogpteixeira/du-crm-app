@@ -1,11 +1,15 @@
 <section class="knowledge-folder-page">
   <header class="page-header">
-    <div>
-      <a class="breadcrumb" routerLink="/home/knowledge-base">
-        Base de Conhecimento ›
+    <div class="breadcrumb">
+      <a routerLink="/home/knowledge-base">
+        Base de Conhecimento
       </a>
 
-      <h1>{{ folderName }}</h1>
+      <span>›</span>
+
+      <strong>
+        {{ folderName }}
+      </strong>
     </div>
 
     <div class="actions">
@@ -41,12 +45,14 @@
     <h2>Subpastas</h2>
 
     <div class="subfolders-grid">
-      <a
-        class="subfolder-card"
-        *ngFor="let subfolder of subfolders"
-        [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
-        [queryParams]="{ name: subfolder.name }"
-      >
+        <a
+          class="subfolder-card"
+          *ngFor="let subfolder of subfolders"
+          [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
+          [queryParams]="{
+            name: subfolder.name
+          }"
+        >
         <span class="folder-icon">▰</span>
 
         <div>
@@ -73,8 +79,7 @@
           *ngFor="let article of articles"
           [routerLink]="['/home/knowledge-base/articles', article.id]"
           [queryParams]="{
-            folderId: folderId,
-            folderName: folderName
+            name: article.name
           }"
         >
         <strong>{{ article.name }}</strong>

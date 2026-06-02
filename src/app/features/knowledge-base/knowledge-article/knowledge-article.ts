@@ -27,6 +27,7 @@ export class KnowledgeArticle implements OnInit {
 
   folderId: string | null = null;
   folderName = 'Base de Conhecimento';
+  articleName = 'Artigo';
 
   isLoading = false;
   errorMessage = '';
@@ -52,6 +53,7 @@ export class KnowledgeArticle implements OnInit {
     this.knowledgeBaseService.getArticle(articleId).subscribe({
       next: (article) => {
         this.article = article;
+        this.articleName = article.name;
       },
       error: () => {
         this.errorMessage = 'Não foi possível carregar o artigo.';

@@ -8,16 +8,19 @@
   </p>
 
   <ng-container *ngIf="article">
+    <div class="breadcrumb">
+      <a routerLink="/home/knowledge-base">
+        Base de Conhecimento
+      </a>
+
+      <span>›</span>
+
+      <strong>
+        {{ articleName }}
+      </strong>
+    </div>
     <header class="article-header">
       <div>
-        <a
-          class="breadcrumb"
-          [routerLink]="folderId ? ['/home/knowledge-base/folders', folderId] : ['/home/knowledge-base']"
-          [queryParams]="folderName ? { name: folderName } : null"
-        >
-          Base de Conhecimento › {{ folderName }} ›
-        </a>
-
         <h1>{{ article.name }}</h1>
       </div>
     </header>
