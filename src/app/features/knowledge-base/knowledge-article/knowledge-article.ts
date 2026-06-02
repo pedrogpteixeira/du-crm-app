@@ -2,25 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-interface ArticleAttachment {
-  id: string;
-  originalName: string;
-  size: string;
-  url: string;
-}
+import {
+  KnowledgeArticle as KnowledgeArticleModel,
+  KnowledgeBaseService,
+} from '../../../core/services/knowledge-base';
 
-interface KnowledgeArticleDetail {
-  id: string;
-  title: string;
-  provider: string;
-  status: string;
-  folderName: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  body: string;
-  attachments: ArticleAttachment[];
-}
+import { environment } from '../../../../environments/environment.development';
 
 @Component({
   selector: 'app-knowledge-article',
@@ -30,47 +17,85 @@ interface KnowledgeArticleDetail {
 })
 export class KnowledgeArticle implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly knowledgeBaseService = inject(KnowledgeBaseService);
+
+  readonly apiUrl = environment.apiUrl;
 
   articleId: string | null = null;
 
-  article: KnowledgeArticleDetail = {
-    id: 'art-1',
-    title: 'Acesso App My Repsol',
-    provider: 'Repsol',
-    status: 'Campanha Ativa',
-    folderName: 'Repsol - Campanhas & Formulários',
-    createdAt: '05 nov, 2025 12:31',
-    updatedAt: '05 nov, 2025 14:12',
-    createdBy: 'Pedro Teixeira',
-    body: `
-      Este artigo reúne a informação necessária para orientar o utilizador no acesso à aplicação My Repsol.
+  article: KnowledgeArticleModel | null = null;
 
-      Deve ser utilizado como referência interna para esclarecimento de dúvidas, apoio operacional e consulta rápida durante o atendimento.
+  folderId: string | null = null;
+  folderName = 'Base de Conhecimento';
 
-      Procedimentos principais:
-      - Confirmar os dados do cliente.
-      - Validar o acesso à aplicação.
-      - Explicar os passos de recuperação de palavra-passe, caso necessário.
-      - Encaminhar situações técnicas para a equipa responsável.
-    `,
-    attachments: [
-      {
-        id: 'att-1',
-        originalName: 'Guia_Acesso_My_Repsol.pdf',
-        size: '245 KB',
-        url: '#',
-      },
-      {
-        id: 'att-2',
-        originalName: 'Formulario_Apoio_Repsol.docx',
-        size: '82 KB',
-        url: '#',
-      },
-    ],
-  };
+  isLoading = false;
+  errorMessage = '';
 
   ngOnInit(): void {
-    this.articleId = this.route.snapshot.paramMap.get('id');
-    console.log('Article ID:', this.articleId);
+    this.route.paramMap.subscribe((params) => {
+      this.articleId = params.get('id');
+
+      this.folderId = this.route.snapshot.queryParamMap.get('folderId');
+      this.folderName =
+        this.route.snapshot.queryParamMap.get('folderName') || 'Base de Conhecimento';
+
+      if (this.articleId) {
+        this.loadArticle(this.articleId);
+      }
+    });
+  }
+
+  loadArticle(articleId: string): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService.getArticle(articleId).subscribe({
+      next: (article) => {
+        this.article = article;
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível carregar o artigo.';
+      },
+      complete: () => {
+        this.isLoading = false;
+      },
+    });
+  }
+
+  getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      campaign_active: 'Campanha ativa',
+      campaign_inactive: 'Campanha inativa',
+      draft: 'Rascunho',
+      archived: 'Arquivado',
+    };
+
+    return labels[status] || status;
+  }
+
+  formatDate(date: string): string {
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  }
+
+  getAttachmentUrl(path: string): string {
+    return `${this.apiUrl}${path}`;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 }

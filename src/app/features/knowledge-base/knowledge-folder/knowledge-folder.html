@@ -45,6 +45,7 @@
         class="subfolder-card"
         *ngFor="let subfolder of subfolders"
         [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
+        [queryParams]="{ name: subfolder.name }"
       >
         <span class="folder-icon">▰</span>
 
@@ -67,11 +68,15 @@
         <span>Criado em</span>
       </div>
 
-      <a
-        class="article-row"
-        *ngFor="let article of articles"
-        [routerLink]="['/home/knowledge-base/articles', article.id]"
-      >
+        <a
+          class="article-row"
+          *ngFor="let article of articles"
+          [routerLink]="['/home/knowledge-base/articles', article.id]"
+          [queryParams]="{
+            folderId: folderId,
+            folderName: folderName
+          }"
+        >
         <strong>{{ article.name }}</strong>
         <span>{{ article.supplier }}</span>
         <span>{{ getStatusLabel(article.status) }}</span>

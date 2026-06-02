@@ -60,4 +60,10 @@ export class KnowledgeBaseService {
       `${this.apiUrl}/api/knowledge-folders/${folderId}/contents`,
     );
   }
+
+  getArticle(articleId: string): Observable<KnowledgeArticle> {
+    return this.http.get<KnowledgeArticle>(
+      `${this.apiUrl}/api/knowledge-articles/${articleId}`,
+    );
+  }
 }

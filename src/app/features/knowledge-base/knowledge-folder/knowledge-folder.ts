@@ -30,7 +30,8 @@ export class KnowledgeFolder implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
-      this.folderName = this.route.snapshot.queryParamMap.get('name') || 'Pasta';
+      this.folderName =
+        this.route.snapshot.queryParamMap.get('name') || 'Pasta';
 
       if (this.folderId) {
         this.loadFolderContents(this.folderId);
