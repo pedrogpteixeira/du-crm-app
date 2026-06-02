@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 import {
   KnowledgeArticle,
@@ -10,13 +12,14 @@ import {
 
 @Component({
   selector: 'app-knowledge-folder',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-folder.html',
   styleUrl: './knowledge-folder.scss',
 })
 export class KnowledgeFolder implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
+  private readonly router = inject(Router);
   // readonly breadcrumbService = inject(KnowledgeBreadcrumbService);
 
   folderId: string | null = null;
@@ -26,7 +29,15 @@ export class KnowledgeFolder implements OnInit {
   folderName = 'Pasta';
 
   isLoading = false;
+  isDeleting = false;
   errorMessage = '';
+
+  showCreateFolderModal = false;
+
+  newFolder = {
+    name: '',
+    description: '',
+  };
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -67,6 +78,74 @@ export class KnowledgeFolder implements OnInit {
     };
 
     return labels[status] || status;
+  }
+
+  createFolder(): void {
+    const duplicate = this.subfolders.some(
+      (folder) =>
+        folder.name.trim().toLowerCase() ===
+        this.newFolder.name.trim().toLowerCase(),
+    );
+
+    if (duplicate) {
+      this.errorMessage =
+        'Já existe uma pasta com esse nome.';
+      return;
+    }
+
+    this.knowledgeBaseService
+      .createFolder({
+        name: this.newFolder.name.trim(),
+        description: this.newFolder.description.trim(),
+        parentFolder: this.folderId ?? '',
+      })
+      .subscribe({
+        next: () => {
+          this.closeCreateFolderModal();
+          this.loadFolderContents(this.folderId!);
+        },
+      });
+  }
+
+  closeCreateFolderModal(): void {
+    this.showCreateFolderModal = false;
+
+    this.newFolder = {
+      name: '',
+      description: '',
+    };
+  }
+
+  deleteFolder(): void {
+    if (!this.folderId) {
+      return;
+    }
+
+    const hasContents = this.subfolders.length > 0 || this.articles.length > 0;
+
+    if (hasContents) {
+      const confirmed = confirm(
+        'Esta pasta contém subpastas ou artigos. Tens a certeza que queres eliminá-la? Esta ação não pode ser revertida.',
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    this.isDeleting = true;
+
+    this.knowledgeBaseService.deleteFolder(this.folderId, hasContents).subscribe({
+      next: () => {
+        this.router.navigate(['/home/knowledge-base']);
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível eliminar a pasta.';
+      },
+      complete: () => {
+        this.isDeleting = false;
+      },
+    });
   }
 
   formatDate(date: string): string {

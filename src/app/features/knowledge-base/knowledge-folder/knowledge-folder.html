@@ -13,12 +13,25 @@
     </div>
 
     <div class="actions">
-      <button type="button" class="secondary">
+      <button
+        type="button"
+        class="secondary"
+        (click)="showCreateFolderModal = true"
+      >
         + Criar pasta
       </button>
 
       <button type="button">
         + Criar artigo
+      </button>
+
+      <button
+        type="button"
+        class="danger"
+        [disabled]="isDeleting"
+        (click)="deleteFolder()"
+      >
+        {{ isDeleting ? 'A eliminar...' : 'Eliminar pasta' }}
       </button>
     </div>
   </header>
@@ -97,3 +110,46 @@
     Esta pasta ainda não tem subpastas ou artigos.
   </p>
 </section>
+
+<!-- Modal de criação de pasta -->
+ <div
+  class="modal-backdrop"
+  *ngIf="showCreateFolderModal"
+>
+  <div class="modal">
+    <h2>Criar pasta</h2>
+
+    <label>
+      Nome
+      <input
+        type="text"
+        [(ngModel)]="newFolder.name"
+      />
+    </label>
+
+    <label>
+      Descrição
+      <textarea
+        rows="3"
+        [(ngModel)]="newFolder.description"
+      ></textarea>
+    </label>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="secondary"
+        (click)="closeCreateFolderModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        (click)="createFolder()"
+      >
+        Criar
+      </button>
+    </div>
+  </div>
+</div>

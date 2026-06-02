@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 import {
   KnowledgeArticle,
@@ -10,7 +11,7 @@ import {
 
 @Component({
   selector: 'app-knowledge-base-home',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-base-home.html',
   styleUrl: './knowledge-base-home.scss',
 })
@@ -22,6 +23,13 @@ export class KnowledgeBaseHome implements OnInit {
 
   isLoading = false;
   errorMessage = '';
+
+  showCreateFolderModal = false;
+
+  newFolder = {
+    name: '',
+    description: '',
+  };
 
   ngOnInit(): void {
     this.loadRootContents();
@@ -43,6 +51,42 @@ export class KnowledgeBaseHome implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  createFolder(): void {
+    const duplicate = this.folders.some(
+      (folder) =>
+        folder.name.trim().toLowerCase() ===
+        this.newFolder.name.trim().toLowerCase(),
+    );
+
+    if (duplicate) {
+      this.errorMessage =
+        'Já existe uma pasta com esse nome.';
+      return;
+    }
+
+    this.knowledgeBaseService
+      .createFolder({
+        name: this.newFolder.name.trim(),
+        description: this.newFolder.description.trim(),
+        parentFolder: '',
+      })
+      .subscribe({
+        next: () => {
+          this.closeCreateFolderModal();
+          this.loadRootContents();
+        },
+      });
+  }
+
+  closeCreateFolderModal(): void {
+    this.showCreateFolderModal = false;
+
+    this.newFolder = {
+      name: '',
+      description: '',
+    };
   }
 
   getStatusLabel(status: string): string {

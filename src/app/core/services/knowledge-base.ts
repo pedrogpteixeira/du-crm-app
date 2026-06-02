@@ -72,4 +72,25 @@ export class KnowledgeBaseService {
       `${this.apiUrl}/api/knowledge-articles/${articleId}`,
     );
   }
+
+  createFolder(payload: {
+    name: string;
+    description: string;
+    parentFolder: string;
+  }) {
+    return this.http.post(
+      `${this.apiUrl}/api/knowledge-folders`,
+      payload,
+    );
+  }
+
+  deleteFolder(folderId: string, force = false): Observable<void> {
+    return this.http.request<void>(
+      'delete',
+      `${this.apiUrl}/api/knowledge-folders/${folderId}`,
+      {
+        body: { force },
+      },
+    );
+  }
 }
