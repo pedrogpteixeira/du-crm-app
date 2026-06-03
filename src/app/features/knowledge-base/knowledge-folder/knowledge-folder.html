@@ -21,7 +21,7 @@
         + Criar pasta
       </button>
 
-      <button type="button">
+      <button type="button" (click)="openCreateArticleModal()">
         + Criar artigo
       </button>
 
@@ -149,6 +149,59 @@
         (click)="createFolder()"
       >
         Criar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="showCreateArticleModal">
+  <div class="modal">
+    <h2>Criar artigo</h2>
+
+    <label>
+      Nome
+      <input type="text" [(ngModel)]="newArticle.name" />
+    </label>
+
+    <label>
+      Fornecedor
+
+      <select [(ngModel)]="newArticle.supplier">
+        <option value="" disabled>
+          Selecionar fornecedor
+        </option>
+
+        <option
+          *ngFor="let company of companies"
+          [value]="company.name"
+        >
+          {{ company.name }}
+        </option>
+      </select>
+    </label>
+
+    <label>
+      Estado
+      <select [(ngModel)]="newArticle.status">
+        <option value="campaign_active">Campanha ativa</option>
+        <option value="campaign_inactive">Campanha inativa</option>
+        <option value="draft">Rascunho</option>
+        <option value="archived">Arquivado</option>
+      </select>
+    </label>
+
+    <label>
+      Mensagem
+      <textarea rows="5" [(ngModel)]="newArticle.message"></textarea>
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary" (click)="closeCreateArticleModal()">
+        Cancelar
+      </button>
+
+      <button type="button" [disabled]="isCreatingArticle" (click)="createArticle()">
+        {{ isCreatingArticle ? 'A criar...' : 'Criar artigo' }}
       </button>
     </div>
   </div>

@@ -9,6 +9,7 @@ import {
   KnowledgeBaseService,
   KnowledgeFolder as KnowledgeFolderModel,
 } from '../../../core/services/knowledge-base';
+import { Company, CompanyService } from '../../../core/services/company';
 
 @Component({
   selector: 'app-knowledge-folder',
@@ -20,6 +21,7 @@ export class KnowledgeFolder implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly router = inject(Router);
+  private readonly companyService = inject(CompanyService);
   // readonly breadcrumbService = inject(KnowledgeBreadcrumbService);
 
   folderId: string | null = null;
@@ -27,6 +29,8 @@ export class KnowledgeFolder implements OnInit {
   subfolders: KnowledgeFolderModel[] = [];
   articles: KnowledgeArticle[] = [];
   folderName = 'Pasta';
+
+  companies: Company[] = [];
 
   isLoading = false;
   isDeleting = false;
@@ -39,6 +43,16 @@ export class KnowledgeFolder implements OnInit {
     description: '',
   };
 
+  showCreateArticleModal = false;
+  isCreatingArticle = false;
+
+  newArticle = {
+    name: '',
+    supplier: '',
+    status: 'campaign_active',
+    message: '',
+  };
+
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
@@ -49,6 +63,8 @@ export class KnowledgeFolder implements OnInit {
         this.loadFolderContents(this.folderId);
       }
     });
+
+    this.loadCompanies();
   }
 
   loadFolderContents(folderId: string): void {
@@ -148,6 +164,64 @@ export class KnowledgeFolder implements OnInit {
     });
   }
 
+  openCreateArticleModal(): void {
+    this.showCreateArticleModal = true;
+  }
+
+  closeCreateArticleModal(): void {
+    this.showCreateArticleModal = false;
+
+    this.newArticle = {
+      name: '',
+      supplier: '',
+      status: 'campaign_active',
+      message: '',
+    };
+  }
+
+  createArticle(): void {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!this.newArticle.name.trim()) {
+      this.errorMessage = 'O nome do artigo é obrigatório.';
+      return;
+    }
+
+    if (!currentUser.id) {
+      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
+      return;
+    }
+
+    if (!this.newArticle.supplier) {
+      this.errorMessage = 'O fornecedor é obrigatório.';
+      return;
+    }
+
+    this.isCreatingArticle = true;
+
+    this.knowledgeBaseService
+      .createArticle({
+        folderId: this.folderId ?? '',
+        name: this.newArticle.name.trim(),
+        supplier: this.newArticle.supplier.trim(),
+        status: this.newArticle.status,
+        message: this.newArticle.message.trim(),
+        createdBy: currentUser.id,
+      })
+      .subscribe({
+        next: () => {
+          this.closeCreateArticleModal();
+          this.loadFolderContents(this.folderId!);
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível criar o artigo.';
+        },
+        complete: () => {
+          this.isCreatingArticle = false;
+        },
+      });
+  }
+
   formatDate(date: string): string {
     return new Intl.DateTimeFormat('pt-PT', {
       day: '2-digit',
@@ -156,5 +230,13 @@ export class KnowledgeFolder implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
+  }
+
+  loadCompanies(): void {
+    this.companyService.getCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies.filter((company) => company.active);
+      },
+    });
   }
 }

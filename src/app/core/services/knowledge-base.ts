@@ -48,6 +48,15 @@ export interface KnowledgeCreatedBy {
   name: string;
 }
 
+export interface CreateKnowledgeArticleRequest {
+  folderId: string;
+  name: string;
+  supplier: string;
+  status: string;
+  message: string;
+  createdBy: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -91,6 +100,13 @@ export class KnowledgeBaseService {
       {
         body: { force },
       },
+    );
+  }
+
+  createArticle(payload: CreateKnowledgeArticleRequest): Observable<KnowledgeArticle> {
+    return this.http.post<KnowledgeArticle>(
+      `${this.apiUrl}/knowledge-articles`,
+      payload,
     );
   }
 }

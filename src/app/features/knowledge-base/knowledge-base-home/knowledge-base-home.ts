@@ -8,6 +8,7 @@ import {
   KnowledgeBaseService,
   KnowledgeFolder,
 } from '../../../core/services/knowledge-base';
+import { Company, CompanyService } from '../../../core/services/company';
 
 @Component({
   selector: 'app-knowledge-base-home',
@@ -17,9 +18,11 @@ import {
 })
 export class KnowledgeBaseHome implements OnInit {
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
+  private readonly companyService = inject(CompanyService);
 
   folders: KnowledgeFolder[] = [];
   articles: KnowledgeArticle[] = [];
+  companies: Company[] = [];
 
   isLoading = false;
   errorMessage = '';
@@ -31,8 +34,19 @@ export class KnowledgeBaseHome implements OnInit {
     description: '',
   };
 
+  showCreateArticleModal = false;
+  isCreatingArticle = false;
+
+  newArticle = {
+    name: '',
+    supplier: '',
+    status: 'campaign_active',
+    message: '',
+  };
+
   ngOnInit(): void {
     this.loadRootContents();
+    this.loadCompanies();
   }
 
   loadRootContents(): void {
@@ -89,6 +103,64 @@ export class KnowledgeBaseHome implements OnInit {
     };
   }
 
+  openCreateArticleModal(): void {
+    this.showCreateArticleModal = true;
+  }
+
+  closeCreateArticleModal(): void {
+    this.showCreateArticleModal = false;
+
+    this.newArticle = {
+      name: '',
+      supplier: '',
+      status: 'campaign_active',
+      message: '',
+    };
+  }
+
+  createArticle(): void {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!this.newArticle.name.trim()) {
+      this.errorMessage = 'O nome do artigo é obrigatório.';
+      return;
+    }
+
+    if (!currentUser.id) {
+      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
+      return;
+    }
+
+    if (!this.newArticle.supplier) {
+      this.errorMessage = 'O fornecedor é obrigatório.';
+      return;
+    }
+
+    this.isCreatingArticle = true;
+
+    this.knowledgeBaseService
+      .createArticle({
+        folderId: '',
+        name: this.newArticle.name.trim(),
+        supplier: this.newArticle.supplier.trim(),
+        status: this.newArticle.status,
+        message: this.newArticle.message.trim(),
+        createdBy: currentUser.id,
+      })
+      .subscribe({
+        next: () => {
+          this.closeCreateArticleModal();
+          this.loadRootContents();
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível criar o artigo.';
+        },
+        complete: () => {
+          this.isCreatingArticle = false;
+        },
+      });
+  }
+
   getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
       campaign_active: 'Campanha ativa',
@@ -106,5 +178,13 @@ export class KnowledgeBaseHome implements OnInit {
       month: 'short',
       year: 'numeric',
     }).format(new Date(date));
+  }
+
+  loadCompanies(): void {
+    this.companyService.getCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies.filter((company) => company.active);
+      },
+    });
   }
 }
