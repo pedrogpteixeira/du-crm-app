@@ -16,6 +16,25 @@
   }
 }
 
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+button.danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+button.danger:hover {
+  background: #b91c1c;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .breadcrumb {
   display: flex;
   align-items: center;

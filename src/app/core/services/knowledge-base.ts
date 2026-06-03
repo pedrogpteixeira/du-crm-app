@@ -37,8 +37,15 @@ export interface KnowledgeArticle {
   updatedAt: string;
 }
 
+export interface CurrentKnowledgeFolder {
+  id: string;
+  name: string;
+  parentFolder: string;
+}
+
 export interface KnowledgeFolderContents {
-  folderId: string;
+  currentFolder?: CurrentKnowledgeFolder;
+  folderId?: string;
   folders: KnowledgeFolder[];
   articles: KnowledgeArticle[];
 }
@@ -105,8 +112,14 @@ export class KnowledgeBaseService {
 
   createArticle(payload: CreateKnowledgeArticleRequest): Observable<KnowledgeArticle> {
     return this.http.post<KnowledgeArticle>(
-      `${this.apiUrl}/knowledge-articles`,
+      `${this.apiUrl}/api/knowledge-articles`,
       payload,
+    );
+  }
+
+  deleteArticle(articleId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/api/knowledge-articles/${articleId}`,
     );
   }
 }

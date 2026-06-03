@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 
 import {
   KnowledgeArticle as KnowledgeArticleModel,
@@ -18,6 +18,7 @@ import { environment } from '../../../../environments/environment.development';
 export class KnowledgeArticle implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
+  private readonly router = inject(Router);
 
   readonly apiUrl = environment.apiUrl;
 
@@ -30,6 +31,7 @@ export class KnowledgeArticle implements OnInit {
   articleName = 'Artigo';
 
   isLoading = false;
+  isDeleting = false;
   errorMessage = '';
 
   ngOnInit(): void {
@@ -99,5 +101,40 @@ export class KnowledgeArticle implements OnInit {
     }
 
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  deleteArticle(): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    const confirmed = confirm(
+      `Tens a certeza que pretendes eliminar o artigo "${this.article.name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const folderId = this.article.folderId;
+    this.isDeleting = true;
+
+    this.knowledgeBaseService
+      .deleteArticle(this.article.id)
+      .subscribe({
+        next: () => {
+          this.router.navigate([
+            '/home/knowledge-base/folders',
+            folderId,
+          ]);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível eliminar o artigo.';
+        },
+        complete: () => {
+          this.isDeleting = false;
+        },
+      });
   }
 }

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import {
+  CurrentKnowledgeFolder,
   KnowledgeArticle,
   KnowledgeBaseService,
   KnowledgeFolder as KnowledgeFolderModel,
@@ -28,6 +29,7 @@ export class KnowledgeFolder implements OnInit {
 
   subfolders: KnowledgeFolderModel[] = [];
   articles: KnowledgeArticle[] = [];
+  currentFolder: CurrentKnowledgeFolder | null = null;
   folderName = 'Pasta';
 
   companies: Company[] = [];
@@ -56,6 +58,7 @@ export class KnowledgeFolder implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
+
       this.folderName =
         this.route.snapshot.queryParamMap.get('name') || 'Pasta';
 
@@ -73,6 +76,13 @@ export class KnowledgeFolder implements OnInit {
 
     this.knowledgeBaseService.getFolderContents(folderId).subscribe({
       next: (contents) => {
+        this.currentFolder = contents.currentFolder ?? null;
+
+        this.folderName =
+          contents.currentFolder?.name ||
+          this.route.snapshot.queryParamMap.get('name') ||
+          'Pasta';
+
         this.subfolders = contents.folders;
         this.articles = contents.articles;
       },
