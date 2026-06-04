@@ -119,14 +119,23 @@ export class KnowledgeArticle implements OnInit {
     const folderId = this.article.folderId;
     this.isDeleting = true;
 
+    // folderId is empty when the article is in the root folder, so we navigate to the root folder page
+    if (!folderId) {
+      console.log('Article is in root folder, navigating to root folder page');
+    }
+
     this.knowledgeBaseService
       .deleteArticle(this.article.id)
       .subscribe({
         next: () => {
-          this.router.navigate([
-            '/home/knowledge-base/folders',
-            folderId,
-          ]);
+          if (!this.article?.folderId) {
+            this.router.navigate(['/home/knowledge-base']);
+          } else {
+            this.router.navigate([
+              '/home/knowledge-base/folders',
+              this.article.folderId,
+            ]);
+          }
         },
         error: () => {
           this.errorMessage =
