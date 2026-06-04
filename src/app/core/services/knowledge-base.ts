@@ -89,6 +89,22 @@ export class KnowledgeBaseService {
     );
   }
 
+  uploadArticleAttachments(
+    articleId: string,
+    files: File[],
+  ): Observable<KnowledgeArticle> {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    return this.http.post<KnowledgeArticle>(
+      `${this.apiUrl}/api/knowledge-articles/${articleId}/attachments`,
+      formData,
+    );
+  }
+
   createFolder(payload: {
     name: string;
     description: string;

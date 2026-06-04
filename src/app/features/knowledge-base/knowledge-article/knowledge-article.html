@@ -50,18 +50,71 @@
           {{ article.message }}
         </div>
 
-        <div
-          class="attachments"
-          *ngIf="article.attachments.length"
-        >
+        <div class="attachments">
           <div class="section-title">
             Anexos
           </div>
 
-          <div class="attachments-grid">
+          <div
+            class="dropzone"
+            [class.dragging]="isDraggingFiles"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDropFiles($event)"
+          >
+            <p>Arrasta ficheiros para aqui</p>
+
+            <span>ou</span>
+
+            <label class="file-select-btn">
+              Selecionar ficheiros
+
+              <input
+                type="file"
+                multiple
+                hidden
+                (change)="onFileInputChange($event)"
+              />
+            </label>
+          </div>
+
+          <div class="selected-files" *ngIf="selectedFiles.length">
+            <div
+              class="selected-file"
+              *ngFor="let file of selectedFiles; let i = index"
+            >
+              <div>
+                <strong>{{ file.name }}</strong>
+                <span>{{ formatFileSize(file.size) }}</span>
+              </div>
+
+              <button
+                type="button"
+                class="remove-file"
+                (click)="removeSelectedFile(i)"
+              >
+                Remover
+              </button>
+            </div>
+
+            <button
+              type="button"
+              class="upload-attachments-btn"
+              [disabled]="isUploadingAttachments"
+              (click)="uploadSelectedAttachments()"
+            >
+              {{
+                isUploadingAttachments
+                  ? 'A enviar...'
+                  : 'Enviar anexos para a base de dados'
+              }}
+            </button>
+          </div>
+
+          <div class="attachments-grid" *ngIf="article?.attachments?.length">
             <a
               class="attachment-item"
-              *ngFor="let attachment of article.attachments"
+              *ngFor="let attachment of article?.attachments"
               [href]="getAttachmentUrl(attachment.path)"
               target="_blank"
             >
@@ -80,6 +133,10 @@
               </div>
             </a>
           </div>
+
+          <p class="empty-attachments" *ngIf="!article?.attachments?.length">
+            Este artigo ainda não tem anexos.
+          </p>
         </div>
       </article>
 

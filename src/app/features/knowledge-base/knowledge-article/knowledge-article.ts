@@ -30,6 +30,10 @@ export class KnowledgeArticle implements OnInit {
   folderName = 'Base de Conhecimento';
   articleName = 'Artigo';
 
+  selectedFiles: File[] = [];
+  isDraggingFiles = false;
+  isUploadingAttachments = false;
+
   isLoading = false;
   isDeleting = false;
   errorMessage = '';
@@ -143,6 +147,69 @@ export class KnowledgeArticle implements OnInit {
         },
         complete: () => {
           this.isDeleting = false;
+        },
+      });
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingFiles = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingFiles = false;
+  }
+
+  onDropFiles(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingFiles = false;
+
+    const files = Array.from(event.dataTransfer?.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    this.selectedFiles = [...this.selectedFiles, ...files];
+  }
+
+  onFileInputChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    this.selectedFiles = [...this.selectedFiles, ...files];
+
+    input.value = '';
+  }
+
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, i) => i !== index);
+  }
+
+  uploadSelectedAttachments(): void {
+    if (!this.article?.id || !this.selectedFiles.length) {
+      return;
+    }
+
+    this.isUploadingAttachments = true;
+
+    this.knowledgeBaseService
+      .uploadArticleAttachments(this.article.id, this.selectedFiles)
+      .subscribe({
+        next: (updatedArticle) => {
+          this.article = updatedArticle;
+          this.selectedFiles = [];
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível carregar os anexos.';
+        },
+        complete: () => {
+          this.isUploadingAttachments = false;
         },
       });
   }
