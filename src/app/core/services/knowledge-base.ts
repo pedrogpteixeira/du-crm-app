@@ -64,6 +64,13 @@ export interface CreateKnowledgeArticleRequest {
   createdBy: string;
 }
 
+export interface UpdateKnowledgeArticleRequest {
+  name: string;
+  supplier: string;
+  status: string;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -129,6 +136,16 @@ export class KnowledgeBaseService {
   createArticle(payload: CreateKnowledgeArticleRequest): Observable<KnowledgeArticle> {
     return this.http.post<KnowledgeArticle>(
       `${this.apiUrl}/api/knowledge-articles`,
+      payload,
+    );
+  }
+
+  updateArticle(
+    articleId: string,
+    payload: UpdateKnowledgeArticleRequest,
+  ): Observable<KnowledgeArticle> {
+    return this.http.patch<KnowledgeArticle>(
+      `${this.apiUrl}/api/knowledge-articles/${articleId}`,
       payload,
     );
   }

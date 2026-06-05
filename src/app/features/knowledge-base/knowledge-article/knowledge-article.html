@@ -19,36 +19,107 @@
         {{ articleName }}
       </strong>
     </div>
+
     <header class="article-header">
       <div>
-        <h1>{{ article.name }}</h1>
+        <h1 *ngIf="!isEditing">
+          {{ article.name }}
+        </h1>
+
+        <input
+          *ngIf="isEditing"
+          class="title-input"
+          [(ngModel)]="editableArticle.name"
+        />
       </div>
 
       <div class="actions">
-      <button
-        type="button"
-        class="danger"
-        [disabled]="isDeleting"
-        (click)="deleteArticle()"
-      >
-        {{ isDeleting ? 'A eliminar...' : 'Eliminar artigo' }}
-      </button>
-    </div>
+        <button
+          *ngIf="!isEditing"
+          type="button"
+          class="secondary"
+          (click)="startEditing()"
+        >
+          Editar artigo
+        </button>
+
+        <button
+          *ngIf="isEditing"
+          type="button"
+          class="secondary"
+          (click)="cancelEditing()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          *ngIf="isEditing"
+          type="button"
+          [disabled]="isSaving"
+          (click)="saveArticle()"
+        >
+          {{ isSaving ? 'A guardar...' : 'Guardar alterações' }}
+        </button>
+
+        <button
+          type="button"
+          class="danger"
+          [disabled]="isDeleting"
+          (click)="deleteArticle()"
+        >
+          {{ isDeleting ? 'A eliminar...' : 'Eliminar artigo' }}
+        </button>
+      </div>
     </header>
 
     <div class="article-layout">
       <article class="content-card">
-        <div class="article-status">
+        <div class="article-status" *ngIf="!isEditing">
           <span>{{ article.supplier }}</span>
 
-          <strong>
+          <strong [class.is-inactive]="article.status === 'campaign_inactive'">
             {{ getStatusLabel(article.status) }}
           </strong>
         </div>
 
-        <div class="article-body">
+        <div class="edit-grid" *ngIf="isEditing">
+          <label>
+            Fornecedor
+
+            <select [(ngModel)]="editableArticle.supplier">
+              <option
+                *ngFor="let company of companies"
+                [value]="company.name"
+              >
+                {{ company.name }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Estado
+            <select [(ngModel)]="editableArticle.status">
+              <option value="campaign_active">
+                Campanha ativa
+              </option>
+
+              <option value="campaign_inactive">
+                Campanha inativa
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <div class="article-body" *ngIf="!isEditing">
           {{ article.message }}
         </div>
+
+        <textarea
+          *ngIf="isEditing"
+          class="message-textarea"
+          rows="8"
+          [(ngModel)]="editableArticle.message"
+        ></textarea>
 
         <div class="attachments">
           <div class="section-title">
@@ -57,6 +128,7 @@
 
           <div
             class="dropzone"
+            *ngIf="isEditing"
             [class.dragging]="isDraggingFiles"
             (dragover)="onDragOver($event)"
             (dragleave)="onDragLeave($event)"
@@ -78,7 +150,10 @@
             </label>
           </div>
 
-          <div class="selected-files" *ngIf="selectedFiles.length">
+          <div
+            class="selected-files"
+            *ngIf="isEditing && selectedFiles.length"
+          >
             <div
               class="selected-file"
               *ngFor="let file of selectedFiles; let i = index"
@@ -137,6 +212,7 @@
               </button>
 
               <button
+                *ngIf="isEditing"
                 type="button"
                 class="delete-attachment-btn"
                 [disabled]="deletingAttachmentFileName === attachment.fileName"

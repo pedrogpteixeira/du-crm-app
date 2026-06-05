@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import {
   KnowledgeArticle as KnowledgeArticleModel,
@@ -8,11 +9,13 @@ import {
   KnowledgeBaseService,
 } from '../../../core/services/knowledge-base';
 
+import { Company, CompanyService } from '../../../core/services/company';
+
 import { environment } from '../../../../environments/environment.development';
 
 @Component({
   selector: 'app-knowledge-article',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-article.html',
   styleUrl: './knowledge-article.scss',
 })
@@ -20,25 +23,37 @@ export class KnowledgeArticle implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly router = inject(Router);
+  private readonly companyService = inject(CompanyService);
 
   readonly apiUrl = environment.apiUrl;
 
   articleId: string | null = null;
-
   article: KnowledgeArticleModel | null = null;
-  deletingAttachmentFileName: string | null = null;
 
   folderId: string | null = null;
   folderName = 'Base de Conhecimento';
   articleName = 'Artigo';
 
   selectedFiles: File[] = [];
-  isDraggingFiles = false;
-  isUploadingAttachments = false;
+  companies: Company[] = [];
 
   isLoading = false;
   isDeleting = false;
+  isEditing = false;
+  isSaving = false;
+  isDraggingFiles = false;
+  isUploadingAttachments = false;
+
+  deletingAttachmentFileName: string | null = null;
+
   errorMessage = '';
+
+  editableArticle = {
+    name: '',
+    supplier: '',
+    status: 'campaign_active',
+    message: '',
+  };
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -46,11 +61,14 @@ export class KnowledgeArticle implements OnInit {
 
       this.folderId = this.route.snapshot.queryParamMap.get('folderId');
       this.folderName =
-        this.route.snapshot.queryParamMap.get('folderName') || 'Base de Conhecimento';
+        this.route.snapshot.queryParamMap.get('folderName') ||
+        'Base de Conhecimento';
 
       if (this.articleId) {
         this.loadArticle(this.articleId);
       }
+
+      this.loadCompanies();
     });
   }
 
@@ -62,6 +80,13 @@ export class KnowledgeArticle implements OnInit {
       next: (article) => {
         this.article = article;
         this.articleName = article.name;
+
+        this.editableArticle = {
+          name: article.name,
+          supplier: article.supplier,
+          status: article.status,
+          message: article.message,
+        };
       },
       error: () => {
         this.errorMessage = 'Não foi possível carregar o artigo.';
@@ -70,6 +95,257 @@ export class KnowledgeArticle implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  loadCompanies(): void {
+    this.companyService.getCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies;
+      },
+    });
+  }
+
+  startEditing(): void {
+    if (!this.article) {
+      return;
+    }
+
+    this.isEditing = true;
+
+    this.editableArticle = {
+      name: this.article.name,
+      supplier: this.article.supplier,
+      status: this.article.status,
+      message: this.article.message,
+    };
+  }
+
+  cancelEditing(): void {
+    if (!this.article) {
+      return;
+    }
+
+    this.isEditing = false;
+    this.selectedFiles = [];
+    this.isDraggingFiles = false;
+
+    this.editableArticle = {
+      name: this.article.name,
+      supplier: this.article.supplier,
+      status: this.article.status,
+      message: this.article.message,
+    };
+  }
+
+  saveArticle(): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    this.isSaving = true;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService
+      .updateArticle(this.article.id, {
+        name: this.editableArticle.name.trim(),
+        supplier: this.editableArticle.supplier.trim(),
+        status: this.editableArticle.status,
+        message: this.editableArticle.message.trim(),
+      })
+      .subscribe({
+        next: (updatedArticle) => {
+          this.article = updatedArticle;
+          this.articleName = updatedArticle.name;
+
+          this.editableArticle = {
+            name: updatedArticle.name,
+            supplier: updatedArticle.supplier,
+            status: updatedArticle.status,
+            message: updatedArticle.message,
+          };
+
+          this.isEditing = false;
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível atualizar o artigo.';
+        },
+        complete: () => {
+          this.isSaving = false;
+        },
+      });
+  }
+
+  deleteArticle(): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    const confirmed = confirm(
+      `Tens a certeza que pretendes eliminar o artigo "${this.article.name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.isDeleting = true;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService.deleteArticle(this.article.id).subscribe({
+      next: () => {
+        if (!this.article?.folderId) {
+          this.router.navigate(['/home/knowledge-base']);
+          return;
+        }
+
+        this.router.navigate([
+          '/home/knowledge-base/folders',
+          this.article.folderId,
+        ]);
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível eliminar o artigo.';
+      },
+      complete: () => {
+        this.isDeleting = false;
+      },
+    });
+  }
+
+  deleteAttachment(fileName: string): void {
+    if (!this.article?.id || !this.isEditing) {
+      return;
+    }
+
+    const confirmed = confirm('Tens a certeza que queres eliminar este anexo?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingAttachmentFileName = fileName;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService
+      .deleteArticleAttachment(this.article.id, fileName)
+      .subscribe({
+        next: (updatedArticle) => {
+          this.article = updatedArticle;
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível eliminar o anexo.';
+        },
+        complete: () => {
+          this.deletingAttachmentFileName = null;
+        },
+      });
+  }
+
+  downloadAttachment(attachment: KnowledgeAttachment): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    this.knowledgeBaseService
+      .downloadAttachment(attachment, this.article.id)
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = attachment.originalName || attachment.fileName;
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível descarregar o anexo.';
+        },
+      });
+  }
+
+  onDragOver(event: DragEvent): void {
+    if (!this.isEditing) {
+      return;
+    }
+
+    event.preventDefault();
+    this.isDraggingFiles = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    if (!this.isEditing) {
+      return;
+    }
+
+    event.preventDefault();
+    this.isDraggingFiles = false;
+  }
+
+  onDropFiles(event: DragEvent): void {
+    if (!this.isEditing) {
+      return;
+    }
+
+    event.preventDefault();
+    this.isDraggingFiles = false;
+
+    const files = Array.from(event.dataTransfer?.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    this.selectedFiles = [...this.selectedFiles, ...files];
+  }
+
+  onFileInputChange(event: Event): void {
+    if (!this.isEditing) {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    this.selectedFiles = [...this.selectedFiles, ...files];
+
+    input.value = '';
+  }
+
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, i) => i !== index);
+  }
+
+  uploadSelectedAttachments(): void {
+    if (!this.article?.id || !this.selectedFiles.length || !this.isEditing) {
+      return;
+    }
+
+    this.isUploadingAttachments = true;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService
+      .uploadArticleAttachments(this.article.id, this.selectedFiles)
+      .subscribe({
+        next: (updatedArticle) => {
+          this.article = updatedArticle;
+          this.selectedFiles = [];
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível carregar os anexos.';
+        },
+        complete: () => {
+          this.isUploadingAttachments = false;
+        },
+      });
   }
 
   getStatusLabel(status: string): string {
@@ -107,165 +383,5 @@ export class KnowledgeArticle implements OnInit {
     }
 
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-  }
-
-  deleteArticle(): void {
-    if (!this.article?.id) {
-      return;
-    }
-
-    const confirmed = confirm(
-      `Tens a certeza que pretendes eliminar o artigo "${this.article.name}"?`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const folderId = this.article.folderId;
-    this.isDeleting = true;
-
-    // folderId is empty when the article is in the root folder, so we navigate to the root folder page
-    if (!folderId) {
-      console.log('Article is in root folder, navigating to root folder page');
-    }
-
-    this.knowledgeBaseService
-      .deleteArticle(this.article.id)
-      .subscribe({
-        next: () => {
-          if (!this.article?.folderId) {
-            this.router.navigate(['/home/knowledge-base']);
-          } else {
-            this.router.navigate([
-              '/home/knowledge-base/folders',
-              this.article.folderId,
-            ]);
-          }
-        },
-        error: () => {
-          this.errorMessage =
-            'Não foi possível eliminar o artigo.';
-        },
-        complete: () => {
-          this.isDeleting = false;
-        },
-      });
-  }
-
-  deleteAttachment(fileName: string): void {
-    if (!this.article?.id) {
-      return;
-    }
-
-    const confirmed = confirm(
-      'Tens a certeza que queres eliminar este anexo?',
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.deletingAttachmentFileName = fileName;
-
-    this.knowledgeBaseService
-      .deleteArticleAttachment(this.article.id, fileName)
-      .subscribe({
-        next: (updatedArticle) => {
-          this.article = updatedArticle;
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível eliminar o anexo.';
-        },
-        complete: () => {
-          this.deletingAttachmentFileName = null;
-        },
-      });
-  }
-
-  downloadAttachment(attachment: KnowledgeAttachment): void {
-    this.knowledgeBaseService
-      .downloadAttachment(attachment, this.article?.id as string)
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = attachment.originalName || attachment.fileName;
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          window.URL.revokeObjectURL(url);
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível descarregar o anexo.';
-        },
-      });
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.isDraggingFiles = true;
-  }
-
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    this.isDraggingFiles = false;
-  }
-
-  onDropFiles(event: DragEvent): void {
-    event.preventDefault();
-    this.isDraggingFiles = false;
-
-    const files = Array.from(event.dataTransfer?.files || []);
-
-    if (!files.length) {
-      return;
-    }
-
-    this.selectedFiles = [...this.selectedFiles, ...files];
-  }
-
-  onFileInputChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files || []);
-
-    if (!files.length) {
-      return;
-    }
-
-    this.selectedFiles = [...this.selectedFiles, ...files];
-
-    input.value = '';
-  }
-
-  removeSelectedFile(index: number): void {
-    this.selectedFiles = this.selectedFiles.filter((_, i) => i !== index);
-  }
-
-  uploadSelectedAttachments(): void {
-    if (!this.article?.id || !this.selectedFiles.length) {
-      return;
-    }
-
-    this.isUploadingAttachments = true;
-
-    this.knowledgeBaseService
-      .uploadArticleAttachments(this.article.id, this.selectedFiles)
-      .subscribe({
-        next: (updatedArticle) => {
-          this.article = updatedArticle;
-          this.selectedFiles = [];
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível carregar os anexos.';
-        },
-        complete: () => {
-          this.isUploadingAttachments = false;
-        },
-      });
   }
 }
