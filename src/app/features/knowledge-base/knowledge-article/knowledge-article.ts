@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 
 import {
   KnowledgeArticle as KnowledgeArticleModel,
+  KnowledgeAttachment,
   KnowledgeBaseService,
 } from '../../../core/services/knowledge-base';
 
@@ -178,6 +179,29 @@ export class KnowledgeArticle implements OnInit {
         },
         complete: () => {
           this.deletingAttachmentFileName = null;
+        },
+      });
+  }
+
+  downloadAttachment(attachment: KnowledgeAttachment): void {
+    this.knowledgeBaseService
+      .downloadAttachment(attachment, this.article?.id as string)
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = attachment.originalName || attachment.fileName;
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível descarregar o anexo.';
         },
       });
   }

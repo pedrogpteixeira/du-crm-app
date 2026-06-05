@@ -116,10 +116,10 @@
               class="attachment-item"
               *ngFor="let attachment of article.attachments"
             >
-              <a
+              <button
+                type="button"
                 class="attachment-link"
-                [href]="getAttachmentUrl(attachment.path)"
-                target="_blank"
+                (click)="downloadAttachment(attachment)"
               >
                 <div class="file-icon">
                   📎
@@ -134,7 +134,7 @@
                     {{ formatFileSize(attachment.size) }}
                   </span>
                 </div>
-              </a>
+              </button>
 
               <button
                 type="button"

@@ -144,4 +144,10 @@ export class KnowledgeBaseService {
       `${this.apiUrl}/api/knowledge-articles/${articleId}/attachments/${fileName}`,
     );
   }
+
+  downloadAttachment(file: KnowledgeAttachment, articleId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}${"/api/knowledge-articles/"}${articleId}${"/attachments/"}${file.fileName}${"/download"}`, {
+      responseType: 'blob',
+    });
+  }
 }
