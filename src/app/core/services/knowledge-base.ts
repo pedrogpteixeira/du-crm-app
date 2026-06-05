@@ -138,4 +138,10 @@ export class KnowledgeBaseService {
       `${this.apiUrl}/api/knowledge-articles/${articleId}`,
     );
   }
+
+  deleteArticleAttachment(articleId: string, fileName: string): Observable<KnowledgeArticle> {
+    return this.http.delete<KnowledgeArticle>(
+      `${this.apiUrl}/api/knowledge-articles/${articleId}/attachments/${fileName}`,
+    );
+  }
 }

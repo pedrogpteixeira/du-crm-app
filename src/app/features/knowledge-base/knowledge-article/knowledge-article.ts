@@ -25,6 +25,7 @@ export class KnowledgeArticle implements OnInit {
   articleId: string | null = null;
 
   article: KnowledgeArticleModel | null = null;
+  deletingAttachmentFileName: string | null = null;
 
   folderId: string | null = null;
   folderName = 'Base de Conhecimento';
@@ -147,6 +148,36 @@ export class KnowledgeArticle implements OnInit {
         },
         complete: () => {
           this.isDeleting = false;
+        },
+      });
+  }
+
+  deleteAttachment(fileName: string): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    const confirmed = confirm(
+      'Tens a certeza que queres eliminar este anexo?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingAttachmentFileName = fileName;
+
+    this.knowledgeBaseService
+      .deleteArticleAttachment(this.article.id, fileName)
+      .subscribe({
+        next: (updatedArticle) => {
+          this.article = updatedArticle;
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível eliminar o anexo.';
+        },
+        complete: () => {
+          this.deletingAttachmentFileName = null;
         },
       });
   }

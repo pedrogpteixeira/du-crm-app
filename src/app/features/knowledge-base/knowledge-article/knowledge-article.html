@@ -111,30 +111,47 @@
             </button>
           </div>
 
-          <div class="attachments-grid" *ngIf="article?.attachments?.length">
-            <a
+          <div class="attachments-grid" *ngIf="article.attachments.length">
+            <div
               class="attachment-item"
-              *ngFor="let attachment of article?.attachments"
-              [href]="getAttachmentUrl(attachment.path)"
-              target="_blank"
+              *ngFor="let attachment of article.attachments"
             >
-              <div class="file-icon">
-                📎
-              </div>
+              <a
+                class="attachment-link"
+                [href]="getAttachmentUrl(attachment.path)"
+                target="_blank"
+              >
+                <div class="file-icon">
+                  📎
+                </div>
 
-              <div>
-                <strong>
-                  {{ attachment.originalName }}
-                </strong>
+                <div>
+                  <strong>
+                    {{ attachment.originalName }}
+                  </strong>
 
-                <span>
-                  {{ formatFileSize(attachment.size) }}
-                </span>
-              </div>
-            </a>
+                  <span>
+                    {{ formatFileSize(attachment.size) }}
+                  </span>
+                </div>
+              </a>
+
+              <button
+                type="button"
+                class="delete-attachment-btn"
+                [disabled]="deletingAttachmentFileName === attachment.fileName"
+                (click)="deleteAttachment(attachment.fileName)"
+              >
+                {{
+                  deletingAttachmentFileName === attachment.fileName
+                    ? 'A eliminar...'
+                    : 'Eliminar'
+                }}
+              </button>
+            </div>
           </div>
 
-          <p class="empty-attachments" *ngIf="!article?.attachments?.length">
+          <p class="empty-attachments" *ngIf="!article.attachments.length">
             Este artigo ainda não tem anexos.
           </p>
         </div>
