@@ -35,6 +35,13 @@ export const routes: Routes = [
           import('./features/teams/teams').then((m) => m.Teams),
       },
       {
+        path: 'teams/:id',
+        loadComponent: () =>
+          import('./features/teams/team-detail/team-detail').then(
+            (m) => m.TeamDetail,
+          ),
+      },
+      {
         path: 'users/:id',
         loadComponent: () =>
           import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),

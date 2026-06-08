@@ -12,6 +12,18 @@ export interface Team {
   active: boolean;
 }
 
+export interface TeamUser {
+  id: string;
+  name: string;
+  role: string;
+  profilePicture?: string;
+}
+
+export interface TeamDetailResponse {
+  team: Team;
+  users: TeamUser[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -21,5 +33,11 @@ export class TeamService {
 
   getTeams(): Observable<Team[]> {
     return this.http.get<Team[]>(`${this.apiUrl}/api/teams`);
+  }
+
+  getTeamUsers(teamId: string): Observable<TeamDetailResponse> {
+    return this.http.get<TeamDetailResponse>(
+      `${this.apiUrl}/api/team-users/team/${teamId}`,
+    );
   }
 }
