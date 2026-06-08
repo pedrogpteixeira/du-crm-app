@@ -142,6 +142,11 @@ export class KnowledgeArticle implements OnInit {
       return;
     }
 
+    if (!this.hasArticleChanges()) {
+      this.isEditing = false;
+      return;
+    }
+
     this.isSaving = true;
     this.errorMessage = '';
 
@@ -337,7 +342,18 @@ export class KnowledgeArticle implements OnInit {
       .subscribe({
         next: (updatedArticle) => {
           this.article = updatedArticle;
+          this.articleName = updatedArticle.name;
+
+          this.editableArticle = {
+            name: updatedArticle.name,
+            supplier: updatedArticle.supplier,
+            status: updatedArticle.status,
+            message: updatedArticle.message,
+          };
+
           this.selectedFiles = [];
+          this.isDraggingFiles = false;
+          this.isEditing = false;
         },
         error: () => {
           this.errorMessage = 'Não foi possível carregar os anexos.';
@@ -346,6 +362,19 @@ export class KnowledgeArticle implements OnInit {
           this.isUploadingAttachments = false;
         },
       });
+  }
+
+  private hasArticleChanges(): boolean {
+    if (!this.article) {
+      return false;
+    }
+
+    return (
+      this.editableArticle.name.trim() !== this.article.name ||
+      this.editableArticle.supplier.trim() !== this.article.supplier ||
+      this.editableArticle.status !== this.article.status ||
+      this.editableArticle.message.trim() !== this.article.message
+    );
   }
 
   getStatusLabel(status: string): string {
