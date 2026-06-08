@@ -92,9 +92,13 @@
           Equipas
 
           <div class="teams-stack" *ngIf="user.teams.length; else noTeams">
-            <div class="team-name" *ngFor="let team of user.teams">
+            <a
+              class="team-name"
+              *ngFor="let team of user.teams"
+              [routerLink]="['/home/teams', team.id]"
+            >
               {{ team.name }}
-            </div>
+            </a>
           </div>
 
           <ng-template #noTeams>
@@ -104,7 +108,16 @@
 
         <label>
           Equipa por defeito
-          <strong>{{ user.defaultTeam?.name || 'Nenhuma equipa por defeito' }}</strong>
+          <a
+            *ngIf="user.defaultTeam"
+            class="team-name"
+            [routerLink]="['/home/teams', user.defaultTeam.id]"
+          >
+            {{ user.defaultTeam.name }}
+          </a>
+          <strong *ngIf="!user.defaultTeam">
+            Nenhuma equipa por defeito
+          </strong>
         </label>
       </div>
     </article>

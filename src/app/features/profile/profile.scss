@@ -127,6 +127,11 @@ strong {
   color: #008db1;
   font-size: 15px;
   font-weight: 700;
+  text-decoration: none;
+}
+
+.team-name:hover {
+  text-decoration: underline;
 }
 
 input,

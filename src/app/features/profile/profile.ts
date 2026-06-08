@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
@@ -38,7 +38,7 @@ interface ProfileUser {
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule, ImageCropperComponent],
+  imports: [CommonModule, FormsModule, ImageCropperComponent, RouterLink],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
