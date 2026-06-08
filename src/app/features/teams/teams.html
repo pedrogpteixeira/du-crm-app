@@ -1,0 +1,79 @@
+<section class="teams-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">
+        Equipas
+      </span>
+
+      <h1>
+        Equipas
+      </h1>
+
+      <p>
+        Gestão das equipas da plataforma.
+      </p>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="table-header">
+      <div>Equipa</div>
+      <div>Função</div>
+      <div>Cargos</div>
+      <div>Estado</div>
+    </div>
+
+    <p
+      *ngIf="isLoading"
+      class="loading"
+    >
+      A carregar equipas...
+    </p>
+
+    <p
+      *ngIf="errorMessage"
+      class="error-message"
+    >
+      {{ errorMessage }}
+    </p>
+
+    <a
+      *ngFor="let team of teams"
+      class="team-row"
+      [routerLink]="['/home/teams', team.id]"
+    >
+      <div class="team-cell">
+        <strong>
+          {{ team.name }}
+        </strong>
+      </div>
+
+      <div class="role-cell">
+        {{ team.role }}
+      </div>
+
+      <div class="positions-cell">
+        {{ team.positionList.length }}
+      </div>
+
+      <div>
+        <div
+          class="status-badge"
+          [class.is-active]="team.active"
+          [class.is-inactive]="!team.active"
+        >
+          <span></span>
+
+          {{ team.active ? 'Ativa' : 'Inativa' }}
+        </div>
+      </div>
+    </a>
+
+    <div
+      *ngIf="!isLoading && !errorMessage && !teams.length"
+      class="empty-state"
+    >
+      Nenhuma equipa encontrada.
+    </div>
+  </div>
+</section>
