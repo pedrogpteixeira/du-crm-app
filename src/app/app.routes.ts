@@ -54,6 +54,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/repsol/:id',
+        loadComponent: () =>
+          import('./features/contracts/repsol-contract-detail/repsol-contract-detail').then(
+            (m) => m.RepsolContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

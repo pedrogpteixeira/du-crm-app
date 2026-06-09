@@ -1,1 +1,320 @@
-<p>repsol-contract-detail works!</p>
+<section class="contract-detail-page">
+  <p class="loading" *ngIf="isLoading">
+    A carregar contrato...
+  </p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <ng-container *ngIf="contract">
+    <div class="breadcrumb">
+      <a routerLink="/home/contracts/repsol">
+        Contratos Repsol
+      </a>
+
+      <span>›</span>
+
+      <strong>
+        {{ contract.nomeClienteEmpresa }}
+      </strong>
+    </div>
+
+    <header class="page-header">
+        <div>
+            <h1>{{ contract.nomeClienteEmpresa }}</h1>
+
+            <p>
+            {{ contract.tipoProduto }} · {{ contract.tipoSegmento }}
+            </p>
+        </div>
+    </header>
+
+    <div class="detail-grid">
+      <article class="card main-card">
+        <div class="section-title">Dados do Cliente</div>
+
+        <div class="info-grid">
+            <label>
+                ID Cliente
+
+                <a
+                    class="linked-item"
+                    [routerLink]="['/home/clients', contract.clientId]"
+                >
+                    {{ contract.clientId }}
+                </a>
+            </label>
+
+          <label>
+            Nome Cliente / Empresa
+            <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
+          </label>
+
+          <label>
+            NIF
+            <strong>{{ getValue(contract.nif) }}</strong>
+          </label>
+
+          <label>
+            Telefone
+            <strong>{{ getValue(contract.telefone) }}</strong>
+          </label>
+
+          <label>
+            Email
+            <strong>{{ getValue(contract.email) }}</strong>
+          </label>
+
+          <label>
+            CAE
+            <strong>{{ getValue(contract.cae) }}</strong>
+          </label>
+
+          <label>
+            CRC
+            <strong>{{ getValue(contract.crc) }}</strong>
+          </label>
+        </div>
+      </article>
+
+      <article class="card main-card">
+        <div class="section-title">Dados do Contrato</div>
+
+        <div class="info-grid">
+          <label>
+            Segmento
+            <strong>{{ getValue(contract.tipoSegmento) }}</strong>
+          </label>
+
+          <label>
+            Produto
+            <strong>{{ getValue(contract.tipoProduto) }}</strong>
+          </label>
+
+          <label>
+            Contratação
+            <strong>{{ getValue(contract.contratacao) }}</strong>
+          </label>
+
+          <label>
+            Tipo Contratação Luz
+            <strong>{{ getValue(contract.tipoContratacaoLuz) }}</strong>
+          </label>
+
+          <label>
+            Tipo Contratação Gás
+            <strong>{{ getValue(contract.tipoContratacaoGas) }}</strong>
+          </label>
+
+          <label>
+            Controlo de Qualidade
+            <strong>{{ getValue(contract.controleQualidade) }}</strong>
+          </label>
+
+          <label>
+            Código Registo CU
+            <strong>{{ getValue(contract.codigoRegistoCU) }}</strong>
+          </label>
+
+          <label>
+            Nome Registo CU
+            <strong>{{ getValue(contract.nomeRegistoCU) }}</strong>
+          </label>
+        </div>
+      </article>
+
+      <article class="card main-card">
+        <div class="section-title">Moradas e Faturação</div>
+
+        <div class="info-grid">
+          <label>
+            Morada Instalação
+            <strong>{{ getValue(contract.moradaInstalacao) }}</strong>
+          </label>
+
+          <label>
+            Morada Faturação
+            <strong>{{ getValue(contract.moradaFaturacao) }}</strong>
+          </label>
+
+          <label>
+            Fatura Eletrónica
+            <strong>{{ formatBoolean(contract.faturaEletronica) }}</strong>
+          </label>
+
+          <label>
+            SVA
+            <strong>{{ formatBoolean(contract.sva) }}</strong>
+          </label>
+
+          <label>
+            Débito Direto
+            <strong>{{ formatBoolean(contract.debitoDireto) }}</strong>
+          </label>
+
+          <label>
+            IBAN
+            <strong>{{ getValue(contract.iban) }}</strong>
+          </label>
+        </div>
+      </article>
+
+      <article class="card main-card">
+        <div class="section-title">Energia</div>
+
+        <div class="info-grid">
+          <label>
+            Campanha
+            <strong>{{ getValue(contract.campanha) }}</strong>
+          </label>
+
+          <label>
+            Antiga Comercializadora
+            <strong>{{ getValue(contract.antigaComercializadora) }}</strong>
+          </label>
+
+          <label>
+            CPE
+            <strong>{{ getValue(contract.cpe) }}</strong>
+          </label>
+
+          <label>
+            CUI
+            <strong>{{ getValue(contract.cui) }}</strong>
+          </label>
+
+          <label>
+            Potência
+            <strong>{{ getValue(contract.potencia) }}</strong>
+          </label>
+
+          <label>
+            Ciclo Horário
+            <strong>{{ getValue(contract.cicloHorario) }}</strong>
+          </label>
+
+          <label>
+            Nível Tensão
+            <strong>{{ getValue(contract.nivelTensao) }}</strong>
+          </label>
+        </div>
+      </article>
+
+      <aside class="side-column">
+        <article class="card">
+          <div class="section-title">Gestão</div>
+
+          <div class="side-list">
+            <label>
+              Estado
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(contract.estado)"
+              >
+                {{ contract.estado }}
+              </span>
+            </label>
+
+            <label>
+                Criado por
+
+                <a
+                    *ngIf="contract.user; else noCreator"
+                    class="linked-item"
+                    [routerLink]="['/home/users', contract.user.id]"
+                >
+                    {{ contract.user.name }}
+                </a>
+
+                <ng-template #noCreator>
+                    <strong>Sem utilizador associado</strong>
+                </ng-template>
+            </label>
+
+            <label>
+              Criado em
+              <strong>{{ formatDate(contract.createdAt) }}</strong>
+            </label>
+
+            <label>
+              Atualizado em
+              <strong>{{ formatDate(contract.updatedAt) }}</strong>
+            </label>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Equipas</div>
+
+          <div class="stack-list" *ngIf="contract.teams.length; else noTeams">
+            <a
+              class="linked-item"
+              *ngFor="let team of contract.teams"
+              [routerLink]="['/home/teams', team.id]"
+            >
+              {{ team.name }}
+            </a>
+          </div>
+
+          <ng-template #noTeams>
+            <p class="empty-state">Sem equipas associadas.</p>
+          </ng-template>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Seguidores</div>
+
+          <div class="stack-list" *ngIf="contract.followers.length; else noFollowers">
+            <a
+              class="linked-item"
+              *ngFor="let follower of contract.followers"
+              [routerLink]="['/home/users', follower.id]"
+            >
+              {{ follower.name }}
+            </a>
+          </div>
+
+          <ng-template #noFollowers>
+            <p class="empty-state">Sem seguidores associados.</p>
+          </ng-template>
+        </article>
+      </aside>
+
+      <article class="card main-card">
+        <div class="section-title">Anexos</div>
+
+        <button
+            type="button"
+            class="attachment-item"
+            *ngFor="let document of contract.documentos"
+            (click)="downloadDocument(document)"
+            >
+            <div class="file-icon">
+                {{ getFileIcon(document.mimetype) }}
+            </div>
+
+            <div class="attachment-info">
+                <strong>{{ document.originalName }}</strong>
+
+                <span>
+                {{ formatFileSize(document.size) }} · {{ document.storageProvider }}
+                </span>
+            </div>
+        </button>
+
+        <ng-template #noDocuments>
+            <p class="empty-state">Sem anexos associados.</p>
+        </ng-template>
+      </article>
+
+      <article class="card main-card">
+        <div class="section-title">Observações</div>
+
+        <p class="observations">
+          {{ contract.observacoes || 'Sem observações.' }}
+        </p>
+      </article>
+    </div>
+  </ng-container>
+</section>

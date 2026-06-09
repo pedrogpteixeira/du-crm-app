@@ -1,9 +1,143 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+
+import {
+  RepsolContractDetail as RepsolContractDetailModel,
+  RepsolContractService,
+  RepsolContractStatus,
+  RepsolContractDocument,
+} from '../../../core/services/repsol-contract';
 
 @Component({
   selector: 'app-repsol-contract-detail',
-  imports: [],
+  imports: [CommonModule, RouterLink],
   templateUrl: './repsol-contract-detail.html',
   styleUrl: './repsol-contract-detail.scss',
 })
-export class RepsolContractDetail {}
+export class RepsolContractDetail implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly repsolContractService = inject(RepsolContractService);
+
+  contract: RepsolContractDetailModel | null = null;
+
+  isLoading = false;
+  errorMessage = '';
+
+  ngOnInit(): void {
+    this.route.paramMap.subscribe((params) => {
+      const contractId = params.get('id');
+
+      if (contractId) {
+        this.loadContract(contractId);
+      }
+    });
+  }
+
+  loadContract(contractId: string): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.repsolContractService.getRepsolContractById(contractId).subscribe({
+      next: (contract) => {
+        this.contract = contract;
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível carregar o contrato Repsol.';
+      },
+      complete: () => {
+        this.isLoading = false;
+      },
+    });
+  }
+
+  getStatusClass(status: RepsolContractStatus): string {
+    return {
+      'Pedido de Chamada': 'status-call-request',
+      'Em validação': 'status-validation',
+      'Chamada Efetuada': 'status-call-done',
+      'Pendente Assinatura Digital': 'status-signature',
+      'Não Conformidade': 'status-non-compliance',
+      'Pendente Docs': 'status-docs',
+      'Documentos Enviados': 'status-docs-sent',
+      Atribuído: 'status-assigned',
+    }[status];
+  }
+
+  downloadDocument(file: RepsolContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.repsolContractService
+      .downloadDocument(this.contract.id, file)
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = file.originalName || file.fileName;
+
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+
+          window.URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.errorMessage = 'Não foi possível descarregar o anexo.';
+        },
+      });
+  }
+
+  formatBoolean(value: boolean): string {
+    return value ? 'Sim' : 'Não';
+  }
+
+  formatDate(date: string): string {
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  }
+
+  getValue(value: string | number | null | undefined): string | number {
+    return value || '-';
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  getFileIcon(mimetype: string): string {
+    if (mimetype.startsWith('audio/')) {
+      return '🎧';
+    }
+
+    if (mimetype.includes('pdf')) {
+      return '📄';
+    }
+
+    if (mimetype.includes('word')) {
+      return '📝';
+    }
+
+    if (mimetype.startsWith('image/')) {
+      return '🖼️';
+    }
+
+    return '📎';
+  }
+}
