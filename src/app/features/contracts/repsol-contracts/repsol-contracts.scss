@@ -1,0 +1,163 @@
+.contracts-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  h1 {
+    color: #243646;
+    font-size: 32px;
+    margin: 4px 0 6px;
+  }
+
+  p {
+    color: #64748b;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  button {
+    border: 0;
+    border-radius: 12px;
+    background: #2f4050;
+    color: #ffffff;
+    padding: 11px 18px;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:hover {
+      background: #243646;
+    }
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.table-header,
+.contract-row {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 0.9fr)
+    minmax(260px, 1.7fr)
+    minmax(120px, 0.8fr)
+    minmax(190px, 1fr)
+    minmax(130px, 0.9fr)
+    minmax(130px, 0.9fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.table-header {
+  padding: 0 14px 14px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.contract-row {
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #eef6fa;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 15px;
+    font-weight: 800;
+  }
+}
+
+.status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 5px;
+  padding: 5px 10px;
+
+  color: #ffffff !important;
+
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-call-request {
+  background: #0097b2;
+}
+
+.status-validation {
+  background: #9b83c9;
+}
+
+.status-call-done {
+  background: #2563eb;
+}
+
+.status-signature {
+  background: #9b83c9;
+}
+
+.status-non-compliance {
+  background: #f59e0b;
+}
+
+.status-docs {
+  background: #f59e0b;
+}
+
+.status-docs-sent {
+  background: #16a34a;
+}
+
+.status-assigned {
+  background: #9b83c9;
+}
+
+.loading,
+.error-message,
+.empty-state {
+  padding: 16px 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.loading,
+.empty-state {
+  color: #64748b;
+}
+
+.error-message {
+  color: #dc2626;
+}

@@ -47,6 +47,13 @@ export const routes: Routes = [
           import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),
       },
       {
+        path: 'contracts/repsol',
+        loadComponent: () =>
+          import('./features/contracts/repsol-contracts/repsol-contracts').then(
+            (m) => m.RepsolContracts,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

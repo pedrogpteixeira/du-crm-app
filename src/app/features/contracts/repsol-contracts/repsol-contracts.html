@@ -1,0 +1,64 @@
+<section class="contracts-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Contratos › Repsol</span>
+
+      <h1>Contratos Repsol</h1>
+
+      <p>Consulta e acompanha os contratos Repsol registados no CRM.</p>
+    </div>
+
+    <button type="button">
+      + Novo contrato
+    </button>
+  </header>
+
+  <div class="card">
+    <div class="table-header">
+      <span>Código Cliente</span>
+      <span>Cliente / Empresa</span>
+      <span>NIF</span>
+      <span>Estado</span>
+      <span>CPE</span>
+      <span>CUI</span>
+    </div>
+
+    <p class="loading" *ngIf="isLoading">
+      A carregar contratos...
+    </p>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <a
+      class="contract-row"
+      *ngFor="let contract of contracts"
+      [routerLink]="['/home/contracts/repsol', contract.id]"
+    >
+      <span>{{ contract.codigoCliente || '-' }}</span>
+
+      <strong>{{ contract.nomeClienteEmpresa || '-' }}</strong>
+
+      <span>{{ contract.nif || '-' }}</span>
+
+      <span
+        class="status-badge"
+        [ngClass]="getStatusClass(contract.estado)"
+      >
+        {{ contract.estado }}
+      </span>
+
+      <span>{{ contract.cpe || '-' }}</span>
+
+      <span>{{ contract.cui || '-' }}</span>
+    </a>
+
+    <p
+      class="empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length"
+    >
+      Ainda não existem contratos Repsol.
+    </p>
+  </div>
+</section>

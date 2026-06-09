@@ -93,11 +93,34 @@
 /* =========================
    NAVIGATION
 ========================= */
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-title {
+  color: #94a3b8;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  padding: 0 14px;
+  margin: 8px 0 4px;
+
+  white-space: nowrap;
+}
+
 
 nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 18px;
+
+  padding-bottom: 90px;
 }
 
 a {
@@ -253,6 +276,16 @@ a.active {
 
   nav {
     align-items: center;
+    gap: 14px;
+  }
+
+  .nav-section {
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title {
+    display: none;
   }
 
   a {

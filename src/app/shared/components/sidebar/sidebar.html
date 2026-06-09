@@ -9,30 +9,42 @@
   </div>
 
   <nav>
-    <a routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-      <span class="icon">▦</span>
-      <span class="label">Dashboard</span>
-    </a>
+    <div class="nav-section">
+      <span class="section-title">Geral</span>
 
-    <a routerLink="/home/users" routerLinkActive="active">
-      <span class="icon">●</span>
-      <span class="label">Users</span>
-    </a>
+      <a routerLink="/home/dashboard" routerLinkActive="active">
+        <span class="icon">▦</span>
+        <span class="label">Dashboard</span>
+      </a>
 
-    <a routerLink="/home/teams" routerLinkActive="active">
-      <span class="icon">▦</span>
-      <span class="label">Teams</span>
-    </a>
+      <a routerLink="/home/users" routerLinkActive="active">
+        <span class="icon">●</span>
+        <span class="label">Users</span>
+      </a>
 
-    <a routerLink="/home/emails" routerLinkActive="active">
-      <span class="icon">✉</span>
-      <span class="label">Emails</span>
-    </a>
+      <a routerLink="/home/teams" routerLinkActive="active">
+        <span class="icon">▦</span>
+        <span class="label">Teams</span>
+      </a>
+    </div>
 
-    <a routerLink="/home/knowledge-base" routerLinkActive="active">
-      <span class="icon">▤</span>
-      <span class="label">Catálogo</span>
-    </a>
+    <div class="nav-section">
+      <span class="section-title">CRM Repsol</span>
+
+      <a routerLink="/home/contracts/repsol" routerLinkActive="active">
+        <span class="icon">💡</span>
+        <span class="label">Contratos Repsol</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <span class="section-title">Conhecimento</span>
+
+      <a routerLink="/home/knowledge-base" routerLinkActive="active">
+        <span class="icon">▤</span>
+        <span class="label">Conhecimento</span>
+      </a>
+    </div>
   </nav>
 
   <a class="profile-card" routerLink="/home/profile">
