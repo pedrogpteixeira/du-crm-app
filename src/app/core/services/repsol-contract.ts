@@ -16,7 +16,7 @@ export type RepsolContractStatus =
 
 export interface RepsolContract {
   id: string;
-  codigoCliente: string;
+  clientId: string;
   nomeClienteEmpresa: string;
   nif: number;
   estado: RepsolContractStatus;

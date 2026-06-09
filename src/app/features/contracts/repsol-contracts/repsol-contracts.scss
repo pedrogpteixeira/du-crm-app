@@ -53,13 +53,16 @@
 .table-header,
 .contract-row {
   display: grid;
+
   grid-template-columns:
-    minmax(130px, 0.9fr)
-    minmax(260px, 1.7fr)
-    minmax(120px, 0.8fr)
-    minmax(190px, 1fr)
-    minmax(130px, 0.9fr)
-    minmax(130px, 0.9fr);
+    minmax(170px, 1fr)      // ID Contrato
+    minmax(170px, 1fr)      // ID Cliente
+    minmax(260px, 1.8fr)    // Cliente
+    100px                   // NIF
+    minmax(230px, 1.2fr)    // Estado
+    minmax(130px, 0.9fr)    // CPE
+    minmax(130px, 0.9fr);   // CUI
+
   gap: 18px;
   align-items: center;
 }

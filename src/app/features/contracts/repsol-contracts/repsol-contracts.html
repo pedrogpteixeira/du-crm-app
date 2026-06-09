@@ -15,7 +15,8 @@
 
   <div class="card">
     <div class="table-header">
-      <span>Código Cliente</span>
+      <span>ID Contrato</span>
+      <span>ID Cliente</span>
       <span>Cliente / Empresa</span>
       <span>NIF</span>
       <span>Estado</span>
@@ -36,7 +37,9 @@
       *ngFor="let contract of contracts"
       [routerLink]="['/home/contracts/repsol', contract.id]"
     >
-      <span>{{ contract.codigoCliente || '-' }}</span>
+      <span>{{ contract.id }}</span>
+
+      <span>{{ contract.clientId }}</span>
 
       <strong>{{ contract.nomeClienteEmpresa || '-' }}</strong>
 
