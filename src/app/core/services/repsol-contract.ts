@@ -22,6 +22,7 @@ export interface RepsolContract {
   estado: RepsolContractStatus;
   cpe: string;
   cui: string;
+  nomeRegistoCE: string;
 }
 
 export interface RepsolContractUser {

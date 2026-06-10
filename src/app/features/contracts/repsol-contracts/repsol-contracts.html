@@ -22,6 +22,7 @@
       <span>Estado</span>
       <span>CPE</span>
       <span>CUI</span>
+      <span>Nome de Registo C.E.</span>
     </div>
 
     <p class="loading" *ngIf="isLoading">
@@ -55,6 +56,8 @@
       <span>{{ contract.cpe || '-' }}</span>
 
       <span>{{ contract.cui || '-' }}</span>
+
+      <span>{{ contract.nomeRegistoCE || '—' }}</span>
     </a>
 
     <p

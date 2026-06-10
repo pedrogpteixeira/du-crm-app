@@ -48,23 +48,35 @@
   border-radius: 22px;
   padding: 18px;
   box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
 }
 
 .table-header,
 .contract-row {
   display: grid;
+  min-width: 1450px;
 
   grid-template-columns:
-    minmax(170px, 1fr)      // ID Contrato
-    minmax(170px, 1fr)      // ID Cliente
-    minmax(260px, 1.8fr)    // Cliente
-    100px                   // NIF
-    minmax(230px, 1.2fr)    // Estado
-    minmax(130px, 0.9fr)    // CPE
-    minmax(130px, 0.9fr);   // CUI
+    minmax(100px, 0.5fr)   // ID Contrato
+    minmax(100px, 0.5fr)   // ID Cliente
+    minmax(220px, 1.4fr)   // Cliente
+    90px                   // NIF
+    minmax(215px, 1fr)  // Estado
+    minmax(160px, 0.9fr)     // CPE
+    minmax(160px, 1fr)     // CUI
+    minmax(180px, 1.1fr);  // Nome Registo CE
 
-  gap: 18px;
+  gap: 14px;
   align-items: center;
+}
+
+.table-header span,
+.contract-row span,
+.contract-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .table-header {
@@ -75,8 +87,8 @@
 }
 
 .contract-row {
-  min-height: 64px;
-  padding: 12px 14px;
+  min-height: 62px;
+  padding: 11px 12px;
   border-radius: 16px;
   color: inherit;
   text-decoration: none;
