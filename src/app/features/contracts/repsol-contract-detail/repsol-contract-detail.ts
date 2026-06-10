@@ -51,6 +51,19 @@ export class RepsolContractDetail implements OnInit {
     });
   }
 
+  collapsedSections = {
+    client: false,
+    contract: false,
+    billing: false,
+    energy: false,
+    attachments: false,
+    observations: false,
+  };
+
+  toggleSection(section: keyof typeof this.collapsedSections): void {
+    this.collapsedSections[section] = !this.collapsedSections[section];
+  }
+
   getStatusClass(status: RepsolContractStatus): string {
     return {
       'Pedido de Chamada': 'status-call-request',

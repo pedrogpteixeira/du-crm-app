@@ -62,8 +62,8 @@ export interface RepsolContractDetail {
   tipoContratacaoGas: string;
 
   controleQualidade: string;
-  codigoRegistoCU: string;
-  nomeRegistoCU: string;
+  codigoRegistoCE: string;
+  nomeRegistoCE: string;
 
   estado: RepsolContractStatus;
 

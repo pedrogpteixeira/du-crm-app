@@ -31,175 +31,241 @@
     </header>
 
     <div class="detail-grid">
-      <article class="card main-card">
-        <div class="section-title">Dados do Cliente</div>
+      <div class="main-column">
+        <article class="card">
+          <button
+            type="button"
+            class="section-toggle"
+            (click)="toggleSection('client')"
+          >
+            <span>Dados do Cliente</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.client">⌄</span>
+          </button>
 
-        <div class="info-grid">
-            <label>
+          <div class="section-content" *ngIf="!collapsedSections.client">
+            <div class="info-grid">
+              <label>
+                Nome Cliente / Empresa
+                <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
+              </label>
+
+              <label>
                 ID Cliente
-
-                <a
-                    class="linked-item"
-                    [routerLink]="['/home/clients', contract.clientId]"
-                >
-                    {{ contract.clientId }}
+                <a class="linked-item" [routerLink]="['/home/clients', contract.clientId]">
+                  {{ contract.clientId }}
                 </a>
-            </label>
+              </label>
 
-          <label>
-            Nome Cliente / Empresa
-            <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
-          </label>
+              <label>
+                NIF
+                <strong>{{ getValue(contract.nif) }}</strong>
+              </label>
 
-          <label>
-            NIF
-            <strong>{{ getValue(contract.nif) }}</strong>
-          </label>
+              <label>
+                Telefone
+                <strong>{{ getValue(contract.telefone) }}</strong>
+              </label>
 
-          <label>
-            Telefone
-            <strong>{{ getValue(contract.telefone) }}</strong>
-          </label>
+              <label>
+                Email
+                <strong>{{ getValue(contract.email) }}</strong>
+              </label>
 
-          <label>
-            Email
-            <strong>{{ getValue(contract.email) }}</strong>
-          </label>
+              <label>
+                CAE
+                <strong>{{ getValue(contract.cae) }}</strong>
+              </label>
 
-          <label>
-            CAE
-            <strong>{{ getValue(contract.cae) }}</strong>
-          </label>
+              <label>
+                CRC
+                <strong>{{ getValue(contract.crc) }}</strong>
+              </label>
+            </div>
+          </div>
+        </article>
 
-          <label>
-            CRC
-            <strong>{{ getValue(contract.crc) }}</strong>
-          </label>
-        </div>
-      </article>
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('contract')">
+            <span>Dados do Contrato</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.contract">⌄</span>
+          </button>
 
-      <article class="card main-card">
-        <div class="section-title">Dados do Contrato</div>
+          <div class="section-content" *ngIf="!collapsedSections.contract">
+            <div class="info-grid">
+              <label>
+                Segmento
+                <strong>{{ getValue(contract.tipoSegmento) }}</strong>
+              </label>
 
-        <div class="info-grid">
-          <label>
-            Segmento
-            <strong>{{ getValue(contract.tipoSegmento) }}</strong>
-          </label>
+              <label>
+                Produto
+                <strong>{{ getValue(contract.tipoProduto) }}</strong>
+              </label>
 
-          <label>
-            Produto
-            <strong>{{ getValue(contract.tipoProduto) }}</strong>
-          </label>
+              <label>
+                Contratação
+                <strong>{{ getValue(contract.contratacao) }}</strong>
+              </label>
 
-          <label>
-            Contratação
-            <strong>{{ getValue(contract.contratacao) }}</strong>
-          </label>
+              <label>
+                Tipo Contratação Luz
+                <strong>{{ getValue(contract.tipoContratacaoLuz) }}</strong>
+              </label>
 
-          <label>
-            Tipo Contratação Luz
-            <strong>{{ getValue(contract.tipoContratacaoLuz) }}</strong>
-          </label>
+              <label>
+                Tipo Contratação Gás
+                <strong>{{ getValue(contract.tipoContratacaoGas) }}</strong>
+              </label>
 
-          <label>
-            Tipo Contratação Gás
-            <strong>{{ getValue(contract.tipoContratacaoGas) }}</strong>
-          </label>
+              <label>
+                Controlo de Qualidade
+                <strong>{{ getValue(contract.controleQualidade) }}</strong>
+              </label>
 
-          <label>
-            Controlo de Qualidade
-            <strong>{{ getValue(contract.controleQualidade) }}</strong>
-          </label>
+              <label>
+                Código Registo CE
+                <strong>{{ getValue(contract.codigoRegistoCE) }}</strong>
+              </label>
 
-          <label>
-            Código Registo CU
-            <strong>{{ getValue(contract.codigoRegistoCU) }}</strong>
-          </label>
+              <label>
+                Nome Registo CE
+                <strong>{{ getValue(contract.nomeRegistoCE) }}</strong>
+              </label>
+            </div>
+          </div>
+        </article>
 
-          <label>
-            Nome Registo CU
-            <strong>{{ getValue(contract.nomeRegistoCU) }}</strong>
-          </label>
-        </div>
-      </article>
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('billing')">
+            <span>Moradas e Faturação</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.billing">⌄</span>
+          </button>
 
-      <article class="card main-card">
-        <div class="section-title">Moradas e Faturação</div>
+          <div class="section-content" *ngIf="!collapsedSections.billing">
+            <div class="info-grid">
+              <label>
+                Morada Instalação
+                <strong>{{ getValue(contract.moradaInstalacao) }}</strong>
+              </label>
 
-        <div class="info-grid">
-          <label>
-            Morada Instalação
-            <strong>{{ getValue(contract.moradaInstalacao) }}</strong>
-          </label>
+              <label>
+                Morada Faturação
+                <strong>{{ getValue(contract.moradaFaturacao) }}</strong>
+              </label>
 
-          <label>
-            Morada Faturação
-            <strong>{{ getValue(contract.moradaFaturacao) }}</strong>
-          </label>
+              <label>
+                Fatura Eletrónica
+                <strong>{{ formatBoolean(contract.faturaEletronica) }}</strong>
+              </label>
 
-          <label>
-            Fatura Eletrónica
-            <strong>{{ formatBoolean(contract.faturaEletronica) }}</strong>
-          </label>
+              <label>
+                SVA
+                <strong>{{ formatBoolean(contract.sva) }}</strong>
+              </label>
 
-          <label>
-            SVA
-            <strong>{{ formatBoolean(contract.sva) }}</strong>
-          </label>
+              <label>
+                Débito Direto
+                <strong>{{ formatBoolean(contract.debitoDireto) }}</strong>
+              </label>
 
-          <label>
-            Débito Direto
-            <strong>{{ formatBoolean(contract.debitoDireto) }}</strong>
-          </label>
+              <label>
+                IBAN
+                <strong>{{ getValue(contract.iban) }}</strong>
+              </label>
+            </div>
+          </div>
+        </article>
 
-          <label>
-            IBAN
-            <strong>{{ getValue(contract.iban) }}</strong>
-          </label>
-        </div>
-      </article>
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('energy')">
+            <span>Energia</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.energy">⌄</span>
+          </button>
 
-      <article class="card main-card">
-        <div class="section-title">Energia</div>
+          <div class="section-content" *ngIf="!collapsedSections.energy">
+            <div class="info-grid">
+              <label>
+                Campanha
+                <strong>{{ getValue(contract.campanha) }}</strong>
+              </label>
 
-        <div class="info-grid">
-          <label>
-            Campanha
-            <strong>{{ getValue(contract.campanha) }}</strong>
-          </label>
+              <label>
+                Antiga Comercializadora
+                <strong>{{ getValue(contract.antigaComercializadora) }}</strong>
+              </label>
 
-          <label>
-            Antiga Comercializadora
-            <strong>{{ getValue(contract.antigaComercializadora) }}</strong>
-          </label>
+              <label>
+                CPE
+                <strong>{{ getValue(contract.cpe) }}</strong>
+              </label>
 
-          <label>
-            CPE
-            <strong>{{ getValue(contract.cpe) }}</strong>
-          </label>
+              <label>
+                CUI
+                <strong>{{ getValue(contract.cui) }}</strong>
+              </label>
 
-          <label>
-            CUI
-            <strong>{{ getValue(contract.cui) }}</strong>
-          </label>
+              <label>
+                Potência
+                <strong>{{ getValue(contract.potencia) }}</strong>
+              </label>
 
-          <label>
-            Potência
-            <strong>{{ getValue(contract.potencia) }}</strong>
-          </label>
+              <label>
+                Ciclo Horário
+                <strong>{{ getValue(contract.cicloHorario) }}</strong>
+              </label>
 
-          <label>
-            Ciclo Horário
-            <strong>{{ getValue(contract.cicloHorario) }}</strong>
-          </label>
+              <label>
+                Nível Tensão
+                <strong>{{ getValue(contract.nivelTensao) }}</strong>
+              </label>
+            </div>
+          </div>
+        </article>
 
-          <label>
-            Nível Tensão
-            <strong>{{ getValue(contract.nivelTensao) }}</strong>
-          </label>
-        </div>
-      </article>
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('attachments')">
+            <span>Anexos</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.attachments">⌄</span>
+          </button>
+
+          <div class="section-content" *ngIf="!collapsedSections.attachments">
+            <div class="attachments-list" *ngIf="contract.documentos.length; else noDocuments">
+              <button
+                type="button"
+                class="attachment-item"
+                *ngFor="let document of contract.documentos"
+                (click)="downloadDocument(document)"
+              >
+                <div class="file-icon">
+                  {{ getFileIcon(document.mimetype) }}
+                </div>
+
+                <div class="attachment-info">
+                  <strong>{{ document.originalName }}</strong>
+                  <span>{{ formatFileSize(document.size) }} · {{ document.storageProvider }}</span>
+                </div>
+              </button>
+            </div>
+
+            <ng-template #noDocuments>
+              <p class="empty-state">Sem anexos associados.</p>
+            </ng-template>
+          </div>
+        </article>
+
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('observations')">
+            <span>Observações</span>
+            <span class="chevron" [class.collapsed]="collapsedSections.observations">⌄</span>
+          </button>
+
+          <div class="section-content" *ngIf="!collapsedSections.observations">
+            <p class="observations">
+              {{ contract.observacoes || 'Sem observações.' }}
+            </p>
+          </div>
+        </article>
+      </div>
 
       <aside class="side-column">
         <article class="card">
@@ -208,28 +274,24 @@
           <div class="side-list">
             <label>
               Estado
-              <span
-                class="status-badge"
-                [ngClass]="getStatusClass(contract.estado)"
-              >
+              <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
                 {{ contract.estado }}
               </span>
             </label>
 
             <label>
-                Criado por
+              Criado por
+              <a
+                *ngIf="contract.user; else noCreator"
+                class="linked-item"
+                [routerLink]="['/home/users', contract.user.id]"
+              >
+                {{ contract.user.name }}
+              </a>
 
-                <a
-                    *ngIf="contract.user; else noCreator"
-                    class="linked-item"
-                    [routerLink]="['/home/users', contract.user.id]"
-                >
-                    {{ contract.user.name }}
-                </a>
-
-                <ng-template #noCreator>
-                    <strong>Sem utilizador associado</strong>
-                </ng-template>
+              <ng-template #noCreator>
+                <strong>Sem utilizador associado</strong>
+              </ng-template>
             </label>
 
             <label>
@@ -280,41 +342,6 @@
           </ng-template>
         </article>
       </aside>
-
-      <article class="card main-card">
-        <div class="section-title">Anexos</div>
-
-        <button
-            type="button"
-            class="attachment-item"
-            *ngFor="let document of contract.documentos"
-            (click)="downloadDocument(document)"
-            >
-            <div class="file-icon">
-                {{ getFileIcon(document.mimetype) }}
-            </div>
-
-            <div class="attachment-info">
-                <strong>{{ document.originalName }}</strong>
-
-                <span>
-                {{ formatFileSize(document.size) }} · {{ document.storageProvider }}
-                </span>
-            </div>
-        </button>
-
-        <ng-template #noDocuments>
-            <p class="empty-state">Sem anexos associados.</p>
-        </ng-template>
-      </article>
-
-      <article class="card main-card">
-        <div class="section-title">Observações</div>
-
-        <p class="observations">
-          {{ contract.observacoes || 'Sem observações.' }}
-        </p>
-      </article>
     </div>
   </ng-container>
 </section>
