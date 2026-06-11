@@ -4,6 +4,13 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from '../../../environments/environment.development';
 
+export interface RepsolContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -56,6 +63,44 @@ export class SocketService {
       this.zone.run(() => {
         this.onlineUsersSubject.next(onlineUsers);
       });
+    });
+  }
+
+  public listenRepsolContractCreated(): Observable<RepsolContractSocketEvent> {
+    return new Observable((observer) => {
+      if (!this.socket) {
+        observer.complete();
+        return;
+      }
+
+      const handler = (payload: RepsolContractSocketEvent) => {
+        observer.next(payload);
+      };
+
+      this.socket.on('repsol-contract:created', handler);
+
+      return () => {
+        this.socket?.off('repsol-contract:created', handler);
+      };
+    });
+  }
+
+  public listenRepsolContractUpdated(): Observable<RepsolContractSocketEvent> {
+    return new Observable((observer) => {
+      if (!this.socket) {
+        observer.complete();
+        return;
+      }
+
+      const handler = (payload: RepsolContractSocketEvent) => {
+        observer.next(payload);
+      };
+
+      this.socket.on('repsol-contract:updated', handler);
+
+      return () => {
+        this.socket?.off('repsol-contract:updated', handler);
+      };
     });
   }
 }

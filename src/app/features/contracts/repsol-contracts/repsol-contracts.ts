@@ -1,12 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   RepsolContract,
   RepsolContractService,
   RepsolContractStatus,
 } from '../../../core/services/repsol-contract';
+import { SocketService } from '../../../core/services/socket';
+
+
 
 @Component({
   selector: 'app-repsol-contracts',
@@ -16,7 +20,9 @@ import {
 })
 export class RepsolContracts implements OnInit {
   private readonly repsolContractService = inject(RepsolContractService);
-
+  private readonly socketService = inject(SocketService);
+  private readonly destroyRef = inject(DestroyRef);
+  
   contracts: RepsolContract[] = [];
 
   isLoading = false;
@@ -37,6 +43,18 @@ export class RepsolContracts implements OnInit {
 
   ngOnInit(): void {
     this.loadContracts();
+
+    this.socketService
+      .listenRepsolContractCreated()
+      .subscribe(() => {
+        this.loadContracts();
+      });
+
+    this.socketService
+      .listenRepsolContractUpdated()
+      .subscribe(() => {
+        this.loadContracts();
+      });
   }
 
   loadContracts(): void {
