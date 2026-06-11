@@ -162,6 +162,15 @@
           {{ (isCurrentUserOnline$ | async) ? 'Online' : 'Offline' }}
         </span>
       </div>
+
+      <div class="profile-actions">
+        <a
+          class="secondary-button"
+          routerLink="/home/preferences"
+        >
+          Preferências da interface
+        </a>
+      </div>
     </aside>
 
     <!-- ACCESS CONTROL -->

@@ -9,6 +9,7 @@ import {
   RepsolContractStatus,
 } from '../../../core/services/repsol-contract';
 import { SocketService } from '../../../core/services/socket';
+import { PreferencesService } from '../../../core/services/preferences';
 
 
 
@@ -21,14 +22,15 @@ import { SocketService } from '../../../core/services/socket';
 export class RepsolContracts implements OnInit {
   private readonly repsolContractService = inject(RepsolContractService);
   private readonly socketService = inject(SocketService);
-  private readonly destroyRef = inject(DestroyRef);
+  //private readonly destroyRef = inject(DestroyRef);
+  private readonly preferencesService = inject(PreferencesService);
   
   contracts: RepsolContract[] = [];
 
   isLoading = false;
   errorMessage = '';
 
-  viewMode: 'table' | 'kanban' = 'table';
+  viewMode: 'table' | 'kanban' = this.preferencesService.getRepsolContractsDefaultView();
 
   statuses: RepsolContractStatus[] = [
     'Pedido de Chamada',

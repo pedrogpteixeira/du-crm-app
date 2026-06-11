@@ -83,6 +83,13 @@ export const routes: Routes = [
           import('./features/knowledge-base/knowledge-article/knowledge-article')
             .then((m) => m.KnowledgeArticle),
       },
+      {
+        path: 'preferences',
+        loadComponent: () =>
+          import('./features/preferences/preferences').then(
+            (m) => m.Preferences,
+          ),
+      },
     ],
   },
   {

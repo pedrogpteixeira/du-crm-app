@@ -1,0 +1,90 @@
+<section class="preferences-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">
+        Definições
+      </span>
+
+      <h1>
+        Preferências
+      </h1>
+
+      <p>
+        Personaliza a forma como utilizas o CRM.
+      </p>
+    </div>
+  </header>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <div class="settings-grid">
+    <article class="card">
+      <div class="section-title">
+        Vista / Interface
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <strong>Sidebar colapsada por defeito</strong>
+          <span>
+            Define se a sidebar deve abrir automaticamente colapsada ao entrar no CRM.
+          </span>
+        </div>
+
+        <label class="switch">
+          <input
+            type="checkbox"
+            [(ngModel)]="preferences.sidebarCollapsedByDefault"
+            (ngModelChange)="updateSidebarPreference($event)"
+          />
+
+          <span></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <strong>Vista por defeito dos contratos Repsol</strong>
+          <span>
+            Escolhe se a página de contratos deve abrir em tabela ou organizada por estados.
+          </span>
+        </div>
+
+        <select
+          [(ngModel)]="preferences.repsolContractsDefaultView"
+          (ngModelChange)="updateContractsView($event)"
+        >
+          <option value="table">
+            Tabela
+          </option>
+
+          <option value="kanban">
+            Estados
+          </option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div>
+            <strong>Secções dos contratos minimizadas por defeito</strong>
+
+            <span>
+            Define se os blocos da página de detalhe dos contratos Repsol devem abrir recolhidos.
+            </span>
+        </div>
+
+        <label class="switch">
+            <input
+            type="checkbox"
+            [(ngModel)]="preferences.repsolContractDetailsCollapsedByDefault"
+            (ngModelChange)="updateContractDetailsSectionsPreference($event)"
+            />
+
+            <span></span>
+        </label>
+        </div>
+    </article>
+  </div>
+</section>

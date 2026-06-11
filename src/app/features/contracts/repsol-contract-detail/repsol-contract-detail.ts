@@ -8,6 +8,7 @@ import {
   RepsolContractStatus,
   RepsolContractDocument,
 } from '../../../core/services/repsol-contract';
+import { PreferencesService } from '../../../core/services/preferences';
 
 @Component({
   selector: 'app-repsol-contract-detail',
@@ -18,13 +19,21 @@ import {
 export class RepsolContractDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly repsolContractService = inject(RepsolContractService);
+  private readonly preferencesService = inject(PreferencesService);
 
   contract: RepsolContractDetailModel | null = null;
+  collapsedSections = this.buildCollapsedSections(false);
 
   isLoading = false;
   errorMessage = '';
 
   ngOnInit(): void {
+    const collapseByDefault =
+    this.preferencesService.getPreferences()
+      .repsolContractDetailsCollapsedByDefault;
+
+    this.collapsedSections =
+      this.buildCollapsedSections(collapseByDefault);
     this.route.paramMap.subscribe((params) => {
       const contractId = params.get('id');
 
@@ -51,14 +60,16 @@ export class RepsolContractDetail implements OnInit {
     });
   }
 
-  collapsedSections = {
-    client: false,
-    contract: false,
-    billing: false,
-    energy: false,
-    attachments: false,
-    observations: false,
-  };
+  private buildCollapsedSections(value: boolean) {
+    return {
+      client: value,
+      contract: value,
+      billing: value,
+      energy: value,
+      attachments: value,
+      observations: value,
+    };
+  }
 
   toggleSection(section: keyof typeof this.collapsedSections): void {
     this.collapsedSections[section] = !this.collapsedSections[section];
