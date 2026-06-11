@@ -22,6 +22,19 @@ export class RepsolContracts implements OnInit {
   isLoading = false;
   errorMessage = '';
 
+  viewMode: 'table' | 'kanban' = 'table';
+
+  statuses: RepsolContractStatus[] = [
+    'Pedido de Chamada',
+    'Em validação',
+    'Chamada Efetuada',
+    'Pendente Assinatura Digital',
+    'Não Conformidade',
+    'Pendente Docs',
+    'Documentos Enviados',
+    'Atribuído',
+  ];
+
   ngOnInit(): void {
     this.loadContracts();
   }
@@ -57,5 +70,13 @@ export class RepsolContracts implements OnInit {
       'Documentos Enviados': 'status-docs-sent',
       Atribuído: 'status-assigned',
     }[status];
+  }
+
+  setViewMode(mode: 'table' | 'kanban'): void {
+    this.viewMode = mode;
+  }
+
+  getContractsByStatus(status: RepsolContractStatus): RepsolContract[] {
+    return this.contracts.filter((contract) => contract.estado === status);
   }
 }

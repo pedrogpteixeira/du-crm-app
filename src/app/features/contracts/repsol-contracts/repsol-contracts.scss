@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .page-header {
@@ -128,6 +131,170 @@
   white-space: nowrap;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 12px;
+  background: #e2e8f0;
+
+  button {
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #64748b;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+
+    &.active {
+      background: #ffffff;
+      color: #243646;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+  }
+}
+
+.create-btn {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover {
+    background: #243646;
+  }
+}
+
+.kanban-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  max-height: calc(100vh - 230px);
+
+  overflow-x: auto;
+  overflow-y: auto;
+
+  padding-bottom: 14px;
+}
+
+.kanban-board {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+
+  width: max-content;
+  min-width: max-content;
+
+  align-items: flex-start;
+}
+
+.kanban-column {
+  width: 280px;
+  min-width: 280px;
+
+  background: #eef6fa;
+  border-radius: 12px;
+
+  overflow: visible;
+}
+
+.kanban-column-header {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 10px;
+
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  border-radius: 12px 12px 0 0;
+}
+
+.kanban-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 8px;
+}
+
+.kanban-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  min-height: 145px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+
+  padding: 12px;
+
+  color: inherit;
+  text-decoration: none;
+
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  .contract-id {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #008db1;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1.35;
+  }
+
+  span {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+}
+
+.empty-column {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px;
+}
+
 .status-call-request {
   background: #0097b2;
 }
@@ -156,6 +323,46 @@
   background: #16a34a;
 }
 
+.status-assigned {
+  background: #9b83c9;
+}
+
+.kanban-column-header.status-call-request,
+.status-call-request {
+  background: #0097b2;
+}
+
+.kanban-column-header.status-validation,
+.status-validation {
+  background: #9b83c9;
+}
+
+.kanban-column-header.status-call-done,
+.status-call-done {
+  background: #2563eb;
+}
+
+.kanban-column-header.status-signature,
+.status-signature {
+  background: #9b83c9;
+}
+
+.kanban-column-header.status-non-compliance,
+.status-non-compliance {
+  background: #f59e0b;
+}
+
+.kanban-column-header.status-docs,
+.status-docs {
+  background: #f59e0b;
+}
+
+.kanban-column-header.status-docs-sent,
+.status-docs-sent {
+  background: #0097b2;
+}
+
+.kanban-column-header.status-assigned,
 .status-assigned {
   background: #9b83c9;
 }

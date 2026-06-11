@@ -8,12 +8,32 @@
       <p>Consulta e acompanha os contratos Repsol registados no CRM.</p>
     </div>
 
-    <button type="button">
-      + Novo contrato
-    </button>
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button
+          type="button"
+          [class.active]="viewMode === 'table'"
+          (click)="setViewMode('table')"
+        >
+          Tabela
+        </button>
+
+        <button
+          type="button"
+          [class.active]="viewMode === 'kanban'"
+          (click)="setViewMode('kanban')"
+        >
+          Estados
+        </button>
+      </div>
+
+      <button type="button" class="create-btn">
+        + Novo contrato
+      </button>
+    </div>
   </header>
 
-  <div class="card">
+  <div class="card" *ngIf="viewMode === 'table'">
     <div class="table-header">
       <span>ID Contrato</span>
       <span>ID Cliente</span>
@@ -66,5 +86,46 @@
     >
       Ainda não existem contratos Repsol.
     </p>
+  </div>
+
+  <div class="kanban-wrapper" *ngIf="viewMode === 'kanban'">
+    <div class="kanban-board">
+      <section
+        class="kanban-column"
+        *ngFor="let status of statuses"
+      >
+        <header
+          class="kanban-column-header"
+          [ngClass]="getStatusClass(status)"
+        >
+          {{ status }}
+        </header>
+
+        <div class="kanban-list">
+          <a
+            class="kanban-card"
+            *ngFor="let contract of getContractsByStatus(status)"
+            [routerLink]="['/home/contracts/repsol', contract.id]"
+          >
+            <span class="contract-id">{{ contract.id }}</span>
+
+            <strong>{{ contract.nomeClienteEmpresa || '-' }}</strong>
+
+            <span>{{ contract.nif || '-' }}</span>
+
+            <span>{{ contract.nomeRegistoCE || 'Sem nome de registo' }}</span>
+
+            <span>{{ contract.clientId }}</span>
+          </a>
+
+          <p
+            class="empty-column"
+            *ngIf="!getContractsByStatus(status).length"
+          >
+            Sem contratos.
+          </p>
+        </div>
+      </section>
+    </div>
   </div>
 </section>
