@@ -9,6 +9,7 @@ import {
   RepsolContractDocument,
 } from '../../../core/services/repsol-contract';
 import { PreferencesService } from '../../../core/services/preferences';
+import { SocketService } from '../../../core/services/socket';
 
 @Component({
   selector: 'app-repsol-contract-detail',
@@ -20,12 +21,18 @@ export class RepsolContractDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly repsolContractService = inject(RepsolContractService);
   private readonly preferencesService = inject(PreferencesService);
+  private readonly socketService = inject(SocketService);
 
   contract: RepsolContractDetailModel | null = null;
   collapsedSections = this.buildCollapsedSections(false);
 
   isLoading = false;
   errorMessage = '';
+  socketMessage = '';
+
+  contractId = '';
+
+  lastSocketUpdate = '';
 
   ngOnInit(): void {
     const collapseByDefault =
@@ -35,12 +42,32 @@ export class RepsolContractDetail implements OnInit {
     this.collapsedSections =
       this.buildCollapsedSections(collapseByDefault);
     this.route.paramMap.subscribe((params) => {
-      const contractId = params.get('id');
+      this.contractId = params.get('id') as string;
 
-      if (contractId) {
-        this.loadContract(contractId);
+      if (this.contractId) {
+        this.loadContract(this.contractId);
       }
     });
+
+    this.socketService.listenRepsolContractUpdated().subscribe((event) => {
+  if (event.contractId !== this.contractId) {
+    return;
+  }
+
+  this.socketMessage =
+  `Este contrato foi atualizado por outro utilizador às ${new Date().toLocaleTimeString('pt-PT')}.`;
+
+  this.loadContract(this.contractId);
+  this.lastSocketUpdate = new Date().toLocaleTimeString('pt-PT');
+
+  setTimeout(() => {
+      this.lastSocketUpdate = '';
+  }, 5000);
+
+  setTimeout(() => {
+      this.socketMessage = '';
+    }, 5000);
+  });
   }
 
   loadContract(contractId: string): void {

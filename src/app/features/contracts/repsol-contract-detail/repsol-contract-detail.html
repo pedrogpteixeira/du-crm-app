@@ -7,6 +7,10 @@
     {{ errorMessage }}
   </p>
 
+  <span class="last-sync" *ngIf="lastSocketUpdate">
+    Atualizado automaticamente às {{ lastSocketUpdate }}
+  </span>
+
   <ng-container *ngIf="contract">
     <div class="breadcrumb">
       <a routerLink="/home/contracts/repsol">

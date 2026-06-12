@@ -302,3 +302,17 @@ strong {
     transform: translateY(0);
   }
 }
+
+.socket-message {
+  width: fit-content;
+
+  background: #fef3c7;
+  color: #92400e;
+
+  border-radius: 12px;
+
+  padding: 10px 14px;
+
+  font-size: 14px;
+  font-weight: 800;
+}
