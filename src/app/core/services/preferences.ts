@@ -1,12 +1,18 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../../environments/environment.development';
 
 export type ContractsDefaultView = 'table' | 'kanban';
 
 export interface UserPreferences {
+  id?: string;
+  userId?: string;
   sidebarCollapsedByDefault: boolean;
   repsolContractsDefaultView: ContractsDefaultView;
   repsolContractDetailsCollapsedByDefault: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -19,40 +25,57 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   providedIn: 'root',
 })
 export class PreferencesService {
-  private readonly storageKey = 'user_preferences';
-
   private readonly preferencesSubject =
     new BehaviorSubject<UserPreferences>(this.getPreferences());
+
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl;
 
   preferences$ = this.preferencesSubject.asObservable();
 
   getPreferences(): UserPreferences {
-    const storedPreferences = localStorage.getItem(this.storageKey);
-
-    if (!storedPreferences) {
-      return DEFAULT_PREFERENCES;
-    }
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     return {
       ...DEFAULT_PREFERENCES,
-      ...JSON.parse(storedPreferences),
+      ...(user.preferences || {}),
     };
   }
 
-  updatePreferences(preferences: Partial<UserPreferences>): void {
-    const currentPreferences = this.getPreferences();
+  updateLocalPreferences(preferences: Partial<UserPreferences>): void {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     const updatedPreferences = {
-      ...currentPreferences,
+      ...this.getPreferences(),
       ...preferences,
     };
 
-    localStorage.setItem(
-      this.storageKey,
-      JSON.stringify(updatedPreferences),
-    );
+    const updatedUser = {
+      ...user,
+      preferences: updatedPreferences,
+    };
+
+    localStorage.setItem('user', JSON.stringify(updatedUser));
 
     this.preferencesSubject.next(updatedPreferences);
+  }
+
+  syncPreferences() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const payload = {
+      sidebarCollapsedByDefault:
+        user.preferences.sidebarCollapsedByDefault,
+      repsolContractsDefaultView:
+        user.preferences.repsolContractsDefaultView,
+      repsolContractDetailsCollapsedByDefault:
+        user.preferences.repsolContractDetailsCollapsedByDefault,
+    };
+
+    return this.http.patch(
+      `${this.apiUrl}/api/user-preferences/user/${user.id}`,
+      payload,
+    );
   }
 
   getSidebarCollapsedByDefault(): boolean {
@@ -61,5 +84,9 @@ export class PreferencesService {
 
   getRepsolContractsDefaultView(): ContractsDefaultView {
     return this.getPreferences().repsolContractsDefaultView;
+  }
+
+  getRepsolContractDetailsCollapsedByDefault(): boolean {
+    return this.getPreferences().repsolContractDetailsCollapsedByDefault;
   }
 }

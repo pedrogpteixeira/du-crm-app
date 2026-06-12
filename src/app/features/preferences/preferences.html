@@ -87,4 +87,17 @@
         </div>
     </article>
   </div>
+
+  <div class="actions" *ngIf="hasUnsavedChanges">
+    <button
+      type="button"
+      [disabled]="isSaving"
+      (click)="persistPreferences()"
+    >
+      {{ isSaving ? 'A guardar...' : 'Guardar preferências' }}
+    </button>
+  </div>
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
 </section>

@@ -24,6 +24,11 @@ export class Preferences implements OnInit {
 };
 
   successMessage = '';
+  errorMessage = '';
+  
+
+  hasUnsavedChanges = false;
+  isSaving = false;
 
   ngOnInit(): void {
     this.preferences = this.preferencesService.getPreferences();
@@ -42,13 +47,10 @@ export class Preferences implements OnInit {
   }
 
   private savePreferences(): void {
-    this.preferencesService.updatePreferences(this.preferences);
+    this.preferencesService.updateLocalPreferences(this.preferences);
 
-    this.successMessage = 'Preferências atualizadas.';
-
-    setTimeout(() => {
-      this.successMessage = '';
-    }, 2500);
+    this.hasUnsavedChanges = true;
+    this.successMessage = '';
   }
 
   updateContractDetailsSectionsPreference(value: boolean): void {
@@ -56,4 +58,23 @@ export class Preferences implements OnInit {
 
     this.savePreferences();
   }
-}
+
+  persistPreferences(): void {
+    this.isSaving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.preferencesService.syncPreferences().subscribe({
+      next: () => {
+        this.hasUnsavedChanges = false;
+        this.successMessage = 'Preferências guardadas com sucesso.';
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível guardar as preferências.';
+      },
+      complete: () => {
+        this.isSaving = false;
+      },
+    });
+  }
+  }
