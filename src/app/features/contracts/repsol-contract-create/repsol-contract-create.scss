@@ -1,0 +1,162 @@
+.create-contract-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.page-header {
+  h1 {
+    color: #243646;
+    font-size: 32px;
+    margin: 4px 0 6px;
+  }
+
+  p {
+    color: #64748b;
+    margin: 0;
+    font-size: 15px;
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+}
+
+.section-title {
+  color: #243646;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 18px;
+  max-width: 620px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input {
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
+  color: #243646;
+  font-family: inherit;
+  outline: none;
+}
+
+input:disabled {
+  background: #f8fafc;
+  cursor: not-allowed;
+}
+
+.inline-field {
+  display: flex;
+  gap: 10px;
+
+  input {
+    flex: 1;
+  }
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #243646;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.client-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 14px;
+
+  border-radius: 14px;
+
+  background: #dcfce7;
+
+  span {
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.warning-message {
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.error-message {
+  width: fit-content;
+  color: #dc2626;
+  background: #fee2e2;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.success-message {
+  width: fit-content;
+  color: #16a34a;
+  background: #dcfce7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

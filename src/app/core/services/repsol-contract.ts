@@ -104,6 +104,22 @@ export interface RepsolContractDetail {
   updatedAt: string;
 }
 
+export interface CreateRepsolContractRequest {
+  clientId: string;
+  companyId: string;
+  estado: RepsolContractStatus;
+  nomeClienteEmpresa: string;
+  nif: number;
+  email: string;
+  telefone: number;
+  tipoSegmento: string;
+  tipoProduto: string;
+  contratacao: string;
+  userId: string;
+  teams: string[];
+  followers: string[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -132,6 +148,15 @@ export class RepsolContractService {
       {
         responseType: 'blob',
       },
+    );
+  }
+
+  createRepsolContract(
+    payload: CreateRepsolContractRequest,
+  ): Observable<RepsolContractDetail> {
+    return this.http.post<RepsolContractDetail>(
+      `${this.apiUrl}/contracts/repsol`,
+      payload,
     );
   }
 }

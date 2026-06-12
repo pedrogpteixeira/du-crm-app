@@ -54,6 +54,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/repsol/create',
+        loadComponent: () =>
+          import('./features/contracts/repsol-contract-create/repsol-contract-create').then(
+            (m) => m.RepsolContractCreate,
+          ),
+      },
+      {
         path: 'contracts/repsol/:id',
         loadComponent: () =>
           import('./features/contracts/repsol-contract-detail/repsol-contract-detail').then(

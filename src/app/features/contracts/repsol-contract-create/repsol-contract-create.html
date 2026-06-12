@@ -1,0 +1,82 @@
+<section class="create-contract-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">
+        Contratos › Repsol › Novo contrato
+      </span>
+
+      <h1>Novo contrato Repsol</h1>
+
+      <p>Começa por identificar o cliente através do NIF.</p>
+    </div>
+  </header>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <article class="card">
+    <div class="section-title">
+      Identificação do cliente
+    </div>
+
+    <div class="form-grid">
+      <label>
+        NIF do cliente
+
+        <div class="inline-field">
+          <input
+            type="number"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+          />
+
+          <button
+            type="button"
+            [disabled]="isCheckingClient || !!client"
+            (click)="checkClientByNif()"
+          >
+            {{ isCheckingClient ? 'A procurar...' : 'Verificar' }}
+          </button>
+        </div>
+      </label>
+
+      <div class="client-result" *ngIf="client">
+        <span>Cliente encontrado</span>
+
+        <strong>{{ client.name }}</strong>
+
+        <small>{{ client.id }} · NIF {{ client.nif }}</small>
+      </div>
+
+      <ng-container *ngIf="clientNotFound">
+        <p class="warning-message">
+          Cliente não encontrado. Preenche o nome para criar uma nova ficha de cliente.
+        </p>
+
+        <label>
+          Nome Cliente / Empresa
+
+          <input
+            type="text"
+            [(ngModel)]="clientName"
+          />
+        </label>
+
+        <div class="actions">
+          <button
+            type="button"
+            [disabled]="isCreatingClient"
+            (click)="createClient()"
+          >
+            {{ isCreatingClient ? 'A criar cliente...' : 'Criar cliente' }}
+          </button>
+        </div>
+      </ng-container>
+    </div>
+  </article>
+</section>
