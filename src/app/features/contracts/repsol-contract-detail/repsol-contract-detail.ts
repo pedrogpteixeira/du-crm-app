@@ -30,7 +30,7 @@ export class RepsolContractDetail implements OnInit {
   ngOnInit(): void {
     const collapseByDefault =
     this.preferencesService.getPreferences()
-      .repsolContractDetailsCollapsedByDefault;
+      .contractDetailsCollapsedByDefault;
 
     this.collapsedSections =
       this.buildCollapsedSections(collapseByDefault);

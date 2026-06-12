@@ -9,16 +9,16 @@ export interface UserPreferences {
   id?: string;
   userId?: string;
   sidebarCollapsedByDefault: boolean;
-  repsolContractsDefaultView: ContractsDefaultView;
-  repsolContractDetailsCollapsedByDefault: boolean;
+  contractsDefaultView: ContractsDefaultView;
+  contractDetailsCollapsedByDefault: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   sidebarCollapsedByDefault: false,
-  repsolContractsDefaultView: 'table',
-  repsolContractDetailsCollapsedByDefault: false,
+  contractsDefaultView: 'table',
+  contractDetailsCollapsedByDefault: false,
 };
 
 @Injectable({
@@ -66,10 +66,10 @@ export class PreferencesService {
     const payload = {
       sidebarCollapsedByDefault:
         user.preferences.sidebarCollapsedByDefault,
-      repsolContractsDefaultView:
-        user.preferences.repsolContractsDefaultView,
-      repsolContractDetailsCollapsedByDefault:
-        user.preferences.repsolContractDetailsCollapsedByDefault,
+      contractsDefaultView:
+        user.preferences.contractsDefaultView,
+      contractDetailsCollapsedByDefault:
+        user.preferences.contractDetailsCollapsedByDefault,
     };
 
     return this.http.patch(
@@ -82,11 +82,11 @@ export class PreferencesService {
     return this.getPreferences().sidebarCollapsedByDefault;
   }
 
-  getRepsolContractsDefaultView(): ContractsDefaultView {
-    return this.getPreferences().repsolContractsDefaultView;
+  getContractsDefaultView(): ContractsDefaultView {
+    return this.getPreferences().contractsDefaultView;
   }
 
-  getRepsolContractDetailsCollapsedByDefault(): boolean {
-    return this.getPreferences().repsolContractDetailsCollapsedByDefault;
+  getContractDetailsCollapsedByDefault(): boolean {
+    return this.getPreferences().contractDetailsCollapsedByDefault;
   }
 }

@@ -40,7 +40,7 @@ export class RepsolContracts implements OnInit {
   isCreatingContract = false;
   clientWasFound = false;
 
-  viewMode: 'table' | 'kanban' = this.preferencesService.getRepsolContractsDefaultView();
+  viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
 
   statuses: RepsolContractStatus[] = [
     'Pedido de Chamada',

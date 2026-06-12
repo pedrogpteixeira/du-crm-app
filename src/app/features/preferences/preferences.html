@@ -46,14 +46,14 @@
 
       <div class="setting-row">
         <div>
-          <strong>Vista por defeito dos contratos Repsol</strong>
+          <strong>Vista por defeito dos contratos</strong>
           <span>
             Escolhe se a página de contratos deve abrir em tabela ou organizada por estados.
           </span>
         </div>
 
         <select
-          [(ngModel)]="preferences.repsolContractsDefaultView"
+          [(ngModel)]="preferences.contractsDefaultView"
           (ngModelChange)="updateContractsView($event)"
         >
           <option value="table">
@@ -71,14 +71,14 @@
             <strong>Secções dos contratos minimizadas por defeito</strong>
 
             <span>
-            Define se os blocos da página de detalhe dos contratos Repsol devem abrir recolhidos.
+            Define se os blocos da página de detalhe dos contratos devem abrir recolhidos.
             </span>
         </div>
 
         <label class="switch">
             <input
             type="checkbox"
-            [(ngModel)]="preferences.repsolContractDetailsCollapsedByDefault"
+            [(ngModel)]="preferences.contractDetailsCollapsedByDefault"
             (ngModelChange)="updateContractDetailsSectionsPreference($event)"
             />
 

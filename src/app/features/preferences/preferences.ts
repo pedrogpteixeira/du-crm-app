@@ -19,8 +19,8 @@ export class Preferences implements OnInit {
 
   preferences: UserPreferences = {
   sidebarCollapsedByDefault: false,
-  repsolContractsDefaultView: 'table',
-  repsolContractDetailsCollapsedByDefault: false,
+  contractsDefaultView: 'table',
+  contractDetailsCollapsedByDefault: false,
 };
 
   successMessage = '';
@@ -41,7 +41,7 @@ export class Preferences implements OnInit {
   }
 
   updateContractsView(value: ContractsDefaultView): void {
-    this.preferences.repsolContractsDefaultView = value;
+    this.preferences.contractsDefaultView = value;
 
     this.savePreferences();
   }
@@ -54,7 +54,7 @@ export class Preferences implements OnInit {
   }
 
   updateContractDetailsSectionsPreference(value: boolean): void {
-    this.preferences.repsolContractDetailsCollapsedByDefault = value;
+    this.preferences.contractDetailsCollapsedByDefault = value;
 
     this.savePreferences();
   }
