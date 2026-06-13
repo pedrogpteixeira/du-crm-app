@@ -85,6 +85,29 @@
             <span></span>
         </label>
         </div>
+
+        <div class="setting-row">
+          <div>
+            <strong>Layout dos contratos</strong>
+
+            <span>
+              Escolhe a experiência de utilização dos contratos.
+            </span>
+          </div>
+
+          <select
+            [(ngModel)]="preferences.contractLayout"
+            (ngModelChange)="updateContractLayout($event)"
+          >
+            <option value="light">
+              Light
+            </option>
+
+            <option value="pro">
+              Pro
+            </option>
+          </select>
+        </div>
     </article>
   </div>
 

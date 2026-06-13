@@ -21,6 +21,7 @@ export class Preferences implements OnInit {
   sidebarCollapsedByDefault: false,
   contractsDefaultView: 'table',
   contractDetailsCollapsedByDefault: false,
+  contractLayout: 'pro'
 };
 
   successMessage = '';
@@ -55,6 +56,12 @@ export class Preferences implements OnInit {
 
   updateContractDetailsSectionsPreference(value: boolean): void {
     this.preferences.contractDetailsCollapsedByDefault = value;
+
+    this.savePreferences();
+  }
+
+  updateContractLayout(value: 'light' | 'pro'): void {
+    this.preferences.contractLayout = value;
 
     this.savePreferences();
   }

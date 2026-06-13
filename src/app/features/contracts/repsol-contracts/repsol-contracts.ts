@@ -14,6 +14,7 @@ import {
 } from '../../../core/services/repsol-contract';
 import { SocketService } from '../../../core/services/socket';
 import { PreferencesService } from '../../../core/services/preferences';
+import { environment } from '../../../../environments/environment.development';
 
 
 
@@ -55,7 +56,7 @@ export class RepsolContracts implements OnInit {
 
   newContract = {
     clientId: '',
-    companyId: 'cmp_njRqliQBpR',
+    companyId: environment.repsolId,
     estado: 'Pedido de Chamada' as RepsolContractStatus,
     nomeClienteEmpresa: '',
     nif: null as number | null,
@@ -188,78 +189,5 @@ export class RepsolContracts implements OnInit {
         this.isCheckingClient = false;
       },
     });
-  }
-
-  createContract(): void {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-
-    if (!currentUser.id) {
-      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
-      return;
-    }
-
-    if (!this.newContract.nomeClienteEmpresa.trim() || !this.newContract.nif) {
-      this.errorMessage = 'O nome da empresa e o NIF são obrigatórios.';
-      return;
-    }
-
-    if (!this.newContract.email.trim() || !this.newContract.telefone) {
-      this.errorMessage = 'O email e telefone são obrigatórios.';
-      return;
-    }
-
-    this.isCreatingContract = true;
-    this.errorMessage = '';
-
-    const createContractWithClient = (clientId: string) => {
-      this.repsolContractService
-        .createRepsolContract({
-          clientId,
-          companyId: this.newContract.companyId,
-          estado: this.newContract.estado,
-          nomeClienteEmpresa: this.newContract.nomeClienteEmpresa.trim(),
-          nif: this.newContract.nif as number,
-          email: this.newContract.email.trim(),
-          telefone: this.newContract.telefone as number,
-          tipoSegmento: this.newContract.tipoSegmento,
-          tipoProduto: this.newContract.tipoProduto,
-          contratacao: this.newContract.contratacao,
-          userId: currentUser.id,
-          teams: this.newContract.teams,
-          followers: this.newContract.followers,
-        })
-        .subscribe({
-          next: () => {
-            this.closeCreateContractModal();
-            this.loadContracts();
-          },
-          error: () => {
-            this.errorMessage = 'Não foi possível criar o contrato Repsol.';
-          },
-          complete: () => {
-            this.isCreatingContract = false;
-          },
-        });
-    };
-
-    if (this.newContract.clientId) {
-      createContractWithClient(this.newContract.clientId);
-      return;
-    }
-
-    this.clientService
-      .createClient({
-        name: this.newContract.nomeClienteEmpresa.trim(),
-        nif: this.newContract.nif,
-      })
-      .subscribe({
-        next: (client) => {
-          createContractWithClient(client.id);
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível criar o cliente.';
-          this.isCreatingContract = false;
-        },
-      });
   }
 }

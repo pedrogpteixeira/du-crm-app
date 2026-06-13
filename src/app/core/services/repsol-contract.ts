@@ -51,6 +51,11 @@ export interface RepsolContractFollower {
   name: string;
 }
 
+export interface RepsolContractCampaign {
+  id: string;
+  name: string;
+}
+
 export interface RepsolContractDetail {
   id: string;
   companyId: string;
@@ -83,7 +88,7 @@ export interface RepsolContractDetail {
   debitoDireto: boolean;
   iban: string;
 
-  campanha: string;
+  campaign: RepsolContractCampaign
   antigaComercializadora: string;
 
   cpe: string;
@@ -107,17 +112,59 @@ export interface RepsolContractDetail {
 export interface CreateRepsolContractRequest {
   clientId: string;
   companyId: string;
-  estado: RepsolContractStatus;
+
+  tipoSegmento?: string;
+  tipoProduto?: string;
+  contratacao?: string;
+
+  tipoContratacaoLuz?: string;
+  tipoContratacaoGas?: string;
+
+  controleQualidade?: string;
+  codigoRegistoCE?: string;
+  nomeRegistoCE?: string;
+
+  estado?: RepsolContractStatus;
+
+  agendamento?: string;
+  dataAssinatura?: string;
+  dataContrato?: string;
+  dataRegisto?: string;
+  dataAtivacaoCPE?: string;
+  dataBaixaCPE?: string;
+  dataAtivacaoCUI?: string;
+  dataBaixaCUI?: string;
+
   nomeClienteEmpresa: string;
   nif: number;
-  email: string;
-  telefone: number;
-  tipoSegmento: string;
-  tipoProduto: string;
-  contratacao: string;
+
+  telefone?: number;
+  email?: string;
+  cae?: string;
+  crc?: string;
+
+  moradaInstalacao?: string;
+  moradaFaturacao?: string;
+
+  faturaEletronica?: boolean;
+  sva?: boolean;
+  debitoDireto?: boolean;
+  iban?: string;
+
+  campanha?: string;
+  antigaComercializadora?: string;
+
+  cpe?: string;
+  cui?: string;
+  potencia?: string;
+  escalao?: number;
+  cicloHorario?: string;
+  nivelTensao?: string;
+
+  observacoes?: string;
+
   userId: string;
-  teams: string[];
-  followers: string[];
+  teams?: string[];
 }
 
 @Injectable({
@@ -155,7 +202,7 @@ export class RepsolContractService {
     payload: CreateRepsolContractRequest,
   ): Observable<RepsolContractDetail> {
     return this.http.post<RepsolContractDetail>(
-      `${this.apiUrl}/contracts/repsol`,
+      `${this.apiUrl}/api/contracts/repsol`,
       payload,
     );
   }

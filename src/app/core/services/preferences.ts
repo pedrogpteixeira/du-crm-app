@@ -5,20 +5,20 @@ import { environment } from '../../../environments/environment.development';
 
 export type ContractsDefaultView = 'table' | 'kanban';
 
+export type ContractLayout = 'light' | 'pro';
+
 export interface UserPreferences {
-  id?: string;
-  userId?: string;
   sidebarCollapsedByDefault: boolean;
   contractsDefaultView: ContractsDefaultView;
   contractDetailsCollapsedByDefault: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  contractLayout: ContractLayout;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   sidebarCollapsedByDefault: false,
   contractsDefaultView: 'table',
   contractDetailsCollapsedByDefault: false,
+  contractLayout: 'light',
 };
 
 @Injectable({
@@ -66,10 +66,15 @@ export class PreferencesService {
     const payload = {
       sidebarCollapsedByDefault:
         user.preferences.sidebarCollapsedByDefault,
-      contractsDefaultView:
-        user.preferences.contractsDefaultView,
-      contractDetailsCollapsedByDefault:
-        user.preferences.contractDetailsCollapsedByDefault,
+
+      repsolContractsDefaultView:
+        user.preferences.repsolContractsDefaultView,
+
+      repsolContractDetailsCollapsedByDefault:
+        user.preferences.repsolContractDetailsCollapsedByDefault,
+
+      contractLayout:
+        user.preferences.contractLayout,
     };
 
     return this.http.patch(
@@ -88,5 +93,9 @@ export class PreferencesService {
 
   getContractDetailsCollapsedByDefault(): boolean {
     return this.getPreferences().contractDetailsCollapsedByDefault;
+  }
+
+  getContractLayout(): ContractLayout {
+    return this.getPreferences().contractLayout;
   }
 }

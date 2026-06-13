@@ -7,7 +7,7 @@
 
       <h1>Novo contrato Repsol</h1>
 
-      <p>Começa por identificar o cliente através do NIF.</p>
+      <p>Preenche os dados necessários para criar um novo contrato.</p>
     </div>
   </header>
 
@@ -21,19 +21,15 @@
 
   <article class="card">
     <div class="section-title">
-      Identificação do cliente
+      Identificação do Cliente
     </div>
 
     <div class="form-grid">
       <label>
-        NIF do cliente
+        NIF do Cliente *
 
         <div class="inline-field">
-          <input
-            type="number"
-            [(ngModel)]="nif"
-            [disabled]="!!client"
-          />
+          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
 
           <button
             type="button"
@@ -46,25 +42,19 @@
       </label>
 
       <div class="client-result" *ngIf="client">
-        <span>Cliente encontrado</span>
-
+        <span>Cliente identificado</span>
         <strong>{{ client.name }}</strong>
-
         <small>{{ client.id }} · NIF {{ client.nif }}</small>
       </div>
 
       <ng-container *ngIf="clientNotFound">
         <p class="warning-message">
-          Cliente não encontrado. Preenche o nome para criar uma nova ficha de cliente.
+          Cliente não encontrado. Preenche o nome para criar uma ficha de cliente.
         </p>
 
         <label>
-          Nome Cliente / Empresa
-
-          <input
-            type="text"
-            [(ngModel)]="clientName"
-          />
+          Nome Cliente / Empresa *
+          <input type="text" [(ngModel)]="clientName" />
         </label>
 
         <div class="actions">
@@ -79,4 +69,422 @@
       </ng-container>
     </div>
   </article>
+
+  <ng-container *ngIf="client">
+    <article class="card">
+      <div class="section-title">
+        Selecione Tipo de Segmento
+      </div>
+
+      <div class="form-grid three-columns">
+        <label>
+          Tipo Segmento *
+          <select [(ngModel)]="contractForm.tipoSegmento">
+            <option *ngFor="let option of tipoSegmentoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Tipo Produto *
+          <select [(ngModel)]="contractForm.tipoProduto">
+            <option *ngFor="let option of tipoProdutoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Contratação *
+          <select [(ngModel)]="contractForm.contratacao">
+            <option *ngFor="let option of contratacaoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label *ngIf="shouldShowLuzFields()">
+          Tipo Contratação Luz
+          <select [(ngModel)]="contractForm.tipoContratacaoLuz">
+            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label *ngIf="shouldShowGasFields()">
+          Tipo Contratação Gás
+          <select [(ngModel)]="contractForm.tipoContratacaoGas">
+            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Controle de Qualidade
+          <input type="text" [(ngModel)]="contractForm.controleQualidade" />
+        </label>
+
+        <label>
+          Código Registo C.E.
+          <input type="text" [(ngModel)]="contractForm.codigoRegistoCE" />
+        </label>
+
+        <label>
+          Nome Registo C.E.
+          <input type="text" [(ngModel)]="contractForm.nomeRegistoCE" />
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Estado da Venda
+      </div>
+
+      <div class="form-grid three-columns">
+        <label>
+          Estado
+          <select [(ngModel)]="contractForm.estado">
+            <option *ngFor="let option of estadoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Agendamento
+          <input type="datetime-local" [(ngModel)]="contractForm.agendamento" />
+        </label>
+
+        <label>
+          Data Assinatura
+          <input type="date" [(ngModel)]="contractForm.dataAssinatura" />
+        </label>
+
+        <label>
+          Data Contrato
+          <input type="date" [(ngModel)]="contractForm.dataContrato" />
+        </label>
+
+        <label>
+          Data de Registo
+          <input type="date" [(ngModel)]="contractForm.dataRegisto" />
+        </label>
+
+        <label>
+          Data de Ativação CPE
+          <input type="date" [(ngModel)]="contractForm.dataAtivacaoCPE" />
+        </label>
+
+        <label>
+          Data Baixa CPE
+          <input type="date" [(ngModel)]="contractForm.dataBaixaCPE" />
+        </label>
+
+        <label>
+          Data de Ativação CUI
+          <input type="date" [(ngModel)]="contractForm.dataAtivacaoCUI" />
+        </label>
+
+        <label>
+          Data Baixa CUI
+          <input type="date" [(ngModel)]="contractForm.dataBaixaCUI" />
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Dados Cliente / Empresa
+      </div>
+
+      <div class="form-grid two-columns">
+        <label>
+          Nome Cliente / Empresa *
+          <input type="text" [value]="client.name" readonly />
+        </label>
+
+        <label>
+          NIF *
+          <input type="number" [value]="client.nif" readonly />
+        </label>
+
+        <label>
+          Telefone
+          <input type="number" [(ngModel)]="contractForm.telefone" />
+        </label>
+
+        <label>
+          Email
+          <input type="email" [(ngModel)]="contractForm.email" />
+        </label>
+
+        <label>
+          CAE
+          <input type="text" [(ngModel)]="contractForm.cae" />
+        </label>
+
+        <label>
+          CRC
+          <input type="text" [(ngModel)]="contractForm.crc" />
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Dados Morada / Faturação
+      </div>
+
+      <div class="address-selection">
+        <label>
+          Morada Faturação - Seleção
+
+          <select [(ngModel)]="contractForm.moradaFaturacaoSelecao">
+            <option
+              *ngFor="let option of moradaFaturacaoOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div
+        class="address-grid"
+        [class.two-addresses]="shouldShowBillingAddress()"
+      >
+        <div class="address-block">
+          <label>
+            Morada Instalação
+            <input
+              type="text"
+              placeholder="Rua"
+              [(ngModel)]="contractForm.moradaInstalacaoRua"
+            />
+          </label>
+
+          <div class="address-row">
+            <input
+              type="text"
+              placeholder="Cidade"
+              [(ngModel)]="contractForm.moradaInstalacaoCidade"
+            />
+
+            <input
+              type="text"
+              placeholder="Distrito"
+              [(ngModel)]="contractForm.moradaInstalacaoDistrito"
+            />
+
+            <input
+              type="text"
+              placeholder="Código postal"
+              [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
+            />
+          </div>
+
+          <input
+            type="text"
+            placeholder="País"
+            [(ngModel)]="contractForm.moradaInstalacaoPais"
+          />
+        </div>
+
+        <div
+          class="address-block"
+          *ngIf="shouldShowBillingAddress()"
+        >
+          <label>
+            Morada Faturação
+            <input
+              type="text"
+              placeholder="Rua"
+              [(ngModel)]="contractForm.moradaFaturacaoRua"
+            />
+          </label>
+
+          <div class="address-row">
+            <input
+              type="text"
+              placeholder="Cidade"
+              [(ngModel)]="contractForm.moradaFaturacaoCidade"
+            />
+
+            <input
+              type="text"
+              placeholder="Distrito"
+              [(ngModel)]="contractForm.moradaFaturacaoDistrito"
+            />
+
+            <input
+              type="text"
+              placeholder="Código postal"
+              [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
+            />
+          </div>
+
+          <input
+            type="text"
+            placeholder="País"
+            [(ngModel)]="contractForm.moradaFaturacaoPais"
+          />
+        </div>
+      </div>
+
+      <div class="form-grid two-columns billing-options">
+        <label>
+          Fatura Eletrónica
+          <select [(ngModel)]="contractForm.faturaEletronica">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select>
+        </label>
+
+        <label>
+          SVA
+          <select [(ngModel)]="contractForm.sva">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select>
+        </label>
+
+        <label>
+          Débito Direto
+          <select [(ngModel)]="contractForm.debitoDireto">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select>
+        </label>
+
+        <label>
+          IBAN
+          <input
+            type="text"
+            [(ngModel)]="contractForm.iban"
+          />
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Dados Produto
+      </div>
+
+      <div class="form-grid two-columns">
+        <label>
+          Campanha
+          <select [(ngModel)]="contractForm.campanha">
+            <option
+              *ngFor="let campaign of campaigns"
+              [value]="campaign.id"
+            >
+              {{ campaign.name }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Antiga Comercializadora
+          <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
+        </label>
+
+        <label>
+          CPE
+          <input type="text" [(ngModel)]="contractForm.cpe" />
+        </label>
+
+        <label>
+          CUI
+          <input type="text" [(ngModel)]="contractForm.cui" />
+        </label>
+
+        <label>
+          Potência
+          <input type="text" [(ngModel)]="contractForm.potencia" />
+        </label>
+
+        <label>
+          Escalão
+          <select [(ngModel)]="contractForm.escalao">
+            <option *ngFor="let option of escalaoOptions" [ngValue]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Ciclo Horário
+          <select [(ngModel)]="contractForm.cicloHorario">
+            <option *ngFor="let option of cicloHorarioOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Nível Tensão
+          <select [(ngModel)]="contractForm.nivelTensao">
+            <option *ngFor="let option of nivelTensaoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Carregar Documentos
+      </div>
+
+      <p class="muted">
+        Os documentos serão associados depois da criação do contrato.
+      </p>
+
+      <div class="documents-grid">
+        <button type="button" disabled>
+          📎 Carregar Documentos
+        </button>
+
+        <button type="button" disabled>
+          🎧 Audio MP3
+        </button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
+        Observações / Tipo de Pendência
+      </div>
+
+      <label>
+        Tipo de Pendência / Observações
+        <textarea rows="6" [(ngModel)]="contractForm.observacoes"></textarea>
+      </label>
+    </article>
+
+    <div class="final-actions">
+      <button
+        type="button"
+        class="secondary"
+        routerLink="/home/contracts/repsol"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        [disabled]="isCreatingContract"
+        (click)="createContract()"
+      >
+        {{ isCreatingContract ? 'A criar contrato...' : 'Criar contrato' }}
+      </button>
+    </div>
+  </ng-container>
 </section>

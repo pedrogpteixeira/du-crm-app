@@ -41,7 +41,14 @@
 .form-grid {
   display: grid;
   gap: 18px;
-  max-width: 620px;
+}
+
+.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 label {
@@ -53,17 +60,40 @@ label {
   font-weight: 700;
 }
 
-input {
-  height: 42px;
+input,
+select,
+textarea {
+  width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
-  padding: 0 12px;
   color: #243646;
   font-family: inherit;
+  font-size: 14px;
   outline: none;
+  background: #ffffff;
 }
 
-input:disabled {
+input,
+select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+textarea {
+  min-height: 130px;
+  padding: 12px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #008db1;
+  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+}
+
+input:disabled,
+input[readonly] {
   background: #f8fafc;
   cursor: not-allowed;
 }
@@ -100,11 +130,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 4px;
-
   padding: 14px;
-
   border-radius: 14px;
-
   background: #dcfce7;
 
   span {
@@ -159,4 +186,68 @@ button:disabled {
 .actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.documents-grid {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.final-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.final-actions button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+.final-actions button.secondary:hover {
+  background: #cbd5e1;
+}
+
+.address-selection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+
+  label {
+    width: 320px;
+  }
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 480px);
+  gap: 18px;
+}
+
+.address-grid.two-addresses {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.billing-options {
+  margin-top: 18px;
 }
