@@ -1,65 +1,128 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
-import {
-  KnowledgeArticle,
-  KnowledgeBaseService,
-  KnowledgeFolder,
-} from '../../../core/services/knowledge-base';
 import { Company, CompanyService } from '../../../core/services/company';
+
+type KnowledgeCompanyAction = 'campaigns' | 'forms' | 'training';
+
+interface KnowledgeCompanyConfig {
+  companyId: string;
+  name: string;
+  logo: string;
+  formsFolderId: string;
+  trainingFolderId: string;
+}
 
 @Component({
   selector: 'app-knowledge-base-home',
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule],
   templateUrl: './knowledge-base-home.html',
   styleUrl: './knowledge-base-home.scss',
 })
 export class KnowledgeBaseHome implements OnInit {
-  private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly companyService = inject(CompanyService);
+  private readonly router = inject(Router);
 
-  folders: KnowledgeFolder[] = [];
-  articles: KnowledgeArticle[] = [];
   companies: Company[] = [];
 
   isLoading = false;
   errorMessage = '';
 
-  showCreateFolderModal = false;
-
-  newFolder = {
-    name: '',
-    description: '',
-  };
-
-  showCreateArticleModal = false;
-  isCreatingArticle = false;
-
-  newArticle = {
-    name: '',
-    supplier: '',
-    status: 'campaign_active',
-    message: '',
-  };
+  companyConfigs: KnowledgeCompanyConfig[] = [
+    {
+      companyId: 'cmp_njRqliQBpR',
+      name: 'Repsol',
+      logo: 'assets/companies/repsol.png',
+      formsFolderId: 'COLOCAR_ID_PASTA_FORMULARIOS_REPSOL',
+      trainingFolderId: 'COLOCAR_ID_PASTA_FORMACOES_REPSOL',
+    },
+    {
+      companyId: 'edp',
+      name: 'EDP',
+      logo: '_images/companies/edp.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'endesa',
+      name: 'Endesa',
+      logo: '_images/companies/endesa.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'nabalia',
+      name: 'Nabalia',
+      logo: '_images/companies/nabalia.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'iberdrola',
+      name: 'Iberdrola',
+      logo: '_images/companies/iberdrola.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'plenitude',
+      name: 'Plenitude',
+      logo: '_images/companies/plenitude.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'goldenergy',
+      name: 'Goldenergy',
+      logo: '_images/companies/goldenergy.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'portugal-gas',
+      name: 'Portugalgás',
+      logo: '_images/companies/portugal-gas.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'ezu',
+      name: 'EZU Energia',
+      logo: '_images/companies/ezu.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'galp',
+      name: 'Galp',
+      logo: '_images/companies/galp.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'yes-energy',
+      name: 'Yes Energy',
+      logo: '_images/companies/yes-energy.png',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+  ];
 
   ngOnInit(): void {
-    this.loadRootContents();
     this.loadCompanies();
   }
 
-  loadRootContents(): void {
+  loadCompanies(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.knowledgeBaseService.getRootContents().subscribe({
-      next: (contents) => {
-        this.folders = contents.folders;
-        this.articles = contents.articles;
+    this.companyService.getCompanies().subscribe({
+      next: (companies) => {
+        this.companies = companies.filter((company) => company.active);
       },
       error: () => {
-        this.errorMessage = 'Não foi possível carregar a base de conhecimento.';
+        this.errorMessage = 'Não foi possível carregar as empresas.';
       },
       complete: () => {
         this.isLoading = false;
@@ -67,124 +130,55 @@ export class KnowledgeBaseHome implements OnInit {
     });
   }
 
-  createFolder(): void {
-    const duplicate = this.folders.some(
-      (folder) =>
-        folder.name.trim().toLowerCase() ===
-        this.newFolder.name.trim().toLowerCase(),
+  getVisibleCompanies(): KnowledgeCompanyConfig[] {
+    if (!this.companies.length) {
+      return this.companyConfigs;
+    }
+
+    return this.companyConfigs.filter((config) =>
+      this.companies.some(
+        (company) =>
+          company.id === config.companyId ||
+          company.name.trim().toLowerCase() === config.name.trim().toLowerCase(),
+      ),
     );
+  }
 
-    if (duplicate) {
+  openCompanyAction(
+    company: KnowledgeCompanyConfig,
+    action: KnowledgeCompanyAction,
+  ): void {
+    if (action === 'campaigns') {
+      this.router.navigate([
+        '/home/knowledge-base/campaigns',
+        company.companyId,
+      ]);
+
+      return;
+    }
+
+    const folderId =
+      action === 'forms'
+        ? company.formsFolderId
+        : company.trainingFolderId;
+
+    if (!folderId) {
       this.errorMessage =
-        'Já existe uma pasta com esse nome.';
+        'Ainda não existe uma pasta configurada para esta opção.';
+
       return;
     }
 
-    this.knowledgeBaseService
-      .createFolder({
-        name: this.newFolder.name.trim(),
-        description: this.newFolder.description.trim(),
-        parentFolder: '',
-      })
-      .subscribe({
-        next: () => {
-          this.closeCreateFolderModal();
-          this.loadRootContents();
+    this.router.navigate(
+      ['/home/knowledge-base/folders', folderId],
+      {
+        queryParams: {
+          name:
+            action === 'forms'
+              ? `${company.name} - Formulários de Adesão`
+              : `${company.name} - Formações`,
         },
-      });
-  }
-
-  closeCreateFolderModal(): void {
-    this.showCreateFolderModal = false;
-
-    this.newFolder = {
-      name: '',
-      description: '',
-    };
-  }
-
-  openCreateArticleModal(): void {
-    this.showCreateArticleModal = true;
-  }
-
-  closeCreateArticleModal(): void {
-    this.showCreateArticleModal = false;
-
-    this.newArticle = {
-      name: '',
-      supplier: '',
-      status: 'campaign_active',
-      message: '',
-    };
-  }
-
-  createArticle(): void {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-
-    if (!this.newArticle.name.trim()) {
-      this.errorMessage = 'O nome do artigo é obrigatório.';
-      return;
-    }
-
-    if (!currentUser.id) {
-      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
-      return;
-    }
-
-    if (!this.newArticle.supplier) {
-      this.errorMessage = 'O fornecedor é obrigatório.';
-      return;
-    }
-
-    this.isCreatingArticle = true;
-
-    this.knowledgeBaseService
-      .createArticle({
-        folderId: '',
-        name: this.newArticle.name.trim(),
-        supplier: this.newArticle.supplier.trim(),
-        status: this.newArticle.status,
-        message: this.newArticle.message.trim(),
-        createdBy: currentUser.id,
-      })
-      .subscribe({
-        next: () => {
-          this.closeCreateArticleModal();
-          this.loadRootContents();
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível criar o artigo.';
-        },
-        complete: () => {
-          this.isCreatingArticle = false;
-        },
-      });
-  }
-
-  getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      campaign_active: 'Campanha ativa',
-      campaign_inactive: 'Campanha inativa',
-      draft: 'Rascunho',
-      archived: 'Arquivado',
-    };
-
-    return labels[status] || status;
-  }
-
-  formatDate(date: string): string {
-    return new Intl.DateTimeFormat('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(new Date(date));
-  }
-
-  loadCompanies(): void {
-    this.companyService.getCompanies().subscribe({
-      next: (companies) => {
-        this.companies = companies.filter((company) => company.active);
       },
-    });
+    );
   }
 }

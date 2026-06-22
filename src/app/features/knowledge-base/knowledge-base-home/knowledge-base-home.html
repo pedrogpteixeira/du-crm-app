@@ -2,33 +2,12 @@
   <header class="page-header">
     <div>
       <h1>Base de Conhecimento</h1>
-      <p>Consulta pastas, artigos e documentação interna.</p>
-    </div>
 
-    <div class="actions">
-      <button
-        type="button"
-        class="secondary"
-        (click)="showCreateFolderModal = true"
-      >
-        + Criar pasta
-      </button>
-
-      <button type="button" (click)="openCreateArticleModal()">
-        + Criar artigo
-      </button>
+      <p>
+        Consulta campanhas, formulários de adesão e formações por empresa.
+      </p>
     </div>
   </header>
-
-  <div class="toolbar">
-    <select>
-      <option>Todos</option>
-    </select>
-
-    <input type="text" placeholder="Pesquisar..." />
-
-    <button type="button">🔍</button>
-  </div>
 
   <p class="loading" *ngIf="isLoading">
     A carregar base de conhecimento...
@@ -38,152 +17,66 @@
     {{ errorMessage }}
   </p>
 
-  <section class="content-section" *ngIf="folders.length">
-    <h2>Pastas</h2>
-
-    <div class="folders-grid">
-        <a
-          class="folder-card"
-          *ngFor="let folder of folders"
-          [routerLink]="['/home/knowledge-base/folders', folder.id]"
-          [queryParams]="{
-            name: folder.name
-          }"
-        >
-        <span class="folder-icon">▰</span>
-
-        <div>
-          <strong>{{ folder.name }}</strong>
-          <small>{{ folder.description }}</small>
-        </div>
-      </a>
-    </div>
-  </section>
-
-  <section class="content-section" *ngIf="articles.length">
-    <h2>Artigos</h2>
-
-    <div class="articles-card">
-      <div class="table-header">
-        <span>Nome</span>
-        <span>Fornecedor</span>
-        <span>Estado</span>
-        <span>Criado em</span>
+  <section class="companies-grid" *ngIf="!isLoading">
+    <article
+      class="company-card"
+      *ngFor="let company of getVisibleCompanies()"
+    >
+      <div class="company-logo">
+        <img
+          [src]="company.logo"
+          [alt]="company.name"
+        />
       </div>
 
-      <a
-        class="article-row"
-        *ngFor="let article of articles"
-        [routerLink]="['/home/knowledge-base/articles', article.id]"
+      <button
+        type="button"
+        class="company-action"
+        (click)="openCompanyAction(company, 'campaigns')"
       >
-        <strong>{{ article.name }}</strong>
+        <span class="action-icon material-symbols-rounded">
+          business_center
+        </span>
 
-        <span>{{ article.supplier }}</span>
+        <span>Campanhas</span>
 
-        <span>{{ getStatusLabel(article.status) }}</span>
+        <strong>›</strong>
+      </button>
 
-        <span>{{ formatDate(article.createdAt) }}</span>
-      </a>
-    </div>
+      <button
+        type="button"
+        class="company-action"
+        (click)="openCompanyAction(company, 'forms')"
+      >
+        <span class="action-icon material-symbols-rounded">
+          description
+        </span>
+
+        <span>Formulários de Adesão</span>
+
+        <strong>›</strong>
+      </button>
+
+      <button
+        type="button"
+        class="company-action"
+        (click)="openCompanyAction(company, 'training')"
+      >
+        <span class="action-icon material-symbols-rounded">
+          school
+        </span>
+
+        <span>Formações</span>
+
+        <strong>›</strong>
+      </button>
+    </article>
   </section>
 
   <p
     class="empty-state"
-    *ngIf="!isLoading && !folders.length && !articles.length"
+    *ngIf="!isLoading && !getVisibleCompanies().length"
   >
-    Ainda não existem pastas ou artigos nesta base de conhecimento.
+    Ainda não existem empresas disponíveis na base de conhecimento.
   </p>
 </section>
-
-<div
-  class="modal-backdrop"
-  *ngIf="showCreateFolderModal"
->
-  <div class="modal">
-    <h2>Criar pasta</h2>
-
-    <label>
-      Nome
-      <input
-        type="text"
-        [(ngModel)]="newFolder.name"
-      />
-    </label>
-
-    <label>
-      Descrição
-      <textarea
-        rows="3"
-        [(ngModel)]="newFolder.description"
-      ></textarea>
-    </label>
-
-    <div class="modal-actions">
-      <button
-        type="button"
-        class="secondary"
-        (click)="closeCreateFolderModal()"
-      >
-        Cancelar
-      </button>
-
-      <button
-        type="button"
-        (click)="createFolder()"
-      >
-        Criar
-      </button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" *ngIf="showCreateArticleModal">
-  <div class="modal">
-    <h2>Criar artigo</h2>
-
-    <label>
-      Nome
-      <input type="text" [(ngModel)]="newArticle.name" />
-    </label>
-
-    <label>
-      Fornecedor
-
-      <select [(ngModel)]="newArticle.supplier">
-        <option value="" disabled>
-          Selecionar fornecedor
-        </option>
-
-        <option
-          *ngFor="let company of companies"
-          [value]="company.name"
-        >
-          {{ company.name }}
-        </option>
-      </select>
-    </label>
-
-    <label>
-      Estado
-      <select [(ngModel)]="newArticle.status">
-        <option value="campaign_active">Campanha ativa</option>
-        <option value="campaign_inactive">Campanha inativa</option>
-      </select>
-    </label>
-
-    <label>
-      Mensagem
-      <textarea rows="5" [(ngModel)]="newArticle.message"></textarea>
-    </label>
-
-    <div class="modal-actions">
-      <button type="button" class="secondary" (click)="closeCreateArticleModal()">
-        Cancelar
-      </button>
-
-      <button type="button" [disabled]="isCreatingArticle" (click)="createArticle()">
-        {{ isCreatingArticle ? 'A criar...' : 'Criar artigo' }}
-      </button>
-    </div>
-  </div>
-</div>
