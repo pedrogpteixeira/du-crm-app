@@ -1,0 +1,94 @@
+<section class="campaigns-page">
+  <div class="breadcrumb">
+    <a routerLink="/home/knowledge-base">
+      Base de Conhecimento
+    </a>
+
+    <span>›</span>
+
+    <strong>
+      Campanhas
+    </strong>
+  </div>
+
+  <header class="page-header">
+    <div>
+      <h1>
+        Campanhas · {{ companyName }}
+      </h1>
+
+      <p>
+        Consulta e gere campanhas associadas à empresa selecionada.
+      </p>
+    </div>
+
+    <button type="button">
+      + Nova campanha
+    </button>
+  </header>
+
+  <p class="loading" *ngIf="isLoading">
+    A carregar campanhas...
+  </p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <div class="campaigns-card">
+    <div class="table-header">
+      <span>Nome</span>
+      <span>Início</span>
+      <span>Fim</span>
+      <span>Estado</span>
+      <span>Ações</span>
+    </div>
+
+    <div
+      class="campaign-row"
+      *ngFor="let campaign of campaigns"
+    >
+      <strong>{{ campaign.name }}</strong>
+
+      <span>{{ formatDate(campaign.startDate) }}</span>
+
+      <span>{{ formatDate(campaign.endDate) }}</span>
+
+      <span
+        class="status-badge"
+        [class.active]="campaign.active"
+        [class.inactive]="!campaign.active"
+      >
+        {{ campaign.active ? 'Ativa' : 'Inativa' }}
+      </span>
+
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.disable]="campaign.active"
+        [class.enable]="!campaign.active"
+        [disabled]="updatingCampaignId === campaign.id"
+        (click)="toggleCampaign(campaign)"
+      >
+        {{
+          updatingCampaignId === campaign.id
+            ? 'A atualizar...'
+            : campaign.active
+              ? 'Desativar'
+              : 'Ativar'
+        }}
+      </button>
+    </div>
+
+    <p
+      class="empty-state"
+      *ngIf="!isLoading && !campaigns.length"
+    >
+      Ainda não existem campanhas associadas a esta empresa.
+    </p>
+  </div>
+</section>

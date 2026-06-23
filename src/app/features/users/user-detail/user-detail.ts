@@ -58,7 +58,7 @@ export class UserDetail implements OnInit {
       return null;
     }
 
-    return `${environment.apiUrl}${this.user.profilePicture}`;
+    return `${environment.apiUrl}/api/users/${this.user.id}/profile-picture`;
   }
 
   get userInitial(): string {

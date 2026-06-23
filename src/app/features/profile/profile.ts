@@ -138,7 +138,7 @@ export class Profile implements OnInit {
       return null;
     }
 
-    return `${environment.apiUrl}${this.user.profilePicture}`;
+    return `${environment.apiUrl}/api/users/${this.user.id}/profile-picture`;
   }
 
   toggleEdit(): void {

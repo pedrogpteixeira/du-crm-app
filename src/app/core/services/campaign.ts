@@ -6,7 +6,17 @@ import { environment } from '../../../environments/environment.development';
 
 export interface Campaign {
   id: string;
+  companyId: string;
   name: string;
+  startDate: string;
+  endDate: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateCampaignRequest {
+  active?: boolean;
 }
 
 @Injectable({
@@ -19,6 +29,16 @@ export class CampaignService {
   getCampaignsByCompanyId(companyId: string): Observable<Campaign[]> {
     return this.http.get<Campaign[]>(
       `${this.apiUrl}/api/campaigns/company/${companyId}`,
+    );
+  }
+
+  updateCampaign(
+    campaignId: string,
+    payload: UpdateCampaignRequest,
+  ): Observable<Campaign> {
+    return this.http.patch<Campaign>(
+      `${this.apiUrl}/api/campaigns/${campaignId}`,
+      payload,
     );
   }
 }

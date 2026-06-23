@@ -91,6 +91,13 @@ export const routes: Routes = [
             .then((m) => m.KnowledgeArticle),
       },
       {
+        path: 'knowledge-base/campaigns/:companyId',
+        loadComponent: () =>
+          import('./features/knowledge-base/knowledge-campaigns/knowledge-campaigns').then(
+            (m) => m.KnowledgeCampaigns,
+          ),
+      },
+      {
         path: 'preferences',
         loadComponent: () =>
           import('./features/preferences/preferences').then(

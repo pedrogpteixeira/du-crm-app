@@ -52,9 +52,9 @@ export class KnowledgeBaseHome implements OnInit {
       trainingFolderId: '',
     },
     {
-      companyId: 'nabalia',
-      name: 'Nabalia',
-      logo: '_images/companies/nabalia.png',
+      companyId: 'cmp_KCnjrA0i-U',
+      name: 'Meo Energias',
+      logo: 'assets/companies/meo.png',
       formsFolderId: '',
       trainingFolderId: '',
     },
@@ -149,10 +149,14 @@ export class KnowledgeBaseHome implements OnInit {
     action: KnowledgeCompanyAction,
   ): void {
     if (action === 'campaigns') {
-      this.router.navigate([
-        '/home/knowledge-base/campaigns',
-        company.companyId,
-      ]);
+      this.router.navigate(
+        ['/home/knowledge-base/campaigns', company.companyId],
+        {
+          queryParams: {
+            name: company.name,
+          },
+        },
+      );
 
       return;
     }
