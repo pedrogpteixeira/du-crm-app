@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { SocketService } from './core/services/socket';
+import { Auth } from './core/services/auth';
 
 @Component({
   selector: 'app-root',
@@ -9,12 +10,20 @@ import { SocketService } from './core/services/socket';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App {
+export class App implements OnInit{
+  private readonly auth = inject(Auth);
+
   constructor(private socketService: SocketService) {
     const token = localStorage.getItem('token');
 
     if (token) {
       this.socketService.connect(token);
+    }
+  }
+
+  ngOnInit(): void {
+    if (this.auth.hasToken() && !this.auth.getCurrentUser()) {
+      this.auth.loadCurrentUser().subscribe();
     }
   }
 }

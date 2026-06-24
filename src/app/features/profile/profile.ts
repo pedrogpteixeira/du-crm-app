@@ -7,34 +7,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 import { Auth } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
-
 import { SocketService } from '../../core/services/socket';
+import { AuthUser, UserTeam } from '../../core/models/auth-user';
 
 import {
   ImageCropperComponent,
   ImageCroppedEvent,
 } from 'ngx-image-cropper';
-
-interface UserTeam {
-  id: string;
-  name: string;
-}
-
-interface ProfileUser {
-  id: string;
-  username: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  active: boolean;
-  defaultTeam: UserTeam | null;
-  teams: UserTeam[];
-  profilePicture?: string;
-  createdAt?: string;
-  lastAccess?: string;
-  online?: boolean;
-}
 
 @Component({
   selector: 'app-profile',
@@ -46,19 +25,20 @@ export class Profile implements OnInit {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
-  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
-
   private readonly socketService = inject(SocketService);
+
+  private messageTimeout: ReturnType<typeof setTimeout> | null = null;
 
   isEditing = false;
   isUploadingPhoto = false;
   isLoadingProfile = false;
   isSaving = false;
+
   errorMessage = '';
   successMessage = '';
 
-  user: ProfileUser = this.getStoredUser();
-  editableUser: ProfileUser = { ...this.user };
+  user: AuthUser = this.getEmptyUser();
+  editableUser: AuthUser = { ...this.user };
 
   selectedImageEvent: Event | null = null;
   croppedImageBlob: Blob | null = null;
@@ -67,27 +47,48 @@ export class Profile implements OnInit {
   isCurrentUserOnline$!: Observable<boolean>;
 
   ngOnInit(): void {
-    this.loadFreshUserProfile();
-
-    this.isCurrentUserOnline$ = this.socketService.isOnline$(this.user.id);
+    this.loadProfileFromAuth();
   }
 
-  private loadFreshUserProfile(): void {
-    if (!this.user.id) {
+  private loadProfileFromAuth(): void {
+    const currentUser = this.auth.getCurrentUser();
+
+    if (!currentUser?.id) {
+      this.showTemporaryMessage(
+        'error',
+        'Não foi possível identificar o utilizador autenticado.',
+      );
+
       return;
     }
 
+    this.user = {
+      ...this.getEmptyUser(),
+      ...currentUser,
+    };
+
+    this.editableUser = { ...this.user };
+    this.isCurrentUserOnline$ = this.socketService.isOnline$(this.user.id);
+
+    this.loadFreshUserProfile(this.user.id);
+  }
+
+  private loadFreshUserProfile(userId: string): void {
     this.isLoadingProfile = true;
 
-    this.userService.getUserById(this.user.id).subscribe({
-      next: (user) => {
+    this.userService.getUserById(userId).subscribe({
+      next: (user: AuthUser) => {
         this.user = user;
         this.editableUser = { ...user };
 
-        localStorage.setItem('user', JSON.stringify(user));
+        this.auth.setCurrentUser(user);
+        this.isCurrentUserOnline$ = this.socketService.isOnline$(this.user.id);
       },
       error: () => {
-        this.isLoadingProfile = false;
+        this.showTemporaryMessage(
+          'error',
+          'Não foi possível carregar o perfil atualizado.',
+        );
       },
       complete: () => {
         this.isLoadingProfile = false;
@@ -134,7 +135,7 @@ export class Profile implements OnInit {
   }
 
   get profilePictureUrl(): string | null {
-    if (!this.user.profilePicture) {
+    if (!this.user.profilePicture || !this.user.id) {
       return null;
     }
 
@@ -172,11 +173,11 @@ export class Profile implements OnInit {
     this.isSaving = true;
 
     this.userService.updateUser(this.user.id, payload).subscribe({
-      next: (updatedUser) => {
+      next: (updatedUser: AuthUser) => {
         this.user = updatedUser;
         this.editableUser = { ...updatedUser };
 
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        this.auth.setCurrentUser(updatedUser);
 
         this.isEditing = false;
         this.showTemporaryMessage('success', 'Perfil atualizado com sucesso.');
@@ -226,41 +227,35 @@ export class Profile implements OnInit {
 
     this.isUploadingPhoto = true;
 
-    this.userService
-      .updateProfilePicture(this.user.id, file)
-      .subscribe({
-        next: (response) => {
-          this.user = {
-            ...this.user,
-            profilePicture: response.profilePicture,
-          };
+    this.userService.updateProfilePicture(this.user.id, file).subscribe({
+      next: (response) => {
+        this.user = {
+          ...this.user,
+          profilePicture: response.profilePicture,
+        };
 
-          this.editableUser = { ...this.user };
+        this.editableUser = { ...this.user };
+        this.auth.setCurrentUser(this.user);
 
-          localStorage.setItem(
-            'user',
-            JSON.stringify(this.user),
-          );
-
-          this.showImageCropper = false;
-        },
-        complete: () => {
-          this.isUploadingPhoto = false;
-        },
-      });
+        this.showImageCropper = false;
+      },
+      error: () => {
+        this.showTemporaryMessage(
+          'error',
+          'Não foi possível atualizar a fotografia de perfil.',
+        );
+      },
+      complete: () => {
+        this.isUploadingPhoto = false;
+      },
+    });
   }
 
-  private getStoredUser(): ProfileUser {
-    const storedUser = localStorage.getItem('user');
-
-    if (storedUser) {
-      return JSON.parse(storedUser);
-    }
-
+  private getEmptyUser(): AuthUser {
     return {
       id: '',
       username: '',
-      name: 'Unknown User',
+      name: '',
       role: '',
       email: '',
       phone: '',

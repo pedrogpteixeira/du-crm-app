@@ -60,7 +60,7 @@ export class TeamDetail implements OnInit {
       return null;
     }
 
-    return `${environment.apiUrl}${user.profilePicture}`;
+    return `${environment.apiUrl}/api/users/${user.id}/profile-picture`;
   }
 
   getInitial(name: string): string {

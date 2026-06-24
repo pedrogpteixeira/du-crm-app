@@ -1,7 +1,16 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { environment } from '../../../../environments/environment.development';
 import { CommonModule } from '@angular/common';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
+import { environment } from '../../../../environments/environment.development';
+import { Auth } from '../../../core/services/auth';
+import { AuthUser } from '../../../core/models/auth-user';
 
 @Component({
   selector: 'app-sidebar',
@@ -10,19 +19,17 @@ import { CommonModule } from '@angular/common';
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {
+  private readonly auth = inject(Auth);
+
   @Input() collapsed = false;
   @Output() toggle = new EventEmitter<void>();
 
-  user = this.getUser();
+  user: AuthUser | null = this.auth.getCurrentUser();
 
-  private getUser() {
-    const user = localStorage.getItem('user');
-
-    if (!user) {
-      return null;
-    }
-
-    return JSON.parse(user);
+  constructor() {
+    this.auth.currentUser$.subscribe((user) => {
+      this.user = user;
+    });
   }
 
   get userInitial(): string {
@@ -34,7 +41,7 @@ export class Sidebar {
   }
 
   get profilePictureUrl(): string | null {
-    if (!this.user?.profilePicture) {
+    if (!this.user?.profilePicture || !this.user?.id) {
       return null;
     }
 

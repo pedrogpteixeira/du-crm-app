@@ -32,13 +32,17 @@ export class Login {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.auth.login(this.form.getRawValue()).subscribe({
+    const { username, password } = this.form.getRawValue();
+
+    this.auth.login(username, password).subscribe({
       next: () => {
         this.router.navigate(['/home']);
       },
 
       error: (error) => {
-        this.errorMessage = error.error?.message || 'Invalid credentials.';
+        this.errorMessage =
+          error.error?.message || 'Invalid credentials.';
+
         this.isLoading = false;
       },
 

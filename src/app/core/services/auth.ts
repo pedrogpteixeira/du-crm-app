@@ -1,31 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
-import { SocketService } from './socket';
+import { AuthUser } from '../models/auth-user';
 
-interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-interface AuthUser {
-  id: string;
-  username: string;
-  name: string;
-  role: string;
-  email: string;
-  phone: string;
-  active: boolean;
-  online?: boolean;
-  defaultTeam: string;
-}
-
-interface AuthResponse {
-  user: AuthUser;
+interface LoginResponse {
   token: string;
+  user: AuthUser;
 }
 
 @Injectable({
@@ -33,57 +15,57 @@ interface AuthResponse {
 })
 export class Auth {
   private readonly http = inject(HttpClient);
-  private readonly socketService = inject(SocketService);
+  private readonly apiUrl = environment.apiUrl;
 
-  private readonly tokenKey = 'token';
+  private readonly currentUserSubject =
+    new BehaviorSubject<AuthUser | null>(null);
 
-  login(data: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(environment.apiUrl + '/api/auth/signin', data).pipe(
-      tap((response) => {
-        localStorage.setItem(this.tokenKey, response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+  currentUser$ = this.currentUserSubject.asObservable();
 
-        this.socketService.connect(response.token);
+  login(username: string, password: string): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/api/auth/signin`, {
+        username,
+        password,
+      })
+      .pipe(
+        tap((response) => {
+          localStorage.setItem('token', response.token);
+          this.setCurrentUser(response.user);
+        }),
+      );
+  }
+
+  setCurrentUser(user: AuthUser | null): void {
+    this.currentUserSubject.next(user);
+  }
+
+  getCurrentUser(): AuthUser | null {
+    return this.currentUserSubject.value;
+  }
+
+  loadCurrentUser(): Observable<AuthUser> {
+    return this.http.get<AuthUser>(`${this.apiUrl}/api/users/me`).pipe(
+      tap((user) => {
+        this.setCurrentUser(user);
       }),
     );
   }
 
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem('user');
-    this.socketService.disconnect();
+  hasToken(): boolean {
+    return !!localStorage.getItem('token');
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return localStorage.getItem('token');
   }
 
   isAuthenticated(): boolean {
-    const token = this.getToken();
-
-    if (!token) {
-      return false;
-    }
-
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return false;
-    }
-
-    return true;
+    return !!this.getToken();
   }
 
-  private isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-
-      if (!payload.exp) {
-        return false;
-      }
-
-      return Date.now() >= payload.exp * 1000;
-    } catch {
-      return true;
-    }
+  logout(): void {
+    localStorage.removeItem('token');
+    this.setCurrentUser(null);
   }
 }
