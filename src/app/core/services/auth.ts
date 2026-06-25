@@ -31,6 +31,11 @@ export class Auth {
       .pipe(
         tap((response) => {
           localStorage.setItem('token', response.token);
+          localStorage.setItem(
+            'preferences',
+            JSON.stringify(response.user.preferences),
+          );
+          
           this.setCurrentUser(response.user);
         }),
       );
@@ -48,7 +53,14 @@ export class Auth {
     return this.http.get<AuthUser>(`${this.apiUrl}/api/users/me`).pipe(
       tap((user) => {
         this.setCurrentUser(user);
-      }),
+
+        if (user.preferences) {
+          localStorage.setItem(
+            'preferences',
+            JSON.stringify(user.preferences),
+          );
+        }
+      })
     );
   }
 
@@ -66,6 +78,7 @@ export class Auth {
 
   logout(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('preferences');
     this.setCurrentUser(null);
   }
 }

@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
+  ContractLayout,
   ContractsDefaultView,
   PreferencesService,
   UserPreferences,
@@ -18,15 +19,14 @@ export class Preferences implements OnInit {
   private readonly preferencesService = inject(PreferencesService);
 
   preferences: UserPreferences = {
-  sidebarCollapsedByDefault: false,
-  contractsDefaultView: 'table',
-  contractDetailsCollapsedByDefault: false,
-  contractLayout: 'pro'
-};
+    sidebarCollapsedByDefault: false,
+    contractsDefaultView: 'table',
+    contractDetailsCollapsedByDefault: false,
+    contractLayout: 'light',
+  };
 
   successMessage = '';
   errorMessage = '';
-  
 
   hasUnsavedChanges = false;
   isSaving = false;
@@ -36,34 +36,39 @@ export class Preferences implements OnInit {
   }
 
   updateSidebarPreference(value: boolean): void {
-    this.preferences.sidebarCollapsedByDefault = value;
+    this.preferences = {
+      ...this.preferences,
+      sidebarCollapsedByDefault: value,
+    };
 
-    this.savePreferences();
+    this.savePreferencesLocally();
   }
 
   updateContractsView(value: ContractsDefaultView): void {
-    this.preferences.contractsDefaultView = value;
+    this.preferences = {
+      ...this.preferences,
+      contractsDefaultView: value,
+    };
 
-    this.savePreferences();
-  }
-
-  private savePreferences(): void {
-    this.preferencesService.updateLocalPreferences(this.preferences);
-
-    this.hasUnsavedChanges = true;
-    this.successMessage = '';
+    this.savePreferencesLocally();
   }
 
   updateContractDetailsSectionsPreference(value: boolean): void {
-    this.preferences.contractDetailsCollapsedByDefault = value;
+    this.preferences = {
+      ...this.preferences,
+      contractDetailsCollapsedByDefault: value,
+    };
 
-    this.savePreferences();
+    this.savePreferencesLocally();
   }
 
-  updateContractLayout(value: 'light' | 'pro'): void {
-    this.preferences.contractLayout = value;
+  updateContractLayout(value: ContractLayout): void {
+    this.preferences = {
+      ...this.preferences,
+      contractLayout: value,
+    };
 
-    this.savePreferences();
+    this.savePreferencesLocally();
   }
 
   persistPreferences(): void {
@@ -84,4 +89,12 @@ export class Preferences implements OnInit {
       },
     });
   }
+
+  private savePreferencesLocally(): void {
+    this.preferencesService.updateLocalPreferences(this.preferences);
+
+    this.hasUnsavedChanges = true;
+    this.successMessage = '';
+    this.errorMessage = '';
   }
+}

@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+
 import { environment } from '../../../environments/environment.development';
+import { Auth } from './auth';
 
 export type ContractsDefaultView = 'table' | 'kanban';
-
 export type ContractLayout = 'light' | 'pro';
 
 export interface UserPreferences {
@@ -25,62 +26,65 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   providedIn: 'root',
 })
 export class PreferencesService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly storageKey = 'preferences';
+
   private readonly preferencesSubject =
     new BehaviorSubject<UserPreferences>(this.getPreferences());
-
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = environment.apiUrl;
 
   preferences$ = this.preferencesSubject.asObservable();
 
   getPreferences(): UserPreferences {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const storedPreferences = localStorage.getItem(this.storageKey);
+
+    if (!storedPreferences) {
+      return DEFAULT_PREFERENCES;
+    }
 
     return {
       ...DEFAULT_PREFERENCES,
-      ...(user.preferences || {}),
+      ...JSON.parse(storedPreferences),
     };
   }
 
-  updateLocalPreferences(preferences: Partial<UserPreferences>): void {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-
+  setLocalPreferences(preferences: Partial<UserPreferences>): void {
     const updatedPreferences = {
       ...this.getPreferences(),
       ...preferences,
     };
 
-    const updatedUser = {
-      ...user,
-      preferences: updatedPreferences,
-    };
-
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem(
+      this.storageKey,
+      JSON.stringify(updatedPreferences),
+    );
 
     this.preferencesSubject.next(updatedPreferences);
   }
 
+  updateLocalPreferences(preferences: Partial<UserPreferences>): void {
+    this.setLocalPreferences(preferences);
+  }
+
   syncPreferences() {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = this.auth.getCurrentUser();
 
-    const payload = {
-      sidebarCollapsedByDefault:
-        user.preferences.sidebarCollapsedByDefault,
+    if (!user?.id) {
+      throw new Error('Authenticated user not found.');
+    }
 
-      repsolContractsDefaultView:
-        user.preferences.repsolContractsDefaultView,
-
-      repsolContractDetailsCollapsedByDefault:
-        user.preferences.repsolContractDetailsCollapsedByDefault,
-
-      contractLayout:
-        user.preferences.contractLayout,
-    };
+    const preferences = this.getPreferences();
 
     return this.http.patch(
       `${this.apiUrl}/api/user-preferences/user/${user.id}`,
-      payload,
+      preferences,
     );
+  }
+
+  clearLocalPreferences(): void {
+    localStorage.removeItem(this.storageKey);
+    this.preferencesSubject.next(DEFAULT_PREFERENCES);
   }
 
   getSidebarCollapsedByDefault(): boolean {
