@@ -85,7 +85,16 @@
     >
       <div class="provider">
         <div class="provider-logo">
-          {{ result.tariff.provider.name.charAt(0) }}
+            <img
+                *ngIf="!hasLogoError[result.tariff.provider.name]"
+                [src]="getProviderLogo(result.tariff.provider.name)"
+                [alt]="result.tariff.provider.name"
+                (error)="onLogoError(result.tariff.provider.name)"
+            />
+
+            <span *ngIf="hasLogoError[result.tariff.provider.name]">
+                {{ result.tariff.provider.name.charAt(0) }}
+            </span>
         </div>
 
         <div>
@@ -97,7 +106,7 @@
 
       <div class="tariff-info">
         <div>
-          <strong>{{ result.tariff.tariffType }}</strong>
+          <strong>{{ getTariffTypeLabel(result.tariff.tariffType) }}</strong>
           <span>Tipo tarifa</span>
         </div>
 

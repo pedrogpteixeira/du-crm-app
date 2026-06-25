@@ -20,6 +20,7 @@ export class Simulator {
   hasSimulation = false;
   isLoading = false;
   errorMessage = '';
+  hasLogoError: Record<string, boolean> = {};
 
   form: SimulatorRequest = {
     productType: 'electricity',
@@ -58,5 +59,31 @@ export class Simulator {
       style: 'currency',
       currency: 'EUR',
     }).format(value);
+  }
+
+  getProviderLogo(providerName: string): string | null {
+    const logos: Record<string, string> = {
+      Repsol: 'assets/companies/repsol.png',
+      'Meo Energias': 'assets/companies/meo.png',
+      MEO: 'assets/companies/meo.png',
+    };
+
+    return logos[providerName] ?? null;
+  }
+
+  onLogoError(provider: string): void {
+    this.hasLogoError[provider] = true;
+  }
+
+  getTariffTypeLabel(tariffType: string): string {
+    const labels: Record<string, string> = {
+      simple: 'Simples',
+      bi_hourly: 'Bi-horário',
+      'bi-hourly': 'Bi-horário',
+      tri_hourly: 'Tri-horário',
+      'tri-hourly': 'Tri-horário',
+    };
+
+    return labels[tariffType] || tariffType;
   }
 }

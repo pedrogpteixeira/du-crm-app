@@ -146,13 +146,28 @@ button:disabled {
 .provider-logo {
   width: 72px;
   height: 72px;
-  border: 1px solid #bfdbfe;
-  border-radius: 14px;
+
   display: grid;
   place-items: center;
-  color: #008db1;
-  font-size: 28px;
-  font-weight: 900;
+
+  border-radius: 16px;
+  border: 1px solid #dbeafe;
+
+  background: #ffffff;
+
+  overflow: hidden;
+
+  img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+  }
+
+  span {
+    color: #008db1;
+    font-size: 28px;
+    font-weight: 900;
+  }
 }
 
 .tariff-info {
