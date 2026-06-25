@@ -98,6 +98,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'simulator',
+        loadComponent: () =>
+          import('./features/simulator/simulator').then(
+            (m) => m.Simulator,
+          ),
+      },
+      {
         path: 'preferences',
         loadComponent: () =>
           import('./features/preferences/preferences').then(

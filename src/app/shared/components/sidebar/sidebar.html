@@ -13,17 +13,17 @@
       <span class="section-title">Geral</span>
 
       <a routerLink="/home/dashboard" routerLinkActive="active">
-        <span class="icon">▦</span>
+        <span class="icon material-symbols-rounded">dashboard</span>
         <span class="label">Dashboard</span>
       </a>
 
       <a routerLink="/home/users" routerLinkActive="active">
-        <span class="icon">●</span>
+        <span class="icon material-symbols-rounded">group</span>
         <span class="label">Utilizadores</span>
       </a>
 
       <a routerLink="/home/teams" routerLinkActive="active">
-        <span class="icon">▦</span>
+        <span class="icon material-symbols-rounded">groups</span>
         <span class="label">Equipas</span>
       </a>
     </div>
@@ -32,8 +32,17 @@
       <span class="section-title">CRM Repsol</span>
 
       <a routerLink="/home/contracts/repsol" routerLinkActive="active">
-        <span class="icon">💡</span>
-        <span class="label">Repsol</span>
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Contratos</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <span class="section-title">Simulações</span>
+
+      <a routerLink="/home/simulator" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">electric_bolt</span>
+        <span class="label">Simulador</span>
       </a>
     </div>
 
@@ -41,32 +50,28 @@
       <span class="section-title">Conhecimento</span>
 
       <a routerLink="/home/knowledge-base" routerLinkActive="active">
-        <span class="icon">▤</span>
+        <span class="icon material-symbols-rounded">library_books</span>
         <span class="label">Conhecimento</span>
       </a>
     </div>
   </nav>
 
   <a class="profile-card" routerLink="/home/profile">
-  <div class="avatar">
-    <img
-      *ngIf="profilePictureUrl; else initials"
-      [src]="profilePictureUrl"
-      [alt]="user?.name"
-    />
+    <div class="avatar">
+      <img
+        *ngIf="profilePictureUrl; else initials"
+        [src]="profilePictureUrl"
+        [alt]="user?.name"
+      />
 
-    <ng-template #initials>
-      {{ userInitial }}
-    </ng-template>
-  </div>
+      <ng-template #initials>
+        {{ userInitial }}
+      </ng-template>
+    </div>
 
     <div class="profile-info">
       <strong>{{ user?.name || 'Unknown User' }}</strong>
-
-      <span>
-        {{ user?.role || 'No role assigned' }}
-      </span>
+      <span>{{ user?.role || 'No role assigned' }}</span>
     </div>
   </a>
-
 </aside>

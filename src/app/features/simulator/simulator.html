@@ -1,0 +1,136 @@
+<section class="simulator-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Simulador</span>
+
+      <h1>Simulador de Energia</h1>
+
+      <p>
+        Compara tarifas de energia com base no consumo e potência contratada.
+      </p>
+    </div>
+  </header>
+
+  <article class="card">
+    <div class="section-title">Dados da simulação</div>
+
+    <div class="form-grid">
+      <label>
+        Produto
+        <select [(ngModel)]="form.productType">
+          <option value="electricity">Eletricidade</option>
+          <option value="gas">Gás</option>
+          <option value="dual">Luz + Gás</option>
+        </select>
+      </label>
+
+      <label>
+        Segmento
+        <select [(ngModel)]="form.segment">
+          <option value="residential">Residencial</option>
+          <option value="business">Empresarial</option>
+        </select>
+      </label>
+
+      <label>
+        Tipo de tarifa
+        <select [(ngModel)]="form.tariffType">
+          <option value="simple">Simples</option>
+          <option value="bi_hourly">Bi-horário</option>
+          <option value="tri_hourly">Tri-horário</option>
+        </select>
+      </label>
+
+      <label>
+        Potência contratada
+        <input
+          type="number"
+          step="0.1"
+          [(ngModel)]="form.powerKva"
+        />
+      </label>
+
+      <label>
+        Consumo mensal estimado
+        <input
+          type="number"
+          [(ngModel)]="form.monthlyConsumptionKwh"
+        />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button
+        type="button"
+        [disabled]="isLoading"
+        (click)="simulate()"
+      >
+        {{ isLoading ? 'A simular...' : 'Simular' }}
+      </button>
+    </div>
+  </article>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <section class="results-section" *ngIf="results.length">
+    <h2>
+      Encontrámos {{ results.length }} oferta{{ results.length > 1 ? 's' : '' }}
+    </h2>
+
+    <article
+      class="result-card"
+      *ngFor="let result of results"
+    >
+      <div class="provider">
+        <div class="provider-logo">
+          {{ result.tariff.provider.name.charAt(0) }}
+        </div>
+
+        <div>
+          <h3>{{ result.tariff.provider.name }}</h3>
+          <p>{{ result.tariff.name }}</p>
+          <span>Eletricidade</span>
+        </div>
+      </div>
+
+      <div class="tariff-info">
+        <div>
+          <strong>{{ result.tariff.tariffType }}</strong>
+          <span>Tipo tarifa</span>
+        </div>
+
+        <div>
+          <strong>{{ result.tariff.powerKva }} kVA</strong>
+          <span>Potência</span>
+        </div>
+      </div>
+
+      <div class="price">
+        <strong>
+          {{ formatCurrency(result.simulation.estimatedMonthlyCost) }}
+        </strong>
+
+        <span>Estimativa mensal</span>
+      </div>
+    </article>
+  </section>
+
+  <section
+    class="empty-results"
+    *ngIf="hasSimulation && !results.length"
+    >
+    <span class="material-symbols-rounded">
+        search_off
+    </span>
+
+    <h2>
+        Não foram encontradas ofertas
+    </h2>
+
+    <p>
+        Não existe atualmente nenhuma tarifa compatível com os critérios introduzidos.
+    </p>
+  </section>
+</section>

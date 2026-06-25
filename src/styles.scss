@@ -23,3 +23,59 @@ h1 {
 p {
   font-weight: 400;
 }
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  min-height: 42px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #64748b 50%),
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+
+  color: #243646;
+
+  padding: 0 42px 0 16px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+
+  outline: none;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+select:hover {
+  border-color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+select:focus {
+  border-color: #008db1;
+  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.12);
+}
+
+select:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
