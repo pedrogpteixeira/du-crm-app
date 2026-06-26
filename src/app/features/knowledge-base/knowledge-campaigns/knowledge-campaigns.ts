@@ -6,10 +6,11 @@ import {
   Campaign,
   CampaignService,
 } from '../../../core/services/campaign';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-knowledge-campaigns',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-campaigns.html',
   styleUrl: './knowledge-campaigns.scss',
 })
@@ -22,11 +23,21 @@ export class KnowledgeCampaigns implements OnInit {
 
   campaigns: Campaign[] = [];
 
+  showCreateCampaignModal = false;
+  isCreatingCampaign = false;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
 
   updatingCampaignId: string | null = null;
+  deletingCampaignId: string | null = null;
+
+  newCampaign = {
+    name: '',
+    active: true,
+    startDate: '',
+    endDate: '',
+  };
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -96,17 +107,124 @@ export class KnowledgeCampaigns implements OnInit {
       });
   }
 
-  formatDate(date: string): string {
+  openCreateCampaignModal(): void {
+    this.showCreateCampaignModal = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  closeCreateCampaignModal(): void {
+    this.showCreateCampaignModal = false;
+
+    this.newCampaign = {
+      name: '',
+      active: true,
+      startDate: '',
+      endDate: '',
+    };
+  }
+
+  createCampaign(): void {
+    if (!this.newCampaign.name.trim()) {
+      this.errorMessage = 'O nome da campanha é obrigatório.';
+      return;
+    }
+
+    this.isCreatingCampaign = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const payload: any = {
+      companyId: this.companyId,
+      name: this.newCampaign.name.trim(),
+      active: this.newCampaign.active,
+    };
+
+    if (this.newCampaign.startDate) {
+      payload.startDate = new Date(
+        this.newCampaign.startDate,
+      ).toISOString();
+    }
+
+    if (this.newCampaign.endDate) {
+      payload.endDate = new Date(
+        this.newCampaign.endDate,
+      ).toISOString();
+    }
+
+    this.campaignService.createCampaign(payload)
+      .subscribe({
+        next: (campaign) => {
+          this.campaigns = [campaign, ...this.campaigns];
+
+          this.closeCreateCampaignModal();
+
+          this.successMessage = 'Campanha criada com sucesso.';
+          this.clearSuccessMessage();
+        },
+        error: (error) => {
+          this.errorMessage =
+            error.error?.message ||
+            'Não foi possível criar a campanha.';
+        },
+        complete: () => {
+          this.isCreatingCampaign = false;
+        },
+      });
+  }
+
+  formatDate(date?: string | null): string {
+    if (!date) {
+      return '—';
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '—';
+    }
+
     return new Intl.DateTimeFormat('pt-PT', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    }).format(new Date(date));
+    }).format(parsedDate);
   }
 
   private clearSuccessMessage(): void {
     setTimeout(() => {
       this.successMessage = '';
     }, 2500);
+  }
+
+  deleteCampaign(campaign: Campaign): void {
+    const confirmed = confirm(
+      `Tens a certeza que pretendes eliminar a campanha "${campaign.name}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingCampaignId = campaign.id;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.campaignService.deleteCampaign(campaign.id).subscribe({
+      next: () => {
+        this.campaigns = this.campaigns.filter(
+          (item) => item.id !== campaign.id,
+        );
+
+        this.successMessage = 'Campanha eliminada com sucesso.';
+        this.clearSuccessMessage();
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível eliminar a campanha.';
+      },
+      complete: () => {
+        this.deletingCampaignId = null;
+      },
+    });
   }
 }

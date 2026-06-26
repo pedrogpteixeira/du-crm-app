@@ -15,6 +15,14 @@ export interface Campaign {
   updatedAt: string;
 }
 
+export interface CreateCampaignRequest {
+  companyId: string;
+  name: string;
+  active: boolean;
+  startDate: string;
+  endDate: string;
+}
+
 export interface UpdateCampaignRequest {
   active?: boolean;
 }
@@ -32,6 +40,13 @@ export class CampaignService {
     );
   }
 
+  createCampaign(payload: CreateCampaignRequest): Observable<Campaign> {
+    return this.http.post<Campaign>(
+      `${this.apiUrl}/api/campaigns`,
+      payload,
+    );
+  }
+
   updateCampaign(
     campaignId: string,
     payload: UpdateCampaignRequest,
@@ -39,6 +54,12 @@ export class CampaignService {
     return this.http.patch<Campaign>(
       `${this.apiUrl}/api/campaigns/${campaignId}`,
       payload,
+    );
+  }
+
+  deleteCampaign(campaignId: string) {
+    return this.http.delete(
+      `${this.apiUrl}/api/campaigns/${campaignId}`,
     );
   }
 }

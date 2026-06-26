@@ -22,7 +22,10 @@
       </p>
     </div>
 
-    <button type="button">
+    <button
+      type="button"
+      (click)="openCreateCampaignModal()"
+    >
       + Nova campanha
     </button>
   </header>
@@ -66,22 +69,37 @@
         {{ campaign.active ? 'Ativa' : 'Inativa' }}
       </span>
 
-      <button
-        type="button"
-        class="toggle-btn"
-        [class.disable]="campaign.active"
-        [class.enable]="!campaign.active"
-        [disabled]="updatingCampaignId === campaign.id"
-        (click)="toggleCampaign(campaign)"
-      >
-        {{
-          updatingCampaignId === campaign.id
-            ? 'A atualizar...'
-            : campaign.active
-              ? 'Desativar'
-              : 'Ativar'
-        }}
-      </button>
+      <div class="row-actions">
+        <button
+          type="button"
+          class="toggle-btn"
+          [class.disable]="campaign.active"
+          [class.enable]="!campaign.active"
+          [disabled]="updatingCampaignId === campaign.id"
+          (click)="toggleCampaign(campaign)"
+        >
+          {{
+            updatingCampaignId === campaign.id
+              ? 'A atualizar...'
+              : campaign.active
+                ? 'Desativar'
+                : 'Ativar'
+          }}
+        </button>
+
+        <button
+          type="button"
+          class="delete-btn"
+          [disabled]="deletingCampaignId === campaign.id"
+          (click)="deleteCampaign(campaign)"
+        >
+          {{
+            deletingCampaignId === campaign.id
+              ? 'A eliminar...'
+              : 'Eliminar'
+          }}
+        </button>
+      </div>
     </div>
 
     <p
@@ -92,3 +110,71 @@
     </p>
   </div>
 </section>
+
+<div
+  class="modal-backdrop"
+  *ngIf="showCreateCampaignModal"
+>
+  <div class="modal">
+    <h2>Nova campanha</h2>
+
+    <p>
+      Criar campanha para {{ companyName }}.
+    </p>
+
+    <label>
+      Nome da campanha
+      <input
+        type="text"
+        [(ngModel)]="newCampaign.name"
+      />
+    </label>
+
+    <label>
+      Data de início
+      <input
+        type="date"
+        [(ngModel)]="newCampaign.startDate"
+      />
+    </label>
+
+    <label>
+      Data de fim
+      <input
+        type="date"
+        [(ngModel)]="newCampaign.endDate"
+      />
+    </label>
+
+    <label>
+      Estado
+      <select [(ngModel)]="newCampaign.active">
+        <option [ngValue]="true">
+          Ativa
+        </option>
+
+        <option [ngValue]="false">
+          Inativa
+        </option>
+      </select>
+    </label>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="secondary"
+        (click)="closeCreateCampaignModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        [disabled]="isCreatingCampaign"
+        (click)="createCampaign()"
+      >
+        {{ isCreatingCampaign ? 'A criar...' : 'Criar campanha' }}
+      </button>
+    </div>
+  </div>
+</div>

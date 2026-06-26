@@ -78,7 +78,7 @@
 .table-header,
 .campaign-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) 150px 150px 120px 140px;
+  grid-template-columns: minmax(260px, 1.5fr) 150px 150px 120px 220px;
   gap: 18px;
   align-items: center;
 }
@@ -192,4 +192,140 @@
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 800;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 23, 42, 0.45);
+
+  z-index: 1000;
+}
+
+.modal {
+  width: 520px;
+  max-width: 92vw;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  background: #ffffff;
+
+  border-radius: 22px;
+
+  padding: 24px;
+
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
+
+  h2 {
+    color: #243646;
+    font-size: 24px;
+    margin: 0;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  input,
+  select {
+    height: 42px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+
+    padding: 0 12px;
+
+    color: #243646;
+
+    font-family: inherit;
+
+    outline: none;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  margin-top: 8px;
+
+  button {
+    border: 0;
+    border-radius: 12px;
+
+    background: #2f4050;
+    color: #ffffff;
+
+    padding: 11px 18px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    &:hover {
+      background: #243646;
+    }
+
+    &.secondary {
+      background: #e2e8f0;
+      color: #243646;
+
+      &:hover {
+        background: #cbd5e1;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
+}
+
+.delete-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
