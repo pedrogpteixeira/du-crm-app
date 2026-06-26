@@ -79,6 +79,7 @@ export class Auth {
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('preferences');
+
     this.setCurrentUser(null);
   }
 }
