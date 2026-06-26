@@ -295,10 +295,7 @@
           />
         </div>
 
-        <div
-          class="address-block"
-          *ngIf="shouldShowBillingAddress()"
-        >
+        <div class="address-block" *ngIf="shouldShowBillingAddress()">
           <label>
             Morada Faturação
             <input
@@ -391,7 +388,10 @@
 
         <label>
           Antiga Comercializadora
-          <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.antigaComercializadora"
+          />
         </label>
 
         <label>
@@ -406,7 +406,27 @@
 
         <label>
           Potência
-          <input type="text" [(ngModel)]="contractForm.potencia" />
+          <select [(ngModel)]="contractForm.potencia">
+            <option
+              *ngFor="let power of availablePowers"
+              [ngValue]="formatPowerValue(power)"
+            >
+              {{ power.toFixed(2) }} kVA
+            </option>
+
+            <option [ngValue]="otherPowerValue">
+              Outra...
+            </option>
+          </select>
+        </label>
+
+        <label *ngIf="contractForm.potencia === otherPowerValue">
+          Outra potência
+          <input
+            type="text"
+            placeholder="Ex.: 9.20"
+            [(ngModel)]="customPower"
+          />
         </label>
 
         <label>

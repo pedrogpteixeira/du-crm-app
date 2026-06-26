@@ -8,6 +8,13 @@ import {
   SimulatorService,
 } from '../../core/services/simulator';
 
+import {
+  ELECTRICITY_POWERS,
+  OTHER_POWER,
+} from '../../core/constants/electricity';
+
+type PowerKvaSelection = number | typeof OTHER_POWER;
+
 @Component({
   selector: 'app-simulator',
   imports: [CommonModule, FormsModule],
@@ -20,9 +27,17 @@ export class Simulator {
   hasSimulation = false;
   isLoading = false;
   errorMessage = '';
+
   hasLogoError: Record<string, boolean> = {};
 
-  form: SimulatorRequest = {
+  readonly availablePowers = ELECTRICITY_POWERS;
+  readonly otherPowerValue = OTHER_POWER;
+
+  customPower: number | null = null;
+
+  form: Omit<SimulatorRequest, 'powerKva'> & {
+    powerKva: PowerKvaSelection;
+  } = {
     productType: 'electricity',
     segment: 'business',
     tariffType: 'simple',
@@ -33,13 +48,27 @@ export class Simulator {
   results: SimulatorResult[] = [];
 
   simulate(): void {
+    const powerKva =
+      this.form.powerKva === OTHER_POWER
+        ? this.customPower
+        : this.form.powerKva;
+
+    if (!powerKva) {
+      this.errorMessage = 'A potência contratada é obrigatória.';
+      return;
+    }
+
+    const payload: SimulatorRequest = {
+      ...this.form,
+      powerKva,
+    };
+
     this.isLoading = true;
     this.errorMessage = '';
-
     this.results = [];
     this.hasSimulation = false;
 
-    this.simulatorService.simulate(this.form).subscribe({
+    this.simulatorService.simulate(payload).subscribe({
       next: (results) => {
         this.results = results;
         this.hasSimulation = true;

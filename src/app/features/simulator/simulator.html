@@ -43,10 +43,27 @@
 
       <label>
         Potência contratada
+        <select [(ngModel)]="form.powerKva">
+          <option
+            *ngFor="let power of availablePowers"
+            [ngValue]="power"
+          >
+            {{ power.toFixed(2) }} kVA
+          </option>
+
+          <option [ngValue]="otherPowerValue">
+            Outra...
+          </option>
+        </select>
+      </label>
+
+      <label *ngIf="form.powerKva === otherPowerValue">
+        Outra potência
         <input
           type="number"
-          step="0.1"
-          [(ngModel)]="form.powerKva"
+          step="0.01"
+          placeholder="Ex.: 9.20"
+          [(ngModel)]="customPower"
         />
       </label>
 
@@ -85,16 +102,16 @@
     >
       <div class="provider">
         <div class="provider-logo">
-            <img
-                *ngIf="!hasLogoError[result.tariff.provider.name]"
-                [src]="getProviderLogo(result.tariff.provider.name)"
-                [alt]="result.tariff.provider.name"
-                (error)="onLogoError(result.tariff.provider.name)"
-            />
+          <img
+            *ngIf="!hasLogoError[result.tariff.provider.name]"
+            [src]="getProviderLogo(result.tariff.provider.name)"
+            [alt]="result.tariff.provider.name"
+            (error)="onLogoError(result.tariff.provider.name)"
+          />
 
-            <span *ngIf="hasLogoError[result.tariff.provider.name]">
-                {{ result.tariff.provider.name.charAt(0) }}
-            </span>
+          <span *ngIf="hasLogoError[result.tariff.provider.name]">
+            {{ result.tariff.provider.name.charAt(0) }}
+          </span>
         </div>
 
         <div>
@@ -129,17 +146,17 @@
   <section
     class="empty-results"
     *ngIf="hasSimulation && !results.length"
-    >
+  >
     <span class="material-symbols-rounded">
-        search_off
+      search_off
     </span>
 
     <h2>
-        Não foram encontradas ofertas
+      Não foram encontradas ofertas
     </h2>
 
     <p>
-        Não existe atualmente nenhuma tarifa compatível com os critérios introduzidos.
+      Não existe atualmente nenhuma tarifa compatível com os critérios introduzidos.
     </p>
   </section>
 </section>
