@@ -11,7 +11,7 @@ import {
 import {
   ELECTRICITY_POWERS,
   OTHER_POWER,
-} from '../../core/constants/electricity';
+} from '../../core/constants/energy';
 
 type PowerKvaSelection = number | typeof OTHER_POWER;
 

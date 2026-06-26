@@ -25,7 +25,9 @@ import { Auth } from '../../../core/services/auth';
 import {
   ELECTRICITY_POWERS,
   OTHER_POWER,
-} from '../../../core/constants/electricity';
+  GAS_LEVELS,
+  OTHER_GAS_LEVEL,
+} from '../../../core/constants/energy';
 
 type TipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 type TipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
@@ -71,7 +73,17 @@ export class RepsolContractCreate implements OnInit {
   readonly availablePowers = ELECTRICITY_POWERS;
   readonly otherPowerValue = OTHER_POWER;
 
-  customPower = '';
+  readonly availableGasLevels = GAS_LEVELS;
+
+  readonly otherGasLevelValue = OTHER_GAS_LEVEL;
+
+  customGasLevel: number | null = null;
+
+  customPower: number | null = null;
+
+  campaignSelectionMode: 'existing' | 'other' = 'existing';
+
+  customCampaign = '';
 
   tipoSegmentoOptions: TipoSegmento[] = [
     'Residencial',
@@ -185,7 +197,7 @@ export class RepsolContractCreate implements OnInit {
 
     potencia: '6.90' as ContractPowerSelection,
 
-    escalao: 1 as number | null,
+    escalao: 1 as number | typeof OTHER_GAS_LEVEL,
     cicloHorario: 'Simples',
     nivelTensao: 'Monofásico',
 
@@ -204,10 +216,6 @@ export class RepsolContractCreate implements OnInit {
       .subscribe({
         next: (campaigns) => {
           this.campaigns = campaigns;
-
-          if (!this.contractForm.campanha && campaigns.length) {
-            this.contractForm.campanha = campaigns[0].id;
-          }
         },
         error: () => {
           this.errorMessage = 'Não foi possível carregar as campanhas.';
@@ -378,12 +386,37 @@ export class RepsolContractCreate implements OnInit {
     this.addIfFilled(payload, 'moradaInstalacao', this.getMoradaInstalacao());
     this.addIfFilled(payload, 'moradaFaturacao', this.getMoradaFaturacao());
 
-    payload['faturaEletronica'] = this.contractForm.faturaEletronica;
-    payload['sva'] = this.contractForm.sva;
-    payload['debitoDireto'] = this.contractForm.debitoDireto;
+    this.addBoolean(
+      payload,
+      'faturaEletronica',
+      this.contractForm.faturaEletronica,
+    );
+
+    this.addBoolean(
+      payload,
+      'sva',
+      this.contractForm.sva,
+    );
+
+    this.addBoolean(
+      payload,
+      'debitoDireto',
+      this.contractForm.debitoDireto,
+    );
 
     this.addIfFilled(payload, 'iban', this.contractForm.iban);
-    this.addIfFilled(payload, 'campanha', this.contractForm.campanha);
+    
+    const campaign =
+      this.campaignSelectionMode === 'other'
+        ? this.customCampaign.trim()
+        : this.contractForm.campanha;
+
+    this.addIfFilled(
+      payload,
+      'campanha',
+      campaign,
+    );
+
     this.addIfFilled(
       payload,
       'antigaComercializadora',
@@ -392,7 +425,18 @@ export class RepsolContractCreate implements OnInit {
     this.addIfFilled(payload, 'cpe', this.contractForm.cpe);
     this.addIfFilled(payload, 'cui', this.contractForm.cui);
     this.addIfFilled(payload, 'potencia', contractPower);
-    this.addIfFilled(payload, 'escalao', this.contractForm.escalao);
+
+    const gasLevel =
+      this.contractForm.escalao === OTHER_GAS_LEVEL
+        ? this.customGasLevel
+        : this.contractForm.escalao;
+
+    this.addIfFilled(
+      payload,
+      'escalao',
+      gasLevel,
+    );
+
     this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
     this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
     this.addIfFilled(payload, 'observacoes', this.contractForm.observacoes);
@@ -437,12 +481,10 @@ export class RepsolContractCreate implements OnInit {
     return this.contractForm.moradaFaturacaoSelecao === 'Outra';
   }
 
-  private getContractPowerValue(): string {
-    if (this.contractForm.potencia === OTHER_POWER) {
-      return this.customPower.trim();
-    }
-
-    return this.contractForm.potencia;
+  private getContractPowerValue(): string | number {
+    return this.contractForm.potencia === OTHER_POWER
+      ? this.customPower!
+      : this.contractForm.potencia;
   }
 
   private buildAddress(
@@ -500,6 +542,14 @@ export class RepsolContractCreate implements OnInit {
       return;
     }
 
+    payload[key] = value;
+  }
+
+  private addBoolean(
+    payload: Record<string, unknown>,
+    key: string,
+    value: boolean,
+  ): void {
     payload[key] = value;
   }
 

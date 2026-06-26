@@ -15,3 +15,12 @@ export const ELECTRICITY_POWERS = [
 ] as const;
 
 export const OTHER_POWER = 'other';
+
+export const GAS_LEVELS = [
+  1,
+  2,
+  3,
+  4,
+] as const;
+
+export const OTHER_GAS_LEVEL = 'other';

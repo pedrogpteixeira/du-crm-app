@@ -59,9 +59,11 @@
 
       <label *ngIf="form.powerKva === otherPowerValue">
         Outra potência
+
         <input
           type="number"
           step="0.01"
+          min="0"
           placeholder="Ex.: 9.20"
           [(ngModel)]="customPower"
         />
