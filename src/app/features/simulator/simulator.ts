@@ -104,13 +104,19 @@ export class Simulator {
     this.hasLogoError[provider] = true;
   }
 
-  getTariffTypeLabel(tariffType: string): string {
+  getTariffTypeLabel(tariffType?: string): string {
+    if (!tariffType) {
+      return '—';
+    }
+
     const labels: Record<string, string> = {
       simple: 'Simples',
       bi_hourly: 'Bi-horário',
       'bi-hourly': 'Bi-horário',
       tri_hourly: 'Tri-horário',
       'tri-hourly': 'Tri-horário',
+      tetra_hourly: 'Tetra-horário',
+      'tetra-hourly': 'Tetra-horário',
     };
 
     return labels[tariffType] || tariffType;

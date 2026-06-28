@@ -105,6 +105,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'invoice-compare',
+        loadComponent: () =>
+          import('./features/simulator/invoice-compare/invoice-compare').then(
+            (m) => m.InvoiceCompare,
+          ),
+      },
+      {
         path: 'preferences',
         loadComponent: () =>
           import('./features/preferences/preferences').then(
