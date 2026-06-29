@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -26,6 +26,7 @@ type GasTierSelection = number | typeof OTHER_GAS_LEVEL;
   selector: 'app-invoice-compare',
   imports: [CommonModule, FormsModule],
   templateUrl: './invoice-compare.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './invoice-compare.scss',
 })
 export class InvoiceCompare {
@@ -94,8 +95,7 @@ export class InvoiceCompare {
       },
       error: (error) => {
         this.errorMessage =
-          error?.error?.message ||
-          'Não foi possível realizar a comparação da fatura.';
+          error?.error?.message || 'Não foi possível realizar a comparação da fatura.';
       },
       complete: () => {
         this.isLoading = false;
@@ -153,52 +153,31 @@ export class InvoiceCompare {
   }
 
   shouldShowElectricityFields(): boolean {
-    return (
-      this.form.productType === 'electricity' ||
-      this.form.productType === 'dual'
-    );
+    return this.form.productType === 'electricity' || this.form.productType === 'dual';
   }
 
   shouldShowGasFields(): boolean {
-    return (
-      this.form.productType === 'gas' ||
-      this.form.productType === 'dual'
-    );
+    return this.form.productType === 'gas' || this.form.productType === 'dual';
   }
 
   shouldShowCycleType(): boolean {
-    return (
-      this.shouldShowElectricityFields() &&
-      this.form.tariffType !== 'simple'
-    );
+    return this.shouldShowElectricityFields() && this.form.tariffType !== 'simple';
   }
 
   shouldShowSimpleConsumption(): boolean {
-    return (
-      this.shouldShowElectricityFields() &&
-      this.form.tariffType === 'simple'
-    );
+    return this.shouldShowElectricityFields() && this.form.tariffType === 'simple';
   }
 
   shouldShowBiHourlyConsumption(): boolean {
-    return (
-      this.shouldShowElectricityFields() &&
-      this.form.tariffType === 'bi_hourly'
-    );
+    return this.shouldShowElectricityFields() && this.form.tariffType === 'bi_hourly';
   }
 
   shouldShowTriHourlyConsumption(): boolean {
-    return (
-      this.shouldShowElectricityFields() &&
-      this.form.tariffType === 'tri_hourly'
-    );
+    return this.shouldShowElectricityFields() && this.form.tariffType === 'tri_hourly';
   }
 
   shouldShowTetraHourlyConsumption(): boolean {
-    return (
-      this.shouldShowElectricityFields() &&
-      this.form.tariffType === 'tetra_hourly'
-    );
+    return this.shouldShowElectricityFields() && this.form.tariffType === 'tetra_hourly';
   }
 
   getTariffTypeLabel(tariffType?: string): string {
@@ -283,11 +262,7 @@ export class InvoiceCompare {
       }
 
       if (this.form.tariffType === 'simple') {
-        this.addIfFilled(
-          payload,
-          'electricityConsumptionKwh',
-          this.form.electricityConsumptionKwh,
-        );
+        this.addIfFilled(payload, 'electricityConsumptionKwh', this.form.electricityConsumptionKwh);
       }
 
       if (this.form.tariffType === 'bi_hourly') {
@@ -325,11 +300,7 @@ export class InvoiceCompare {
 
       payload.gasTier = gasTier;
 
-      this.addIfFilled(
-        payload,
-        'gasConsumptionKwh',
-        this.form.gasConsumptionKwh,
-      );
+      this.addIfFilled(payload, 'gasConsumptionKwh', this.form.gasConsumptionKwh);
     }
 
     return payload;
@@ -371,11 +342,7 @@ export class InvoiceCompare {
     this.form.gasConsumptionKwh = null;
   }
 
-  private addIfFilled<T extends object>(
-    payload: T,
-    key: string,
-    value: unknown,
-  ): void {
+  private addIfFilled<T extends object>(payload: T, key: string, value: unknown): void {
     if (value === null || value === undefined || value === '') {
       return;
     }
@@ -404,10 +371,7 @@ export class InvoiceCompare {
   }
 
   hasGasPrices(offer: InvoiceComparisonOffer): boolean {
-    return (
-      !!offer.tariff.fixedTermPerDay ||
-      !!offer.tariff.gasEnergyPrice
-    );
+    return !!offer.tariff.fixedTermPerDay || !!offer.tariff.gasEnergyPrice;
   }
 
   hasCampaignDates(offer: InvoiceComparisonOffer): boolean {
@@ -415,8 +379,7 @@ export class InvoiceCompare {
   }
 
   hasDualCostBreakdown(offer: InvoiceComparisonOffer): boolean {
-    return !!offer.simulation.details.electricityCost ||
-      !!offer.simulation.details.gasCost;
+    return !!offer.simulation.details.electricityCost || !!offer.simulation.details.gasCost;
   }
 
   formatDecimalPrice(value?: number): string {

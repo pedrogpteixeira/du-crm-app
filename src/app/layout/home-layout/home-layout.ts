@@ -1,4 +1,4 @@
-import { Component, OnInit, inject} from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 import { SocketService } from '../../core/services/socket';
@@ -8,6 +8,7 @@ import { PreferencesService } from '../../core/services/preferences';
   selector: 'app-home-layout',
   imports: [RouterOutlet, Sidebar],
   templateUrl: './home-layout.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './home-layout.scss',
 })
 export class HomeLayout implements OnInit {

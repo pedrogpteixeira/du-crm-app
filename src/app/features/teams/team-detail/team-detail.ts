@@ -1,18 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment.development';
 
-import {
-  Team,
-  TeamService,
-  TeamUser,
-} from '../../../core/services/team';
+import { Team, TeamService, TeamUser } from '../../../core/services/team';
 
 @Component({
   selector: 'app-team-detail',
   imports: [CommonModule, RouterLink],
   templateUrl: './team-detail.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './team-detail.scss',
 })
 export class TeamDetail implements OnInit {

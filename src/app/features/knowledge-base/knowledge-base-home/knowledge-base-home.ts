@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Company, CompanyService } from '../../../core/services/company';
@@ -18,6 +18,7 @@ interface KnowledgeCompanyConfig {
   selector: 'app-knowledge-base-home',
   imports: [CommonModule],
   templateUrl: './knowledge-base-home.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-base-home.scss',
 })
 export class KnowledgeBaseHome implements OnInit {
@@ -144,45 +145,32 @@ export class KnowledgeBaseHome implements OnInit {
     );
   }
 
-  openCompanyAction(
-    company: KnowledgeCompanyConfig,
-    action: KnowledgeCompanyAction,
-  ): void {
+  openCompanyAction(company: KnowledgeCompanyConfig, action: KnowledgeCompanyAction): void {
     if (action === 'campaigns') {
-      this.router.navigate(
-        ['/home/knowledge-base/campaigns', company.companyId],
-        {
-          queryParams: {
-            name: company.name,
-          },
+      this.router.navigate(['/home/knowledge-base/campaigns', company.companyId], {
+        queryParams: {
+          name: company.name,
         },
-      );
+      });
 
       return;
     }
 
-    const folderId =
-      action === 'forms'
-        ? company.formsFolderId
-        : company.trainingFolderId;
+    const folderId = action === 'forms' ? company.formsFolderId : company.trainingFolderId;
 
     if (!folderId) {
-      this.errorMessage =
-        'Ainda não existe uma pasta configurada para esta opção.';
+      this.errorMessage = 'Ainda não existe uma pasta configurada para esta opção.';
 
       return;
     }
 
-    this.router.navigate(
-      ['/home/knowledge-base/folders', folderId],
-      {
-        queryParams: {
-          name:
-            action === 'forms'
-              ? `${company.name} - Formulários de Adesão`
-              : `${company.name} - Formações`,
-        },
+    this.router.navigate(['/home/knowledge-base/folders', folderId], {
+      queryParams: {
+        name:
+          action === 'forms'
+            ? `${company.name} - Formulários de Adesão`
+            : `${company.name} - Formações`,
       },
-    );
+    });
   }
 }

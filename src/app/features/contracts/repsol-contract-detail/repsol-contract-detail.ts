@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import {
@@ -15,6 +15,7 @@ import { SocketService } from '../../../core/services/socket';
   selector: 'app-repsol-contract-detail',
   imports: [CommonModule, RouterLink],
   templateUrl: './repsol-contract-detail.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './repsol-contract-detail.scss',
 })
 export class RepsolContractDetail implements OnInit {
@@ -36,11 +37,9 @@ export class RepsolContractDetail implements OnInit {
 
   ngOnInit(): void {
     const collapseByDefault =
-    this.preferencesService.getPreferences()
-      .contractDetailsCollapsedByDefault;
+      this.preferencesService.getPreferences().contractDetailsCollapsedByDefault;
 
-    this.collapsedSections =
-      this.buildCollapsedSections(collapseByDefault);
+    this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
     this.route.paramMap.subscribe((params) => {
       this.contractId = params.get('id') as string;
 
@@ -50,24 +49,23 @@ export class RepsolContractDetail implements OnInit {
     });
 
     this.socketService.listenRepsolContractUpdated().subscribe((event) => {
-  if (event.contractId !== this.contractId) {
-    return;
-  }
+      if (event.contractId !== this.contractId) {
+        return;
+      }
 
-  this.socketMessage =
-  `Este contrato foi atualizado por outro utilizador às ${new Date().toLocaleTimeString('pt-PT')}.`;
+      this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${new Date().toLocaleTimeString('pt-PT')}.`;
 
-  this.loadContract(this.contractId);
-  this.lastSocketUpdate = new Date().toLocaleTimeString('pt-PT');
+      this.loadContract(this.contractId);
+      this.lastSocketUpdate = new Date().toLocaleTimeString('pt-PT');
 
-  setTimeout(() => {
-      this.lastSocketUpdate = '';
-  }, 5000);
+      setTimeout(() => {
+        this.lastSocketUpdate = '';
+      }, 5000);
 
-  setTimeout(() => {
-      this.socketMessage = '';
-    }, 5000);
-  });
+      setTimeout(() => {
+        this.socketMessage = '';
+      }, 5000);
+    });
   }
 
   loadContract(contractId: string): void {
@@ -120,26 +118,24 @@ export class RepsolContractDetail implements OnInit {
       return;
     }
 
-    this.repsolContractService
-      .downloadDocument(this.contract.id, file)
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
+    this.repsolContractService.downloadDocument(this.contract.id, file).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
 
-          const link = window.document.createElement('a');
-          link.href = url;
-          link.download = file.originalName || file.fileName;
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.download = file.originalName || file.fileName;
 
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
 
-          window.URL.revokeObjectURL(url);
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível descarregar o anexo.';
-        },
-      });
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível descarregar o anexo.';
+      },
+    });
   }
 
   formatBoolean(value: boolean): string {

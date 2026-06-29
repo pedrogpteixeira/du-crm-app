@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 
@@ -11,6 +11,7 @@ import { environment } from '../../../../environments/environment.development';
   selector: 'app-user-detail',
   imports: [CommonModule, RouterLink],
   templateUrl: './user-detail.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './user-detail.scss',
 })
 export class UserDetail implements OnInit {

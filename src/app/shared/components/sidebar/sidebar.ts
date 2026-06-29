@@ -5,6 +5,7 @@ import {
   Input,
   Output,
   inject,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -16,6 +17,7 @@ import { AuthUser } from '../../../core/models/auth-user';
   selector: 'app-sidebar',
   imports: [RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './sidebar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {

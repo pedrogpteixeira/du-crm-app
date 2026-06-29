@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +16,7 @@ import { Company, CompanyService } from '../../../core/services/company';
   selector: 'app-knowledge-folder',
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-folder.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-folder.scss',
 })
 export class KnowledgeFolder implements OnInit {
@@ -59,8 +60,7 @@ export class KnowledgeFolder implements OnInit {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
 
-      this.folderName =
-        this.route.snapshot.queryParamMap.get('name') || 'Pasta';
+      this.folderName = this.route.snapshot.queryParamMap.get('name') || 'Pasta';
 
       if (this.folderId) {
         this.loadFolderContents(this.folderId);
@@ -79,9 +79,7 @@ export class KnowledgeFolder implements OnInit {
         this.currentFolder = contents.currentFolder ?? null;
 
         this.folderName =
-          contents.currentFolder?.name ||
-          this.route.snapshot.queryParamMap.get('name') ||
-          'Pasta';
+          contents.currentFolder?.name || this.route.snapshot.queryParamMap.get('name') || 'Pasta';
 
         this.subfolders = contents.folders;
         this.articles = contents.articles;
@@ -108,14 +106,11 @@ export class KnowledgeFolder implements OnInit {
 
   createFolder(): void {
     const duplicate = this.subfolders.some(
-      (folder) =>
-        folder.name.trim().toLowerCase() ===
-        this.newFolder.name.trim().toLowerCase(),
+      (folder) => folder.name.trim().toLowerCase() === this.newFolder.name.trim().toLowerCase(),
     );
 
     if (duplicate) {
-      this.errorMessage =
-        'Já existe uma pasta com esse nome.';
+      this.errorMessage = 'Já existe uma pasta com esse nome.';
       return;
     }
 

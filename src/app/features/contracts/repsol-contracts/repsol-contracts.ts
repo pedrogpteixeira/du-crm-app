@@ -1,7 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, 
-  //DestroyRef 
-} from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 //import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -16,12 +14,11 @@ import { SocketService } from '../../../core/services/socket';
 import { PreferencesService } from '../../../core/services/preferences';
 import { environment } from '../../../../environments/environment.development';
 
-
-
 @Component({
   selector: 'app-repsol-contracts',
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './repsol-contracts.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './repsol-contracts.scss',
 })
 export class RepsolContracts implements OnInit {
@@ -30,7 +27,7 @@ export class RepsolContracts implements OnInit {
   //private readonly destroyRef = inject(DestroyRef);
   private readonly preferencesService = inject(PreferencesService);
   private readonly clientService = inject(ClientService);
-  
+
   contracts: RepsolContract[] = [];
 
   isLoading = false;
@@ -72,17 +69,13 @@ export class RepsolContracts implements OnInit {
   ngOnInit(): void {
     this.loadContracts();
 
-    this.socketService
-      .listenRepsolContractCreated()
-      .subscribe(() => {
-        this.loadContracts();
-      });
+    this.socketService.listenRepsolContractCreated().subscribe(() => {
+      this.loadContracts();
+    });
 
-    this.socketService
-      .listenRepsolContractUpdated()
-      .subscribe(() => {
-        this.loadContracts();
-      });
+    this.socketService.listenRepsolContractUpdated().subscribe(() => {
+      this.loadContracts();
+    });
   }
 
   loadContracts(): void {
@@ -131,7 +124,10 @@ export class RepsolContracts implements OnInit {
 
     this.newContract.teams = currentUser.teams?.map((team: any) => team.id) || [];
 
-    if (currentUser.defaultTeam?.id && !this.newContract.teams.includes(currentUser.defaultTeam.id)) {
+    if (
+      currentUser.defaultTeam?.id &&
+      !this.newContract.teams.includes(currentUser.defaultTeam.id)
+    ) {
       this.newContract.teams.push(currentUser.defaultTeam.id);
     }
 

@@ -1,17 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import {
-  SimulatorRequest,
-  SimulatorResult,
-  SimulatorService,
-} from '../../core/services/simulator';
+import { SimulatorRequest, SimulatorResult, SimulatorService } from '../../core/services/simulator';
 
-import {
-  ELECTRICITY_POWERS,
-  OTHER_POWER,
-} from '../../core/constants/energy';
+import { ELECTRICITY_POWERS, OTHER_POWER } from '../../core/constants/energy';
 
 type PowerKvaSelection = number | typeof OTHER_POWER;
 
@@ -19,6 +12,7 @@ type PowerKvaSelection = number | typeof OTHER_POWER;
   selector: 'app-simulator',
   imports: [CommonModule, FormsModule],
   templateUrl: './simulator.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './simulator.scss',
 })
 export class Simulator {
@@ -48,10 +42,7 @@ export class Simulator {
   results: SimulatorResult[] = [];
 
   simulate(): void {
-    const powerKva =
-      this.form.powerKva === OTHER_POWER
-        ? this.customPower
-        : this.form.powerKva;
+    const powerKva = this.form.powerKva === OTHER_POWER ? this.customPower : this.form.powerKva;
 
     if (!powerKva) {
       this.errorMessage = 'A potência contratada é obrigatória.';
@@ -74,8 +65,7 @@ export class Simulator {
         this.hasSimulation = true;
       },
       error: () => {
-        this.errorMessage =
-          'Não foi possível realizar a simulação.';
+        this.errorMessage = 'Não foi possível realizar a simulação.';
       },
       complete: () => {
         this.isLoading = false;

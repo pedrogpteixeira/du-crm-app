@@ -1,16 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import {
-  Team,
-  TeamService,
-} from '../../core/services/team';
+import { Team, TeamService } from '../../core/services/team';
 
 @Component({
   selector: 'app-teams',
   imports: [CommonModule, RouterLink],
   templateUrl: './teams.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './teams.scss',
 })
 export class Teams implements OnInit {
@@ -34,8 +32,7 @@ export class Teams implements OnInit {
         this.teams = teams;
       },
       error: () => {
-        this.errorMessage =
-          'Não foi possível carregar as equipas.';
+        this.errorMessage = 'Não foi possível carregar as equipas.';
       },
       complete: () => {
         this.isLoading = false;

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -17,6 +17,7 @@ import { environment } from '../../../../environments/environment.development';
   selector: 'app-knowledge-article',
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-article.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-article.scss',
 })
 export class KnowledgeArticle implements OnInit {
@@ -61,8 +62,7 @@ export class KnowledgeArticle implements OnInit {
 
       this.folderId = this.route.snapshot.queryParamMap.get('folderId');
       this.folderName =
-        this.route.snapshot.queryParamMap.get('folderName') ||
-        'Base de Conhecimento';
+        this.route.snapshot.queryParamMap.get('folderName') || 'Base de Conhecimento';
 
       if (this.articleId) {
         this.loadArticle(this.articleId);
@@ -203,10 +203,7 @@ export class KnowledgeArticle implements OnInit {
           return;
         }
 
-        this.router.navigate([
-          '/home/knowledge-base/folders',
-          this.article.folderId,
-        ]);
+        this.router.navigate(['/home/knowledge-base/folders', this.article.folderId]);
       },
       error: () => {
         this.errorMessage = 'Não foi possível eliminar o artigo.';
@@ -231,19 +228,17 @@ export class KnowledgeArticle implements OnInit {
     this.deletingAttachmentFileName = fileName;
     this.errorMessage = '';
 
-    this.knowledgeBaseService
-      .deleteArticleAttachment(this.article.id, fileName)
-      .subscribe({
-        next: (updatedArticle) => {
-          this.article = updatedArticle;
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível eliminar o anexo.';
-        },
-        complete: () => {
-          this.deletingAttachmentFileName = null;
-        },
-      });
+    this.knowledgeBaseService.deleteArticleAttachment(this.article.id, fileName).subscribe({
+      next: (updatedArticle) => {
+        this.article = updatedArticle;
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível eliminar o anexo.';
+      },
+      complete: () => {
+        this.deletingAttachmentFileName = null;
+      },
+    });
   }
 
   downloadAttachment(attachment: KnowledgeAttachment): void {
@@ -251,26 +246,24 @@ export class KnowledgeArticle implements OnInit {
       return;
     }
 
-    this.knowledgeBaseService
-      .downloadAttachment(attachment, this.article.id)
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
+    this.knowledgeBaseService.downloadAttachment(attachment, this.article.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
 
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = attachment.originalName || attachment.fileName;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.originalName || attachment.fileName;
 
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-          window.URL.revokeObjectURL(url);
-        },
-        error: () => {
-          this.errorMessage = 'Não foi possível descarregar o anexo.';
-        },
-      });
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível descarregar o anexo.';
+      },
+    });
   }
 
   onDragOver(event: DragEvent): void {

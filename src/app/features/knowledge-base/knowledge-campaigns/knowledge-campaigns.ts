@@ -1,17 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import {
-  Campaign,
-  CampaignService,
-} from '../../../core/services/campaign';
+import { Campaign, CampaignService } from '../../../core/services/campaign';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-knowledge-campaigns',
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './knowledge-campaigns.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-campaigns.scss',
 })
 export class KnowledgeCampaigns implements OnInit {
@@ -42,8 +40,7 @@ export class KnowledgeCampaigns implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
       this.companyId = params.get('companyId') || '';
-      this.companyName =
-        this.route.snapshot.queryParamMap.get('name') || 'Empresa';
+      this.companyName = this.route.snapshot.queryParamMap.get('name') || 'Empresa';
 
       if (this.companyId) {
         this.loadCampaigns();
@@ -82,9 +79,7 @@ export class KnowledgeCampaigns implements OnInit {
       .subscribe({
         next: (updatedCampaign) => {
           this.campaigns = this.campaigns.map((item) =>
-            item.id === updatedCampaign.id
-              ? updatedCampaign
-              : item,
+            item.id === updatedCampaign.id ? updatedCampaign : item,
           );
 
           this.successMessage = updatedCampaign.active
@@ -141,36 +136,29 @@ export class KnowledgeCampaigns implements OnInit {
     };
 
     if (this.newCampaign.startDate) {
-      payload.startDate = new Date(
-        this.newCampaign.startDate,
-      ).toISOString();
+      payload.startDate = new Date(this.newCampaign.startDate).toISOString();
     }
 
     if (this.newCampaign.endDate) {
-      payload.endDate = new Date(
-        this.newCampaign.endDate,
-      ).toISOString();
+      payload.endDate = new Date(this.newCampaign.endDate).toISOString();
     }
 
-    this.campaignService.createCampaign(payload)
-      .subscribe({
-        next: (campaign) => {
-          this.campaigns = [campaign, ...this.campaigns];
+    this.campaignService.createCampaign(payload).subscribe({
+      next: (campaign) => {
+        this.campaigns = [campaign, ...this.campaigns];
 
-          this.closeCreateCampaignModal();
+        this.closeCreateCampaignModal();
 
-          this.successMessage = 'Campanha criada com sucesso.';
-          this.clearSuccessMessage();
-        },
-        error: (error) => {
-          this.errorMessage =
-            error.error?.message ||
-            'Não foi possível criar a campanha.';
-        },
-        complete: () => {
-          this.isCreatingCampaign = false;
-        },
-      });
+        this.successMessage = 'Campanha criada com sucesso.';
+        this.clearSuccessMessage();
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Não foi possível criar a campanha.';
+      },
+      complete: () => {
+        this.isCreatingCampaign = false;
+      },
+    });
   }
 
   formatDate(date?: string | null): string {
@@ -212,9 +200,7 @@ export class KnowledgeCampaigns implements OnInit {
 
     this.campaignService.deleteCampaign(campaign.id).subscribe({
       next: () => {
-        this.campaigns = this.campaigns.filter(
-          (item) => item.id !== campaign.id,
-        );
+        this.campaigns = this.campaigns.filter((item) => item.id !== campaign.id);
 
         this.successMessage = 'Campanha eliminada com sucesso.';
         this.clearSuccessMessage();

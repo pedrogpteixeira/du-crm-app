@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import {FormBuilder, ReactiveFormsModule, Validators,} from '@angular/forms';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 
@@ -8,6 +8,7 @@ import { Auth } from '../../../core/services/auth';
   selector: 'app-login',
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './login.scss',
 })
 export class Login {
@@ -40,8 +41,7 @@ export class Login {
       },
 
       error: (error) => {
-        this.errorMessage =
-          error.error?.message || 'Invalid credentials.';
+        this.errorMessage = error.error?.message || 'Invalid credentials.';
 
         this.isLoading = false;
       },

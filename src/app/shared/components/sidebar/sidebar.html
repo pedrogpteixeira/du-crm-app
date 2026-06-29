@@ -1,7 +1,5 @@
 <aside class="sidebar" [class.collapsed]="collapsed">
-  <button class="toggle-btn" type="button" (click)="toggle.emit()">
-    ☰
-  </button>
+  <button class="toggle-btn" type="button" (click)="toggle.emit()">☰</button>
 
   <div class="brand">
     <div class="brand-icon">Certo</div>
@@ -66,7 +64,7 @@
       <img
         *ngIf="profilePictureUrl; else initials"
         [src]="profilePictureUrl"
-        [alt]="user?.name"
+        [alt]="$safeNavigationMigration($safeNavigationMigration(user?.name))"
       />
 
       <ng-template #initials>

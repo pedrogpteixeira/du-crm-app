@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -13,6 +13,7 @@ import {
   selector: 'app-preferences',
   imports: [CommonModule, FormsModule],
   templateUrl: './preferences.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './preferences.scss',
 })
 export class Preferences implements OnInit {

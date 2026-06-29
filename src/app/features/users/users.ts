@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { SocketService } from '../../core/services/socket';
@@ -10,6 +10,7 @@ import { environment } from '../../../environments/environment.development';
   selector: 'app-users',
   imports: [CommonModule, RouterLink],
   templateUrl: './users.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './users.scss',
 })
 export class Users implements OnInit {

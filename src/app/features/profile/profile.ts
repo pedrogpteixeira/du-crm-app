@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -10,15 +10,13 @@ import { UserService } from '../../core/services/user';
 import { SocketService } from '../../core/services/socket';
 import { AuthUser, UserTeam } from '../../core/models/auth-user';
 
-import {
-  ImageCropperComponent,
-  ImageCroppedEvent,
-} from 'ngx-image-cropper';
+import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 
 @Component({
   selector: 'app-profile',
   imports: [CommonModule, FormsModule, ImageCropperComponent, RouterLink],
   templateUrl: './profile.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.scss',
 })
 export class Profile implements OnInit {
@@ -54,10 +52,7 @@ export class Profile implements OnInit {
     const currentUser = this.auth.getCurrentUser();
 
     if (!currentUser?.id) {
-      this.showTemporaryMessage(
-        'error',
-        'Não foi possível identificar o utilizador autenticado.',
-      );
+      this.showTemporaryMessage('error', 'Não foi possível identificar o utilizador autenticado.');
 
       return;
     }
@@ -85,10 +80,7 @@ export class Profile implements OnInit {
         this.isCurrentUserOnline$ = this.socketService.isOnline$(this.user.id);
       },
       error: () => {
-        this.showTemporaryMessage(
-          'error',
-          'Não foi possível carregar o perfil atualizado.',
-        );
+        this.showTemporaryMessage('error', 'Não foi possível carregar o perfil atualizado.');
       },
       complete: () => {
         this.isLoadingProfile = false;
@@ -217,13 +209,9 @@ export class Profile implements OnInit {
       return;
     }
 
-    const file = new File(
-      [this.croppedImageBlob],
-      'profile-picture.png',
-      {
-        type: 'image/png',
-      },
-    );
+    const file = new File([this.croppedImageBlob], 'profile-picture.png', {
+      type: 'image/png',
+    });
 
     this.isUploadingPhoto = true;
 
@@ -240,10 +228,7 @@ export class Profile implements OnInit {
         this.showImageCropper = false;
       },
       error: () => {
-        this.showTemporaryMessage(
-          'error',
-          'Não foi possível atualizar a fotografia de perfil.',
-        );
+        this.showTemporaryMessage('error', 'Não foi possível atualizar a fotografia de perfil.');
       },
       complete: () => {
         this.isUploadingPhoto = false;
@@ -289,15 +274,12 @@ export class Profile implements OnInit {
 
     const diffMs = now.getTime() - accessDate.getTime();
 
-    const diffDays = Math.floor(
-      diffMs / (1000 * 60 * 60 * 24),
-    );
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    const formattedTime =
-      accessDate.toLocaleTimeString('pt-PT', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+    const formattedTime = accessDate.toLocaleTimeString('pt-PT', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
     if (diffDays === 0) {
       return `Hoje às ${formattedTime}`;
