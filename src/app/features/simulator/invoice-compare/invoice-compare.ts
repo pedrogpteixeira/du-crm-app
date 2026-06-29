@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import {
   CycleType,
@@ -31,6 +32,7 @@ type GasTierSelection = number | typeof OTHER_GAS_LEVEL;
 })
 export class InvoiceCompare {
   private readonly simulatorService = inject(SimulatorService);
+  private readonly router = inject(Router);
 
   readonly availablePowers = ELECTRICITY_POWERS;
   readonly otherPowerValue = OTHER_POWER;
@@ -409,5 +411,21 @@ export class InvoiceCompare {
       month: 'short',
       year: 'numeric',
     }).format(parsedDate);
+  }
+
+  openProposalPreview(offer: InvoiceComparisonOffer): void {
+    this.router.navigate(
+      ['/home/simulator/proposal-preview'],
+      {
+        state: {
+          offer,
+          current: {
+            provider: this.form.currentProvider,
+            invoiceAmount: this.form.currentInvoiceAmount,
+            days: this.form.days,
+          },
+        },
+      },
+    );
   }
 }

@@ -98,6 +98,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'simulator/proposal-preview',
+        loadComponent: () =>
+          import('./features/simulator/proposal-preview/proposal-preview').then(
+            (m) => m.ProposalPreview,
+          ),
+      },
+      {
         path: 'simulator',
         loadComponent: () =>
           import('./features/simulator/simulator').then(
