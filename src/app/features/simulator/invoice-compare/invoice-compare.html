@@ -442,6 +442,71 @@
       </div>
     </section>
 
+    <section
+      class="modal-section"
+      *ngIf="hasDualCostBreakdown(selectedOffer)"
+    >
+      <h3>Detalhe Luz + Gás</h3>
+
+      <div class="dual-cost-grid">
+        <div
+          class="dual-cost-card"
+          *ngIf="selectedOffer.simulation.details.electricityCost"
+        >
+          <h4>Eletricidade</h4>
+
+          <div>
+            <span>Custo fixo</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.fixedCost) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Custo energia</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.energyCost) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Total eletricidade</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.totalCost) }}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          class="dual-cost-card"
+          *ngIf="selectedOffer.simulation.details.gasCost"
+        >
+          <h4>Gás</h4>
+
+          <div>
+            <span>Custo fixo</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.gasCost.fixedCost) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Custo energia</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.gasCost.energyCost) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Total gás</span>
+            <strong>
+              {{ formatCurrency(selectedOffer.simulation.details.gasCost.totalCost) }}
+            </strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="modal-section">
       <h3>Composição do preço</h3>
 
@@ -554,71 +619,6 @@
           <strong>
             {{ formatDecimalPrice(selectedOffer.tariff.gasEnergyPrice) }} €/kWh
           </strong>
-        </div>
-      </div>
-    </section>
-
-    <section
-      class="modal-section"
-      *ngIf="hasDualCostBreakdown(selectedOffer)"
-    >
-      <h3>Detalhe Luz + Gás</h3>
-
-      <div class="dual-cost-grid">
-        <div
-          class="dual-cost-card"
-          *ngIf="selectedOffer.simulation.details.electricityCost"
-        >
-          <h4>Eletricidade</h4>
-
-          <div>
-            <span>Custo fixo</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.fixedCost) }}
-            </strong>
-          </div>
-
-          <div>
-            <span>Custo energia</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.energyCost) }}
-            </strong>
-          </div>
-
-          <div>
-            <span>Total eletricidade</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.totalCost) }}
-            </strong>
-          </div>
-        </div>
-
-        <div
-          class="dual-cost-card"
-          *ngIf="selectedOffer.simulation.details.gasCost"
-        >
-          <h4>Gás</h4>
-
-          <div>
-            <span>Custo fixo</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.fixedCost) }}
-            </strong>
-          </div>
-
-          <div>
-            <span>Custo energia</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.energyCost) }}
-            </strong>
-          </div>
-
-          <div>
-            <span>Total gás</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.totalCost) }}
-            </strong>
-          </div>
         </div>
       </div>
     </section>
