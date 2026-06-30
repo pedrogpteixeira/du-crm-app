@@ -1,0 +1,207 @@
+<section class="tariff-create-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Simulador › Tarifários</span>
+      <h1>Novo Tarifário de Simulação</h1>
+      <p>Cria tarifários usados pelo simulador energético.</p>
+    </div>
+  </header>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <article class="card">
+    <div class="section-title">Dados gerais</div>
+
+    <div class="form-grid">
+      <label>
+        Empresa *
+
+        <select
+            [(ngModel)]="form.companyId"
+            [disabled]="isLoadingCompanies"
+        >
+            <option value="" disabled>
+            Selecione uma empresa
+            </option>
+
+            <option
+            *ngFor="let company of companies"
+            [value]="company.id"
+            >
+            {{ company.name }}
+            </option>
+        </select>
+      </label>
+
+      <label>
+        Nome *
+        <input type="text" [(ngModel)]="form.name" />
+      </label>
+
+      <label>
+        Produto *
+        <select
+          [(ngModel)]="form.productType"
+          (ngModelChange)="onProductTypeChange()"
+        >
+          <option value="electricity">Eletricidade</option>
+          <option value="gas">Gás</option>
+          <option value="dual">Luz + Gás</option>
+        </select>
+      </label>
+
+      <label>
+        Segmento
+        <select [(ngModel)]="form.segment">
+          <option value="residential">Residencial</option>
+          <option value="business">Empresarial</option>
+          <option value="condominium">Condomínio</option>
+        </select>
+      </label>
+
+      <label>
+        Início
+        <input type="date" [(ngModel)]="form.startDate" />
+      </label>
+
+      <label>
+        Fim
+        <input type="date" [(ngModel)]="form.endDate" />
+      </label>
+    </div>
+  </article>
+
+  <article class="card" *ngIf="shouldShowElectricityFields()">
+    <div class="section-title">Eletricidade</div>
+
+    <div class="form-grid">
+      <label>
+        Tipo tarifário *
+        <select
+          [(ngModel)]="form.tariffType"
+          (ngModelChange)="onTariffTypeChange()"
+        >
+          <option value="simple">Simples</option>
+          <option value="bi_hourly">Bi-horário</option>
+          <option value="tri_hourly">Tri-horário</option>
+          <option value="tetra_hourly">Tetra-horário</option>
+        </select>
+      </label>
+
+      <label *ngIf="shouldShowCycleType()">
+        Ciclo *
+        <select [(ngModel)]="form.cycleType">
+          <option value="daily">Diário</option>
+          <option value="weekly">Semanal</option>
+        </select>
+      </label>
+
+      <label>
+        Potência *
+        <select [(ngModel)]="form.powerKva">
+          <option
+            *ngFor="let power of availablePowers"
+            [ngValue]="power"
+          >
+            {{ power.toFixed(2) }} kVA
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Preço potência/dia *
+        <input type="number" step="0.0001" [(ngModel)]="form.powerPricePerDay" />
+      </label>
+
+      <label *ngIf="shouldShowSimplePrices()">
+        Energia simples *
+        <input type="number" step="0.0001" [(ngModel)]="form.singleEnergyPrice" />
+      </label>
+
+      <label *ngIf="shouldShowBiHourlyPrices()">
+        Fora vazio *
+        <input type="number" step="0.0001" [(ngModel)]="form.foraVazioEnergyPrice" />
+      </label>
+
+      <label
+        *ngIf="
+          shouldShowBiHourlyPrices() ||
+          shouldShowTriHourlyPrices() ||
+          shouldShowTetraHourlyPrices()
+        "
+      >
+        Vazio *
+        <input type="number" step="0.0001" [(ngModel)]="form.vazioEnergyPrice" />
+      </label>
+
+      <label
+        *ngIf="
+          shouldShowTriHourlyPrices() ||
+          shouldShowTetraHourlyPrices()
+        "
+      >
+        Ponta *
+        <input type="number" step="0.0001" [(ngModel)]="form.pontaEnergyPrice" />
+      </label>
+
+      <label
+        *ngIf="
+          shouldShowTriHourlyPrices() ||
+          shouldShowTetraHourlyPrices()
+        "
+      >
+        Cheias *
+        <input type="number" step="0.0001" [(ngModel)]="form.cheiasEnergyPrice" />
+      </label>
+
+      <label *ngIf="shouldShowTetraHourlyPrices()">
+        Super vazio *
+        <input type="number" step="0.0001" [(ngModel)]="form.superVazioEnergyPrice" />
+      </label>
+    </div>
+  </article>
+
+  <article class="card" *ngIf="shouldShowGasFields()">
+    <div class="section-title">Gás</div>
+
+    <div class="form-grid">
+      <label>
+        Escalão *
+        <select [(ngModel)]="form.gasTier">
+          <option
+            *ngFor="let level of availableGasLevels"
+            [ngValue]="level"
+          >
+            Escalão {{ level }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Termo fixo/dia *
+        <input type="number" step="0.0001" [(ngModel)]="form.fixedTermPerDay" />
+      </label>
+
+      <label>
+        Energia gás *
+        <input type="number" step="0.0001" [(ngModel)]="form.gasEnergyPrice" />
+      </label>
+    </div>
+  </article>
+
+  <div class="actions">
+    <button
+      type="button"
+      [disabled]="isCreating"
+      (click)="createTariff()"
+    >
+      {{ isCreating ? 'A criar...' : 'Criar tarifário' }}
+    </button>
+  </div>
+</section>

@@ -37,6 +37,44 @@ export interface InvoiceComparisonRequest {
   };
 }
 
+export type SimulationProductType = 'electricity' | 'gas' | 'dual';
+export type SimulationSegment = 'residential' | 'business' | 'condominium';
+export type SimulationTariffType =
+  | 'simple'
+  | 'bi_hourly'
+  | 'tri_hourly'
+  | 'tetra_hourly';
+export type SimulationCycleType = 'daily' | 'weekly';
+
+export interface CreateSimulationTariffRequest {
+  companyId: string;
+  name: string;
+
+  productType: SimulationProductType;
+  segment?: SimulationSegment;
+
+  tariffType?: SimulationTariffType;
+  cycleType?: SimulationCycleType;
+
+  powerKva?: number;
+  gasTier?: number;
+
+  powerPricePerDay?: number;
+  fixedTermPerDay?: number;
+
+  singleEnergyPrice?: number;
+  gasEnergyPrice?: number;
+
+  foraVazioEnergyPrice?: number;
+  vazioEnergyPrice?: number;
+  pontaEnergyPrice?: number;
+  cheiasEnergyPrice?: number;
+  superVazioEnergyPrice?: number;
+
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface InvoiceComparisonResponse {
   current: {
     provider?: string;
@@ -163,6 +201,15 @@ export class SimulatorService {
   ): Observable<InvoiceComparisonResponse> {
     return this.http.post<InvoiceComparisonResponse>(
       `${this.apiUrl}/api/simulator/invoice-compare`,
+      payload,
+    );
+  }
+
+  createSimulationTariff(
+    payload: CreateSimulationTariffRequest,
+  ) {
+    return this.http.post(
+      `${this.apiUrl}/api/simulator/tariffs`,
       payload,
     );
   }
