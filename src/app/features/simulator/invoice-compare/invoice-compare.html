@@ -643,12 +643,25 @@
       </div>
     </section>
   </div>
-  <button
-    type="button"
-    class="proposal-btn"
-    (click)="openProposalPreview(selectedOffer)"
-  >
-    Gerar proposta
-  </button>
+    <footer class="offer-modal-footer">
+      <button
+        type="button"
+        class="proposal-btn"
+        (click)="openProposalPreview(selectedOffer)"
+      >
+        <span class="material-symbols-rounded">
+          description
+        </span>
+
+        <span class="proposal-btn-text">
+          <strong>Gerar proposta</strong>
+          <small>Criar proposta comercial em PDF</small>
+        </span>
+
+        <span class="material-symbols-rounded arrow-icon">
+          arrow_forward
+        </span>
+      </button>
+    </footer>
   </div>
 </div>
