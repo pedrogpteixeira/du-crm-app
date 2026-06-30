@@ -110,6 +110,8 @@ export interface InvoiceComparisonOffer {
     };
   };
 
+  commissionValue?: number;
+
   comparison: {
     monthlySaving: number;
     yearlySaving: number;

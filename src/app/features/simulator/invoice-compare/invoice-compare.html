@@ -308,6 +308,13 @@
 
         <span>Estimativa mensal</span>
 
+        <span
+          class="commission-pill"
+          *ngIf="offer.commissionValue !== undefined && offer.commissionValue !== null"
+        >
+          Comissão {{ formatCurrency(offer.commissionValue) }}
+        </span>
+
         <small
           [class.positive]="offer.comparison.isBetterOffer"
           [class.negative]="!offer.comparison.isBetterOffer"
@@ -437,6 +444,13 @@
           <span>Dias considerados</span>
           <strong>
             {{ selectedOffer.simulation.details.days }}
+          </strong>
+        </div>
+
+        <div *ngIf="selectedOffer.commissionValue !== undefined && selectedOffer.commissionValue !== null">
+          <span>Comissão comercial</span>
+          <strong>
+            {{ formatCurrency(selectedOffer.commissionValue) }}
           </strong>
         </div>
       </div>

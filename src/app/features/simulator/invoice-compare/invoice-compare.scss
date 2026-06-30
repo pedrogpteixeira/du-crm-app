@@ -539,6 +539,10 @@ select:focus {
   .price-block {
     text-align: left;
   }
+
+  .commission-pill {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 900px) {
@@ -713,4 +717,26 @@ select:focus {
       font-size: 12px;
     }
   }
+}
+
+.commission-pill {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 8px;
+  margin-left: auto;
+
+  color: #7c3aed;
+  background: #f3e8ff;
+
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+
+  padding: 5px 10px;
+
+  font-size: 12px;
+  font-weight: 900;
 }
