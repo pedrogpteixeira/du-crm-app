@@ -42,6 +42,27 @@
     </div>
   </article>
 
+  <article class="form-card">
+    <h2>Dados do comercial</h2>
+
+    <div class="form-grid">
+      <label>
+        Nome
+        <input type="text" [(ngModel)]="commercial.name" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" [(ngModel)]="commercial.email" />
+      </label>
+
+      <label>
+        Telemóvel
+        <input type="text" [(ngModel)]="commercial.phone" />
+      </label>
+    </div>
+  </article>
+
   <div id="proposal-document" class="proposal-document">
     <section class="proposal-page cover-page">
       <div class="cover-top">
@@ -79,6 +100,11 @@
         <div>
           <span>Fornecedor</span>
           <strong>{{ offer.tariff.provider.name }}</strong>
+        </div>
+
+        <div>
+          <span>Comercial</span>
+          <strong>{{ commercial.name || '-' }}</strong>
         </div>
       </div>
     </section>
@@ -118,6 +144,27 @@
           <div class="full">
             <span>Morada</span>
             <strong>{{ client.address || '-' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="proposal-box">
+        <div class="box-title">Identificação do comercial</div>
+
+        <div class="proposal-grid">
+          <div>
+            <span>Nome</span>
+            <strong>{{ commercial.name || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Email</span>
+            <strong>{{ commercial.email || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Telemóvel</span>
+            <strong>{{ commercial.phone || '-' }}</strong>
           </div>
         </div>
       </div>

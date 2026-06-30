@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Auth } from '../../../core/services/auth';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -10,7 +11,9 @@ import jsPDF from 'jspdf';
   templateUrl: './proposal-preview.html',
   styleUrl: './proposal-preview.scss',
 })
-export class ProposalPreview {
+export class ProposalPreview implements OnInit {
+  private readonly auth = inject(Auth);
+  
   offer = history.state.offer;
   current = history.state.current;
 
@@ -29,6 +32,20 @@ export class ProposalPreview {
   };
 
   today = new Date();
+
+  ngOnInit(): void {
+    const currentUser = this.auth.getCurrentUser();
+
+    if (!currentUser) {
+      return;
+    }
+
+    this.commercial = {
+      name: currentUser.name || '',
+      email: currentUser.email || '',
+      phone: currentUser.phone || '',
+    };
+  }
 
   exportPdf(): void {
     const element = document.getElementById('proposal-document');
