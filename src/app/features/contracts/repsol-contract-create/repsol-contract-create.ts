@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 
 import { environment } from '../../../../environments/environment.development';
 
@@ -188,12 +189,14 @@ export class RepsolContractCreate implements OnInit {
   }
 
   private loadCampaigns(): void {
-    this.campaignService.getCampaignsByCompanyId(environment.repsolId).subscribe({
+    this.campaignService.getCampaignsByCompanyId(environment.repsolId).pipe(
+      map((campaigns) =>
+        campaigns.filter((campaign) => campaign.active),
+      ),
+    )
+    .subscribe({
       next: (campaigns) => {
         this.campaigns = campaigns;
-      },
-      error: () => {
-        this.errorMessage = 'Não foi possível carregar as campanhas.';
       },
     });
   }
