@@ -1,0 +1,210 @@
+<div class="proposal-document">
+  <section class="proposal-page cover" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
+    <div class="cover-header">
+      <span>Proposta Comercial de Energia</span>
+      <img [src]="theme.logo" />
+    </div>
+
+    <div class="cover-main">
+      <p class="eyebrow">{{ theme.name }}</p>
+
+      <h1>
+        A energia certa<br />
+        para o seu negócio.
+      </h1>
+
+      <p class="intro">
+        Proposta personalizada com base na fatura atual e nos consumos indicados.
+      </p>
+    </div>
+
+    <div class="saving-card">
+      <span>Poupança mensal estimada</span>
+      <strong>{{ formatCurrency(proposal.offer.comparison.monthlySaving) }}</strong>
+      <small>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}/ano</small>
+    </div>
+
+    <div class="cover-info">
+      <div>
+        <span>Cliente</span>
+        <strong>{{ proposal.client.name || 'Nome do cliente' }}</strong>
+      </div>
+
+      <div>
+        <span>Fornecedor</span>
+        <strong>{{ proposal.offer.tariff.provider.name }}</strong>
+      </div>
+
+      <div>
+        <span>Data</span>
+        <strong>{{ formatDate() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="proposal-page content" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
+    <header class="page-top">
+      <img [src]="theme.logo" />
+      <span>Resumo da proposta</span>
+    </header>
+
+    <h2>Condições particulares</h2>
+
+    <div class="pdf-box">
+      <div class="box-title">Identificação do cliente</div>
+
+      <div class="pdf-grid">
+        <div>
+          <span>Nome / Empresa</span>
+          <strong>{{ proposal.client.name || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>NIF</span>
+          <strong>{{ proposal.client.nif || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Email</span>
+          <strong>{{ proposal.client.email || '-' }}</strong>
+        </div>
+
+        <div>
+          <span>Telemóvel</span>
+          <strong>{{ proposal.client.phone || '-' }}</strong>
+        </div>
+
+        <div class="full">
+          <span>Morada</span>
+          <strong>{{ proposal.client.address || '-' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="commercial-line">
+      <strong>Comercial responsável</strong>
+      <span>
+        {{ proposal.commercial.name || '-' }}
+        · {{ proposal.commercial.email || '-' }}
+        · {{ proposal.commercial.phone || '-' }}
+      </span>
+    </div>
+
+    <div class="summary-cards">
+      <div>
+        <span>Fatura atual</span>
+        <strong>{{ formatCurrency(proposal.current.invoiceAmount) }}</strong>
+      </div>
+
+      <div>
+        <span>Nova estimativa</span>
+        <strong>{{ formatCurrency(proposal.offer.simulation.estimatedMonthlyCost) }}</strong>
+      </div>
+
+      <div class="highlight">
+        <span>Poupança anual</span>
+        <strong>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}</strong>
+      </div>
+    </div>
+
+    <footer>Proposta gerada pelo CRM · {{ formatDate() }}</footer>
+  </section>
+
+  <section class="proposal-page content" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
+    <header class="page-top">
+      <img [src]="theme.logo" />
+      <span>Oferta selecionada</span>
+    </header>
+
+    <h2>{{ proposal.offer.tariff.name }}</h2>
+
+    <div class="pdf-box">
+      <div class="box-title">Resumo do plano</div>
+
+      <div class="pdf-grid">
+        <div>
+          <span>Fornecedor</span>
+          <strong>{{ proposal.offer.tariff.provider.name }}</strong>
+        </div>
+
+        <div>
+          <span>Produto</span>
+          <strong>{{ getProductLabel(proposal.offer.tariff.productType) }}</strong>
+        </div>
+
+        <div>
+          <span>Tipo tarifário</span>
+          <strong>{{ getTariffLabel(proposal.offer.tariff.tariffType) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.powerKva">
+          <span>Potência</span>
+          <strong>{{ proposal.offer.tariff.powerKva }} kVA</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.gasTier">
+          <span>Escalão gás</span>
+          <strong>Escalão {{ proposal.offer.tariff.gasTier }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.commissionValue">
+          <span>Comissão comercial</span>
+          <strong>{{ formatCurrency(proposal.offer.commissionValue) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-box">
+      <div class="box-title">Condições económicas</div>
+
+      <div class="pdf-grid">
+        <div *ngIf="proposal.offer.tariff.powerPricePerDay">
+          <span>Preço potência/dia</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.powerPricePerDay, '€/dia') }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.singleEnergyPrice">
+          <span>Energia simples</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.singleEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.foraVazioEnergyPrice">
+          <span>Fora vazio</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.foraVazioEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.pontaEnergyPrice">
+          <span>Ponta</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.pontaEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.cheiasEnergyPrice">
+          <span>Cheias</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.cheiasEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.vazioEnergyPrice">
+          <span>Vazio</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.vazioEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.superVazioEnergyPrice">
+          <span>Super vazio</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.superVazioEnergyPrice) }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.fixedTermPerDay">
+          <span>Termo fixo gás/dia</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.fixedTermPerDay, '€/dia') }}</strong>
+        </div>
+
+        <div *ngIf="proposal.offer.tariff.gasEnergyPrice">
+          <span>Energia gás</span>
+          <strong>{{ formatPrice(proposal.offer.tariff.gasEnergyPrice) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <footer>Proposta Comercial · {{ proposal.offer.tariff.provider.name }}</footer>
+  </section>
+</div>

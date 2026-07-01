@@ -2,8 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../../core/services/auth';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { ProposalPdfService } from '../../../core/services/proposal-pdf';
 
 @Component({
   selector: 'app-proposal-preview',
@@ -13,6 +12,7 @@ import jsPDF from 'jspdf';
 })
 export class ProposalPreview implements OnInit {
   private readonly auth = inject(Auth);
+  private readonly proposalPdfService = inject(ProposalPdfService);
   
   offer = history.state.offer;
   current = history.state.current;
@@ -48,42 +48,11 @@ export class ProposalPreview implements OnInit {
   }
 
   exportPdf(): void {
-    const element = document.getElementById('proposal-document');
-
-    if (!element) {
-      return;
-    }
-
-    html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-    }).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`proposta-${this.client.name || 'cliente'}.pdf`);
+    this.proposalPdfService.generate({
+      offer: this.offer,
+      current: this.current,
+      client: this.client,
+      commercial: this.commercial,
     });
   }
 

@@ -1,0 +1,271 @@
+:host {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+}
+
+.proposal-document {
+  width: 210mm;
+  background: #ffffff;
+}
+
+.proposal-page {
+  width: 210mm;
+  height: 297mm;
+  box-sizing: border-box;
+  background: #ffffff;
+  overflow: hidden;
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+
+.cover {
+  padding: 22mm;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8), transparent 28%),
+    linear-gradient(135deg, #c8f3e9 0%, #eafff8 100%);
+}
+
+.cover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  span {
+    color: var(--secondary);
+  }
+
+  img {
+    max-width: 42mm;
+    max-height: 20mm;
+    object-fit: contain;
+  }
+}
+
+.cover-main {
+  margin-top: 42mm;
+
+  .eyebrow {
+    color: var(--secondary);
+    font-size: 14px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  h1 {
+    color: #ff7a00;
+    font-size: 42px;
+    line-height: 1.05;
+  }
+
+  .intro {
+    max-width: 120mm;
+    color: #64748b;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+}
+
+.saving-card {
+  width: 80mm;
+  margin-top: 30mm;
+  padding: 12mm;
+  border-radius: 9mm;
+  background: var(--secondary);
+  color: #ffffff;
+
+  span {
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  strong {
+    display: block;
+    margin-top: 4mm;
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  small {
+    display: block;
+    margin-top: 3mm;
+    font-size: 13px;
+    font-weight: 800;
+  }
+}
+
+.cover-info {
+  position: absolute;
+  left: 22mm;
+  right: 22mm;
+  bottom: 22mm;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6mm;
+
+  div {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #e2e8f0;
+    border-radius: 5mm;
+    padding: 5mm;
+  }
+
+  span {
+    display: block;
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 900;
+  }
+
+  strong {
+    display: block;
+    margin-top: 2mm;
+    color: #243646;
+    font-size: 12px;
+  }
+}
+
+.content {
+  padding: 18mm;
+}
+
+.page-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8mm;
+  border-bottom: 1px solid #e2e8f0;
+
+  img {
+    max-width: 32mm;
+    max-height: 14mm;
+    object-fit: contain;
+  }
+
+  span {
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 900;
+  }
+}
+
+h2 {
+  color: #243646;
+  font-size: 28px;
+  margin: 12mm 0 8mm;
+}
+
+.pdf-box {
+  border: 1px solid rgba(24, 169, 87, 0.45);
+  border-radius: 6mm;
+  overflow: hidden;
+  margin-bottom: 8mm;
+}
+
+.box-title {
+  background: var(--secondary);
+  color: #ffffff;
+  padding: 4mm 6mm;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pdf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+  padding: 5mm;
+
+  div {
+    padding: 4mm;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  span {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  strong {
+    display: block;
+    margin-top: 1.5mm;
+    color: #243646;
+    font-size: 12px;
+  }
+}
+
+.commercial-line {
+  margin-bottom: 8mm;
+  padding: 5mm 6mm;
+  background: var(--light);
+  border-radius: 5mm;
+
+  strong {
+    display: block;
+    color: var(--primary);
+    font-size: 12px;
+  }
+
+  span {
+    display: block;
+    margin-top: 2mm;
+    color: #243646;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6mm;
+
+  div {
+    padding: 7mm 5mm;
+    background: #f8fafc;
+    border-radius: 6mm;
+    text-align: center;
+  }
+
+  .highlight {
+    color: #18a957;
+
+    strong {
+      color: var(--secondary);
+    }
+  }
+
+  span {
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  strong {
+    display: block;
+    margin-top: 3mm;
+    color: #243646;
+    font-size: 18px;
+  }
+}
+
+footer {
+  position: absolute;
+  left: 18mm;
+  right: 18mm;
+  bottom: 12mm;
+
+  color: #94a3b8;
+  font-size: 10px;
+  text-align: center;
+}
