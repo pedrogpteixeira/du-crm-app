@@ -23,19 +23,24 @@
         Empresa *
 
         <select
-            [(ngModel)]="form.companyId"
-            [disabled]="isLoadingCompanies"
+          [(ngModel)]="form.companyId"
+          [disabled]="isLoadingCompanies"
         >
-            <option value="" disabled>
+          <option
+            [ngValue]="null"
+            disabled
+            selected
+            hidden
+          >
             Selecione uma empresa
-            </option>
+          </option>
 
-            <option
+          <option
             *ngFor="let company of companies"
             [value]="company.id"
-            >
+          >
             {{ company.name }}
-            </option>
+          </option>
         </select>
       </label>
 
@@ -73,6 +78,17 @@
       <label>
         Fim
         <input type="date" [(ngModel)]="form.endDate" />
+      </label>
+
+      <label>
+        Comissão de venda (€)
+
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          [(ngModel)]="form.salesCommission"
+        />
       </label>
     </div>
   </article>

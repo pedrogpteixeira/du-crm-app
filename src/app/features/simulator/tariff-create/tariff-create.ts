@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 
 import { Company, CompanyService } from '../../../core/services/company';
 
@@ -24,9 +25,10 @@ import {
   templateUrl: './tariff-create.html',
   styleUrl: './tariff-create.scss',
 })
-export class TariffCreate implements OnInit{
+export class TariffCreate implements OnInit {
   private readonly simulatorService = inject(SimulatorService);
   private readonly companyService = inject(CompanyService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly availablePowers = ELECTRICITY_POWERS;
   readonly availableGasLevels = GAS_LEVELS;
@@ -39,7 +41,7 @@ export class TariffCreate implements OnInit{
   errorMessage = '';
 
   form = {
-    companyId: '',
+    companyId: null as string | null,
     name: '',
 
     productType: 'electricity' as SimulationProductType,
@@ -63,6 +65,8 @@ export class TariffCreate implements OnInit{
     cheiasEnergyPrice: null as number | null,
     superVazioEnergyPrice: null as number | null,
 
+    salesCommission: null as number | null,
+
     startDate: '',
     endDate: '',
   };
@@ -77,15 +81,18 @@ export class TariffCreate implements OnInit{
     this.companyService.getCompanies().subscribe({
       next: (companies) => {
         this.companies = companies.filter(
-          (company) => company.active,
+          (company) => company.active === true,
         );
 
-        if (this.companies.length && !this.form.companyId) {
-          this.form.companyId = this.companies[0].id;
-        }
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.errorMessage = 'Não foi possível carregar as empresas.';
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.isLoadingCompanies = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -96,6 +103,7 @@ export class TariffCreate implements OnInit{
 
     if (this.form.productType === 'gas') {
       this.clearElectricityFields();
+      this.form.gasTier ||= 1;
       return;
     }
 
@@ -151,65 +159,167 @@ export class TariffCreate implements OnInit{
     const payload = this.buildPayload();
 
     if (!payload) {
+      this.cdr.detectChanges();
       return;
     }
 
     this.isCreating = true;
     this.successMessage = '';
     this.errorMessage = '';
+    this.cdr.detectChanges();
 
-    this.simulatorService.createSimulationTariff(payload).subscribe({
-      next: () => {
-        this.successMessage = 'Tarifário criado com sucesso.';
-      },
-      error: (error) => {
-        this.errorMessage =
-          error?.error?.details?.join(' ') ||
-          error?.error?.message ||
-          'Não foi possível criar o tarifário.';
-      },
-      complete: () => {
-        this.isCreating = false;
-      },
-    });
+    this.simulatorService
+      .createSimulationTariff(payload)
+      .pipe(
+        finalize(() => {
+          this.isCreating = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          const createdTariff = response.body;
+
+          if (response.status === 201 || response.status === 200) {
+            this.showSuccess(
+              `Tarifário "${createdTariff?.name}" criado com sucesso.`
+            );
+
+            this.errorMessage = '';
+            this.resetForm();
+            this.cdr.detectChanges();
+          }
+        },
+        error: (error) => {
+          this.successMessage = '';
+
+          if (error?.status === 409) {
+            this.showError(
+              error?.error?.message ||
+              'Não foi possível criar o tarifário.'
+            );
+            this.cdr.detectChanges();
+            return;
+          }
+
+          if (error?.status === 400) {
+            this.errorMessage =
+              error?.error?.details?.join(' ') ||
+              error?.error?.message ||
+              'Existem dados inválidos no formulário.';
+            this.cdr.detectChanges();
+            return;
+          }
+
+          this.errorMessage =
+            error?.error?.details?.join(' ') ||
+            error?.error?.message ||
+            'Não foi possível criar o tarifário.';
+
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  private resetForm(): void {
+    this.form = {
+      companyId: null,
+
+      name: '',
+
+      productType: 'electricity',
+      segment: 'business',
+
+      tariffType: 'simple',
+      cycleType: 'daily',
+
+      powerKva: 6.9,
+      gasTier: 1,
+
+      powerPricePerDay: null,
+      fixedTermPerDay: null,
+
+      singleEnergyPrice: null,
+      gasEnergyPrice: null,
+
+      foraVazioEnergyPrice: null,
+      vazioEnergyPrice: null,
+      pontaEnergyPrice: null,
+      cheiasEnergyPrice: null,
+      superVazioEnergyPrice: null,
+
+      salesCommission: null,
+
+      startDate: '',
+      endDate: '',
+    };
   }
 
   shouldShowElectricityFields(): boolean {
-    return this.form.productType === 'electricity' || this.form.productType === 'dual';
+    return (
+      this.form.productType === 'electricity' ||
+      this.form.productType === 'dual'
+    );
   }
 
   shouldShowGasFields(): boolean {
-    return this.form.productType === 'gas' || this.form.productType === 'dual';
+    return (
+      this.form.productType === 'gas' ||
+      this.form.productType === 'dual'
+    );
   }
 
   shouldShowCycleType(): boolean {
-    return this.shouldShowElectricityFields() && this.form.tariffType !== 'simple';
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.tariffType !== 'simple'
+    );
   }
 
   shouldShowSimplePrices(): boolean {
-    return this.shouldShowElectricityFields() && this.form.tariffType === 'simple';
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.tariffType === 'simple'
+    );
   }
 
   shouldShowBiHourlyPrices(): boolean {
-    return this.shouldShowElectricityFields() && this.form.tariffType === 'bi_hourly';
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.tariffType === 'bi_hourly'
+    );
   }
 
   shouldShowTriHourlyPrices(): boolean {
-    return this.shouldShowElectricityFields() && this.form.tariffType === 'tri_hourly';
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.tariffType === 'tri_hourly'
+    );
   }
 
   shouldShowTetraHourlyPrices(): boolean {
-    return this.shouldShowElectricityFields() && this.form.tariffType === 'tetra_hourly';
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.tariffType === 'tetra_hourly'
+    );
   }
 
   private buildPayload(): CreateSimulationTariffRequest | null {
-    if (!this.form.companyId.trim()) {
+    if (!this.form.companyId) {
       this.errorMessage = 'A empresa é obrigatória.';
       return null;
     }
 
     if (!this.form.name.trim()) {
       this.errorMessage = 'O nome do tarifário é obrigatório.';
+      return null;
+    }
+
+    if (
+      this.form.salesCommission === null ||
+      this.form.salesCommission < 0
+    ) {
+      this.errorMessage = 'A comissão de venda é obrigatória.';
       return null;
     }
 
@@ -222,7 +332,8 @@ export class TariffCreate implements OnInit{
 
     if (this.shouldShowElectricityFields()) {
       if (!this.form.powerKva || !this.form.powerPricePerDay) {
-        this.errorMessage = 'A potência e o preço potência/dia são obrigatórios.';
+        this.errorMessage =
+          'A potência e o preço potência/dia são obrigatórios.';
         return null;
       }
 
@@ -245,7 +356,8 @@ export class TariffCreate implements OnInit{
 
       if (this.form.tariffType === 'bi_hourly') {
         if (!this.form.foraVazioEnergyPrice || !this.form.vazioEnergyPrice) {
-          this.errorMessage = 'Os preços fora vazio e vazio são obrigatórios.';
+          this.errorMessage =
+            'Os preços fora vazio e vazio são obrigatórios.';
           return null;
         }
 
@@ -259,7 +371,8 @@ export class TariffCreate implements OnInit{
           !this.form.cheiasEnergyPrice ||
           !this.form.vazioEnergyPrice
         ) {
-          this.errorMessage = 'Os preços ponta, cheias e vazio são obrigatórios.';
+          this.errorMessage =
+            'Os preços ponta, cheias e vazio são obrigatórios.';
           return null;
         }
 
@@ -311,6 +424,8 @@ export class TariffCreate implements OnInit{
       payload.endDate = new Date(this.form.endDate).toISOString();
     }
 
+    payload.salesCommission = this.form.salesCommission;
+
     return this.cleanPayload(payload);
   }
 
@@ -346,5 +461,23 @@ export class TariffCreate implements OnInit{
     this.form.gasTier = null;
     this.form.fixedTermPerDay = null;
     this.form.gasEnergyPrice = null;
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+
+    setTimeout(() => {
+      this.successMessage = '';
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.cdr.detectChanges();
+    }, 5000);
   }
 }

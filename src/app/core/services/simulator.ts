@@ -50,11 +50,11 @@ export interface CreateSimulationTariffRequest {
   companyId: string;
   name: string;
 
-  productType: SimulationProductType;
-  segment?: SimulationSegment;
+  productType: 'electricity' | 'gas' | 'dual';
+  segment?: 'residential' | 'business' | 'condominium';
 
-  tariffType?: SimulationTariffType;
-  cycleType?: SimulationCycleType;
+  tariffType?: 'simple' | 'bi_hourly' | 'tri_hourly' | 'tetra_hourly';
+  cycleType?: 'daily' | 'weekly';
 
   powerKva?: number;
   gasTier?: number;
@@ -70,6 +70,8 @@ export interface CreateSimulationTariffRequest {
   pontaEnergyPrice?: number;
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
+
+  salesCommission?: number;
 
   startDate?: string;
   endDate?: string;
@@ -176,6 +178,8 @@ export interface SimulationTariff {
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
 
+  salesCommission?: number;
+
   startDate?: string;
   endDate?: string;
 
@@ -210,9 +214,12 @@ export class SimulatorService {
   createSimulationTariff(
     payload: CreateSimulationTariffRequest,
   ) {
-    return this.http.post(
+    return this.http.post<SimulationTariff>(
       `${this.apiUrl}/api/simulator/tariffs`,
       payload,
+      {
+        observe: 'response',
+      },
     );
   }
 }
