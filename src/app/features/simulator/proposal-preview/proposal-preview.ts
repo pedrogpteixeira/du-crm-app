@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../../core/services/auth';
 import { ProposalPdfService } from '../../../core/services/proposal-pdf';
+import { environment } from '../../../../environments/environment.development';
 
 @Component({
   selector: 'app-proposal-preview',
@@ -29,6 +30,7 @@ export class ProposalPreview implements OnInit {
     name: '',
     email: '',
     phone: '',
+    profilePicture: null as string | null,
   };
 
   today = new Date();
@@ -44,6 +46,9 @@ export class ProposalPreview implements OnInit {
       name: currentUser.name || '',
       email: currentUser.email || '',
       phone: currentUser.phone || '',
+      profilePicture: currentUser.profilePicture
+        ? `${environment.apiUrl}/api/users/${currentUser.id}/profile-picture`
+        : null,
     };
   }
 
@@ -77,5 +82,26 @@ export class ProposalPreview implements OnInit {
     };
 
     return logos[provider] || 'assets/companies/repsol.png';
+  }
+
+  getProductLabel(value?: string): string {
+    const labels: Record<string, string> = {
+      electricity: 'Eletricidade',
+      gas: 'Gás',
+      dual: 'Luz + Gás',
+    };
+
+    return value ? labels[value] || value : '—';
+  }
+
+  getTariffLabel(value?: string): string {
+    const labels: Record<string, string> = {
+      simple: 'Simples',
+      bi_hourly: 'Bi-horário',
+      tri_hourly: 'Tri-horário',
+      tetra_hourly: 'Tetra-horário',
+    };
+
+    return value ? labels[value] || value : '—';
   }
 }

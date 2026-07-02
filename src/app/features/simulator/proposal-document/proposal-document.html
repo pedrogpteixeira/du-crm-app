@@ -6,16 +6,39 @@
     </div>
 
     <div class="cover-main">
-      <p class="eyebrow">{{ theme.name }}</p>
 
-      <h1>
-        A energia certa<br />
-        para o seu negócio.
-      </h1>
+      <div class="cover-title">
 
-      <p class="intro">
-        Proposta personalizada com base na fatura atual e nos consumos indicados.
-      </p>
+        <p class="eyebrow">
+          {{ theme.name }}
+        </p>
+
+        <h1>
+          A energia certa<br />
+          para o seu negócio.
+        </h1>
+
+        <p class="intro">
+          Proposta personalizada com base na fatura
+          atual e nos consumos indicados.
+        </p>
+
+      </div>
+
+      <div class="cover-illustration">
+
+        <img
+          src="assets/proposal/repsol-cover.png"
+          *ngIf="proposal.offer.tariff.provider.name === 'Repsol'"
+        />
+
+        <img
+          src="assets/proposal/meo-cover.png"
+          *ngIf="proposal.offer.tariff.provider.name !== 'Repsol'"
+        />
+
+      </div>
+
     </div>
 
     <div class="saving-card">
@@ -42,13 +65,18 @@
     </div>
   </section>
 
-  <section class="proposal-page content" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
+  <section
+    class="proposal-page content"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
     <header class="page-top">
       <img [src]="theme.logo" />
-      <span>Resumo da proposta</span>
     </header>
 
-    <h2>Condições particulares</h2>
+    <h2>Proposta à sua medida</h2>
+    <h3>Condições particulares</h3>
 
     <div class="pdf-box">
       <div class="box-title">Identificação do cliente</div>
@@ -81,29 +109,49 @@
       </div>
     </div>
 
-    <div class="commercial-line">
-      <strong>Comercial responsável</strong>
-      <span>
-        {{ proposal.commercial.name || '-' }}
-        · {{ proposal.commercial.email || '-' }}
-        · {{ proposal.commercial.phone || '-' }}
-      </span>
+    <div class="pdf-box">
+      <div class="box-title">Resumo da proposta</div>
+
+      <div class="summary-cards">
+        <div>
+          <span>Fatura atual</span>
+          <strong>{{ formatCurrency(proposal.current.invoiceAmount) }}</strong>
+        </div>
+
+        <div>
+          <span>Nova estimativa</span>
+          <strong>{{ formatCurrency(proposal.offer.simulation.estimatedMonthlyCost) }}</strong>
+        </div>
+
+        <div class="highlight">
+          <span>Poupança anual</span>
+          <strong>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}</strong>
+        </div>
+      </div>
     </div>
 
-    <div class="summary-cards">
-      <div>
-        <span>Fatura atual</span>
-        <strong>{{ formatCurrency(proposal.current.invoiceAmount) }}</strong>
-      </div>
+    <div class="pdf-box commercial-box">
+      <div class="box-title">Comercial responsável</div>
 
-      <div>
-        <span>Nova estimativa</span>
-        <strong>{{ formatCurrency(proposal.offer.simulation.estimatedMonthlyCost) }}</strong>
-      </div>
+      <div class="commercial-card">
+        <div class="commercial-avatar">
+          <img
+            *ngIf="proposal.commercial.profilePicture; else commercialInitial"
+            [src]="proposal.commercial.profilePicture"
+            [alt]="proposal.commercial.name"
+          />
 
-      <div class="highlight">
-        <span>Poupança anual</span>
-        <strong>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}</strong>
+          <ng-template #commercialInitial>
+            {{ proposal.commercial.name ? proposal.commercial.name.charAt(0).toUpperCase() : '?' }}
+          </ng-template>
+        </div>
+
+        <div class="commercial-info">
+          <strong>{{ proposal.commercial.name || '-' }}</strong>
+
+          <span>{{ proposal.commercial.email || '-' }}</span>
+          <span>{{ proposal.commercial.phone || '-' }}</span>
+        </div>
       </div>
     </div>
 
@@ -116,7 +164,9 @@
       <span>Oferta selecionada</span>
     </header>
 
-    <h2>{{ proposal.offer.tariff.name }}</h2>
+    <h2 class="offer-title">
+      {{ proposal.offer.tariff.name }}
+    </h2>
 
     <div class="pdf-box">
       <div class="box-title">Resumo do plano</div>
@@ -147,10 +197,6 @@
           <strong>Escalão {{ proposal.offer.tariff.gasTier }}</strong>
         </div>
 
-        <div *ngIf="proposal.offer.commissionValue">
-          <span>Comissão comercial</span>
-          <strong>{{ formatCurrency(proposal.offer.commissionValue) }}</strong>
-        </div>
       </div>
     </div>
 

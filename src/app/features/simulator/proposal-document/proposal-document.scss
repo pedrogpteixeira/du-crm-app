@@ -13,17 +13,19 @@
   width: 210mm;
   height: 297mm;
   box-sizing: border-box;
-  background: #ffffff;
   overflow: hidden;
   position: relative;
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
 }
+
+/* COVER */
 
 .cover {
   padding: 22mm;
   background:
-    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.8), transparent 28%),
-    linear-gradient(135deg, #c8f3e9 0%, #eafff8 100%);
+    radial-gradient(circle at 86% 10%, rgba(255, 255, 255, 0.65), transparent 28%),
+    radial-gradient(circle at 90% 86%, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(135deg, #baf0e5 0%, #d7fff7 50%, #f7fffd 100%);
 }
 
 .cover-header {
@@ -33,58 +35,71 @@
 
   span {
     color: var(--secondary);
+    font-size: 15px;
+    font-weight: 900;
   }
 
   img {
-    max-width: 42mm;
+    max-width: 48mm;
     max-height: 20mm;
     object-fit: contain;
   }
 }
 
 .cover-main {
-  margin-top: 42mm;
+  margin-top: 50mm;
+}
+
+.cover-title {
+  max-width: 145mm;
 
   .eyebrow {
-    color: var(--secondary);
-    font-size: 14px;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    display: none;
   }
 
   h1 {
-    color: #ff7a00;
-    font-size: 42px;
+    color: var(--primary);
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: -1.4px;
     line-height: 1.05;
+    margin: 0;
   }
 
   .intro {
     max-width: 120mm;
-    color: #64748b;
-    font-size: 15px;
-    line-height: 1.5;
+    color: #243646;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.45;
+    margin: 34mm 0 0;
   }
 }
 
+.cover-illustration {
+  display: none;
+}
+
 .saving-card {
-  width: 80mm;
+  width: 82mm;
   margin-top: 30mm;
-  padding: 12mm;
-  border-radius: 9mm;
+  padding: 8mm 9mm;
+  border-radius: 8mm;
   background: var(--secondary);
   color: #ffffff;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.08);
 
   span {
     display: block;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 900;
   }
 
   strong {
     display: block;
-    margin-top: 4mm;
+    margin-top: 3mm;
     font-size: 34px;
+    font-weight: 900;
     line-height: 1;
   }
 
@@ -92,7 +107,7 @@
     display: block;
     margin-top: 3mm;
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 900;
   }
 }
 
@@ -107,15 +122,14 @@
   gap: 6mm;
 
   div {
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.78);
     border-radius: 5mm;
     padding: 5mm;
   }
 
   span {
     display: block;
-    color: var(--primary);
+    color: var(--secondary);
     font-size: 10px;
     font-weight: 900;
   }
@@ -125,37 +139,48 @@
     margin-top: 2mm;
     color: #243646;
     font-size: 12px;
+    font-weight: 900;
+    line-height: 1.35;
   }
 }
 
+/* CONTENT */
+
 .content {
   padding: 18mm;
+  background: #ffffff;
 }
 
 .page-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding-bottom: 8mm;
-  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 6mm;
 
   img {
-    max-width: 32mm;
-    max-height: 14mm;
+    max-width: 38mm;
+    max-height: 16mm;
     object-fit: contain;
   }
 
   span {
-    color: var(--primary);
-    font-size: 14px;
-    font-weight: 900;
+    display: none;
   }
 }
 
 h2 {
-  color: #243646;
+  color: var(--secondary);
   font-size: 28px;
-  margin: 12mm 0 8mm;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 6mm 0 1mm;
+}
+
+h3 {
+  color: var(--secondary);
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0 0 8mm;
 }
 
 .pdf-box {
@@ -171,17 +196,17 @@ h2 {
   padding: 4mm 6mm;
   font-size: 13px;
   font-weight: 900;
+  text-align: center;
 }
 
 .pdf-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0;
   padding: 5mm;
 
   div {
     padding: 4mm;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #edf7f2;
   }
 
   .full {
@@ -192,7 +217,7 @@ h2 {
     display: block;
     color: #64748b;
     font-size: 10px;
-    font-weight: 800;
+    font-weight: 900;
   }
 
   strong {
@@ -200,44 +225,26 @@ h2 {
     margin-top: 1.5mm;
     color: #243646;
     font-size: 12px;
-  }
-}
-
-.commercial-line {
-  margin-bottom: 8mm;
-  padding: 5mm 6mm;
-  background: var(--light);
-  border-radius: 5mm;
-
-  strong {
-    display: block;
-    color: var(--primary);
-    font-size: 12px;
-  }
-
-  span {
-    display: block;
-    margin-top: 2mm;
-    color: #243646;
-    font-size: 11px;
-    font-weight: 700;
+    font-weight: 900;
+    line-height: 1.35;
   }
 }
 
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6mm;
+  gap: 5mm;
+  padding: 6mm;
 
   div {
-    padding: 7mm 5mm;
+    padding: 6mm 4mm;
     background: #f8fafc;
-    border-radius: 6mm;
+    border-radius: 5mm;
     text-align: center;
   }
 
   .highlight {
-    color: #18a957;
+    background: #f0fdf4;
 
     strong {
       color: var(--secondary);
@@ -248,14 +255,64 @@ h2 {
     display: block;
     color: #64748b;
     font-size: 10px;
-    font-weight: 800;
+    font-weight: 900;
   }
 
   strong {
     display: block;
     margin-top: 3mm;
     color: #243646;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: 900;
+  }
+}
+
+.commercial-box {
+  margin-top: 8mm;
+}
+
+.commercial-card {
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  padding: 6mm;
+  background: #ffffff;
+}
+
+.commercial-avatar {
+  width: 17mm;
+  height: 17mm;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--light);
+  color: var(--secondary);
+  font-size: 18px;
+  font-weight: 900;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.commercial-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5mm;
+
+  strong {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 800;
   }
 }
 
@@ -264,8 +321,12 @@ footer {
   left: 18mm;
   right: 18mm;
   bottom: 12mm;
-
   color: #94a3b8;
   font-size: 10px;
+  font-weight: 700;
   text-align: center;
+}
+
+.offer-title {
+  margin-bottom: 8mm;
 }

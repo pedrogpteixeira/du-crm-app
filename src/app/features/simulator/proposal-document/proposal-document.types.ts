@@ -12,6 +12,7 @@ export interface ProposalCommercial {
   name: string;
   email: string;
   phone: string;
+  profilePicture?: string | null;
 }
 
 export interface ProposalCurrent {

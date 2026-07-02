@@ -2,231 +2,133 @@
   <header class="page-header">
     <div>
       <span class="breadcrumb">Simulador › Proposta Comercial</span>
-      <h1>Pré-visualização da Proposta</h1>
-      <p>Confirma os dados antes de exportar o PDF.</p>
+      <h1>Preparar proposta</h1>
+      <p>Confirma os dados antes de gerar o PDF comercial.</p>
     </div>
-
-    <button type="button" (click)="exportPdf()">
-      Exportar PDF
-    </button>
   </header>
 
-  <article class="form-card">
-    <h2>Dados do cliente</h2>
+  <section class="proposal-layout">
+    <div class="left-column">
+      <article class="form-card">
+        <h2>Dados do cliente</h2>
 
-    <div class="form-grid">
-      <label>
-        Nome / Empresa
-        <input type="text" [(ngModel)]="client.name" />
-      </label>
+        <div class="form-grid">
+          <label>
+            Nome / Empresa
+            <input type="text" [(ngModel)]="client.name" />
+          </label>
 
-      <label>
-        NIF
-        <input type="text" [(ngModel)]="client.nif" />
-      </label>
+          <label>
+            NIF
+            <input type="text" [(ngModel)]="client.nif" />
+          </label>
 
-      <label>
-        Email
-        <input type="email" [(ngModel)]="client.email" />
-      </label>
+          <label>
+            Email
+            <input type="email" [(ngModel)]="client.email" />
+          </label>
 
-      <label>
-        Telemóvel
-        <input type="text" [(ngModel)]="client.phone" />
-      </label>
+          <label>
+            Telemóvel
+            <input type="text" [(ngModel)]="client.phone" />
+          </label>
 
-      <label class="full">
-        Morada
-        <input type="text" [(ngModel)]="client.address" />
-      </label>
+          <label class="full">
+            Morada
+            <input type="text" [(ngModel)]="client.address" />
+          </label>
+        </div>
+      </article>
+
+      <article class="form-card">
+        <h2>Dados do comercial</h2>
+
+        <div class="form-grid">
+          <label>
+            Nome
+            <input type="text" [(ngModel)]="commercial.name" />
+          </label>
+
+          <label>
+            Email
+            <input type="email" [(ngModel)]="commercial.email" />
+          </label>
+
+          <label>
+            Telemóvel
+            <input type="text" [(ngModel)]="commercial.phone" />
+          </label>
+        </div>
+      </article>
     </div>
-  </article>
 
-  <article class="form-card">
-    <h2>Dados do comercial</h2>
-
-    <div class="form-grid">
-      <label>
-        Nome
-        <input type="text" [(ngModel)]="commercial.name" />
-      </label>
-
-      <label>
-        Email
-        <input type="email" [(ngModel)]="commercial.email" />
-      </label>
-
-      <label>
-        Telemóvel
-        <input type="text" [(ngModel)]="commercial.phone" />
-      </label>
-    </div>
-  </article>
-
-  <div id="proposal-document" class="proposal-document">
-    <section class="proposal-page cover-page">
-      <div class="cover-top">
-        <span>Proposta Comercial de Energia</span>
-        <img [src]="getProviderLogo()" />
-      </div>
-
-      <h1>
-        A energia certa<br />
-        para o seu negócio.
-      </h1>
-
-      <p>
-        Proposta personalizada com base na fatura atual e nos consumos indicados.
-      </p>
-
-      <div class="cover-highlight">
-        <strong>
-          {{ formatCurrency(offer.comparison.monthlySaving) }}
-        </strong>
-        <span>Poupança mensal estimada</span>
-      </div>
-
-      <div class="cover-bottom">
-        <div>
-          <span>Cliente</span>
-          <strong>{{ client.name || 'Nome do cliente' }}</strong>
+    <aside class="proposal-summary-card">
+      <div class="provider-header">
+        <div class="provider-logo">
+          <img [src]="getProviderLogo()" [alt]="offer.tariff.provider.name" />
         </div>
 
         <div>
-          <span>Data</span>
-          <strong>{{ formatDate(today) }}</strong>
+          <span>Oferta selecionada</span>
+          <h2>{{ offer.tariff.provider.name }}</h2>
+          <p>{{ offer.tariff.name }}</p>
         </div>
+      </div>
 
+      <div class="summary-metrics">
         <div>
-          <span>Fornecedor</span>
-          <strong>{{ offer.tariff.provider.name }}</strong>
+          <span>Estimativa mensal</span>
+          <strong>{{ formatCurrency(offer.simulation.estimatedMonthlyCost) }}</strong>
         </div>
 
+        <div class="saving">
+          <span>Poupança mensal</span>
+          <strong>{{ formatCurrency(offer.comparison.monthlySaving) }}</strong>
+        </div>
+
+        <div class="saving">
+          <span>Poupança anual</span>
+          <strong>{{ formatCurrency(offer.comparison.yearlySaving) }}</strong>
+        </div>
+
+        <div *ngIf="offer.commissionValue">
+          <span>Comissão</span>
+          <strong>{{ formatCurrency(offer.commissionValue) }}</strong>
+        </div>
+      </div>
+
+      <div class="offer-details">
         <div>
-          <span>Comercial</span>
-          <strong>{{ commercial.name || '-' }}</strong>
+          <span>Produto</span>
+          <strong>{{ getProductLabel(offer.tariff.productType) }}</strong>
         </div>
-      </div>
-    </section>
 
-    <section class="proposal-page details-page">
-      <div class="proposal-logo">
-        <img [src]="getProviderLogo()" />
-      </div>
+        <div *ngIf="offer.tariff.tariffType">
+          <span>Tarifário</span>
+          <strong>{{ getTariffLabel(offer.tariff.tariffType) }}</strong>
+        </div>
 
-      <h2>Proposta à sua medida</h2>
-      <h3>Condições particulares</h3>
+        <div *ngIf="offer.tariff.powerKva">
+          <span>Potência</span>
+          <strong>{{ offer.tariff.powerKva }} kVA</strong>
+        </div>
 
-      <div class="proposal-box">
-        <div class="box-title">Identificação do cliente</div>
-
-        <div class="proposal-grid">
-          <div>
-            <span>Nome / Empresa</span>
-            <strong>{{ client.name || '-' }}</strong>
-          </div>
-
-          <div>
-            <span>NIF</span>
-            <strong>{{ client.nif || '-' }}</strong>
-          </div>
-
-          <div>
-            <span>Email</span>
-            <strong>{{ client.email || '-' }}</strong>
-          </div>
-
-          <div>
-            <span>Telemóvel</span>
-            <strong>{{ client.phone || '-' }}</strong>
-          </div>
-
-          <div class="full">
-            <span>Morada</span>
-            <strong>{{ client.address || '-' }}</strong>
-          </div>
+        <div *ngIf="offer.tariff.gasTier">
+          <span>Gás</span>
+          <strong>Escalão {{ offer.tariff.gasTier }}</strong>
         </div>
       </div>
 
-      <div class="proposal-box">
-        <div class="box-title">Identificação do comercial</div>
+      <button type="button" class="generate-btn" (click)="exportPdf()">
+        <span class="material-symbols-rounded">description</span>
 
-        <div class="proposal-grid">
-          <div>
-            <span>Nome</span>
-            <strong>{{ commercial.name || '-' }}</strong>
-          </div>
+        <span>
+          <strong>Gerar proposta</strong>
+          <small>Exportar proposta comercial em PDF</small>
+        </span>
 
-          <div>
-            <span>Email</span>
-            <strong>{{ commercial.email || '-' }}</strong>
-          </div>
-
-          <div>
-            <span>Telemóvel</span>
-            <strong>{{ commercial.phone || '-' }}</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="proposal-box">
-        <div class="box-title">Resumo da proposta</div>
-
-        <div class="summary-grid">
-          <div>
-            <span>Fatura atual</span>
-            <strong>{{ formatCurrency(current.invoiceAmount) }}</strong>
-          </div>
-
-          <div>
-            <span>Nova estimativa</span>
-            <strong>{{ formatCurrency(offer.simulation.estimatedMonthlyCost) }}</strong>
-          </div>
-
-          <div class="saving">
-            <span>Poupança anual</span>
-            <strong>{{ formatCurrency(offer.comparison.yearlySaving) }}</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="proposal-page details-page">
-      <div class="proposal-box">
-        <div class="box-title">Oferta selecionada</div>
-
-        <div class="proposal-grid">
-          <div>
-            <span>Plano</span>
-            <strong>{{ offer.tariff.name }}</strong>
-          </div>
-
-          <div>
-            <span>Produto</span>
-            <strong>{{ offer.tariff.productType }}</strong>
-          </div>
-
-          <div *ngIf="offer.tariff.powerKva">
-            <span>Potência</span>
-            <strong>{{ offer.tariff.powerKva }} kVA</strong>
-          </div>
-
-          <div *ngIf="offer.tariff.gasTier">
-            <span>Escalão gás</span>
-            <strong>Escalão {{ offer.tariff.gasTier }}</strong>
-          </div>
-
-          <div *ngIf="offer.tariff.singleEnergyPrice">
-            <span>Energia</span>
-            <strong>{{ offer.tariff.singleEnergyPrice }} €/kWh</strong>
-          </div>
-
-          <div *ngIf="offer.tariff.gasEnergyPrice">
-            <span>Energia gás</span>
-            <strong>{{ offer.tariff.gasEnergyPrice }} €/kWh</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+        <span class="material-symbols-rounded">arrow_forward</span>
+      </button>
+    </aside>
+  </section>
 </section>

@@ -19,7 +19,9 @@ export class ProposalPdfService {
 
     document.body.appendChild(componentRef.location.nativeElement);
 
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await document.fonts.ready;
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const pageElements =
       componentRef.location.nativeElement.querySelectorAll(
