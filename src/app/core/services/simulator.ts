@@ -186,6 +186,19 @@ export interface SimulationTariff {
   active: boolean;
 }
 
+export interface SimulationTariffFilters {
+  name?: string;
+  companyId?: string;
+  segment?: Segment;
+  productType?: ProductType;
+  tariffType?: TariffType;
+}
+
+export type UpdateSimulationTariffRequest =
+  Partial<CreateSimulationTariffRequest> & {
+    active?: boolean;
+  };
+
 @Injectable({
   providedIn: 'root',
 })
@@ -220,6 +233,40 @@ export class SimulatorService {
       {
         observe: 'response',
       },
+    );
+  }
+
+  getSimulationTariffs(
+    filters: SimulationTariffFilters,
+  ): Observable<SimulationTariff[]> {
+    const params = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([, value]) =>
+          value !== undefined &&
+          value !== null &&
+          value !== '',
+      ),
+    );
+
+    return this.http.get<SimulationTariff[]>(
+      `${this.apiUrl}/api/simulator/tariffs`,
+      { params },
+    );
+  }
+
+  updateSimulationTariff(
+    id: string,
+    payload: UpdateSimulationTariffRequest,
+  ): Observable<SimulationTariff> {
+    return this.http.patch<SimulationTariff>(
+      `${this.apiUrl}/api/simulator/tariffs/${id}`,
+      payload,
+    );
+  }
+
+  deleteSimulationTariff(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiUrl}/api/simulator/tariffs/${id}`,
     );
   }
 }

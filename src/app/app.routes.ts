@@ -112,6 +112,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'tariffs/edit',
+        loadComponent: () =>
+          import('./features/simulator/tariff-edit/tariff-edit').then(
+            (m) => m.TariffEdit,
+          ),
+      },
+      {
         path: 'simulator',
         loadComponent: () =>
           import('./features/simulator/simulator').then(

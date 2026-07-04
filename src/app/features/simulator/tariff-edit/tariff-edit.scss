@@ -1,0 +1,271 @@
+.tariff-edit-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.page-header {
+  h1 {
+    color: #243646;
+    font-size: 32px;
+    margin: 4px 0 6px;
+  }
+
+  p {
+    color: #64748b;
+    margin: 0;
+    font-size: 15px;
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.card {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.section-title {
+  color: #243646;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select {
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 0 12px;
+  color: #243646;
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: #008db1;
+  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+}
+
+.form-footer {
+  margin-top: 22px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #243646;
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: #00b894;
+    cursor: pointer;
+  }
+
+  span {
+    user-select: none;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 22px;
+
+  button {
+    border: 0;
+    border-radius: 999px;
+    background: #00b894;
+    color: #ffffff;
+    padding: 12px 26px;
+    font-weight: 900;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+
+  .secondary-btn {
+    background: #e2e8f0;
+    color: #243646;
+  }
+}
+
+.success-message,
+.error-message {
+  width: fit-content;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.success-message {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.error-message {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 430px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.results-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tariff-result {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: #008db1;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  &.selected {
+    border-color: #00b894;
+    background: #f0fdf4;
+  }
+
+  h3 {
+    color: #243646;
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+
+  span {
+    color: #008db1;
+    background: #eef6fa;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 900;
+
+    &.inactive {
+      color: #dc2626;
+      background: #fee2e2;
+    }
+  }
+}
+
+.edit-card {
+  position: sticky;
+  top: 22px;
+}
+
+@media (max-width: 1200px) {
+  .results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-card {
+    position: static;
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.danger-zone {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-start;
+
+  button {
+    border: 0;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 11px 20px;
+    font-weight: 900;
+    cursor: pointer;
+
+    &:hover {
+      background: #fecaca;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+}
