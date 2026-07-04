@@ -428,4 +428,16 @@ export class InvoiceCompare {
       },
     );
   }
+
+  isDifferentCycle(offer: InvoiceComparisonOffer): boolean {
+    return (
+      !!this.form.cycleType &&
+      !!offer.tariff.cycleType &&
+      this.form.cycleType !== offer.tariff.cycleType
+    );
+  }
+
+  getCycleDifferenceText(offer: InvoiceComparisonOffer): string {
+    return `${this.getCycleTypeLabel(this.form.cycleType)} → ${this.getCycleTypeLabel(offer.tariff.cycleType)}`;
+  }
 }

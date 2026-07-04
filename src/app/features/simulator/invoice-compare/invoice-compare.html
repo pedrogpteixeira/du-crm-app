@@ -253,6 +253,7 @@
       class="offer-card"
       *ngFor="let offer of offers"
       [class.better]="offer.comparison.isBetterOffer"
+      [class.different-cycle]="isDifferentCycle(offer)"
       (click)="openOfferDetails(offer)"
     >
       <div class="provider">
@@ -273,9 +274,22 @@
           <h3>{{ offer.tariff.provider.name }}</h3>
           <p>{{ offer.tariff.name }}</p>
 
-          <span class="product-pill">
-            {{ getProductTypeLabel(offer.tariff.productType) }}
-          </span>
+          <div class="offer-badges">
+            <span class="product-pill">
+              {{ getProductTypeLabel(offer.tariff.productType) }}
+            </span>
+
+            <span
+              class="cycle-warning"
+              *ngIf="isDifferentCycle(offer)"
+            >
+              <span class="material-symbols-rounded">
+                sync_alt
+              </span>
+
+              {{ getCycleDifferenceText(offer) }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -394,6 +408,28 @@
     </header>
 
     <div class="offer-modal-content">
+
+    <section
+      class="cycle-alert"
+      *ngIf="isDifferentCycle(selectedOffer)"
+    >
+      <span class="material-symbols-rounded">
+        sync_alt
+      </span>
+
+      <div>
+        <strong>
+          Esta oferta utiliza um ciclo diferente.
+        </strong>
+
+        <p>
+          O cliente encontra-se atualmente em ciclo
+          <b>{{ getCycleTypeLabel(form.cycleType) }}</b>,
+          enquanto esta proposta utiliza
+          <b>{{ getCycleTypeLabel(selectedOffer.tariff.cycleType) }}</b>.
+        </p>
+      </div>
+    </section>  
 
     <section class="modal-section highlight-section">
       <h3>Resultado da simulação</h3>
