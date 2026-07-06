@@ -72,16 +72,30 @@ export class ProposalPreview implements OnInit {
     return new Intl.DateTimeFormat('pt-PT').format(date);
   }
 
-  getProviderLogo(): string {
-    const provider = this.offer?.tariff?.provider?.name;
+  getProviderLogo(providerName: string): string {
+    const normalized = (providerName || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
 
     const logos: Record<string, string> = {
-      Repsol: 'assets/companies/repsol.png',
-      'Meo Energias': 'assets/companies/meo.png',
-      MEO: 'assets/companies/meo.png',
+      repsol: 'assets/companies/repsol.png',
+      meo: 'assets/companies/meo.png',
+      'meo energias': 'assets/companies/meo.png',
+      galp: 'assets/companies/galp.png',
+      iberdrola: 'assets/companies/iberdrola.png',
+      yes: 'assets/companies/yes.png',
+      'yes energy': 'assets/companies/yes.png',
+      endesa: 'assets/companies/endesa.png',
+      portulogos: 'assets/companies/portulogos.png',
+      'nossa energia': 'assets/companies/nossa-energia.png',
+      ezu: 'assets/companies/ezu.png',
+      audax: 'assets/companies/audax.png',
+      plenitude: 'assets/companies/plenitude.png',
     };
 
-    return logos[provider] || 'assets/companies/repsol.png';
+    return logos[normalized] ?? 'assets/companies/default.png';
   }
 
   getProductLabel(value?: string): string {
