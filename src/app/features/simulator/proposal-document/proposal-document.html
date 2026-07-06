@@ -14,31 +14,15 @@
         </p>
 
         <h1>
-          A energia certa<br />
-          para o seu negócio.
+          {{ getCoverTitle().split('\n')[0] }}<br />
+          {{ getCoverTitle().split('\n')[1] }}
         </h1>
 
         <p class="intro">
-          Proposta personalizada com base na fatura
-          atual e nos consumos indicados.
+          {{ getCoverIntro() }}
         </p>
 
       </div>
-
-      <div class="cover-illustration">
-
-        <img
-          src="assets/proposal/repsol-cover.png"
-          *ngIf="proposal.offer.tariff.provider.name === 'Repsol'"
-        />
-
-        <img
-          src="assets/proposal/meo-cover.png"
-          *ngIf="proposal.offer.tariff.provider.name !== 'Repsol'"
-        />
-
-      </div>
-
     </div>
 
     <div class="saving-card">
@@ -49,7 +33,7 @@
 
     <div class="cover-info">
       <div>
-        <span>Cliente</span>
+        <span>{{ getSegmentLabel(proposal.offer.tariff.segment) }}</span>
         <strong>{{ proposal.client.name || 'Nome do cliente' }}</strong>
       </div>
 
@@ -79,11 +63,21 @@
     <h3>Condições particulares</h3>
 
     <div class="pdf-box">
-      <div class="box-title">Identificação do cliente</div>
+      <div class="box-title">
+        Identificação do {{ getSegmentLabel(proposal.offer.tariff.segment) }}
+      </div>
 
       <div class="pdf-grid">
         <div>
-          <span>Nome / Empresa</span>
+          <span>
+            {{
+              proposal.offer.tariff.segment === 'business'
+                ? 'Nome / Empresa'
+                : proposal.offer.tariff.segment === 'condominium'
+                  ? 'Nome do condomínio'
+                  : 'Nome do cliente'
+            }}
+          </span>
           <strong>{{ proposal.client.name || '-' }}</strong>
         </div>
 
@@ -175,6 +169,11 @@
         <div>
           <span>Fornecedor</span>
           <strong>{{ proposal.offer.tariff.provider.name }}</strong>
+        </div>
+
+        <div>
+          <span>Segmento</span>
+          <strong>{{ getSegmentLabel(proposal.offer.tariff.segment) }}</strong>
         </div>
 
         <div>

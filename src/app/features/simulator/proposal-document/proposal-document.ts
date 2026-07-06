@@ -34,6 +34,8 @@ export class ProposalDocument {
       this.proposal.offer.tariff.provider.name,
     );
 
+    console.log('Provider:', provider);
+
     const themes: Record<string, ProposalTheme> = {
       repsol: {
         name: 'Repsol',
@@ -95,7 +97,7 @@ export class ProposalDocument {
         fontColor: '#243646',
       },
 
-      yes: {
+      'yes energy': {
         name: 'Yes Energy',
         logo: 'assets/companies/yes.png',
         primary: '#6b21a8',
@@ -233,6 +235,46 @@ export class ProposalDocument {
     };
 
     return value ? labels[value] || value : '—';
+  }
+
+  getSegmentLabel(value?: string): string {
+    const labels: Record<string, string> = {
+      business: 'Empresa',
+      residential: 'Cliente particular',
+      condominium: 'Condomínio',
+    };
+
+    return value ? labels[value] || value : 'Cliente';
+  }
+
+  getCoverTitle(): string {
+    const segment = this.proposal.offer.tariff.segment;
+
+    const titles: Record<string, string> = {
+      business: 'A energia certa\npara o seu negócio.',
+      residential: 'A energia certa\npara a sua casa.',
+      condominium: 'A energia certa\npara o seu condomínio.',
+    };
+
+    return titles[segment || ''] || 'A energia certa\npara si.';
+  }
+
+  getCoverIntro(): string {
+    const segment = this.proposal.offer.tariff.segment;
+
+    const intros: Record<string, string> = {
+      business:
+        'Proposta personalizada com base na fatura atual e nos consumos indicados para o seu negócio.',
+      residential:
+        'Proposta personalizada com base na fatura atual e nos consumos indicados para a sua casa.',
+      condominium:
+        'Proposta personalizada com base na fatura atual e nos consumos indicados para o seu condomínio.',
+    };
+
+    return (
+      intros[segment || ''] ||
+      'Proposta personalizada com base na fatura atual e nos consumos indicados.'
+    );
   }
 
   formatPrice(value?: number, suffix = '€/kWh'): string {
