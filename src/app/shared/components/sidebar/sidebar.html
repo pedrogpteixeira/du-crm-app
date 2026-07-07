@@ -15,21 +15,31 @@
         <span class="label">Dashboard</span>
       </a>
 
-      <a routerLink="/home/users" routerLinkActive="active">
+      <a 
+      *ngIf="canAccessRoles('Super Admin')"
+      routerLink="/home/users" routerLinkActive="active">
         <span class="icon material-symbols-rounded">group</span>
         <span class="label">Utilizadores</span>
       </a>
 
-      <a routerLink="/home/teams" routerLinkActive="active">
+      <a 
+      *ngIf="canAccessRoles('Super Admin')"
+      routerLink="/home/teams" routerLinkActive="active">
         <span class="icon material-symbols-rounded">groups</span>
         <span class="label">Equipas</span>
       </a>
     </div>
 
-    <div class="nav-section">
-      <span class="section-title">CRM Repsol</span>
+    <div 
+    *ngIf="canAccessRoles('Super Admin')"
+    class="nav-section">
+      <span 
+      *ngIf="canAccessRoles('Super Admin')"
+      class="section-title">CRM Repsol</span>
 
-      <a routerLink="/home/contracts/repsol" routerLinkActive="active">
+      <a 
+      *ngIf="canAccessRoles('Super Admin')"
+      routerLink="/home/contracts/repsol" routerLinkActive="active">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Contratos</span>
       </a>
@@ -38,12 +48,16 @@
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 
-      <a routerLink="/home/tariffs/create" routerLinkActive="active">
+      <a 
+      *ngIf="canAccessRoles('Super Admin')"
+      routerLink="/home/tariffs/create" routerLinkActive="active">
         <span class="icon material-symbols-rounded">price_change</span>
         <span class="label">Novo Tarifário</span>
       </a>
 
-      <a routerLink="/home/tariffs/edit" routerLinkActive="active">
+      <a 
+      *ngIf="canAccessRoles('Super Admin')"
+      routerLink="/home/tariffs/edit" routerLinkActive="active">
         <span class="icon material-symbols-rounded">edit_note</span>
         <span class="label">Editar Tarifários</span>
       </a>
@@ -53,14 +67,21 @@
         <span class="label">Comparar Fatura</span>
       </a>
 
-      <a routerLink="/home/admin/omie-averages" routerLinkActive="active">
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/admin/omie-averages" routerLinkActive="active"
+      >
         <span class="icon material-symbols-rounded">query_stats</span>
         <span class="label">Médias OMIE</span>
       </a>
     </div>
 
-    <div class="nav-section">
-      <span class="section-title">Conhecimento</span>
+    <div 
+    *ngIf="canAccessRoles('Super Admin')"
+    class="nav-section">
+      <span 
+      *ngIf="canAccessRoles('Super Admin')"
+      class="section-title">Conhecimento</span>
 
       <a routerLink="/home/knowledge-base" routerLinkActive="active">
         <span class="icon material-symbols-rounded">library_books</span>

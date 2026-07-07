@@ -49,4 +49,12 @@ export class Sidebar {
 
     return `${environment.apiUrl}/api/users/${this.user.id}/profile-picture`;
   }
+
+  canAccessRoles(...allowedRoles: string[]): boolean {
+    const role = this.user?.role ?? '';
+
+    return allowedRoles.some((allowedRole) =>
+      role.toLowerCase().includes(allowedRole.toLowerCase()),
+    );
+  }
 }

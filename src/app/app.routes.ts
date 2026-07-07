@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth-guard';
 import { guestGuard } from './core/guards/guest-guard';
+import { roleIncludesGuard } from './core/guards/role-includes-guard';
 
 export const routes: Routes = [
   {
@@ -26,16 +27,28 @@ export const routes: Routes = [
       },
       {
         path: 'users',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/users/users').then((m) => m.Users),
       },
       {
         path: 'teams',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/teams/teams').then((m) => m.Teams),
       },
       {
         path: 'teams/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/teams/team-detail/team-detail').then(
             (m) => m.TeamDetail,
@@ -43,11 +56,19 @@ export const routes: Routes = [
       },
       {
         path: 'users/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),
       },
       {
         path: 'contracts/repsol',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/contracts/repsol-contracts/repsol-contracts').then(
             (m) => m.RepsolContracts,
@@ -55,6 +76,10 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/repsol/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-create/repsol-contract-create').then(
             (m) => m.RepsolContractCreate,
@@ -62,6 +87,10 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/repsol/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-detail/repsol-contract-detail').then(
             (m) => m.RepsolContractDetail,
@@ -74,24 +103,40 @@ export const routes: Routes = [
       },
       {
         path: 'knowledge-base',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-base-home/knowledge-base-home')
             .then((m) => m.KnowledgeBaseHome),
       },
       {
         path: 'knowledge-base/folders/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-folder/knowledge-folder')
             .then((m) => m.KnowledgeFolder),
       },
       {
         path: 'knowledge-base/articles/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-article/knowledge-article')
             .then((m) => m.KnowledgeArticle),
       },
       {
         path: 'knowledge-base/campaigns/:companyId',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-campaigns/knowledge-campaigns').then(
             (m) => m.KnowledgeCampaigns,
@@ -106,12 +151,21 @@ export const routes: Routes = [
       },
       {
         path: 'admin/omie-averages',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
-          import('./features/admin/omie-averages/omie-averages')
-            .then((m) => m.OmieAverages),
+          import('./features/admin/omie-averages/omie-averages').then(
+            (m) => m.OmieAverages,
+          ),
       },
       {
         path: 'tariffs/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/simulator/tariff-create/tariff-create').then(
             (m) => m.TariffCreate,
@@ -119,6 +173,10 @@ export const routes: Routes = [
       },
       {
         path: 'tariffs/edit',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
         loadComponent: () =>
           import('./features/simulator/tariff-edit/tariff-edit').then(
             (m) => m.TariffEdit,
