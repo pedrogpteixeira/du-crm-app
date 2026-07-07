@@ -1,0 +1,157 @@
+<section class="omie-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Administração › OMIE</span>
+
+      <h1>Médias OMIE Indexadas</h1>
+
+      <p>
+        Consulta e altera manualmente as médias OMIE usadas nos tarifários indexados.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      (click)="loadAverages()"
+      [disabled]="isLoading"
+    >
+      {{ isLoading ? 'A atualizar...' : 'Atualizar' }}
+    </button>
+  </header>
+
+  <p class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </p>
+
+  <p class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </p>
+
+  <section class="averages-grid">
+    <article
+      class="average-card"
+      *ngFor="let card of cards"
+    >
+      <ng-container *ngIf="card.average as average; else emptyAverage">
+        <div class="card-header">
+          <div>
+            <span class="period-label">
+              {{ card.title }}
+            </span>
+
+            <h2>
+              {{ getReferenceLabel(average) }}
+            </h2>
+          </div>
+
+          <span
+            class="status-pill"
+            [class.manual]="average.manualOverride"
+          >
+            {{ average.manualOverride ? 'Manual' : 'Automática' }}
+          </span>
+        </div>
+
+        <div class="price-block">
+          <span>Preço médio</span>
+
+          <strong>
+            {{ formatMwh(average.averagePriceMwh) }} €/MWh
+          </strong>
+
+          <small>
+            {{ formatKwh(average.averagePriceKwh) }} €/kWh
+          </small>
+        </div>
+
+        <div class="meta-grid">
+          <div>
+            <span>Mercado</span>
+            <strong>{{ average.market | uppercase }}</strong>
+          </div>
+
+          <div>
+            <span>País</span>
+            <strong>{{ average.country }}</strong>
+          </div>
+
+          <div>
+            <span>Atualizado em</span>
+            <strong>{{ formatDateTime(average.updatedAt) }}</strong>
+          </div>
+
+          <div>
+            <span>Estado</span>
+            <strong>{{ average.active ? 'Ativa' : 'Inativa' }}</strong>
+          </div>
+        </div>
+
+        <form
+          class="edit-form"
+          *ngIf="editingId === average.id"
+          [formGroup]="editForm"
+          (ngSubmit)="saveAverage(average)"
+        >
+          <label>
+            Novo valor em €/MWh
+
+            <input
+              type="number"
+              min="0"
+              step="0.000001"
+              formControlName="averagePriceMwh"
+            />
+          </label>
+
+          <small
+            class="field-error"
+            *ngIf="
+              editForm.controls.averagePriceMwh.invalid &&
+              editForm.controls.averagePriceMwh.touched
+            "
+          >
+            Introduz um valor válido, igual ou superior a 0.
+          </small>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              class="secondary-btn"
+              (click)="cancelEdit()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              [disabled]="isSaving"
+            >
+              {{ isSaving ? 'A guardar...' : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+
+        <button
+          type="button"
+          class="edit-btn"
+          *ngIf="editingId !== average.id"
+          (click)="startEdit(average)"
+        >
+          Editar
+        </button>
+      </ng-container>
+
+      <ng-template #emptyAverage>
+        <div class="empty-average">
+          <span class="material-symbols-rounded">
+            database_off
+          </span>
+
+          <h2>{{ card.title }}</h2>
+
+          <p>Sem média disponível.</p>
+        </div>
+      </ng-template>
+    </article>
+  </section>
+</section>

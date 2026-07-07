@@ -1,0 +1,301 @@
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { finalize } from 'rxjs';
+
+import {
+  IndexedEnergyAverage,
+  IndexedEnergyAverageCard,
+  LatestIndexedEnergyAveragesResponse,
+} from '../../../core/models/indexed-energy-average.model';
+
+import { IndexedEnergyAverageService } from '../../../core/services/indexed-energy-average';
+
+@Component({
+  selector: 'app-omie-averages',
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './omie-averages.html',
+  styleUrl: './omie-averages.scss',
+})
+export class OmieAverages implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly indexedEnergyAverageService = inject(
+    IndexedEnergyAverageService,
+  );
+
+  isLoading = false;
+  isSaving = false;
+
+  successMessage = '';
+  errorMessage = '';
+
+  editingId: string | null = null;
+
+  cards: IndexedEnergyAverageCard[] = [
+    {
+      periodType: 'daily',
+      title: 'Média diária',
+      average: null,
+    },
+    {
+      periodType: 'weekly',
+      title: 'Média semanal',
+      average: null,
+    },
+    {
+      periodType: 'monthly',
+      title: 'Média mensal',
+      average: null,
+    },
+  ];
+
+  editForm = this.fb.group({
+    averagePriceMwh: [
+      null as number | null,
+      [
+        Validators.required,
+        Validators.min(0),
+      ],
+    ],
+  });
+
+  ngOnInit(): void {
+    this.loadAverages();
+  }
+
+  loadAverages(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.indexedEnergyAverageService
+      .getLatestAverages()
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          this.cards = this.buildCards(response);
+        },
+        error: () => {
+          this.showError('Não foi possível carregar as médias OMIE.');
+        },
+      });
+  }
+
+  startEdit(average: IndexedEnergyAverage): void {
+    this.editingId = average.id;
+
+    this.editForm.reset({
+      averagePriceMwh: average.averagePriceMwh,
+    });
+
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  cancelEdit(): void {
+    this.editingId = null;
+    this.editForm.reset();
+  }
+
+  saveAverage(average: IndexedEnergyAverage): void {
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      this.showError('Introduz um valor válido em €/MWh.');
+      return;
+    }
+
+    const value = this.editForm.controls.averagePriceMwh.value;
+
+    if (
+      value === null ||
+      value === undefined ||
+      Number.isNaN(Number(value)) ||
+      Number(value) < 0
+    ) {
+      this.showError('O valor não pode ser vazio, negativo ou inválido.');
+      return;
+    }
+
+    this.isSaving = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.indexedEnergyAverageService
+      .updateAverage(average.id, {
+        averagePriceMwh: Number(value),
+      })
+      .pipe(
+        finalize(() => {
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.editingId = null;
+          this.editForm.reset();
+          this.showSuccess('Média OMIE atualizada com sucesso.');
+          this.loadAverages();
+        },
+        error: (error) => {
+          this.showError(
+            error?.error?.message ||
+              'Não foi possível atualizar a média OMIE.',
+          );
+        },
+      });
+  }
+
+  private buildCards(
+    response: LatestIndexedEnergyAveragesResponse,
+  ): IndexedEnergyAverageCard[] {
+    return [
+      {
+        periodType: 'daily',
+        title: 'Média diária',
+        average: response.daily,
+      },
+      {
+        periodType: 'weekly',
+        title: 'Média semanal',
+        average: response.weekly,
+      },
+      {
+        periodType: 'monthly',
+        title: 'Média mensal',
+        average: response.monthly,
+      },
+    ];
+  }
+
+  getReferenceLabel(average: IndexedEnergyAverage): string {
+    if (average.periodType === 'daily') {
+      return average.referenceDate
+        ? this.formatDate(average.referenceDate)
+        : '-';
+    }
+
+    if (average.periodType === 'weekly') {
+      return `Semana ${average.week || '-'} · ${this.getWeeklyRangeLabel(average)}`;
+    }
+
+    if (average.periodType === 'monthly') {
+      return `${this.formatMonth(average.month)} · ${average.year || '-'}`;
+    }
+
+    return '-';
+  }
+
+  formatMwh(value?: number): string {
+    return new Intl.NumberFormat('pt-PT', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+    }).format(value || 0);
+  }
+
+  formatKwh(value?: number): string {
+    return new Intl.NumberFormat('pt-PT', {
+      minimumFractionDigits: 5,
+      maximumFractionDigits: 6,
+    }).format(value || 0);
+  }
+
+  formatDate(value?: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('pt-PT').format(new Date(value));
+  }
+
+  formatDateTime(value?: string): string {
+    if (!value) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
+  }
+
+  private formatMonth(month?: number | null): string {
+    if (!month) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('pt-PT', {
+      month: 'long',
+    }).format(new Date(2026, month - 1, 1));
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+
+    setTimeout(() => {
+      this.successMessage = '';
+      this.cdr.detectChanges();
+    }, 4000);
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.cdr.detectChanges();
+    }, 5000);
+  }
+
+  getWeeklyRangeLabel(average: IndexedEnergyAverage): string {
+    if (!average.year || !average.week) {
+      return '-';
+    }
+
+    const startDate = this.getDateOfISOWeek(
+      average.week,
+      average.year,
+    );
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+
+    return `${this.formatDate(startDate.toISOString())} a ${this.formatDate(endDate.toISOString())}`;
+  }
+
+  private getDateOfISOWeek(week: number, year: number): Date {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+
+    const dayOfWeek = simple.getDay();
+
+    const isoWeekStart = new Date(simple);
+
+    if (dayOfWeek <= 4) {
+      isoWeekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    } else {
+      isoWeekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    }
+
+    isoWeekStart.setHours(0, 0, 0, 0);
+
+    return isoWeekStart;
+  }
+}

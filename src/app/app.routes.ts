@@ -105,6 +105,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'admin/omie-averages',
+        loadComponent: () =>
+          import('./features/admin/omie-averages/omie-averages')
+            .then((m) => m.OmieAverages),
+      },
+      {
         path: 'tariffs/create',
         loadComponent: () =>
           import('./features/simulator/tariff-create/tariff-create').then(

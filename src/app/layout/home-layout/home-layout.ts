@@ -47,11 +47,11 @@ export class HomeLayout implements OnInit {
     if (url.includes('/users')) return 'Utilizadores';
     if (url.includes('/teams')) return 'Equipas';
     if (url.includes('/contracts/repsol')) return 'Contratos';
-    if (url.includes('/tariffs/create')) return 'Novo Tarifário';
-    if (url.includes('/tariffs/edit')) return 'Editar Tarifários';
+    if (url.includes('/tariffs')) return 'Tarifários';
     if (url.includes('/invoice-compare')) return 'Comparar Fatura';
     if (url.includes('/knowledge-base')) return 'Conhecimento';
     if (url.includes('/profile')) return 'Perfil';
+    if (url.includes('/omie-averages')) return 'Médias OMIE';
 
     return 'Dashboard';
   }
