@@ -22,17 +22,21 @@ export class SocketService {
   private readonly onlineUsersSubject = new BehaviorSubject<string[]>([]);
   onlineUsers$ = this.onlineUsersSubject.asObservable();
 
-  connect(token: string): void {
-    if (this.socket?.connected) {
-      return;
+  connect(): void {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      if (this.socket?.connected) {
+        return;
+      }
+
+      this.socket = io(environment.socketUrl, {
+        transports: ['websocket'],
+        auth: { token },
+      });
+
+      this.registerPresenceListeners();
     }
-
-    this.socket = io(environment.socketUrl, {
-      transports: ['websocket'],
-      auth: { token },
-    });
-
-    this.registerPresenceListeners();
   }
 
   disconnect(): void {
@@ -40,6 +44,14 @@ export class SocketService {
     this.socket?.disconnect();
     this.socket = null;
     this.onlineUsersSubject.next([]);
+  }
+
+  on<T>(eventName: string, callback: (data: T) => void): void {
+    this.socket?.on(eventName, callback);
+  }
+
+  off(eventName: string): void {
+    this.socket?.off(eventName);
   }
 
   isOnline$(userId: string): Observable<boolean> {

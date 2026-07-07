@@ -1,0 +1,149 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, map } from 'rxjs';
+
+import { environment } from '../../../environments/environment.development';
+import { Notification } from '../models/notification.model';
+import { Auth } from './auth';
+import { SocketService } from './socket';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class NotificationService {
+  private readonly http = inject(HttpClient);
+  private readonly socketService = inject(SocketService);
+  private readonly auth = inject(Auth);
+
+  private readonly apiUrl = environment.apiUrl;
+
+  private readonly notificationsSubject =
+    new BehaviorSubject<Notification[]>([]);
+
+  readonly notifications$ =
+    this.notificationsSubject.asObservable();
+
+  readonly unreadCount$ = this.notifications$.pipe(
+    map((notifications) => {
+      const currentUser = this.auth.getCurrentUser();
+
+      if (!currentUser?.id) {
+        return 0;
+      }
+
+      return notifications.filter(
+        (notification) =>
+          !notification.readBy?.includes(currentUser.id),
+      ).length;
+    }),
+  );
+
+  init(): void {
+    this.loadNotifications();
+    this.listenToSocketNotifications();
+  }
+
+  loadNotifications(): void {
+    const currentUser = this.auth.getCurrentUser();
+
+    if (!currentUser?.id) {
+      return;
+    }
+
+    this.http
+      .get<Notification[]>(
+        `${this.apiUrl}/api/notifications/me`,
+      )
+      .subscribe({
+        next: (notifications) => {
+          const unreadNotifications = notifications.filter(
+            (notification) =>
+              !notification.readBy?.includes(currentUser.id),
+          );
+
+          this.notificationsSubject.next(
+            this.sortNotifications(unreadNotifications),
+          );
+        },
+      });
+  }
+
+  markAsRead(notificationId: string): void {
+    this.http
+      .patch<Notification>(
+        `${this.apiUrl}/api/notifications/${notificationId}/read`,
+        {},
+      )
+      .subscribe({
+        next: () => {
+          const notifications = this.notificationsSubject.value.filter(
+            (notification) => notification.id !== notificationId,
+          );
+
+          this.notificationsSubject.next(notifications);
+        },
+      });
+  }
+
+  handleNewNotification(notification: Notification): void {
+    const currentNotifications = this.notificationsSubject.value;
+
+    const alreadyExists = currentNotifications.some(
+      (item) => item.id === notification.id,
+    );
+
+    if (alreadyExists) {
+      return;
+    }
+
+    this.notificationsSubject.next(
+      this.sortNotifications([
+        notification,
+        ...currentNotifications,
+      ]),
+    );
+
+    this.showBrowserToast(notification);
+  }
+
+  private listenToSocketNotifications(): void {
+    this.socketService.connect();
+
+    this.socketService.off('notifications:new');
+
+    this.socketService.on<Notification>(
+      'notifications:new',
+      (notification) => {
+        this.handleNewNotification(notification);
+      },
+    );
+  }
+
+  private sortNotifications(
+    notifications: Notification[],
+  ): Notification[] {
+    return [...notifications].sort((a, b) => {
+      const dateA = a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : 0;
+
+      const dateB = b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : 0;
+
+      return dateB - dateA;
+    });
+  }
+
+  private showBrowserToast(notification: Notification): void {
+    if (!('Notification' in window)) {
+      return;
+    }
+
+    if (window.Notification.permission === 'granted') {
+      new window.Notification(notification.title, {
+        body: notification.message,
+      });
+    }
+  }
+}

@@ -15,11 +15,7 @@ export class App implements OnInit {
   private readonly auth = inject(Auth);
 
   constructor(private socketService: SocketService) {
-    const token = localStorage.getItem('token');
-
-    if (token) {
-      this.socketService.connect(token);
-    }
+    this.socketService.connect();
   }
 
   ngOnInit(): void {

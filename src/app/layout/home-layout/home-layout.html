@@ -1,10 +1,26 @@
-<div class="home-layout" [class.sidebar-collapsed]="isSidebarCollapsed">
+<div
+  class="home-layout"
+  [class.sidebar-collapsed]="isSidebarCollapsed"
+>
   <app-sidebar
     [collapsed]="isSidebarCollapsed"
     (toggle)="toggleSidebar()"
   />
 
-  <main class="content">
-    <router-outlet />
-  </main>
+  <section class="main-layout">
+    <header class="topbar">
+      <div>
+        <span class="topbar-eyebrow">CERTO CRM</span>
+        <h1>{{ pageTitle }}</h1>
+      </div>
+
+      <div class="topbar-actions">
+        <app-notification-dropdown />
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </section>
 </div>

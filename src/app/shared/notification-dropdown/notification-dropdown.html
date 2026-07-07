@@ -1,0 +1,81 @@
+<div class="notification-wrapper">
+  <button
+    class="notification-trigger"
+    (click)="toggleDropdown($event)"
+  >
+    <span class="material-symbols-rounded">
+      notifications
+    </span>
+
+    <span
+      class="notification-badge"
+      *ngIf="(unreadCount$ | async) as unreadCount"
+    >
+      {{ unreadCount > 9 ? '9+' : unreadCount }}
+    </span>
+  </button>
+
+  <div
+    class="notification-dropdown"
+    *ngIf="isOpen"
+    (click)="$event.stopPropagation()"
+  >
+    <header>
+      <div>
+        <strong>Notificações</strong>
+        <span>Atualizações recentes do CRM</span>
+      </div>
+    </header>
+
+    <section
+      class="notification-list"
+      *ngIf="(notifications$ | async) as notifications"
+    >
+      <article
+        class="notification-item"
+        *ngFor="let notification of notifications"
+        [class.unread]="!isRead(notification)"
+        [class.info]="notification.type === 'info'"
+        [class.success]="notification.type === 'success'"
+        [class.warning]="notification.type === 'warning'"
+        [class.error]="notification.type === 'error'"
+        (click)="markAsRead(notification)"
+      >
+        <div class="notification-icon">
+          <span class="material-symbols-rounded">
+            {{ getNotificationIcon(notification.type) }}
+          </span>
+        </div>
+
+        <div class="notification-content">
+          <div class="notification-title-row">
+            <strong>{{ notification.title }}</strong>
+
+            <span
+              class="unread-dot"
+              *ngIf="!isRead(notification)"
+            ></span>
+          </div>
+
+          <p>{{ notification.message }}</p>
+
+          <small>
+            {{ formatDate(notification.createdAt) }}
+          </small>
+        </div>
+      </article>
+
+      <div
+        class="empty-state"
+        *ngIf="!notifications.length"
+      >
+        <span class="material-symbols-rounded">
+          notifications_off
+        </span>
+
+        <strong>Sem notificações</strong>
+        <p>Ainda não existem notificações para apresentar.</p>
+      </div>
+    </section>
+  </div>
+</div>

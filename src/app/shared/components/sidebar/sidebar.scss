@@ -5,6 +5,9 @@
   width: 260px;
   height: 100vh;
 
+  display: flex;
+  flex-direction: column;
+
   background: #2f4050;
   color: #ffffff;
 
@@ -17,13 +20,11 @@
     padding 0.25s ease;
 }
 
-/* =========================
-   TOGGLE BUTTON
-========================= */
-
 .toggle-btn {
   width: 44px;
   height: 44px;
+
+  flex-shrink: 0;
 
   border: 0;
   border-radius: 12px;
@@ -51,19 +52,17 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* =========================
-   BRAND
-========================= */
-
 .brand {
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   gap: 12px;
 
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 
-  font-weight: 00;
   font-size: 20px;
+  font-weight: 800;
 
   white-space: nowrap;
 
@@ -90,9 +89,53 @@
   flex-shrink: 0;
 }
 
-/* =========================
-   NAVIGATION
-========================= */
+/* NAV SCROLL AREA */
+
+.sidebar-nav {
+  position: relative;
+
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-bottom: 18px;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* subtle fade before profile card */
+.sidebar::after {
+  content: '';
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 86px;
+
+  height: 38px;
+
+  pointer-events: none;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(47, 64, 80, 0),
+    #2f4050
+  );
+
+  z-index: 2;
+}
+
 .nav-section {
   display: flex;
   flex-direction: column;
@@ -112,15 +155,6 @@
   margin: 8px 0 4px;
 
   white-space: nowrap;
-}
-
-
-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-
-  padding-bottom: 90px;
 }
 
 a {
@@ -168,16 +202,13 @@ a.active {
   color: #ffffff;
 }
 
-/* =========================
-   PROFILE CARD
-========================= */
+/* PROFILE CARD */
 
 .profile-card {
-  position: absolute;
+  flex-shrink: 0;
 
-  left: 18px;
-  right: 18px;
-  bottom: 18px;
+  position: relative;
+  z-index: 3;
 
   min-height: 58px;
   max-height: 58px;
@@ -186,6 +217,7 @@ a.active {
   align-items: center;
   gap: 10px;
 
+  margin-top: 16px;
   padding: 10px;
 
   overflow: hidden;
@@ -261,9 +293,7 @@ a.active {
   }
 }
 
-/* =========================
-   COLLAPSED SIDEBAR
-========================= */
+/* COLLAPSED SIDEBAR */
 
 .sidebar.collapsed {
   width: 72px;
@@ -274,7 +304,7 @@ a.active {
     display: none;
   }
 
-  nav {
+  .sidebar-nav {
     align-items: center;
     gap: 14px;
   }
@@ -301,9 +331,7 @@ a.active {
 
   .icon {
     min-width: auto;
-
     width: 100%;
-
     text-align: center;
   }
 
@@ -313,15 +341,10 @@ a.active {
 
   .toggle-btn {
     margin-left: 4px;
-
     transform: none;
   }
 
   .profile-card {
-    left: 10px;
-    right: 10px;
-    bottom: 18px;
-
     width: 52px;
     height: 52px;
 
@@ -335,5 +358,9 @@ a.active {
 
   .profile-info {
     display: none;
+  }
+
+  &::after {
+    bottom: 78px;
   }
 }
