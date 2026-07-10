@@ -1,36 +1,51 @@
-<section class="tariff-create-page">
+<form
+  class="tariff-create-page"
+  [formGroup]="form"
+  (ngSubmit)="createTariff()"
+>
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Simulador › Tarifários</span>
+      <span class="breadcrumb">
+        Simulador › Tarifários
+      </span>
+
       <h1>Novo Tarifário de Simulação</h1>
-      <p>Cria tarifários usados pelo simulador energético.</p>
+
+      <p>
+        Cria tarifários fixos ou indexados usados pelo simulador energético.
+      </p>
     </div>
   </header>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <p class="success-message" *ngIf="successMessage">
+  <p
+    class="success-message"
+    *ngIf="successMessage"
+  >
     {{ successMessage }}
   </p>
 
   <article class="card">
-    <div class="section-title">Dados gerais</div>
+    <div class="section-title">
+      Dados gerais
+    </div>
 
     <div class="form-grid">
       <label>
         Empresa *
 
         <select
-          [(ngModel)]="form.companyId"
-          [disabled]="isLoadingCompanies"
+          formControlName="companyId"
         >
           <option
             [ngValue]="null"
             disabled
-            selected
-            hidden
           >
             Selecione uma empresa
           </option>
@@ -42,42 +57,76 @@
             {{ company.name }}
           </option>
         </select>
+
+        <small
+          class="field-error"
+          *ngIf="isInvalid('companyId')"
+        >
+          Seleciona uma empresa.
+        </small>
       </label>
 
       <label>
         Nome *
-        <input type="text" [(ngModel)]="form.name" />
+
+        <input
+          type="text"
+          formControlName="name"
+        />
       </label>
 
       <label>
         Produto *
-        <select
-          [(ngModel)]="form.productType"
-          (ngModelChange)="onProductTypeChange()"
-        >
-          <option value="electricity">Eletricidade</option>
-          <option value="gas">Gás</option>
-          <option value="dual">Luz + Gás</option>
+
+        <select formControlName="productType">
+          <option value="electricity">
+            Eletricidade
+          </option>
+
+          <option value="gas">
+            Gás
+          </option>
+
+          <option value="dual">
+            Luz + Gás
+          </option>
         </select>
       </label>
 
       <label>
-        Segmento
-        <select [(ngModel)]="form.segment">
-          <option value="residential">Residencial</option>
-          <option value="business">Empresarial</option>
-          <option value="condominium">Condomínio</option>
+        Segmento *
+
+        <select formControlName="segment">
+          <option value="residential">
+            Residencial
+          </option>
+
+          <option value="business">
+            Empresarial
+          </option>
+
+          <option value="condominium">
+            Condomínio
+          </option>
         </select>
       </label>
 
       <label>
         Início
-        <input type="date" [(ngModel)]="form.startDate" />
+
+        <input
+          type="date"
+          formControlName="startDate"
+        />
       </label>
 
       <label>
         Fim
-        <input type="date" [(ngModel)]="form.endDate" />
+
+        <input
+          type="date"
+          formControlName="endDate"
+        />
       </label>
 
       <label>
@@ -85,42 +134,111 @@
 
         <input
           type="number"
-          step="0.01"
           min="0"
-          [(ngModel)]="form.salesCommission"
+          step="0.01"
+          formControlName="salesCommission"
         />
       </label>
     </div>
   </article>
 
-  <article class="card" *ngIf="shouldShowElectricityFields()">
-    <div class="section-title">Eletricidade</div>
+  <article
+    class="card energy-card"
+    *ngIf="shouldShowElectricityFields()"
+  >
+    <div class="section-heading">
+      <div>
+        <div class="section-title">
+          Eletricidade
+        </div>
+
+        <span class="section-description">
+          Configuração da componente elétrica do tarifário.
+        </span>
+      </div>
+
+      <span
+        class="mode-pill"
+        *ngIf="form.controls.electricityPriceMode.value as mode"
+        [class.indexed]="mode === 'indexed'"
+      >
+        {{
+          mode === 'fixed'
+            ? 'Preço fixo'
+            : 'Preço indexado'
+        }}
+      </span>
+    </div>
 
     <div class="form-grid">
       <label>
+        Modo de preço *
+
+        <select formControlName="electricityPriceMode">
+          <option
+            [ngValue]="null"
+            disabled
+          >
+            Selecione o modo
+          </option>
+
+          <option value="fixed">
+            Preço fixo
+          </option>
+
+          <option value="indexed">
+            Preço indexado
+          </option>
+        </select>
+      </label>
+
+      <label>
         Tipo tarifário *
-        <select
-          [(ngModel)]="form.tariffType"
-          (ngModelChange)="onTariffTypeChange()"
-        >
-          <option value="simple">Simples</option>
-          <option value="bi_hourly">Bi-horário</option>
-          <option value="tri_hourly">Tri-horário</option>
-          <option value="tetra_hourly">Tetra-horário</option>
+
+        <select formControlName="tariffType">
+          <option value="simple">
+            Simples
+          </option>
+
+          <option value="bi_hourly">
+            Bi-horário
+          </option>
+
+          <option value="tri_hourly">
+            Tri-horário
+          </option>
+
+          <option value="tetra_hourly">
+            Tetra-horário
+          </option>
         </select>
       </label>
 
       <label *ngIf="shouldShowCycleType()">
         Ciclo *
-        <select [(ngModel)]="form.cycleType">
-          <option value="daily">Diário</option>
-          <option value="weekly">Semanal</option>
+
+        <select formControlName="cycleType">
+          <option
+            [ngValue]="null"
+            disabled
+          >
+            Selecione o ciclo
+          </option>
+
+          <option value="daily">
+            Diário
+          </option>
+
+          <option value="weekly">
+            Semanal
+          </option>
         </select>
       </label>
 
       <label>
         Potência *
-        <select [(ngModel)]="form.powerKva">
+
+        <select formControlName="powerKva">
           <option
             *ngFor="let power of availablePowers"
             [ngValue]="power"
@@ -132,17 +250,35 @@
 
       <label>
         Preço potência/dia *
-        <input type="number" step="0.0001" [(ngModel)]="form.powerPricePerDay" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="powerPricePerDay"
+        />
       </label>
 
       <label *ngIf="shouldShowSimplePrices()">
         Energia simples *
-        <input type="number" step="0.0001" [(ngModel)]="form.singleEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="singleEnergyPrice"
+        />
       </label>
 
       <label *ngIf="shouldShowBiHourlyPrices()">
         Fora vazio *
-        <input type="number" step="0.0001" [(ngModel)]="form.foraVazioEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="foraVazioEnergyPrice"
+        />
       </label>
 
       <label
@@ -153,7 +289,13 @@
         "
       >
         Vazio *
-        <input type="number" step="0.0001" [(ngModel)]="form.vazioEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="vazioEnergyPrice"
+        />
       </label>
 
       <label
@@ -163,7 +305,13 @@
         "
       >
         Ponta *
-        <input type="number" step="0.0001" [(ngModel)]="form.pontaEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="pontaEnergyPrice"
+        />
       </label>
 
       <label
@@ -173,23 +321,98 @@
         "
       >
         Cheias *
-        <input type="number" step="0.0001" [(ngModel)]="form.cheiasEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="cheiasEnergyPrice"
+        />
       </label>
 
       <label *ngIf="shouldShowTetraHourlyPrices()">
         Super vazio *
-        <input type="number" step="0.0001" [(ngModel)]="form.superVazioEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="superVazioEnergyPrice"
+        />
       </label>
+    </div>
+
+    <div
+      class="indexed-note"
+      *ngIf="
+        form.controls.electricityPriceMode.value ===
+        'indexed'
+      "
+    >
+      <span class="material-symbols-rounded">
+        query_stats
+      </span>
+
+      <span>
+        O preço de consumo será calculado com base nos valores OMIE persistidos.
+      </span>
     </div>
   </article>
 
-  <article class="card" *ngIf="shouldShowGasFields()">
-    <div class="section-title">Gás</div>
+  <article
+    class="card energy-card"
+    *ngIf="shouldShowGasFields()"
+  >
+    <div class="section-heading">
+      <div>
+        <div class="section-title">
+          Gás natural
+        </div>
+
+        <span class="section-description">
+          Configuração da componente de gás do tarifário.
+        </span>
+      </div>
+
+      <span
+        class="mode-pill"
+        *ngIf="form.controls.gasPriceMode.value as mode"
+        [class.indexed]="mode === 'indexed'"
+      >
+        {{
+          mode === 'fixed'
+            ? 'Preço fixo'
+            : 'Preço indexado'
+        }}
+      </span>
+    </div>
 
     <div class="form-grid">
       <label>
+        Modo de preço *
+
+        <select formControlName="gasPriceMode">
+          <option
+            [ngValue]="null"
+            disabled
+          >
+            Selecione o modo
+          </option>
+
+          <option value="fixed">
+            Preço fixo
+          </option>
+
+          <option value="indexed">
+            Preço indexado
+          </option>
+        </select>
+      </label>
+
+      <label>
         Escalão *
-        <select [(ngModel)]="form.gasTier">
+
+        <select formControlName="gasTier">
           <option
             *ngFor="let level of availableGasLevels"
             [ngValue]="level"
@@ -201,23 +424,54 @@
 
       <label>
         Termo fixo/dia *
-        <input type="number" step="0.0001" [(ngModel)]="form.fixedTermPerDay" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="fixedTermPerDay"
+        />
       </label>
 
-      <label>
+      <label *ngIf="shouldShowFixedGasPrice()">
         Energia gás *
-        <input type="number" step="0.0001" [(ngModel)]="form.gasEnergyPrice" />
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="gasEnergyPrice"
+        />
       </label>
+    </div>
+
+    <div
+      class="indexed-note"
+      *ngIf="
+        form.controls.gasPriceMode.value ===
+        'indexed'
+      "
+    >
+      <span class="material-symbols-rounded">
+        query_stats
+      </span>
+
+      <span>
+        O preço de consumo será calculado com base nos valores MIBGAS persistidos.
+      </span>
     </div>
   </article>
 
   <div class="actions">
     <button
-      type="button"
+      type="submit"
       [disabled]="isCreating"
-      (click)="createTariff()"
     >
-      {{ isCreating ? 'A criar...' : 'Criar tarifário' }}
+      {{
+        isCreating
+          ? 'A criar...'
+          : 'Criar tarifário'
+      }}
     </button>
   </div>
-</section>
+</form>

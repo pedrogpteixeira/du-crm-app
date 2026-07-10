@@ -136,6 +136,8 @@ export class TariffEdit implements OnInit {
       companyId: tariff.provider.id,
       name: tariff.name,
       productType: tariff.productType,
+      electricityPriceMode: tariff.electricityPriceMode,
+      gasPriceMode: tariff.gasPriceMode,
       segment: tariff.segment,
       tariffType: tariff.tariffType,
       cycleType: tariff.cycleType,

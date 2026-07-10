@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
 
 export type ProductType = 'electricity' | 'gas' | 'dual';
+export type ElectricityPriceMode = 'fixed' | 'indexed';
+export type GasPriceMode = 'fixed' | 'indexed';
 export type Segment = 'residential' | 'business' | 'condominium';
 export type TariffType = 'simple' | 'bi_hourly' | 'tri_hourly' | 'tetra_hourly';
 export type CycleType = 'daily' | 'weekly';
@@ -50,11 +52,15 @@ export interface CreateSimulationTariffRequest {
   companyId: string;
   name: string;
 
-  productType: 'electricity' | 'gas' | 'dual';
-  segment?: 'residential' | 'business' | 'condominium';
+  productType: SimulationProductType;
 
-  tariffType?: 'simple' | 'bi_hourly' | 'tri_hourly' | 'tetra_hourly';
-  cycleType?: 'daily' | 'weekly';
+  electricityPriceMode?: ElectricityPriceMode;
+  gasPriceMode?: GasPriceMode;
+
+  segment?: SimulationSegment;
+
+  tariffType?: SimulationTariffType;
+  cycleType?: SimulationCycleType;
 
   powerKva?: number;
   gasTier?: number;
@@ -158,6 +164,8 @@ export interface SimulationTariff {
   name: string;
 
   productType: ProductType;
+  electricityPriceMode?: ElectricityPriceMode;
+  gasPriceMode?: GasPriceMode;
   segment?: Segment;
 
   tariffType?: TariffType;

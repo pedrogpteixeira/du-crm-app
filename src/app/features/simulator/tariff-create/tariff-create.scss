@@ -120,3 +120,77 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  margin-bottom: 20px;
+
+  .section-title {
+    margin-bottom: 3px;
+  }
+}
+
+.section-description {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mode-pill {
+  flex-shrink: 0;
+
+  padding: 6px 11px;
+
+  border-radius: 999px;
+
+  background: #dcfce7;
+  color: #16a34a;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  &.indexed {
+    background: #e0f2fe;
+    color: #0284c7;
+  }
+}
+
+.indexed-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 20px;
+  padding: 12px 14px;
+
+  border-radius: 14px;
+
+  background: #f0f9ff;
+  color: #0369a1;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  .material-symbols-rounded {
+    flex-shrink: 0;
+    font-size: 21px;
+  }
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+input.ng-invalid.ng-touched,
+select.ng-invalid.ng-touched {
+  border-color: #dc2626;
+
+  box-shadow:
+    0 0 0 4px rgba(220, 38, 38, 0.08);
+}
