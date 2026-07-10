@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
 import {
@@ -18,20 +19,31 @@ import {
   LatestIndexedEnergyAveragesResponse,
 } from '../../../core/models/indexed-energy-average.model';
 
+import { Auth } from '../../../core/services/auth';
 import { IndexedEnergyAverageService } from '../../../core/services/indexed-energy-average';
+import { MibgasPrices } from '../mibgas-prices/mibgas-prices';
 
 @Component({
   selector: 'app-omie-averages',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MibgasPrices,
+  ],
   templateUrl: './omie-averages.html',
   styleUrl: './omie-averages.scss',
 })
 export class OmieAverages implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly auth = inject(Auth);
+
   private readonly indexedEnergyAverageService = inject(
     IndexedEnergyAverageService,
   );
+
+  @ViewChild(MibgasPrices)
+  private mibgasPricesComponent?: MibgasPrices;
 
   isLoading = false;
   isSaving = false;
@@ -69,14 +81,33 @@ export class OmieAverages implements OnInit {
     ],
   });
 
+  get canEdit(): boolean {
+    const role = this.auth.getCurrentUser()?.role ?? '';
+
+    return role
+      .toLowerCase()
+      .includes('super admin');
+  }
+
+  get isRefreshing(): boolean {
+    return (
+      this.isLoading ||
+      !!this.mibgasPricesComponent?.isLoading
+    );
+  }
+
   ngOnInit(): void {
     this.loadAverages();
+  }
+
+  refreshAll(): void {
+    this.loadAverages();
+    this.mibgasPricesComponent?.loadPrices();
   }
 
   loadAverages(): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
     this.indexedEnergyAverageService
       .getLatestAverages()
@@ -91,12 +122,18 @@ export class OmieAverages implements OnInit {
           this.cards = this.buildCards(response);
         },
         error: () => {
-          this.showError('Não foi possível carregar as médias OMIE.');
+          this.showError(
+            'Não foi possível carregar as médias OMIE.',
+          );
         },
       });
   }
 
   startEdit(average: IndexedEnergyAverage): void {
+    if (!this.canEdit) {
+      return;
+    }
+
     this.editingId = average.id;
 
     this.editForm.reset({
@@ -113,21 +150,36 @@ export class OmieAverages implements OnInit {
   }
 
   saveAverage(average: IndexedEnergyAverage): void {
-    if (this.editForm.invalid) {
-      this.editForm.markAllAsTouched();
-      this.showError('Introduz um valor válido em €/MWh.');
+    if (!this.canEdit) {
+      this.showError(
+        'Não tens permissão para editar médias OMIE.',
+      );
       return;
     }
 
-    const value = this.editForm.controls.averagePriceMwh.value;
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+
+      this.showError(
+        'Introduz um valor válido em €/MWh.',
+      );
+
+      return;
+    }
+
+    const value =
+      this.editForm.controls.averagePriceMwh.value;
 
     if (
       value === null ||
       value === undefined ||
-      Number.isNaN(Number(value)) ||
+      !Number.isFinite(Number(value)) ||
       Number(value) < 0
     ) {
-      this.showError('O valor não pode ser vazio, negativo ou inválido.');
+      this.showError(
+        'O valor não pode ser vazio, negativo ou inválido.',
+      );
+
       return;
     }
 
@@ -146,11 +198,22 @@ export class OmieAverages implements OnInit {
         }),
       )
       .subscribe({
-        next: () => {
+        next: (updatedAverage) => {
+          this.cards = this.cards.map((card) =>
+            card.average?.id === updatedAverage.id
+              ? {
+                  ...card,
+                  average: updatedAverage,
+                }
+              : card,
+          );
+
           this.editingId = null;
           this.editForm.reset();
-          this.showSuccess('Média OMIE atualizada com sucesso.');
-          this.loadAverages();
+
+          this.showSuccess(
+            'Média OMIE atualizada com sucesso.',
+          );
         },
         error: (error) => {
           this.showError(
@@ -183,7 +246,9 @@ export class OmieAverages implements OnInit {
     ];
   }
 
-  getReferenceLabel(average: IndexedEnergyAverage): string {
+  getReferenceLabel(
+    average: IndexedEnergyAverage,
+  ): string {
     if (average.periodType === 'daily') {
       return average.referenceDate
         ? this.formatDate(average.referenceDate)
@@ -220,7 +285,9 @@ export class OmieAverages implements OnInit {
       return '-';
     }
 
-    return new Intl.DateTimeFormat('pt-PT').format(new Date(value));
+    return new Intl.DateTimeFormat('pt-PT').format(
+      new Date(value),
+    );
   }
 
   formatDateTime(value?: string): string {
@@ -237,7 +304,55 @@ export class OmieAverages implements OnInit {
     }).format(new Date(value));
   }
 
-  private formatMonth(month?: number | null): string {
+  getWeeklyRangeLabel(
+    average: IndexedEnergyAverage,
+  ): string {
+    if (!average.year || !average.week) {
+      return '-';
+    }
+
+    const startDate = this.getDateOfISOWeek(
+      average.week,
+      average.year,
+    );
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+
+    return `${this.formatDate(startDate.toISOString())} a ${this.formatDate(endDate.toISOString())}`;
+  }
+
+  private getDateOfISOWeek(
+    week: number,
+    year: number,
+  ): Date {
+    const simple = new Date(
+      year,
+      0,
+      1 + (week - 1) * 7,
+    );
+
+    const dayOfWeek = simple.getDay();
+    const isoWeekStart = new Date(simple);
+
+    if (dayOfWeek <= 4) {
+      isoWeekStart.setDate(
+        simple.getDate() - simple.getDay() + 1,
+      );
+    } else {
+      isoWeekStart.setDate(
+        simple.getDate() + 8 - simple.getDay(),
+      );
+    }
+
+    isoWeekStart.setHours(0, 0, 0, 0);
+
+    return isoWeekStart;
+  }
+
+  private formatMonth(
+    month?: number | null,
+  ): string {
     if (!month) {
       return '-';
     }
@@ -263,39 +378,5 @@ export class OmieAverages implements OnInit {
       this.errorMessage = '';
       this.cdr.detectChanges();
     }, 5000);
-  }
-
-  getWeeklyRangeLabel(average: IndexedEnergyAverage): string {
-    if (!average.year || !average.week) {
-      return '-';
-    }
-
-    const startDate = this.getDateOfISOWeek(
-      average.week,
-      average.year,
-    );
-
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-
-    return `${this.formatDate(startDate.toISOString())} a ${this.formatDate(endDate.toISOString())}`;
-  }
-
-  private getDateOfISOWeek(week: number, year: number): Date {
-    const simple = new Date(year, 0, 1 + (week - 1) * 7);
-
-    const dayOfWeek = simple.getDay();
-
-    const isoWeekStart = new Date(simple);
-
-    if (dayOfWeek <= 4) {
-      isoWeekStart.setDate(simple.getDate() - simple.getDay() + 1);
-    } else {
-      isoWeekStart.setDate(simple.getDate() + 8 - simple.getDay());
-    }
-
-    isoWeekStart.setHours(0, 0, 0, 0);
-
-    return isoWeekStart;
   }
 }

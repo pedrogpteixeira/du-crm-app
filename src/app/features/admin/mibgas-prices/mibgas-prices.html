@@ -1,0 +1,211 @@
+<section class="mibgas-section">
+  <header class="section-header">
+    <div>
+      <span class="section-eyebrow">
+        Gás natural · MIBGAS
+      </span>
+
+      <h2>Preços indexados do gás</h2>
+
+      <p>
+        Consulta os preços diário, mensal e trimestral do mercado MIBGAS.
+      </p>
+    </div>
+  </header>
+
+  <p
+    class="load-error-message"
+    *ngIf="loadErrorMessage"
+  >
+    {{ loadErrorMessage }}
+  </p>
+
+  <div
+    class="loading-state"
+    *ngIf="isLoading && !cards.length"
+  >
+    <span class="material-symbols-rounded">
+      progress_activity
+    </span>
+
+    <span>A carregar preços MIBGAS...</span>
+  </div>
+
+  <section
+    class="prices-grid"
+    *ngIf="cards.length"
+  >
+    <article
+      class="price-card"
+      *ngFor="
+        let card of cards;
+        trackBy: trackByPriceId
+      "
+    >
+      <div class="card-header">
+        <div>
+          <span class="product-label">
+            {{ getProductLabel(card.price.productType) }}
+          </span>
+
+          <h3>{{ card.price.reference }}</h3>
+        </div>
+
+        <span
+          class="status-pill"
+          [class.inactive]="!card.price.active"
+        >
+          {{
+            card.price.active
+              ? 'Ativo'
+              : 'Inativo'
+          }}
+        </span>
+      </div>
+
+      <div class="price-block">
+        <span>Preço médio</span>
+
+        <strong>
+          {{ card.price.priceMwh | number:'1.2-6' }}
+          €/MWh
+        </strong>
+
+        <small>
+          {{ card.price.priceKwh | number:'1.5-6' }}
+          €/kWh
+        </small>
+      </div>
+
+      <div class="card-meta">
+        <div>
+          <span>Mercado</span>
+
+          <strong>
+            {{ card.price.market | uppercase }}
+          </strong>
+        </div>
+
+        <div>
+          <span>Hub</span>
+
+          <strong>
+            {{ card.price.hub | uppercase }}
+          </strong>
+        </div>
+
+        <div class="full">
+          <span>Última atualização</span>
+
+          <strong>
+            {{ formatDateTime(card.price.updatedAt) }}
+          </strong>
+        </div>
+      </div>
+
+      <form
+        class="price-form"
+        *ngIf="editingId === card.price.id"
+        [formGroup]="card.form"
+        (ngSubmit)="savePrice(card)"
+      >
+        <label>
+          Novo valor em €/MWh
+
+          <div class="input-with-unit">
+            <input
+              type="number"
+              min="0"
+              step="0.000001"
+              formControlName="priceMwh"
+            />
+
+            <span>€/MWh</span>
+          </div>
+        </label>
+
+        <small
+          class="field-error"
+          *ngIf="
+            card.form.controls.priceMwh.invalid &&
+            card.form.controls.priceMwh.touched
+          "
+        >
+          Introduz um valor válido e igual ou superior a zero.
+        </small>
+
+        <p
+          class="card-success-message"
+          *ngIf="card.successMessage"
+        >
+          {{ card.successMessage }}
+        </p>
+
+        <p
+          class="card-error-message"
+          *ngIf="card.errorMessage"
+        >
+          {{ card.errorMessage }}
+        </p>
+
+        <div class="card-actions">
+          <button
+            type="button"
+            class="secondary-btn"
+            [disabled]="card.isSaving"
+            (click)="cancelEdit(card)"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="save-btn"
+            [disabled]="
+              card.isSaving ||
+              card.form.invalid ||
+              card.form.pristine
+            "
+          >
+            {{
+              card.isSaving
+                ? 'A guardar...'
+                : 'Guardar'
+            }}
+          </button>
+        </div>
+      </form>
+
+      <button
+        type="button"
+        class="edit-btn"
+        *ngIf="
+          canEdit &&
+          editingId !== card.price.id
+        "
+        (click)="startEdit(card)"
+      >
+        Editar
+      </button>
+    </article>
+  </section>
+
+  <div
+    class="empty-state"
+    *ngIf="
+      !isLoading &&
+      !loadErrorMessage &&
+      !cards.length
+    "
+  >
+    <span class="material-symbols-rounded">
+      database_off
+    </span>
+
+    <h3>Sem preços disponíveis</h3>
+
+    <p>
+      Não existem atualmente preços MIBGAS para apresentar.
+    </p>
+  </div>
+</section>
