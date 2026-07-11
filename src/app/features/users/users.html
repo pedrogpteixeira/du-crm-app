@@ -2,14 +2,99 @@
   <header class="page-header">
     <div>
       <span class="breadcrumb">CRM ›</span>
+
       <h1>Utilizadores</h1>
-      <p>Consulta os utilizadores registados no CRM.</p>
+
+      <p>
+        Consulta os utilizadores registados no CRM.
+      </p>
     </div>
 
-    <button type="button" (click)="loadUsers()">Atualizar</button>
+    <button
+      type="button"
+      class="refresh-button"
+      [disabled]="isLoading"
+      (click)="loadUsers()"
+    >
+      {{ isLoading ? 'A atualizar...' : 'Atualizar' }}
+    </button>
   </header>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <section class="filters-card">
+    <div class="filter-field search-field">
+      <label for="user-name-filter">
+        Nome
+      </label>
+
+      <input
+        id="user-name-filter"
+        type="search"
+        placeholder="Pesquisar por nome..."
+        [(ngModel)]="filters.name"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="user-role-filter">
+        Role
+      </label>
+
+      <select
+        id="user-role-filter"
+        [(ngModel)]="filters.role"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">
+          Todas as roles
+        </option>
+
+        <option
+          *ngFor="let role of availableRoles"
+          [value]="role"
+        >
+          {{ role }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="user-team-filter">
+        Equipa
+      </label>
+
+      <select
+        id="user-team-filter"
+        [(ngModel)]="filters.team"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">
+          Todas as equipas
+        </option>
+
+        <option
+          *ngFor="let teamId of availableTeams"
+          [value]="teamId"
+        >
+          {{ getTeamName(teamId) }}
+        </option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      class="clear-filters-button"
+      [disabled]="!hasActiveFilters()"
+      (click)="clearFilters()"
+    >
+      Limpar filtros
+    </button>
+  </section>
+
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
@@ -21,47 +106,92 @@
       <span>Estado</span>
     </div>
 
-    <p class="loading" *ngIf="isLoading">A carregar utilizadores...</p>
+    <p
+      class="loading"
+      *ngIf="isLoading"
+    >
+      A carregar utilizadores...
+    </p>
 
-    <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
-      <a
-        class="user-row"
-        *ngFor="let user of users"
-        [routerLink]="user.id === currentUserId ? '/home/profile' : ['/home/users', user.id]"
-      >
-        <div class="user-cell">
-          <div class="avatar">
-            <img
-              *ngIf="getProfilePictureUrl(user); else initials"
-              [src]="getProfilePictureUrl(user)"
-              [alt]="user.name"
-            />
-
-            <ng-template #initials>
-              {{ getInitial(user.name) }}
-            </ng-template>
-          </div>
-
-          <div>
-            <strong>{{ user.name }}</strong>
-            <span>{{ user.email }}</span>
-          </div>
-        </div>
-
-        <span class="muted">{{ user.role || 'Sem cargo selecionado' }}</span>
-
-        <span class="muted">
-          {{ user.defaultTeam?.name || 'Sem equipa' }}
-        </span>
-
-        <span
-          class="status-badge"
-          [class.is-online]="isOnline(user.id, onlineUsers)"
+    <ng-container *ngIf="!isLoading">
+      <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
+        <a
+          class="user-row"
+          *ngFor="let user of filteredUsers"
+          [routerLink]="
+            user.id === currentUserId
+              ? '/home/profile'
+              : ['/home/users', user.id]
+          "
         >
-          <span></span>
-          {{ isOnline(user.id, onlineUsers) ? 'Online' : 'Offline' }}
-        </span>
-      </a>
+          <div class="user-cell">
+            <div class="avatar">
+              <img
+                *ngIf="getProfilePictureUrl(user); else initials"
+                [src]="getProfilePictureUrl(user)"
+                [alt]="user.name"
+              />
+
+              <ng-template #initials>
+                {{ getInitial(user.name) }}
+              </ng-template>
+            </div>
+
+            <div>
+              <strong>{{ user.name }}</strong>
+              <span>{{ user.email }}</span>
+            </div>
+          </div>
+
+          <span class="muted">
+            {{ user.role || 'Sem cargo selecionado' }}
+          </span>
+
+          <span class="muted">
+            {{ user.defaultTeam?.name || 'Sem equipa' }}
+          </span>
+
+          <span
+            class="status-badge"
+            [class.is-online]="isOnline(user.id, onlineUsers)"
+          >
+            <span></span>
+
+            {{ isOnline(user.id, onlineUsers) ? 'Online' : 'Offline' }}
+          </span>
+        </a>
+
+        <div
+          class="empty-state"
+          *ngIf="!filteredUsers.length"
+        >
+          <strong>Nenhum utilizador encontrado</strong>
+
+          <span>
+            Não existem utilizadores que correspondam aos filtros selecionados.
+          </span>
+
+          <button
+            *ngIf="hasActiveFilters()"
+            type="button"
+            class="empty-clear-button"
+            (click)="clearFilters()"
+          >
+            Limpar filtros
+          </button>
+        </div>
+      </ng-container>
     </ng-container>
+
+    <footer
+      class="table-footer"
+      *ngIf="!isLoading && users.length"
+    >
+      A mostrar
+      <strong>{{ filteredUsers.length }}</strong>
+      de
+      <strong>{{ users.length }}</strong>
+      utilizadores
+    </footer>
   </div>
 </section>
