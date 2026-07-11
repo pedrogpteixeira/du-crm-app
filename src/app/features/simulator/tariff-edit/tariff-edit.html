@@ -61,14 +61,49 @@
 
       <label>
         Produto
-        <select [(ngModel)]="filters.productType">
+        <select
+          [(ngModel)]="filters.productType"
+          (ngModelChange)="onFilterProductTypeChange()"
+        >
           <option value="">Todos</option>
           <option value="electricity">Eletricidade</option>
           <option value="gas">Gás</option>
           <option value="dual">Luz + Gás</option>
         </select>
       </label>
+<!--
+      <label
+        *ngIf="
+          !filters.productType ||
+          filters.productType === 'electricity' ||
+          filters.productType === 'dual'
+        "
+      >
+        Modo de preço da eletricidade
 
+        <select [(ngModel)]="filters.electricityPriceMode">
+          <option value="">Todos</option>
+          <option value="fixed">Preço fixo</option>
+          <option value="indexed">Preço indexado</option>
+        </select>
+      </label>
+
+      <label
+        *ngIf="
+          !filters.productType ||
+          filters.productType === 'gas' ||
+          filters.productType === 'dual'
+        "
+      >
+        Modo de preço do gás
+
+        <select [(ngModel)]="filters.gasPriceMode">
+          <option value="">Todos</option>
+          <option value="fixed">Preço fixo</option>
+          <option value="indexed">Preço indexado</option>
+        </select>
+      </label>
+    -->   
       <label>
         Tipo horário
         <select [(ngModel)]="filters.tariffType">

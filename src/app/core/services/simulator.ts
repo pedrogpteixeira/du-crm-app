@@ -200,6 +200,9 @@ export interface SimulationTariffFilters {
   segment?: Segment;
   productType?: ProductType;
   tariffType?: TariffType;
+
+  electricityPriceMode?: ElectricityPriceMode;
+  gasPriceMode?: GasPriceMode;
 }
 
 export type UpdateSimulationTariffRequest =

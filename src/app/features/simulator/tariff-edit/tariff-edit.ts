@@ -11,6 +11,8 @@ import { finalize } from 'rxjs';
 import { Company, CompanyService } from '../../../core/services/company';
 
 import {
+  ElectricityPriceMode,
+  GasPriceMode,
   ProductType,
   Segment,
   SimulationTariff,
@@ -58,12 +60,16 @@ export class TariffEdit implements OnInit {
     segment: '' | Segment;
     productType: '' | ProductType;
     tariffType: '' | TariffType;
+    electricityPriceMode: '' | ElectricityPriceMode;
+    gasPriceMode: '' | GasPriceMode;
   } = {
     name: '',
     companyId: '',
     segment: '',
     productType: '',
     tariffType: '',
+    electricityPriceMode: '',
+    gasPriceMode: '',
   };
 
   editForm: UpdateSimulationTariffRequest = {};
@@ -102,6 +108,12 @@ export class TariffEdit implements OnInit {
       segment: this.filters.segment || undefined,
       productType: this.filters.productType || undefined,
       tariffType: this.filters.tariffType || undefined,
+
+      electricityPriceMode:
+        this.filters.electricityPriceMode || undefined,
+
+      gasPriceMode:
+        this.filters.gasPriceMode || undefined,
     };
 
     if (!Object.keys(filters).length) {
@@ -384,10 +396,14 @@ export class TariffEdit implements OnInit {
       segment: '',
       productType: '',
       tariffType: '',
+      electricityPriceMode: '',
+      gasPriceMode: '',
     };
 
     this.tariffs = [];
     this.selectedTariff = null;
+    this.errorMessage = '';
+    this.successMessage = '';
   }
 
   private buildUpdatePayload(): UpdateSimulationTariffRequest {
@@ -683,5 +699,16 @@ export class TariffEdit implements OnInit {
       tariff.productType === 'gas' ||
       tariff.productType === 'dual'
     );
+  }
+
+  onFilterProductTypeChange(): void {
+    if (this.filters.productType === 'electricity') {
+      this.filters.gasPriceMode = '';
+    }
+
+    if (this.filters.productType === 'gas') {
+      this.filters.electricityPriceMode = '';
+      this.filters.tariffType = '';
+    }
   }
 }
