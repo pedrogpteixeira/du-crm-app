@@ -11,10 +11,11 @@ import { SocketService } from '../../core/services/socket';
 import { AuthUser, UserTeam } from '../../core/models/auth-user';
 
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
+import { UserCompanyCommissions } from '../users/user-company-commissions/user-company-commissions';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule, ImageCropperComponent, RouterLink],
+  imports: [CommonModule, FormsModule, ImageCropperComponent, RouterLink, UserCompanyCommissions],
   templateUrl: './profile.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.scss',
@@ -298,5 +299,9 @@ export class Profile implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(accessDate);
+  }
+
+  get canViewCommissions(): boolean {
+    return this.auth.roleIncludes('Super Admin');
   }
 }

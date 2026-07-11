@@ -286,4 +286,13 @@
       </div>
     </div>
   </div>
+
+  <article
+    class="card commissions-card"
+    *ngIf="user && canViewCommissions"
+  >
+    <app-user-company-commissions
+      [userId]="user.id"
+    />
+  </article>
 </section>

@@ -97,8 +97,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'galp',
       name: 'Galp',
-      logo: '_images/companies/galp.png',
-      formsFolderId: '',
+      logo: 'assets/companies/galp.png',
+      formsFolderId: 'kfo_w4m6x9244j',
       trainingFolderId: '',
     },
     {

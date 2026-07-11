@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\app",
+    "\\src\\app\\core",
+    "\\src\\app\\features",
+    "\\src\\app\\features\\profile",
+    "\\src\\app\\features\\users",
+    "\\src\\app\\features\\users\\user-detail"
+  ],
+  "SelectedNode": "\\src\\app\\features\\profile\\profile.scss",
+  "PreviewInSolutionExplorer": false
+}
