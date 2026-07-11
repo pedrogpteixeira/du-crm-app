@@ -64,6 +64,17 @@ export class Auth {
     );
   }
 
+  roleIncludes(requiredRoles: string | string[]): boolean {
+    const user = this.getCurrentUser();
+    const role = user?.role || '';
+
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+
+    return roles.some((requiredRole) =>
+      role.toLowerCase().includes(requiredRole.toLowerCase())
+    );
+  }
+
   hasToken(): boolean {
     return !!localStorage.getItem('token');
   }

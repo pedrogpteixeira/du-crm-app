@@ -8,6 +8,7 @@ import { ProfileUser, UserService } from '../../../core/services/user';
 import { environment } from '../../../../environments/environment.development';
 
 import { UserCompanyCommissions } from '../user-company-commissions/user-company-commissions';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-user-detail',
@@ -20,6 +21,7 @@ export class UserDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly userService = inject(UserService);
   private readonly socketService = inject(SocketService);
+  private readonly auth = inject(Auth);
 
   user: ProfileUser | null = null;
   isUserOnline$!: Observable<boolean>;
@@ -114,5 +116,9 @@ export class UserDetail implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(accessDate);
+  }
+
+  get canViewCommissions(): boolean {
+    return this.auth.roleIncludes('Super Admin');
   }
 }
