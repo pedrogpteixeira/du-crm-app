@@ -1,0 +1,142 @@
+<section class="commission-panel">
+  <header class="panel-header">
+    <div>
+      <span>Configuração comercial</span>
+      <h2>Comissão por empresa</h2>
+      <p>
+        Seleciona uma comercializadora para consultar ou alterar a comissão deste utilizador.
+      </p>
+    </div>
+  </header>
+
+  <p
+    class="success-message"
+    *ngIf="successMessage"
+  >
+    {{ successMessage }}
+  </p>
+
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
+    {{ errorMessage }}
+  </p>
+
+  <p
+    class="loading-message"
+    *ngIf="isLoading"
+  >
+    A carregar empresas e comissões...
+  </p>
+
+  <form
+    *ngIf="!isLoading"
+    [formGroup]="form"
+    (ngSubmit)="saveCommission()"
+  >
+    <div class="form-grid">
+      <label>
+        Empresa
+
+        <select
+          formControlName="companyId"
+          (change)="onCompanyChange()"
+        >
+          <option
+            [ngValue]="null"
+            disabled
+          >
+            Seleciona uma empresa
+          </option>
+
+          <option
+            *ngFor="let company of companies"
+            [value]="company.id"
+          >
+            {{ company.name }}
+          </option>
+        </select>
+      </label>
+
+      <label *ngIf="selectedCompany">
+        Comissão
+
+        <div class="input-with-unit">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            formControlName="commissionPercentage"
+          />
+
+          <span>%</span>
+        </div>
+      </label>
+    </div>
+
+    <div
+      class="commission-summary"
+      *ngIf="selectedCompany"
+    >
+      <div>
+        <span>Empresa selecionada</span>
+        <strong>{{ selectedCompany.name }}</strong>
+      </div>
+
+      <div>
+        <span>Estado</span>
+        <strong>
+          {{
+            selectedCommission
+              ? 'Comissão configurada'
+              : 'Sem comissão'
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Última atualização</span>
+        <strong>
+          {{
+            formatUpdatedAt(
+              selectedCommission?.updatedAt
+            )
+          }}
+        </strong>
+      </div>
+    </div>
+
+    <div
+      class="actions"
+      *ngIf="selectedCompany"
+    >
+      <button
+        type="button"
+        class="secondary-btn"
+        [disabled]="isSaving || !hasChanges"
+        (click)="resetCommission()"
+      >
+        Repor
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="
+          isSaving ||
+          form.invalid ||
+          !hasChanges
+        "
+      >
+        {{
+          isSaving
+            ? 'A guardar...'
+            : selectedCommission
+              ? 'Guardar alterações'
+              : 'Criar comissão'
+        }}
+      </button>
+    </div>
+  </form>
+</section>

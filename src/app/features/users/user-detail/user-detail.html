@@ -122,4 +122,13 @@
       </div>
     </article>
   </div>
+
+  <article
+    class="card commissions-card"
+    *ngIf="user"
+  >
+    <app-user-company-commissions
+      [userId]="user.id"
+    />
+  </article>
 </section>

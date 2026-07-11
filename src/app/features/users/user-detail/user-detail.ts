@@ -7,9 +7,11 @@ import { SocketService } from '../../../core/services/socket';
 import { ProfileUser, UserService } from '../../../core/services/user';
 import { environment } from '../../../../environments/environment.development';
 
+import { UserCompanyCommissions } from '../user-company-commissions/user-company-commissions';
+
 @Component({
   selector: 'app-user-detail',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, UserCompanyCommissions],
   templateUrl: './user-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './user-detail.scss',
