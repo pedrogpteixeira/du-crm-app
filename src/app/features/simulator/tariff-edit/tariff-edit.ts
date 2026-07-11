@@ -20,6 +20,11 @@ import {
   UpdateSimulationTariffRequest,
 } from '../../../core/services/simulator';
 
+import {
+  ELECTRICITY_POWERS,
+  GAS_LEVELS,
+} from '../../../core/constants/energy';
+
 @Component({
   selector: 'app-tariff-edit',
   imports: [CommonModule, FormsModule],
@@ -30,6 +35,9 @@ export class TariffEdit implements OnInit {
   private readonly simulatorService = inject(SimulatorService);
   private readonly companyService = inject(CompanyService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly availablePowers = ELECTRICITY_POWERS;
+  readonly availableGasLevels = GAS_LEVELS;
 
   companies: Company[] = [];
 
@@ -168,6 +176,10 @@ export class TariffEdit implements OnInit {
       return;
     }
 
+    if (!this.validateUpdateForm()) {
+      return;
+    }
+
     const payload = this.buildUpdatePayload();
 
     if (!Object.keys(payload).length) {
@@ -215,6 +227,156 @@ export class TariffEdit implements OnInit {
       });
   }
 
+  private validateUpdateForm(): boolean {
+    if (!this.editForm.name?.trim()) {
+      this.showError('O nome do tarifário é obrigatório.');
+      return false;
+    }
+
+    if (
+      this.editForm.salesCommission === undefined ||
+      this.editForm.salesCommission === null ||
+      !Number.isFinite(Number(this.editForm.salesCommission)) ||
+      Number(this.editForm.salesCommission) < 0
+    ) {
+      this.showError(
+        'Introduz uma comissão de venda válida.',
+      );
+      return false;
+    }
+
+    if (this.shouldEditShowElectricityFields()) {
+      if (
+        this.editForm.powerKva === undefined ||
+        this.editForm.powerKva === null ||
+        this.editForm.powerPricePerDay === undefined ||
+        this.editForm.powerPricePerDay === null
+      ) {
+        this.showError(
+          'A potência e o preço de potência por dia são obrigatórios.',
+        );
+
+        return false;
+      }
+
+      if (
+        this.shouldEditShowCycleType() &&
+        !this.editForm.cycleType
+      ) {
+        this.showError('Seleciona o ciclo horário.');
+        return false;
+      }
+
+      if (
+        this.editForm.electricityPriceMode === 'fixed' &&
+        !this.validateFixedElectricityPrices()
+      ) {
+        return false;
+      }
+    }
+
+    if (this.shouldEditShowGasFields()) {
+      if (
+        this.editForm.gasTier === undefined ||
+        this.editForm.gasTier === null ||
+        this.editForm.fixedTermPerDay === undefined ||
+        this.editForm.fixedTermPerDay === null
+      ) {
+        this.showError(
+          'O escalão e o termo fixo do gás são obrigatórios.',
+        );
+
+        return false;
+      }
+
+      if (
+        this.editForm.gasPriceMode === 'fixed' &&
+        (
+          this.editForm.gasEnergyPrice === undefined ||
+          this.editForm.gasEnergyPrice === null
+        )
+      ) {
+        this.showError(
+          'O preço de energia do gás é obrigatório.',
+        );
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private validateFixedElectricityPrices(): boolean {
+    const isMissing = (
+      value: number | undefined,
+    ): boolean =>
+      value === undefined ||
+      value === null ||
+      !Number.isFinite(Number(value)) ||
+      Number(value) < 0;
+
+    switch (this.editForm.tariffType) {
+      case 'simple':
+        if (isMissing(this.editForm.singleEnergyPrice)) {
+          this.showError(
+            'O preço de energia simples é obrigatório.',
+          );
+
+          return false;
+        }
+
+        break;
+
+      case 'bi_hourly':
+        if (
+          isMissing(this.editForm.foraVazioEnergyPrice) ||
+          isMissing(this.editForm.vazioEnergyPrice)
+        ) {
+          this.showError(
+            'Os preços fora vazio e vazio são obrigatórios.',
+          );
+
+          return false;
+        }
+
+        break;
+
+      case 'tri_hourly':
+        if (
+          isMissing(this.editForm.pontaEnergyPrice) ||
+          isMissing(this.editForm.cheiasEnergyPrice) ||
+          isMissing(this.editForm.vazioEnergyPrice)
+        ) {
+          this.showError(
+            'Os preços ponta, cheias e vazio são obrigatórios.',
+          );
+
+          return false;
+        }
+
+        break;
+
+      case 'tetra_hourly':
+        if (
+          isMissing(this.editForm.pontaEnergyPrice) ||
+          isMissing(this.editForm.cheiasEnergyPrice) ||
+          isMissing(this.editForm.vazioEnergyPrice) ||
+          isMissing(this.editForm.superVazioEnergyPrice)
+        ) {
+          this.showError(
+            'Os preços ponta, cheias, vazio e super vazio são obrigatórios.',
+          );
+
+          return false;
+        }
+
+        break;
+    }
+
+    return true;
+  }
+
   clearFilters(): void {
     this.filters = {
       name: '',
@@ -237,23 +399,6 @@ export class TariffEdit implements OnInit {
       name: this.editForm.name,
       segment: this.editForm.segment,
 
-      cycleType: this.editForm.cycleType,
-
-      powerKva: this.editForm.powerKva,
-      gasTier: this.editForm.gasTier,
-
-      powerPricePerDay: this.editForm.powerPricePerDay,
-      fixedTermPerDay: this.editForm.fixedTermPerDay,
-
-      singleEnergyPrice: this.editForm.singleEnergyPrice,
-      gasEnergyPrice: this.editForm.gasEnergyPrice,
-
-      foraVazioEnergyPrice: this.editForm.foraVazioEnergyPrice,
-      vazioEnergyPrice: this.editForm.vazioEnergyPrice,
-      pontaEnergyPrice: this.editForm.pontaEnergyPrice,
-      cheiasEnergyPrice: this.editForm.cheiasEnergyPrice,
-      superVazioEnergyPrice: this.editForm.superVazioEnergyPrice,
-
       salesCommission: this.editForm.salesCommission,
       active: this.editForm.active,
 
@@ -266,7 +411,78 @@ export class TariffEdit implements OnInit {
         : undefined,
     };
 
+    if (this.shouldEditShowElectricityFields()) {
+      payload.powerKva = this.editForm.powerKva;
+      payload.powerPricePerDay =
+        this.editForm.powerPricePerDay;
+
+      if (this.shouldEditShowCycleType()) {
+        payload.cycleType = this.editForm.cycleType;
+      }
+
+      if (
+        this.editForm.electricityPriceMode === 'fixed'
+      ) {
+        this.appendElectricityPricesToPayload(payload);
+      }
+    }
+
+    if (this.shouldEditShowGasFields()) {
+      payload.gasTier = this.editForm.gasTier;
+      payload.fixedTermPerDay =
+        this.editForm.fixedTermPerDay;
+
+      if (this.editForm.gasPriceMode === 'fixed') {
+        payload.gasEnergyPrice =
+          this.editForm.gasEnergyPrice;
+      }
+    }
+
     return this.cleanPayload(payload);
+  }
+
+  private appendElectricityPricesToPayload(
+    payload: UpdateSimulationTariffRequest,
+  ): void {
+    switch (this.editForm.tariffType) {
+      case 'simple':
+        payload.singleEnergyPrice =
+          this.editForm.singleEnergyPrice;
+        break;
+
+      case 'bi_hourly':
+        payload.foraVazioEnergyPrice =
+          this.editForm.foraVazioEnergyPrice;
+
+        payload.vazioEnergyPrice =
+          this.editForm.vazioEnergyPrice;
+        break;
+
+      case 'tri_hourly':
+        payload.pontaEnergyPrice =
+          this.editForm.pontaEnergyPrice;
+
+        payload.cheiasEnergyPrice =
+          this.editForm.cheiasEnergyPrice;
+
+        payload.vazioEnergyPrice =
+          this.editForm.vazioEnergyPrice;
+        break;
+
+      case 'tetra_hourly':
+        payload.pontaEnergyPrice =
+          this.editForm.pontaEnergyPrice;
+
+        payload.cheiasEnergyPrice =
+          this.editForm.cheiasEnergyPrice;
+
+        payload.vazioEnergyPrice =
+          this.editForm.vazioEnergyPrice;
+
+        payload.superVazioEnergyPrice =
+          this.editForm.superVazioEnergyPrice;
+        break;
+    }
   }
 
   deleteTariff(): void {
@@ -312,7 +528,7 @@ export class TariffEdit implements OnInit {
           );
         },
       });
-    }
+  }
 
   private cleanPayload<T extends Record<string, unknown>>(payload: T): T {
     return Object.fromEntries(
@@ -395,101 +611,77 @@ export class TariffEdit implements OnInit {
     );
   }
 
-  shouldEditShowSimplePrices(): boolean {
+  shouldEditShowFixedElectricityPrices(): boolean {
     return (
       this.shouldEditShowElectricityFields() &&
+      this.editForm.electricityPriceMode === 'fixed'
+    );
+  }
+
+  shouldEditShowFixedGasPrice(): boolean {
+    return (
+      this.shouldEditShowGasFields() &&
+      this.editForm.gasPriceMode === 'fixed'
+    );
+  }
+
+  shouldEditShowSimplePrices(): boolean {
+    return (
+      this.shouldEditShowFixedElectricityPrices() &&
       this.editForm.tariffType === 'simple'
     );
   }
 
   shouldEditShowBiHourlyPrices(): boolean {
     return (
-      this.shouldEditShowElectricityFields() &&
+      this.shouldEditShowFixedElectricityPrices() &&
       this.editForm.tariffType === 'bi_hourly'
     );
   }
 
   shouldEditShowTriHourlyPrices(): boolean {
     return (
-      this.shouldEditShowElectricityFields() &&
+      this.shouldEditShowFixedElectricityPrices() &&
       this.editForm.tariffType === 'tri_hourly'
     );
   }
 
   shouldEditShowTetraHourlyPrices(): boolean {
     return (
-      this.shouldEditShowElectricityFields() &&
+      this.shouldEditShowFixedElectricityPrices() &&
       this.editForm.tariffType === 'tetra_hourly'
     );
   }
 
-  onEditProductTypeChange(): void {
-    if (this.editForm.productType === 'gas') {
-      this.editForm.tariffType = undefined;
-      this.editForm.cycleType = undefined;
-      this.editForm.powerKva = undefined;
-      this.editForm.powerPricePerDay = undefined;
+  getPriceModeLabel(value?: string): string {
+    const labels: Record<string, string> = {
+      fixed: 'Preço fixo',
+      indexed: 'Preço indexado',
+    };
 
-      this.clearEditElectricityPrices();
-      return;
-    }
-
-    if (
-      this.editForm.productType === 'electricity' ||
-      this.editForm.productType === 'dual'
-    ) {
-      this.editForm.tariffType ||= 'simple';
-    }
-
-    if (this.editForm.productType === 'electricity') {
-      this.clearEditGasFields();
-    }
+    return value ? labels[value] || value : '—';
   }
 
-  onEditTariffTypeChange(): void {
-    if (this.editForm.tariffType === 'simple') {
-      this.editForm.cycleType = undefined;
+  getCycleTypeLabel(value?: string): string {
+    const labels: Record<string, string> = {
+      daily: 'Diário',
+      weekly: 'Semanal',
+    };
 
-      this.editForm.foraVazioEnergyPrice = undefined;
-      this.editForm.vazioEnergyPrice = undefined;
-      this.editForm.pontaEnergyPrice = undefined;
-      this.editForm.cheiasEnergyPrice = undefined;
-      this.editForm.superVazioEnergyPrice = undefined;
-      return;
-    }
-
-    this.editForm.singleEnergyPrice = undefined;
-
-    if (this.editForm.tariffType === 'bi_hourly') {
-      this.editForm.pontaEnergyPrice = undefined;
-      this.editForm.cheiasEnergyPrice = undefined;
-      this.editForm.superVazioEnergyPrice = undefined;
-      return;
-    }
-
-    if (this.editForm.tariffType === 'tri_hourly') {
-      this.editForm.foraVazioEnergyPrice = undefined;
-      this.editForm.superVazioEnergyPrice = undefined;
-      return;
-    }
-
-    if (this.editForm.tariffType === 'tetra_hourly') {
-      this.editForm.foraVazioEnergyPrice = undefined;
-    }
+    return value ? labels[value] || value : '—';
   }
 
-  private clearEditElectricityPrices(): void {
-    this.editForm.singleEnergyPrice = undefined;
-    this.editForm.foraVazioEnergyPrice = undefined;
-    this.editForm.vazioEnergyPrice = undefined;
-    this.editForm.pontaEnergyPrice = undefined;
-    this.editForm.cheiasEnergyPrice = undefined;
-    this.editForm.superVazioEnergyPrice = undefined;
+  showElectricityModeBadge(tariff: SimulationTariff): boolean {
+    return (
+      tariff.productType === 'electricity' ||
+      tariff.productType === 'dual'
+    );
   }
 
-  private clearEditGasFields(): void {
-    this.editForm.gasTier = undefined;
-    this.editForm.fixedTermPerDay = undefined;
-    this.editForm.gasEnergyPrice = undefined;
+  showGasModeBadge(tariff: SimulationTariff): boolean {
+    return (
+      tariff.productType === 'gas' ||
+      tariff.productType === 'dual'
+    );
   }
 }
