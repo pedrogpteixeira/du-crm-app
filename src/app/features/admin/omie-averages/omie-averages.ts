@@ -256,7 +256,7 @@ export class OmieAverages implements OnInit {
     }
 
     if (average.periodType === 'weekly') {
-      return `Semana ${average.week || '-'} · ${this.getWeeklyRangeLabel(average)}`;
+      return `${average.week || '-'} · ${this.getWeeklyRangeLabel(average)}`;
     }
 
     if (average.periodType === 'monthly') {
@@ -319,7 +319,12 @@ export class OmieAverages implements OnInit {
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
 
-    return `${this.formatDate(startDate.toISOString())} a ${this.formatDate(endDate.toISOString())}`;
+    const formatter = new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+
+    return `${formatter.format(startDate)} a ${formatter.format(endDate)}`;
   }
 
   private getDateOfISOWeek(
