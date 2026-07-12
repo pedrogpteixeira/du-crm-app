@@ -54,6 +54,7 @@ export class Users implements OnInit {
 
   isLoading = false;
   errorMessage = '';
+  showFilters = false;
 
   readonly currentUserId = this.getCurrentUserId();
 
@@ -120,6 +121,7 @@ export class Users implements OnInit {
     };
 
     this.applyFilters();
+    this.showFilters = false;
   }
 
   hasActiveFilters(): boolean {
@@ -221,5 +223,13 @@ export class Users implements OnInit {
       .toLocaleLowerCase('pt-PT')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  closeFilters(): void {
+    this.showFilters = false;
   }
 }
