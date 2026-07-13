@@ -1,30 +1,44 @@
 <section class="tariff-edit-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Simulador › Tarifários</span>
+      <span class="breadcrumb">
+        Simulador › Tarifários
+      </span>
 
       <h1>Editar Tarifários</h1>
 
       <p>
-        Pesquisa tarifários existentes antes de editar. Os tarifários não são carregados automaticamente.
+        Pesquisa tarifários existentes antes de editar. Os tarifários não são
+        carregados automaticamente.
       </p>
     </div>
   </header>
 
-  <p class="success-message" *ngIf="successMessage">
+  <p
+    class="success-message"
+    *ngIf="successMessage"
+  >
     {{ successMessage }}
   </p>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <article class="card">
-    <div class="section-title">Filtros de pesquisa</div>
+  <!-- FILTROS -->
+
+  <article class="card search-card">
+    <div class="section-title">
+      Filtros de pesquisa
+    </div>
 
     <div class="form-grid">
       <label>
         Nome do tarifário
+
         <input
           type="text"
           [(ngModel)]="filters.name"
@@ -34,11 +48,14 @@
 
       <label>
         Empresa
+
         <select
           [(ngModel)]="filters.companyId"
           [disabled]="isLoadingCompanies"
         >
-          <option value="">Todas</option>
+          <option value="">
+            Todas
+          </option>
 
           <option
             *ngFor="let company of companies"
@@ -51,24 +68,48 @@
 
       <label>
         Segmento
+
         <select [(ngModel)]="filters.segment">
-          <option value="">Todos</option>
-          <option value="residential">Residencial</option>
-          <option value="business">Empresarial</option>
-          <option value="condominium">Condomínio</option>
+          <option value="">
+            Todos
+          </option>
+
+          <option value="residential">
+            Residencial
+          </option>
+
+          <option value="business">
+            Empresarial
+          </option>
+
+          <option value="condominium">
+            Condomínio
+          </option>
         </select>
       </label>
 
       <label>
         Produto
+
         <select
           [(ngModel)]="filters.productType"
           (ngModelChange)="onFilterProductTypeChange()"
         >
-          <option value="">Todos</option>
-          <option value="electricity">Eletricidade</option>
-          <option value="gas">Gás</option>
-          <option value="dual">Luz + Gás</option>
+          <option value="">
+            Todos
+          </option>
+
+          <option value="electricity">
+            Eletricidade
+          </option>
+
+          <option value="gas">
+            Gás
+          </option>
+
+          <option value="dual">
+            Luz + Gás
+          </option>
         </select>
       </label>
 
@@ -82,9 +123,17 @@
         Modo de preço da eletricidade
 
         <select [(ngModel)]="filters.electricityPriceMode">
-          <option value="">Todos</option>
-          <option value="fixed">Preço fixo</option>
-          <option value="indexed">Preço indexado</option>
+          <option value="">
+            Todos
+          </option>
+
+          <option value="fixed">
+            Preço fixo
+          </option>
+
+          <option value="indexed">
+            Preço indexado
+          </option>
         </select>
       </label>
 
@@ -98,20 +147,49 @@
         Modo de preço do gás
 
         <select [(ngModel)]="filters.gasPriceMode">
-          <option value="">Todos</option>
-          <option value="fixed">Preço fixo</option>
-          <option value="indexed">Preço indexado</option>
+          <option value="">
+            Todos
+          </option>
+
+          <option value="fixed">
+            Preço fixo
+          </option>
+
+          <option value="indexed">
+            Preço indexado
+          </option>
         </select>
       </label>
-     
-      <label>
+
+      <label
+        *ngIf="
+          !filters.productType ||
+          filters.productType === 'electricity' ||
+          filters.productType === 'dual'
+        "
+      >
         Tipo horário
+
         <select [(ngModel)]="filters.tariffType">
-          <option value="">Todos</option>
-          <option value="simple">Simples</option>
-          <option value="bi_hourly">Bi-horário</option>
-          <option value="tri_hourly">Tri-horário</option>
-          <option value="tetra_hourly">Tetra-horário</option>
+          <option value="">
+            Todos
+          </option>
+
+          <option value="simple">
+            Simples
+          </option>
+
+          <option value="bi_hourly">
+            Bi-horário
+          </option>
+
+          <option value="tri_hourly">
+            Tri-horário
+          </option>
+
+          <option value="tetra_hourly">
+            Tetra-horário
+          </option>
         </select>
       </label>
     </div>
@@ -120,6 +198,7 @@
       <button
         type="button"
         class="secondary-btn"
+        [disabled]="isSearching"
         (click)="clearFilters()"
       >
         Limpar
@@ -130,29 +209,41 @@
         [disabled]="isSearching"
         (click)="searchTariffs()"
       >
-        {{ isSearching ? 'A pesquisar...' : 'Pesquisar' }}
+        {{
+          isSearching
+            ? 'A pesquisar...'
+            : 'Pesquisar'
+        }}
       </button>
     </div>
   </article>
 
-  <section class="results-layout" *ngIf="tariffs.length">
+  <!-- RESULTADOS -->
+
+  <section
+    class="results-layout"
+    *ngIf="tariffs.length"
+  >
     <article class="card results-card">
       <div class="section-title">
         Resultados encontrados
       </div>
 
-      <div
+      <button
+        type="button"
         class="tariff-result"
         *ngFor="let tariff of tariffs"
         [class.selected]="selectedTariff?.id === tariff.id"
         (click)="selectTariff(tariff)"
       >
-        <div>
+        <div class="tariff-result-content">
           <h3>{{ tariff.name }}</h3>
 
           <p>
-            {{ tariff.provider.name }} ·
-            {{ getProductTypeLabel(tariff.productType) }} ·
+            {{ tariff.provider?.name || 'Empresa desconhecida' }}
+            ·
+            {{ getProductTypeLabel(tariff.productType) }}
+            ·
             {{ getSegmentLabel(tariff.segment) }}
           </p>
 
@@ -214,28 +305,43 @@
             </span>
           </div>
         </div>
-      </div>
+      </button>
     </article>
 
-    <article class="card edit-card" *ngIf="selectedTariff">
+    <!-- FORMULÁRIO DE EDIÇÃO -->
+
+    <form
+      class="card edit-card"
+      *ngIf="selectedTariff"
+      [formGroup]="editForm"
+      (ngSubmit)="saveTariff()"
+    >
       <header class="edit-card-header">
         <div>
           <span class="edit-eyebrow">
-            {{ selectedTariff.provider.name }}
+            {{
+              selectedTariff.provider?.name ||
+              'Empresa desconhecida'
+            }}
           </span>
 
           <h2>{{ selectedTariff.name }}</h2>
 
           <p>
-            Altera os dados permitidos sem modificar a estrutura base do tarifário.
+            Altera os dados permitidos sem modificar a estrutura base do
+            tarifário.
           </p>
         </div>
 
         <span
           class="tariff-status"
-          [class.inactive]="!editForm.active"
+          [class.inactive]="!editForm.controls.active.value"
         >
-          {{ editForm.active ? 'Ativo' : 'Inativo' }}
+          {{
+            editForm.controls.active.value
+              ? 'Ativo'
+              : 'Inativo'
+          }}
         </span>
       </header>
 
@@ -258,7 +364,10 @@
 
             <input
               type="text"
-              [value]="selectedTariff.provider.name"
+              [value]="
+                selectedTariff.provider?.name ||
+                'Empresa desconhecida'
+              "
               readonly
             />
           </label>
@@ -268,8 +377,18 @@
 
             <input
               type="text"
-              [(ngModel)]="editForm.name"
+              formControlName="name"
             />
+
+            <small
+              class="field-error"
+              *ngIf="
+                editForm.controls.name.invalid &&
+                editForm.controls.name.touched
+              "
+            >
+              Introduz um nome válido.
+            </small>
           </label>
 
           <label>
@@ -277,7 +396,11 @@
 
             <input
               type="text"
-              [value]="getProductTypeLabel(selectedTariff.productType)"
+              [value]="
+                getProductTypeLabel(
+                  selectedTariff.productType
+                )
+              "
               readonly
             />
           </label>
@@ -285,7 +408,7 @@
           <label>
             Segmento
 
-            <select [(ngModel)]="editForm.segment">
+            <select formControlName="segment">
               <option value="residential">
                 Residencial
               </option>
@@ -305,7 +428,7 @@
       <!-- ELETRICIDADE -->
 
       <section
-        class="edit-section"
+        class="edit-section energy-edit-section"
         *ngIf="shouldEditShowElectricityFields()"
       >
         <div class="edit-section-header">
@@ -319,9 +442,7 @@
 
           <span
             class="mode-pill"
-            [class.indexed]="
-              selectedTariff.electricityPriceMode === 'indexed'
-            "
+            [class.indexed]="isIndexedElectricity()"
           >
             {{
               getPriceModeLabel(
@@ -333,16 +454,15 @@
 
         <div
           class="indexed-note"
-          *ngIf="
-            selectedTariff.electricityPriceMode === 'indexed'
-          "
+          *ngIf="isIndexedElectricity()"
         >
           <span class="material-symbols-rounded">
             query_stats
           </span>
 
           <span>
-            O preço de consumo elétrico é calculado com base nos valores OMIE persistidos.
+            O preço de consumo é calculado através dos valores OMIE
+            persistidos.
           </span>
         </div>
 
@@ -378,7 +498,7 @@
           <label *ngIf="shouldEditShowCycleType()">
             Ciclo
 
-            <select [(ngModel)]="editForm.cycleType">
+            <select formControlName="cycleType">
               <option value="daily">
                 Diário
               </option>
@@ -392,7 +512,7 @@
           <label>
             Potência
 
-            <select [(ngModel)]="editForm.powerKva">
+            <select formControlName="powerKva">
               <option
                 *ngFor="let power of availablePowers"
                 [ngValue]="power"
@@ -409,9 +529,11 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.powerPricePerDay"
+              formControlName="powerPricePerDay"
             />
           </label>
+
+          <!-- PREÇOS FIXOS -->
 
           <label *ngIf="shouldEditShowSimplePrices()">
             Energia simples
@@ -420,7 +542,7 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.singleEnergyPrice"
+              formControlName="singleEnergyPrice"
             />
           </label>
 
@@ -431,7 +553,7 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.foraVazioEnergyPrice"
+              formControlName="foraVazioEnergyPrice"
             />
           </label>
 
@@ -448,7 +570,7 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.vazioEnergyPrice"
+              formControlName="vazioEnergyPrice"
             />
           </label>
 
@@ -464,7 +586,7 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.pontaEnergyPrice"
+              formControlName="pontaEnergyPrice"
             />
           </label>
 
@@ -480,7 +602,7 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.cheiasEnergyPrice"
+              formControlName="cheiasEnergyPrice"
             />
           </label>
 
@@ -491,16 +613,133 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.superVazioEnergyPrice"
+              formControlName="superVazioEnergyPrice"
+            />
+          </label>
+
+          <!-- PARÂMETROS INDEXADOS -->
+
+          <label *ngIf="isIndexedElectricity()">
+            Fator de adequação
+
+            <input
+              type="number"
+              min="0"
+              step="0.0001"
+              formControlName="electricityAdjustmentFactor"
+            />
+          </label>
+
+          <label *ngIf="isIndexedElectricity()">
+            Custo adicional por kWh
+
+            <input
+              type="number"
+              min="0"
+              step="0.00001"
+              formControlName="electricityAdditionalCostPerKwh"
             />
           </label>
         </div>
+
+        <!-- DESCONTOS ELETRICIDADE -->
+
+        <section
+          class="discounts-section"
+          *ngIf="isFixedElectricity()"
+          formGroupName="electricityDiscounts"
+        >
+          <button
+            type="button"
+            class="discounts-toggle"
+            (click)="toggleElectricityDiscounts()"
+          >
+            <span>Descontos sobre o consumo</span>
+
+            <span class="material-symbols-rounded">
+              {{
+                showElectricityDiscounts
+                  ? 'expand_less'
+                  : 'expand_more'
+              }}
+            </span>
+          </button>
+
+          <div
+            class="discounts-grid"
+            *ngIf="showElectricityDiscounts"
+          >
+            <label>
+              Fatura eletrónica
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="electronicInvoice"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Débito direto
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="directDebit"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Bónus de boas-vindas
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="welcomeBonus"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Serviço de valor acrescentado
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="sva"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+          </div>
+        </section>
       </section>
 
       <!-- GÁS -->
 
       <section
-        class="edit-section"
+        class="edit-section energy-edit-section"
         *ngIf="shouldEditShowGasFields()"
       >
         <div class="edit-section-header">
@@ -514,9 +753,7 @@
 
           <span
             class="mode-pill"
-            [class.indexed]="
-              selectedTariff.gasPriceMode === 'indexed'
-            "
+            [class.indexed]="isIndexedGas()"
           >
             {{
               getPriceModeLabel(
@@ -528,16 +765,15 @@
 
         <div
           class="indexed-note gas-note"
-          *ngIf="
-            selectedTariff.gasPriceMode === 'indexed'
-          "
+          *ngIf="isIndexedGas()"
         >
           <span class="material-symbols-rounded">
             query_stats
           </span>
 
           <span>
-            O preço de consumo do gás é calculado com base nos valores MIBGAS persistidos.
+            O preço de consumo é calculado através dos valores MIBGAS
+            persistidos.
           </span>
         </div>
 
@@ -559,7 +795,7 @@
           <label>
             Escalão de gás
 
-            <select [(ngModel)]="editForm.gasTier">
+            <select formControlName="gasTier">
               <option
                 *ngFor="let level of availableGasLevels"
                 [ngValue]="level"
@@ -576,18 +812,187 @@
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.fixedTermPerDay"
+              formControlName="fixedTermPerDay"
             />
           </label>
 
-          <label *ngIf="shouldEditShowFixedGasPrice()">
+          <label *ngIf="isFixedGas()">
             Energia gás
 
             <input
               type="number"
               min="0"
               step="0.0001"
-              [(ngModel)]="editForm.gasEnergyPrice"
+              formControlName="gasEnergyPrice"
+            />
+          </label>
+
+          <label *ngIf="isIndexedGas()">
+            Percentagem de perdas
+
+            <input
+              type="number"
+              min="0"
+              step="0.0001"
+              formControlName="gasLossPercentage"
+            />
+
+            <small class="field-help">
+              Formato decimal. Ex.: 0.004 corresponde a 0,40%.
+            </small>
+          </label>
+
+          <label *ngIf="isIndexedGas()">
+            Custo adicional por kWh
+
+            <input
+              type="number"
+              min="0"
+              step="0.00001"
+              formControlName="gasAdditionalCostPerKwh"
+            />
+          </label>
+        </div>
+
+        <!-- DESCONTOS GÁS -->
+
+        <section
+          class="discounts-section"
+          *ngIf="isFixedGas()"
+          formGroupName="gasDiscounts"
+        >
+          <button
+            type="button"
+            class="discounts-toggle"
+            (click)="toggleGasDiscounts()"
+          >
+            <span>Descontos sobre o consumo</span>
+
+            <span class="material-symbols-rounded">
+              {{
+                showGasDiscounts
+                  ? 'expand_less'
+                  : 'expand_more'
+              }}
+            </span>
+          </button>
+
+          <div
+            class="discounts-grid"
+            *ngIf="showGasDiscounts"
+          >
+            <label>
+              Fatura eletrónica
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="electronicInvoice"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Débito direto
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="directDebit"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Bónus de boas-vindas
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="welcomeBonus"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Serviço de valor acrescentado
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="sva"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label>
+              Bónus de gás
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="gasBonus"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+          </div>
+        </section>
+      </section>
+
+      <!-- VIGÊNCIA -->
+
+      <section class="edit-section">
+        <div class="edit-section-header">
+          <div>
+            <h3>Vigência</h3>
+
+            <p>
+              Define o período em que o tarifário fica disponível.
+            </p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Data de início
+
+            <input
+              type="date"
+              formControlName="startDate"
+            />
+          </label>
+
+          <label>
+            Data de fim
+
+            <input
+              type="date"
+              formControlName="endDate"
             />
           </label>
         </div>
@@ -601,7 +1006,7 @@
             <h3>Configuração comercial</h3>
 
             <p>
-              Comissão, período de validade e estado do tarifário.
+              Comissão e estado atual do tarifário.
             </p>
           </div>
         </div>
@@ -614,26 +1019,18 @@
               type="number"
               min="0"
               step="0.01"
-              [(ngModel)]="editForm.salesCommission"
+              formControlName="salesCommission"
             />
-          </label>
 
-          <label>
-            Data de início
-
-            <input
-              type="date"
-              [(ngModel)]="editForm.startDate"
-            />
-          </label>
-
-          <label>
-            Data de fim
-
-            <input
-              type="date"
-              [(ngModel)]="editForm.endDate"
-            />
+            <small
+              class="field-error"
+              *ngIf="
+                editForm.controls.salesCommission.invalid &&
+                editForm.controls.salesCommission.touched
+              "
+            >
+              Introduz uma comissão válida.
+            </small>
           </label>
         </div>
 
@@ -641,7 +1038,7 @@
           <label class="checkbox-label">
             <input
               type="checkbox"
-              [(ngModel)]="editForm.active"
+              formControlName="active"
             />
 
             <span>Tarifário ativo</span>
@@ -668,10 +1065,14 @@
         </button>
 
         <button
-          type="button"
+          type="submit"
           class="save-changes-btn"
-          [disabled]="isSaving || isDeleting"
-          (click)="saveTariff()"
+          [disabled]="
+            editForm.invalid ||
+            !hasChanges() ||
+            isSaving ||
+            isDeleting
+          "
         >
           <span class="material-symbols-rounded">
             save
@@ -684,6 +1085,6 @@
           }}
         </button>
       </footer>
-    </article>
+    </form>
   </section>
 </section>

@@ -1,53 +1,101 @@
 <div class="proposal-document">
-  <section class="proposal-page cover" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
+  <!-- PÁGINA 1: CAPA -->
+
+  <section
+    class="proposal-page cover"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
     <div class="cover-header">
       <span>Proposta Comercial de Energia</span>
-      <img [src]="theme.logo" />
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
     </div>
 
     <div class="cover-main">
-
       <div class="cover-title">
-
         <p class="eyebrow">
           {{ theme.name }}
         </p>
 
         <h1>
-          {{ getCoverTitle().split('\n')[0] }}<br />
+          {{ getCoverTitle().split('\n')[0] }}
+          <br />
           {{ getCoverTitle().split('\n')[1] }}
         </h1>
 
         <p class="intro">
           {{ getCoverIntro() }}
         </p>
-
       </div>
     </div>
 
     <div class="saving-card">
       <span>Poupança mensal estimada</span>
-      <strong>{{ formatCurrency(proposal.offer.comparison.monthlySaving) }}</strong>
-      <small>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}/ano</small>
+
+      <strong>
+        {{
+          formatCurrency(
+            proposal.offer.comparison
+              .monthlySaving
+          )
+        }}
+      </strong>
+
+      <small>
+        {{
+          formatCurrency(
+            proposal.offer.comparison
+              .yearlySaving
+          )
+        }}/ano
+      </small>
     </div>
 
     <div class="cover-info">
       <div>
-        <span>{{ getSegmentLabel(proposal.offer.tariff.segment) }}</span>
-        <strong>{{ proposal.client.name || 'Nome do cliente' }}</strong>
+        <span>
+          {{
+            getSegmentLabel(
+              proposal.offer.tariff.segment
+            )
+          }}
+        </span>
+
+        <strong>
+          {{
+            proposal.client.name ||
+            'Nome do cliente'
+          }}
+        </strong>
       </div>
 
       <div>
         <span>Fornecedor</span>
-        <strong>{{ proposal.offer.tariff.provider.name }}</strong>
+
+        <strong>
+          {{
+            proposal.offer.tariff.provider
+              .name
+          }}
+        </strong>
       </div>
 
       <div>
         <span>Data</span>
-        <strong>{{ formatDate() }}</strong>
+
+        <strong>
+          {{ formatDate() }}
+        </strong>
       </div>
     </div>
   </section>
+
+  <!-- PÁGINA 2: CLIENTE E RESUMO -->
 
   <section
     class="proposal-page content"
@@ -56,7 +104,10 @@
     [style.--light]="theme.light"
   >
     <header class="page-top">
-      <img [src]="theme.logo" />
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
     </header>
 
     <h2>Proposta à sua medida</h2>
@@ -64,192 +115,1104 @@
 
     <div class="pdf-box">
       <div class="box-title">
-        Identificação do {{ getSegmentLabel(proposal.offer.tariff.segment) }}
+        Identificação do
+        {{
+          getSegmentLabel(
+            proposal.offer.tariff.segment
+          )
+        }}
       </div>
 
       <div class="pdf-grid">
         <div>
           <span>
             {{
-              proposal.offer.tariff.segment === 'business'
+              proposal.offer.tariff.segment ===
+              'business'
                 ? 'Nome / Empresa'
-                : proposal.offer.tariff.segment === 'condominium'
+                : proposal.offer.tariff.segment ===
+                    'condominium'
                   ? 'Nome do condomínio'
                   : 'Nome do cliente'
             }}
           </span>
-          <strong>{{ proposal.client.name || '-' }}</strong>
+
+          <strong>
+            {{ proposal.client.name || '-' }}
+          </strong>
         </div>
 
         <div>
           <span>NIF</span>
-          <strong>{{ proposal.client.nif || '-' }}</strong>
+
+          <strong>
+            {{ proposal.client.nif || '-' }}
+          </strong>
         </div>
 
         <div>
           <span>Email</span>
-          <strong>{{ proposal.client.email || '-' }}</strong>
+
+          <strong>
+            {{ proposal.client.email || '-' }}
+          </strong>
         </div>
 
         <div>
           <span>Telemóvel</span>
-          <strong>{{ proposal.client.phone || '-' }}</strong>
+
+          <strong>
+            {{ proposal.client.phone || '-' }}
+          </strong>
         </div>
 
         <div class="full">
           <span>Morada</span>
-          <strong>{{ proposal.client.address || '-' }}</strong>
+
+          <strong>
+            {{ proposal.client.address || '-' }}
+          </strong>
         </div>
       </div>
     </div>
 
     <div class="pdf-box">
-      <div class="box-title">Resumo da proposta</div>
+      <div class="box-title">
+        Resumo da proposta
+      </div>
 
       <div class="summary-cards">
         <div>
           <span>Fatura atual</span>
-          <strong>{{ formatCurrency(proposal.current.invoiceAmount) }}</strong>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.current.invoiceAmount
+              )
+            }}
+          </strong>
         </div>
 
         <div>
-          <span>Nova estimativa</span>
-          <strong>{{ formatCurrency(proposal.offer.simulation.estimatedMonthlyCost) }}</strong>
+          <span>Nova estimativa parcial</span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .estimatedMonthlyCost
+              )
+            }}
+          </strong>
         </div>
 
         <div class="highlight">
-          <span>Poupança anual</span>
-          <strong>{{ formatCurrency(proposal.offer.comparison.yearlySaving) }}</strong>
+          <span>Poupança anual estimada</span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.comparison
+                  .yearlySaving
+              )
+            }}
+          </strong>
         </div>
       </div>
     </div>
 
+    <div class="estimate-notice">
+      <strong>Nota importante</strong>
+
+      <span>
+        {{ partialEstimateNotice }}
+      </span>
+    </div>
+
     <div class="pdf-box commercial-box">
-      <div class="box-title">Comercial responsável</div>
+      <div class="box-title">
+        Comercial responsável
+      </div>
 
       <div class="commercial-card">
         <div class="commercial-avatar">
           <img
-            *ngIf="proposal.commercial.profilePicture; else commercialInitial"
-            [src]="proposal.commercial.profilePicture"
+            *ngIf="
+              proposal.commercial
+                .profilePicture;
+              else commercialInitial
+            "
+            [src]="
+              proposal.commercial
+                .profilePicture
+            "
             [alt]="proposal.commercial.name"
           />
 
           <ng-template #commercialInitial>
-            {{ proposal.commercial.name ? proposal.commercial.name.charAt(0).toUpperCase() : '?' }}
+            {{
+              proposal.commercial.name
+                ? proposal.commercial.name
+                    .charAt(0)
+                    .toUpperCase()
+                : '?'
+            }}
           </ng-template>
         </div>
 
         <div class="commercial-info">
-          <strong>{{ proposal.commercial.name || '-' }}</strong>
+          <strong>
+            {{
+              proposal.commercial.name ||
+              '-'
+            }}
+          </strong>
 
-          <span>{{ proposal.commercial.email || '-' }}</span>
-          <span>{{ proposal.commercial.phone || '-' }}</span>
+          <span>
+            {{
+              proposal.commercial.email ||
+              '-'
+            }}
+          </span>
+
+          <span>
+            {{
+              proposal.commercial.phone ||
+              '-'
+            }}
+          </span>
         </div>
       </div>
     </div>
 
-    <footer>Proposta gerada pelo CRM · {{ formatDate() }}</footer>
+    <footer>
+      Proposta gerada pelo CRM ·
+      {{ formatDate() }}
+    </footer>
   </section>
 
-  <section class="proposal-page content" [style.--primary]="theme.primary" [style.--secondary]="theme.secondary" [style.--light]="theme.light">
-    <header class="page-top">
-      <img [src]="theme.logo" />
+  <!-- PÁGINA 3: OFERTA SELECIONADA -->
+
+  <section
+    class="proposal-page content"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
+    <header class="page-top page-top-between">
       <span>Oferta selecionada</span>
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
     </header>
 
-    <h2 class="offer-title">
+    <h2 class="page-title">
       {{ proposal.offer.tariff.name }}
     </h2>
 
     <div class="pdf-box">
-      <div class="box-title">Resumo do plano</div>
+      <div class="box-title">
+        Resumo do plano
+      </div>
 
       <div class="pdf-grid">
         <div>
           <span>Fornecedor</span>
-          <strong>{{ proposal.offer.tariff.provider.name }}</strong>
+
+          <strong>
+            {{
+              proposal.offer.tariff.provider
+                .name
+            }}
+          </strong>
         </div>
 
         <div>
           <span>Segmento</span>
-          <strong>{{ getSegmentLabel(proposal.offer.tariff.segment) }}</strong>
+
+          <strong>
+            {{
+              getSegmentLabel(
+                proposal.offer.tariff.segment
+              )
+            }}
+          </strong>
         </div>
 
         <div>
           <span>Produto</span>
-          <strong>{{ getProductLabel(proposal.offer.tariff.productType) }}</strong>
+
+          <strong>
+            {{
+              getProductLabel(
+                proposal.offer.tariff
+                  .productType
+              )
+            }}
+          </strong>
         </div>
 
-        <div>
+        <div *ngIf="hasElectricity()">
           <span>Tipo tarifário</span>
-          <strong>{{ getTariffLabel(proposal.offer.tariff.tariffType) }}</strong>
+
+          <strong>
+            {{
+              getTariffLabel(
+                proposal.offer.tariff
+                  .tariffType
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.powerKva">
+        <div
+          *ngIf="
+            proposal.offer.tariff.cycleType
+          "
+        >
+          <span>Ciclo</span>
+
+          <strong>
+            {{
+              getCycleLabel(
+                proposal.offer.tariff
+                  .cycleType
+              )
+            }}
+          </strong>
+        </div>
+
+        <div *ngIf="hasElectricity()">
+          <span>
+            Modo de preço da eletricidade
+          </span>
+
+          <strong>
+            {{
+              getPriceModeLabel(
+                proposal.offer.tariff
+                  .electricityPriceMode
+              )
+            }}
+          </strong>
+        </div>
+
+        <div *ngIf="hasGas()">
+          <span>Modo de preço do gás</span>
+
+          <strong>
+            {{
+              getPriceModeLabel(
+                proposal.offer.tariff
+                  .gasPriceMode
+              )
+            }}
+          </strong>
+        </div>
+
+        <div
+          *ngIf="
+            proposal.offer.tariff.powerKva !==
+            undefined
+          "
+        >
           <span>Potência</span>
-          <strong>{{ proposal.offer.tariff.powerKva }} kVA</strong>
+
+          <strong>
+            {{
+              proposal.offer.tariff.powerKva
+            }}
+            kVA
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.gasTier">
-          <span>Escalão gás</span>
-          <strong>Escalão {{ proposal.offer.tariff.gasTier }}</strong>
-        </div>
+        <div
+          *ngIf="
+            proposal.offer.tariff.gasTier !==
+            undefined
+          "
+        >
+          <span>Escalão de gás</span>
 
+          <strong>
+            Escalão
+            {{
+              proposal.offer.tariff.gasTier
+            }}
+          </strong>
+        </div>
       </div>
     </div>
 
     <div class="pdf-box">
-      <div class="box-title">Condições económicas</div>
+      <div class="box-title">
+        Condições económicas
+      </div>
 
       <div class="pdf-grid">
-        <div *ngIf="proposal.offer.tariff.powerPricePerDay">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .powerPricePerDay !== undefined
+          "
+        >
           <span>Preço potência/dia</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.powerPricePerDay, '€/dia') }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .powerPricePerDay,
+                '€/dia'
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.singleEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .singleEnergyPrice !== undefined
+          "
+        >
           <span>Energia simples</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.singleEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .singleEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.foraVazioEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .foraVazioEnergyPrice !==
+            undefined
+          "
+        >
           <span>Fora vazio</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.foraVazioEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .foraVazioEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.pontaEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .pontaEnergyPrice !== undefined
+          "
+        >
           <span>Ponta</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.pontaEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .pontaEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.cheiasEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .cheiasEnergyPrice !== undefined
+          "
+        >
           <span>Cheias</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.cheiasEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .cheiasEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.vazioEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .vazioEnergyPrice !== undefined
+          "
+        >
           <span>Vazio</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.vazioEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .vazioEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.superVazioEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .superVazioEnergyPrice !==
+            undefined
+          "
+        >
           <span>Super vazio</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.superVazioEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .superVazioEnergyPrice
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.fixedTermPerDay">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .fixedTermPerDay !== undefined
+          "
+        >
           <span>Termo fixo gás/dia</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.fixedTermPerDay, '€/dia') }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .fixedTermPerDay,
+                '€/dia'
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="proposal.offer.tariff.gasEnergyPrice">
+        <div
+          *ngIf="
+            proposal.offer.tariff
+              .gasEnergyPrice !== undefined
+          "
+        >
           <span>Energia gás</span>
-          <strong>{{ formatPrice(proposal.offer.tariff.gasEnergyPrice) }}</strong>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .gasEnergyPrice
+              )
+            }}
+          </strong>
+        </div>
+
+        <div
+          *ngIf="isIndexedElectricity()"
+        >
+          <span>Fator de adequação</span>
+
+          <strong>
+            {{
+              proposal.offer.tariff
+                .electricityAdjustmentFactor
+            }}
+          </strong>
+        </div>
+
+        <div
+          *ngIf="isIndexedElectricity()"
+        >
+          <span>
+            Custo adicional de eletricidade
+          </span>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .electricityAdditionalCostPerKwh
+              )
+            }}
+          </strong>
+        </div>
+
+        <div *ngIf="isIndexedGas()">
+          <span>Percentagem de perdas</span>
+
+          <strong>
+            {{
+              formatPercentage(
+                proposal.offer.tariff
+                  .gasLossPercentage
+              )
+            }}
+          </strong>
+        </div>
+
+        <div *ngIf="isIndexedGas()">
+          <span>
+            Custo adicional de gás
+          </span>
+
+          <strong>
+            {{
+              formatPrice(
+                proposal.offer.tariff
+                  .gasAdditionalCostPerKwh
+              )
+            }}
+          </strong>
         </div>
       </div>
     </div>
 
-    <footer>Proposta Comercial · {{ proposal.offer.tariff.provider.name }}</footer>
+    <div
+      class="pdf-box"
+      *ngIf="
+        hasElectricityDiscounts() ||
+        hasGasDiscounts() ||
+        hasSelectedConditions()
+      "
+    >
+      <div class="box-title">
+        Condições comerciais
+      </div>
+
+      <div class="conditions-content">
+        <div
+          class="condition-group"
+          *ngIf="hasSelectedConditions()"
+        >
+          <strong>
+            Condições consideradas
+          </strong>
+
+          <div class="condition-pills">
+            <span
+              *ngFor="
+                let condition of getSelectedConditions()
+              "
+            >
+              {{ condition.label }}
+            </span>
+          </div>
+        </div>
+
+        <div
+          class="condition-group"
+          *ngIf="
+            hasElectricityDiscounts()
+          "
+        >
+          <strong>
+            Descontos de eletricidade
+          </strong>
+
+          <div class="discount-list">
+            <div
+              *ngFor="
+                let discount of getElectricityDiscounts()
+              "
+            >
+              <span>{{ discount.label }}</span>
+
+              <strong>
+                {{
+                  formatPercentage(
+                    discount.value
+                  )
+                }}%
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="condition-group"
+          *ngIf="hasGasDiscounts()"
+        >
+          <strong>Descontos de gás</strong>
+
+          <div class="discount-list">
+            <div
+              *ngFor="
+                let discount of getGasDiscounts()
+              "
+            >
+              <span>{{ discount.label }}</span>
+
+              <strong>
+                {{
+                  formatPercentage(
+                    discount.value
+                  )
+                }}%
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Proposta Comercial ·
+      {{
+        proposal.offer.tariff.provider.name
+      }}
+    </footer>
+  </section>
+
+  <!-- PÁGINA 4: DETALHE DA SIMULAÇÃO -->
+
+  <section
+    class="proposal-page content"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
+    <header class="page-top page-top-between">
+      <span>Detalhe da simulação</span>
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
+    </header>
+
+    <h2 class="page-title">
+      Estimativa comercial
+    </h2>
+
+    <div class="pdf-box">
+      <div class="box-title">
+        Composição da estimativa
+      </div>
+
+      <div class="summary-cards simulation-summary">
+        <div>
+          <span>Custo fixo</span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .details.fixedCost
+              )
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Consumo antes do desconto
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .details
+                  .energyCostBeforeDiscount
+              )
+            }}
+          </strong>
+        </div>
+
+        <div
+          *ngIf="hasGeneralDiscount()"
+        >
+          <span>Desconto aplicado</span>
+
+          <strong class="discount-value">
+            -
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .details.discountValue
+              )
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Consumo após desconto
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .details.energyCost
+              )
+            }}
+          </strong>
+        </div>
+
+        <div class="highlight">
+          <span>Total estimado</span>
+
+          <strong>
+            {{
+              formatCurrency(
+                proposal.offer.simulation
+                  .details.totalCost
+              )
+            }}
+          </strong>
+        </div>
+
+        <div>
+          <span>Dias considerados</span>
+
+          <strong>
+            {{
+              proposal.offer.simulation
+                .details.days
+            }}
+          </strong>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="pdf-box"
+      *ngIf="
+        hasElectricityCost() ||
+        hasGasCost()
+      "
+    >
+      <div class="box-title">
+        Detalhe por energia
+      </div>
+
+      <div class="energy-breakdown">
+        <div
+          class="energy-cost-card"
+          *ngIf="
+            getElectricityCost()
+              as electricityCost
+          "
+        >
+          <h4>Eletricidade</h4>
+
+          <div>
+            <span>Custo fixo</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  electricityCost.fixedCost
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Consumo antes do desconto
+            </span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  electricityCost
+                    .energyCostBeforeDiscount
+                )
+              }}
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              electricityCost.discountValue >
+              0
+            "
+          >
+            <span>
+              Desconto
+              {{
+                formatPercentage(
+                  electricityCost
+                    .discountPercentage
+                )
+              }}%
+            </span>
+
+            <strong class="discount-value">
+              -
+              {{
+                formatCurrency(
+                  electricityCost
+                    .discountValue
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Total eletricidade</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  electricityCost.totalCost
+                )
+              }}
+            </strong>
+          </div>
+        </div>
+
+        <div
+          class="energy-cost-card"
+          *ngIf="getGasCost() as gasCost"
+        >
+          <h4>Gás</h4>
+
+          <div>
+            <span>Custo fixo</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  gasCost.fixedCost
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Consumo antes do desconto
+            </span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  gasCost
+                    .energyCostBeforeDiscount
+                )
+              }}
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              gasCost.discountValue > 0
+            "
+          >
+            <span>
+              Desconto
+              {{
+                formatPercentage(
+                  gasCost.discountPercentage
+                )
+              }}%
+            </span>
+
+            <strong class="discount-value">
+              -
+              {{
+                formatCurrency(
+                  gasCost.discountValue
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Total gás</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  gasCost.totalCost
+                )
+              }}
+            </strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="pdf-box"
+      *ngIf="hasElectricityScenarios()"
+    >
+      <div class="box-title">
+        Cenários de eletricidade indexada
+      </div>
+
+      <div class="scenario-grid">
+        <div
+          class="scenario-card"
+          *ngFor="
+            let key of electricityScenarioKeys
+          "
+          [class.reference]="
+            isMainElectricityScenario(key)
+          "
+        >
+          <div class="scenario-title">
+            <strong>
+              {{
+                getElectricityScenarioLabel(
+                  key
+                )
+              }}
+            </strong>
+
+            <span
+              *ngIf="
+                isMainElectricityScenario(
+                  key
+                )
+              "
+            >
+              Referência
+            </span>
+          </div>
+
+          <ng-container
+            *ngIf="
+              getElectricityScenario(key)
+                as scenario
+            "
+          >
+            <div>
+              <span>Preço de mercado</span>
+
+              <strong>
+                {{
+                  formatPrice(
+                    scenario.marketPriceKwh
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Preço final</span>
+
+              <strong>
+                {{
+                  formatPrice(
+                    scenario
+                      .finalEnergyPriceKwh
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total estimado</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    scenario.totalCost
+                  )
+                }}
+              </strong>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="pdf-box"
+      *ngIf="hasGasScenarios()"
+    >
+      <div class="box-title">
+        Cenários de gás indexado
+      </div>
+
+      <div class="scenario-grid">
+        <div
+          class="scenario-card"
+          *ngFor="
+            let key of gasScenarioKeys
+          "
+          [class.reference]="
+            isMainGasScenario(key)
+          "
+        >
+          <div class="scenario-title">
+            <strong>
+              {{ getGasScenarioLabel(key) }}
+            </strong>
+
+            <span
+              *ngIf="isMainGasScenario(key)"
+            >
+              Referência
+            </span>
+          </div>
+
+          <ng-container
+            *ngIf="
+              getGasScenario(key)
+                as scenario
+            "
+          >
+            <div>
+              <span>Preço de mercado</span>
+
+              <strong>
+                {{
+                  formatPrice(
+                    scenario.marketPriceKwh
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Preço final</span>
+
+              <strong>
+                {{
+                  formatPrice(
+                    scenario
+                      .finalEnergyPriceKwh
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total estimado</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    scenario.totalCost
+                  )
+                }}
+              </strong>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Detalhe da simulação ·
+      {{ formatDate() }}
+    </footer>
   </section>
 </div>

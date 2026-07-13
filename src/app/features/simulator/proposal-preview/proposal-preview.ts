@@ -1,6 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+
 import { Auth } from '../../../core/services/auth';
 import { ProposalPdfService } from '../../../core/services/proposal-pdf';
 import { environment } from '../../../../environments/environment.development';
@@ -14,9 +21,15 @@ import { environment } from '../../../../environments/environment.development';
 export class ProposalPreview implements OnInit {
   private readonly auth = inject(Auth);
   private readonly proposalPdfService = inject(ProposalPdfService);
-  
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
+
   offer = history.state.offer;
   current = history.state.current;
+  discountConditions = history.state.discountConditions || {};
+
+  isGeneratingPdf = false;
+  pdfErrorMessage = '';
 
   client = {
     name: '',
@@ -52,13 +65,42 @@ export class ProposalPreview implements OnInit {
     };
   }
 
-  exportPdf(): void {
-    this.proposalPdfService.generate({
-      offer: this.offer,
-      current: this.current,
-      client: this.client,
-      commercial: this.commercial,
+  async exportPdf(): Promise<void> {
+    if (this.isGeneratingPdf) {
+      return;
+    }
+
+    this.isGeneratingPdf = true;
+    this.pdfErrorMessage = '';
+    this.cdr.detectChanges();
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
     });
+
+    try {
+      await this.proposalPdfService.generate({
+        offer: this.offer,
+        current: this.current,
+        client: this.client,
+        commercial: this.commercial,
+        discountConditions:
+          this.discountConditions,
+      });
+    } catch (error) {
+      console.error(
+        'Erro ao gerar proposta:',
+        error,
+      );
+
+      this.pdfErrorMessage =
+        'Não foi possível gerar a proposta. Tenta novamente.';
+    } finally {
+      this.ngZone.run(() => {
+        this.isGeneratingPdf = false;
+        this.cdr.detectChanges();
+      });
+    }
   }
 
   formatCurrency(value: number): string {
@@ -81,6 +123,7 @@ export class ProposalPreview implements OnInit {
 
     const logos: Record<string, string> = {
       repsol: 'assets/companies/repsol.png',
+      wallbox: 'assets/companies/wallbox.png',
       meo: 'assets/companies/meo.png',
       'meo energias': 'assets/companies/meo.png',
       galp: 'assets/companies/galp.png',

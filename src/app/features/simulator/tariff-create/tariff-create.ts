@@ -29,6 +29,7 @@ import {
   SimulationSegment,
   SimulationTariffType,
   SimulatorService,
+  TariffDiscounts,
 } from '../../../core/services/simulator';
 
 import {
@@ -60,17 +61,21 @@ export class TariffCreate implements OnInit {
   isLoadingCompanies = false;
   isCreating = false;
 
+  showElectricityDiscounts = false;
+  showGasDiscounts = false;
+
   successMessage = '';
   errorMessage = '';
 
   readonly form = this.fb.group({
-    companyId: this.fb.control(
+    companyId: this.fb.control<string | null>(
       {
         value: null,
         disabled: true,
       },
       Validators.required,
     ),
+
     name: this.fb.nonNullable.control(''),
 
     productType:
@@ -106,9 +111,6 @@ export class TariffCreate implements OnInit {
     singleEnergyPrice:
       this.fb.control<number | null>(null),
 
-    gasEnergyPrice:
-      this.fb.control<number | null>(null),
-
     foraVazioEnergyPrice:
       this.fb.control<number | null>(null),
 
@@ -124,11 +126,63 @@ export class TariffCreate implements OnInit {
     superVazioEnergyPrice:
       this.fb.control<number | null>(null),
 
+    gasEnergyPrice:
+      this.fb.control<number | null>(null),
+
+    electricityAdjustmentFactor:
+      this.fb.control<number | null>(null),
+
+    electricityAdditionalCostPerKwh:
+      this.fb.control<number | null>(null),
+
+    gasLossPercentage:
+      this.fb.control<number | null>(null),
+
+    gasAdditionalCostPerKwh:
+      this.fb.control<number | null>(null),
+
+    electricityDiscounts: this.fb.group({
+      electronicInvoice:
+        this.fb.control<number | null>(null),
+
+      directDebit:
+        this.fb.control<number | null>(null),
+
+      welcomeBonus:
+        this.fb.control<number | null>(null),
+
+      sva:
+        this.fb.control<number | null>(null),
+
+      gasBonus:
+        this.fb.control<number | null>(null),
+    }),
+
+    gasDiscounts: this.fb.group({
+      electronicInvoice:
+        this.fb.control<number | null>(null),
+
+      directDebit:
+        this.fb.control<number | null>(null),
+
+      welcomeBonus:
+        this.fb.control<number | null>(null),
+
+      sva:
+        this.fb.control<number | null>(null),
+
+      gasBonus:
+        this.fb.control<number | null>(null),
+    }),
+
     salesCommission:
       this.fb.control<number | null>(null),
 
-    startDate: this.fb.nonNullable.control(''),
-    endDate: this.fb.nonNullable.control(''),
+    startDate:
+      this.fb.nonNullable.control(''),
+
+    endDate:
+      this.fb.nonNullable.control(''),
   });
 
   ngOnInit(): void {
@@ -156,9 +210,10 @@ export class TariffCreate implements OnInit {
 
           this.form.controls.companyId.enable();
         },
-        error: () => {
+        error: (error) => {
           this.showError(
-            'Não foi possível carregar as empresas.',
+            error?.error?.message ||
+              'Não foi possível carregar as empresas.',
           );
         },
       });
@@ -197,12 +252,10 @@ export class TariffCreate implements OnInit {
       this.form.controls.productType.value;
 
     if (productType === 'electricity') {
+      this.clearGasFields();
+
       this.form.patchValue(
         {
-          gasPriceMode: null,
-          gasTier: null,
-          fixedTermPerDay: null,
-          gasEnergyPrice: null,
           powerKva:
             this.form.controls.powerKva.value ?? 6.9,
         },
@@ -213,13 +266,10 @@ export class TariffCreate implements OnInit {
     }
 
     if (productType === 'gas') {
+      this.clearElectricityFields();
+
       this.form.patchValue(
         {
-          electricityPriceMode: null,
-          tariffType: 'simple',
-          cycleType: null,
-          powerKva: null,
-          powerPricePerDay: null,
           gasTier:
             this.form.controls.gasTier.value ?? 1,
         },
@@ -227,8 +277,6 @@ export class TariffCreate implements OnInit {
           emitEvent: false,
         },
       );
-
-      this.clearElectricityConsumptionPrices();
     }
 
     if (productType === 'dual') {
@@ -236,6 +284,7 @@ export class TariffCreate implements OnInit {
         {
           powerKva:
             this.form.controls.powerKva.value ?? 6.9,
+
           gasTier:
             this.form.controls.gasTier.value ?? 1,
         },
@@ -255,6 +304,20 @@ export class TariffCreate implements OnInit {
 
     if (mode === 'indexed') {
       this.clearElectricityConsumptionPrices();
+      this.clearElectricityDiscounts();
+      this.showElectricityDiscounts = false;
+    }
+
+    if (mode === 'fixed') {
+      this.form.patchValue(
+        {
+          electricityAdjustmentFactor: null,
+          electricityAdditionalCostPerKwh: null,
+        },
+        {
+          emitEvent: false,
+        },
+      );
     }
 
     this.configureValidators();
@@ -268,6 +331,21 @@ export class TariffCreate implements OnInit {
     if (mode === 'indexed') {
       this.form.controls.gasEnergyPrice.setValue(
         null,
+        {
+          emitEvent: false,
+        },
+      );
+
+      this.clearGasDiscounts();
+      this.showGasDiscounts = false;
+    }
+
+    if (mode === 'fixed') {
+      this.form.patchValue(
+        {
+          gasLossPercentage: null,
+          gasAdditionalCostPerKwh: null,
+        },
         {
           emitEvent: false,
         },
@@ -363,9 +441,16 @@ export class TariffCreate implements OnInit {
   private configureValidators(): void {
     const controls = this.form.controls;
 
-    Object.values(controls).forEach((control) => {
-      control.clearValidators();
-    });
+    Object.entries(controls).forEach(
+      ([key, control]) => {
+        if (
+          key !== 'electricityDiscounts' &&
+          key !== 'gasDiscounts'
+        ) {
+          control.clearValidators();
+        }
+      },
+    );
 
     controls.companyId.setValidators(
       Validators.required,
@@ -415,9 +500,25 @@ export class TariffCreate implements OnInit {
       }
 
       if (
-        controls.electricityPriceMode.value === 'fixed'
+        controls.electricityPriceMode.value ===
+        'fixed'
       ) {
         this.configureFixedElectricityValidators();
+      }
+
+      if (
+        controls.electricityPriceMode.value ===
+        'indexed'
+      ) {
+        controls.electricityAdjustmentFactor.setValidators([
+          Validators.required,
+          Validators.min(0),
+        ]);
+
+        controls.electricityAdditionalCostPerKwh.setValidators([
+          Validators.required,
+          Validators.min(0),
+        ]);
       }
     }
 
@@ -437,24 +538,50 @@ export class TariffCreate implements OnInit {
       ]);
 
       if (
-        controls.gasPriceMode.value === 'fixed'
+        controls.gasPriceMode.value ===
+        'fixed'
       ) {
         controls.gasEnergyPrice.setValidators([
           Validators.required,
           Validators.min(0),
         ]);
       }
+
+      if (
+        controls.gasPriceMode.value ===
+        'indexed'
+      ) {
+        controls.gasLossPercentage.setValidators([
+          Validators.required,
+          Validators.min(0),
+        ]);
+
+        controls.gasAdditionalCostPerKwh.setValidators([
+          Validators.required,
+          Validators.min(0),
+        ]);
+      }
     }
 
-    Object.values(controls).forEach((control) => {
-      control.updateValueAndValidity({
-        emitEvent: false,
-      });
-    });
+    Object.entries(controls).forEach(
+      ([key, control]) => {
+        if (
+          key !== 'electricityDiscounts' &&
+          key !== 'gasDiscounts'
+        ) {
+          control.updateValueAndValidity({
+            emitEvent: false,
+          });
+        }
+      },
+    );
+
+    this.configureDiscountValidators();
   }
 
   private configureFixedElectricityValidators(): void {
     const controls = this.form.controls;
+
     const validators = [
       Validators.required,
       Validators.min(0),
@@ -511,7 +638,48 @@ export class TariffCreate implements OnInit {
     }
   }
 
+  private configureDiscountValidators(): void {
+    const discountValidators = [
+      Validators.min(0),
+      Validators.max(100),
+    ];
+
+    Object.values(
+      this.form.controls.electricityDiscounts.controls,
+    ).forEach((control) => {
+      control.clearValidators();
+
+      if (
+        this.shouldShowFixedElectricityPrices()
+      ) {
+        control.setValidators(discountValidators);
+      }
+
+      control.updateValueAndValidity({
+        emitEvent: false,
+      });
+    });
+
+    Object.values(
+      this.form.controls.gasDiscounts.controls,
+    ).forEach((control) => {
+      control.clearValidators();
+
+      if (this.shouldShowFixedGasPrice()) {
+        control.setValidators(discountValidators);
+      }
+
+      control.updateValueAndValidity({
+        emitEvent: false,
+      });
+    });
+  }
+
   createTariff(): void {
+    if (this.isCreating) {
+      return;
+    }
+
     this.clearMessages();
     this.configureValidators();
 
@@ -525,7 +693,7 @@ export class TariffCreate implements OnInit {
       return;
     }
 
-    const payload = this.buildPayload();
+    const payload = this.buildCreatePayload();
 
     if (!payload) {
       return;
@@ -543,37 +711,37 @@ export class TariffCreate implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          if (
-            response.status === 200 ||
-            response.status === 201
-          ) {
-            this.showSuccess(
-              `Tarifário "${response.body?.name}" criado com sucesso.`,
-            );
+          const createdTariff = response.body;
 
-            this.resetForm();
-          }
+          this.showSuccess(
+            createdTariff?.name
+              ? `Tarifário "${createdTariff.name}" criado com sucesso.`
+              : 'Tarifário criado com sucesso.',
+          );
+
+          this.resetForm();
         },
         error: (error) => {
-          if (error?.status === 409) {
-            this.showError(
-              error?.error?.message ||
-                'Já existe um tarifário com esta configuração.',
-            );
+          const message =
+            error?.error?.message ||
+            'Não foi possível criar o tarifário.';
 
-            return;
-          }
+          const fields = Array.isArray(
+            error?.error?.fields,
+          )
+            ? error.error.fields.join(', ')
+            : '';
 
           this.showError(
-            error?.error?.details?.join(' ') ||
-              error?.error?.message ||
-              'Não foi possível criar o tarifário.',
+            fields
+              ? `${message} Campos: ${fields}.`
+              : message,
           );
         },
       });
   }
 
-  private buildPayload():
+  private buildCreatePayload():
     | CreateSimulationTariffRequest
     | null {
     const value = this.form.getRawValue();
@@ -584,16 +752,24 @@ export class TariffCreate implements OnInit {
     }
 
     if (!value.name.trim()) {
-      this.showError('O nome do tarifário é obrigatório.');
+      this.showError(
+        'O nome do tarifário é obrigatório.',
+      );
+
       return null;
     }
 
     if (
       value.salesCommission === null ||
-      !Number.isFinite(value.salesCommission) ||
-      value.salesCommission < 0
+      !Number.isFinite(
+        Number(value.salesCommission),
+      ) ||
+      Number(value.salesCommission) < 0
     ) {
-      this.showError('A comissão de venda é obrigatória.');
+      this.showError(
+        'A comissão de venda é obrigatória.',
+      );
+
       return null;
     }
 
@@ -602,7 +778,9 @@ export class TariffCreate implements OnInit {
       name: value.name.trim(),
       productType: value.productType,
       segment: value.segment,
-      salesCommission: value.salesCommission,
+
+      salesCommission:
+        Number(value.salesCommission),
     };
 
     if (this.shouldShowElectricityFields()) {
@@ -610,6 +788,7 @@ export class TariffCreate implements OnInit {
         this.showError(
           'Seleciona o modo de preço da eletricidade.',
         );
+
         return null;
       }
 
@@ -620,33 +799,81 @@ export class TariffCreate implements OnInit {
         this.showError(
           'A potência e o preço de potência por dia são obrigatórios.',
         );
+
         return null;
       }
 
       payload.electricityPriceMode =
         value.electricityPriceMode;
 
-      payload.tariffType = value.tariffType;
-      payload.powerKva = value.powerKva;
+      payload.tariffType =
+        value.tariffType;
+
+      payload.powerKva =
+        Number(value.powerKva);
+
       payload.powerPricePerDay =
-        value.powerPricePerDay;
+        Number(value.powerPricePerDay);
 
       if (this.shouldShowCycleType()) {
         if (!value.cycleType) {
-          this.showError('Seleciona o ciclo horário.');
+          this.showError(
+            'Seleciona o ciclo horário.',
+          );
+
           return null;
         }
 
-        payload.cycleType = value.cycleType;
+        payload.cycleType =
+          value.cycleType;
       }
 
       if (
-        value.electricityPriceMode === 'fixed'
+        value.electricityPriceMode ===
+        'fixed'
       ) {
         this.appendFixedElectricityPrices(
           payload,
           value,
         );
+
+        const electricityDiscounts =
+          this.buildDiscounts(
+            value.electricityDiscounts,
+          );
+
+        if (electricityDiscounts) {
+          payload.electricityDiscounts =
+            electricityDiscounts;
+        }
+      }
+
+      if (
+        value.electricityPriceMode ===
+        'indexed'
+      ) {
+        if (
+          value.electricityAdjustmentFactor ===
+            null ||
+          value.electricityAdditionalCostPerKwh ===
+            null
+        ) {
+          this.showError(
+            'Preenche o fator de adequação e o custo adicional da eletricidade.',
+          );
+
+          return null;
+        }
+
+        payload.electricityAdjustmentFactor =
+          Number(
+            value.electricityAdjustmentFactor,
+          );
+
+        payload.electricityAdditionalCostPerKwh =
+          Number(
+            value.electricityAdditionalCostPerKwh,
+          );
       }
     }
 
@@ -655,6 +882,7 @@ export class TariffCreate implements OnInit {
         this.showError(
           'Seleciona o modo de preço do gás.',
         );
+
         return null;
       }
 
@@ -665,24 +893,64 @@ export class TariffCreate implements OnInit {
         this.showError(
           'O escalão e o termo fixo do gás são obrigatórios.',
         );
+
         return null;
       }
 
-      payload.gasPriceMode = value.gasPriceMode;
-      payload.gasTier = value.gasTier;
+      payload.gasPriceMode =
+        value.gasPriceMode;
+
+      payload.gasTier =
+        Number(value.gasTier);
+
       payload.fixedTermPerDay =
-        value.fixedTermPerDay;
+        Number(value.fixedTermPerDay);
 
       if (value.gasPriceMode === 'fixed') {
         if (value.gasEnergyPrice === null) {
           this.showError(
             'O preço de energia do gás é obrigatório.',
           );
+
           return null;
         }
 
         payload.gasEnergyPrice =
-          value.gasEnergyPrice;
+          Number(value.gasEnergyPrice);
+
+        const gasDiscounts =
+          this.buildDiscounts(
+            value.gasDiscounts,
+          );
+
+        if (gasDiscounts) {
+          payload.gasDiscounts =
+            gasDiscounts;
+        }
+      }
+
+      if (
+        value.gasPriceMode === 'indexed'
+      ) {
+        if (
+          value.gasLossPercentage === null ||
+          value.gasAdditionalCostPerKwh ===
+            null
+        ) {
+          this.showError(
+            'Preenche a percentagem de perdas e o custo adicional do gás.',
+          );
+
+          return null;
+        }
+
+        payload.gasLossPercentage =
+          Number(value.gasLossPercentage);
+
+        payload.gasAdditionalCostPerKwh =
+          Number(
+            value.gasAdditionalCostPerKwh,
+          );
       }
     }
 
@@ -710,46 +978,76 @@ export class TariffCreate implements OnInit {
     switch (value.tariffType) {
       case 'simple':
         payload.singleEnergyPrice =
-          value.singleEnergyPrice!;
-
+          Number(value.singleEnergyPrice);
         break;
 
       case 'bi_hourly':
         payload.foraVazioEnergyPrice =
-          value.foraVazioEnergyPrice!;
+          Number(
+            value.foraVazioEnergyPrice,
+          );
 
         payload.vazioEnergyPrice =
-          value.vazioEnergyPrice!;
-
+          Number(value.vazioEnergyPrice);
         break;
 
       case 'tri_hourly':
         payload.pontaEnergyPrice =
-          value.pontaEnergyPrice!;
+          Number(value.pontaEnergyPrice);
 
         payload.cheiasEnergyPrice =
-          value.cheiasEnergyPrice!;
+          Number(value.cheiasEnergyPrice);
 
         payload.vazioEnergyPrice =
-          value.vazioEnergyPrice!;
-
+          Number(value.vazioEnergyPrice);
         break;
 
       case 'tetra_hourly':
         payload.pontaEnergyPrice =
-          value.pontaEnergyPrice!;
+          Number(value.pontaEnergyPrice);
 
         payload.cheiasEnergyPrice =
-          value.cheiasEnergyPrice!;
+          Number(value.cheiasEnergyPrice);
 
         payload.vazioEnergyPrice =
-          value.vazioEnergyPrice!;
+          Number(value.vazioEnergyPrice);
 
         payload.superVazioEnergyPrice =
-          value.superVazioEnergyPrice!;
-
+          Number(
+            value.superVazioEnergyPrice,
+          );
         break;
     }
+  }
+
+  private buildDiscounts(
+    discounts: {
+      electronicInvoice: number | null;
+      directDebit: number | null;
+      welcomeBonus: number | null;
+      sva: number | null;
+      gasBonus: number | null;
+    },
+  ): TariffDiscounts | undefined {
+    const cleanedDiscounts =
+      Object.fromEntries(
+        Object.entries(discounts)
+          .filter(([, value]) => {
+            return (
+              value !== null &&
+              value !== undefined &&
+              Number(value) > 0
+            );
+          })
+          .map(([key, value]) => [
+            key,
+            Number(value),
+          ]),
+      ) as TariffDiscounts;
+
+    return Object.keys(cleanedDiscounts).length
+      ? cleanedDiscounts
+      : undefined;
   }
 
   shouldShowElectricityFields(): boolean {
@@ -786,11 +1084,27 @@ export class TariffCreate implements OnInit {
     );
   }
 
+  shouldShowIndexedElectricityFields(): boolean {
+    return (
+      this.shouldShowElectricityFields() &&
+      this.form.controls.electricityPriceMode
+        .value === 'indexed'
+    );
+  }
+
   shouldShowFixedGasPrice(): boolean {
     return (
       this.shouldShowGasFields() &&
       this.form.controls.gasPriceMode.value ===
         'fixed'
+    );
+  }
+
+  shouldShowIndexedGasFields(): boolean {
+    return (
+      this.shouldShowGasFields() &&
+      this.form.controls.gasPriceMode.value ===
+        'indexed'
     );
   }
 
@@ -826,7 +1140,19 @@ export class TariffCreate implements OnInit {
     );
   }
 
-  isInvalid(controlName: keyof typeof this.form.controls): boolean {
+  toggleElectricityDiscounts(): void {
+    this.showElectricityDiscounts =
+      !this.showElectricityDiscounts;
+  }
+
+  toggleGasDiscounts(): void {
+    this.showGasDiscounts =
+      !this.showGasDiscounts;
+  }
+
+  isInvalid(
+    controlName: keyof typeof this.form.controls,
+  ): boolean {
     const control: AbstractControl =
       this.form.controls[controlName];
 
@@ -845,6 +1171,84 @@ export class TariffCreate implements OnInit {
         pontaEnergyPrice: null,
         cheiasEnergyPrice: null,
         superVazioEnergyPrice: null,
+      },
+      {
+        emitEvent: false,
+      },
+    );
+  }
+
+  private clearElectricityFields(): void {
+    this.form.patchValue(
+      {
+        electricityPriceMode: null,
+        tariffType: 'simple',
+        cycleType: null,
+
+        powerKva: null,
+        powerPricePerDay: null,
+
+        singleEnergyPrice: null,
+        foraVazioEnergyPrice: null,
+        vazioEnergyPrice: null,
+        pontaEnergyPrice: null,
+        cheiasEnergyPrice: null,
+        superVazioEnergyPrice: null,
+
+        electricityAdjustmentFactor: null,
+        electricityAdditionalCostPerKwh: null,
+      },
+      {
+        emitEvent: false,
+      },
+    );
+
+    this.clearElectricityDiscounts();
+    this.showElectricityDiscounts = false;
+  }
+
+  private clearGasFields(): void {
+    this.form.patchValue(
+      {
+        gasPriceMode: null,
+        gasTier: null,
+        fixedTermPerDay: null,
+        gasEnergyPrice: null,
+        gasLossPercentage: null,
+        gasAdditionalCostPerKwh: null,
+      },
+      {
+        emitEvent: false,
+      },
+    );
+
+    this.clearGasDiscounts();
+    this.showGasDiscounts = false;
+  }
+
+  private clearElectricityDiscounts(): void {
+    this.form.controls.electricityDiscounts.reset(
+      {
+        electronicInvoice: null,
+        directDebit: null,
+        welcomeBonus: null,
+        sva: null,
+        gasBonus: null,
+      },
+      {
+        emitEvent: false,
+      },
+    );
+  }
+
+  private clearGasDiscounts(): void {
+    this.form.controls.gasDiscounts.reset(
+      {
+        electronicInvoice: null,
+        directDebit: null,
+        welcomeBonus: null,
+        sva: null,
+        gasBonus: null,
       },
       {
         emitEvent: false,
@@ -874,13 +1278,35 @@ export class TariffCreate implements OnInit {
         fixedTermPerDay: null,
 
         singleEnergyPrice: null,
-        gasEnergyPrice: null,
-
         foraVazioEnergyPrice: null,
         vazioEnergyPrice: null,
         pontaEnergyPrice: null,
         cheiasEnergyPrice: null,
         superVazioEnergyPrice: null,
+
+        gasEnergyPrice: null,
+
+        electricityAdjustmentFactor: null,
+        electricityAdditionalCostPerKwh: null,
+
+        gasLossPercentage: null,
+        gasAdditionalCostPerKwh: null,
+
+        electricityDiscounts: {
+          electronicInvoice: null,
+          directDebit: null,
+          welcomeBonus: null,
+          sva: null,
+          gasBonus: null,
+        },
+
+        gasDiscounts: {
+          electronicInvoice: null,
+          directDebit: null,
+          welcomeBonus: null,
+          sva: null,
+          gasBonus: null,
+        },
 
         salesCommission: null,
 
@@ -891,6 +1317,9 @@ export class TariffCreate implements OnInit {
         emitEvent: false,
       },
     );
+
+    this.showElectricityDiscounts = false;
+    this.showGasDiscounts = false;
 
     this.configureValidators();
   }

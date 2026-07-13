@@ -4,6 +4,10 @@
   gap: 22px;
 }
 
+/* =========================
+   HEADER
+========================= */
+
 .page-header {
   h1 {
     color: #243646;
@@ -24,6 +28,10 @@
   font-weight: 700;
 }
 
+/* =========================
+   CARDS
+========================= */
+
 .card {
   background: #ffffff;
   border: 1px solid #dbeafe;
@@ -39,16 +47,24 @@
   margin-bottom: 20px;
 }
 
+/* =========================
+   FORM
+========================= */
+
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
 label {
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
   gap: 7px;
+
   color: #64748b;
   font-size: 13px;
   font-weight: 700;
@@ -56,63 +72,93 @@ label {
 
 input,
 select {
+  width: 100%;
   height: 42px;
+
   border: 1px solid #cbd5e1;
   border-radius: 14px;
-  padding: 0 12px;
+
+  background: #ffffff;
   color: #243646;
+
+  padding: 0 12px;
+
   font-family: inherit;
+  font-size: 14px;
+
   outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 input:focus,
 select:focus {
   border-color: #008db1;
-  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+  box-shadow:
+    0 0 0 4px rgba(0, 141, 177, 0.1);
 }
 
-.form-footer {
-  margin-top: 22px;
+input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
 }
 
-.checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-
-  color: #243646;
-  font-size: 14px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  input {
-    width: 17px;
-    height: 17px;
-    margin: 0;
-    accent-color: #00b894;
-    cursor: pointer;
-  }
-
-  span {
-    user-select: none;
-  }
+input.ng-invalid.ng-touched,
+select.ng-invalid.ng-touched {
+  border-color: #dc2626;
+  box-shadow:
+    0 0 0 4px rgba(220, 38, 38, 0.08);
 }
+
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.field-help {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* =========================
+   SEARCH ACTIONS
+========================= */
 
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+
   margin-top: 22px;
 
   button {
     border: 0;
     border-radius: 999px;
+
     background: #00b894;
     color: #ffffff;
+
     padding: 12px 26px;
+
+    font-family: inherit;
     font-weight: 900;
+
     cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #00a885;
+    }
 
     &:disabled {
       opacity: 0.65;
@@ -123,14 +169,27 @@ select:focus {
   .secondary-btn {
     background: #e2e8f0;
     color: #243646;
+
+    &:hover:not(:disabled) {
+      background: #cbd5e1;
+    }
   }
 }
+
+/* =========================
+   FEEDBACK
+========================= */
 
 .success-message,
 .error-message {
   width: fit-content;
+
   border-radius: 12px;
+
   padding: 10px 14px;
+
+  margin: 0;
+
   font-size: 14px;
   font-weight: 800;
 }
@@ -145,9 +204,15 @@ select:focus {
   background: #fee2e2;
 }
 
+/* =========================
+   RESULTS LAYOUT
+========================= */
+
 .results-layout {
   display: grid;
-  grid-template-columns: 430px minmax(0, 1fr);
+  grid-template-columns:
+    430px minmax(0, 1fr);
+
   gap: 22px;
   align-items: start;
 }
@@ -159,26 +224,45 @@ select:focus {
 }
 
 .tariff-result {
-  padding: 16px;
+  width: 100%;
+
+  display: block;
+
   border: 1px solid #e2e8f0;
   border-radius: 16px;
+
+  background: #ffffff;
+  color: inherit;
+
+  padding: 16px;
+
+  font-family: inherit;
+  text-align: left;
+
   cursor: pointer;
+
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    background 0.2s ease;
 
   &:hover {
     transform: translateY(-1px);
     border-color: #008db1;
-    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    box-shadow:
+      0 12px 26px rgba(15, 23, 42, 0.08);
   }
 
   &.selected {
     border-color: #00b894;
     background: #f0fdf4;
+    box-shadow:
+      0 0 0 3px rgba(0, 184, 148, 0.08);
   }
+}
 
+.tariff-result-content {
   h3 {
     color: #243646;
     font-size: 16px;
@@ -187,9 +271,11 @@ select:focus {
 
   p {
     margin: 0;
+
     color: #64748b;
     font-size: 13px;
     font-weight: 700;
+    line-height: 1.5;
   }
 }
 
@@ -197,13 +283,17 @@ select:focus {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+
   margin-top: 12px;
 
   span {
     color: #008db1;
     background: #eef6fa;
+
     border-radius: 999px;
+
     padding: 5px 10px;
+
     font-size: 12px;
     font-weight: 900;
 
@@ -211,102 +301,26 @@ select:focus {
       color: #dc2626;
       background: #fee2e2;
     }
+
+    &.fixed-mode {
+      color: #15803d;
+      background: #dcfce7;
+    }
+
+    &.indexed-mode {
+      color: #0369a1;
+      background: #e0f2fe;
+    }
   }
 }
+
+/* =========================
+   EDIT CARD
+========================= */
 
 .edit-card {
   position: sticky;
   top: 22px;
-}
-
-@media (max-width: 1200px) {
-  .results-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .edit-card {
-    position: static;
-  }
-
-  .form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-input[readonly] {
-  background: #f8fafc;
-  color: #64748b;
-  cursor: not-allowed;
-}
-
-.danger-zone {
-  margin-top: 24px;
-  display: flex;
-  justify-content: flex-start;
-
-  button {
-    border: 0;
-    border-radius: 999px;
-    background: #fee2e2;
-    color: #dc2626;
-    padding: 11px 20px;
-    font-weight: 900;
-    cursor: pointer;
-
-    &:hover {
-      background: #fecaca;
-    }
-
-    &:disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-  }
-}
-
-.badges {
-  .fixed-mode {
-    color: #15803d;
-    background: #dcfce7;
-  }
-
-  .indexed-mode {
-    color: #0369a1;
-    background: #e0f2fe;
-  }
-}
-
-.indexed-note {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  margin-top: 18px;
-  padding: 12px 14px;
-
-  border-radius: 14px;
-
-  color: #0369a1;
-  background: #f0f9ff;
-
-  font-size: 13px;
-  font-weight: 700;
-
-  .material-symbols-rounded {
-    flex-shrink: 0;
-    font-size: 21px;
-  }
-
-  &.gas-note {
-    color: #6b21a8;
-    background: #faf5ff;
-  }
 }
 
 .edit-card-header {
@@ -333,13 +347,16 @@ input[readonly] {
 
     color: #64748b;
     font-size: 13px;
+    line-height: 1.5;
   }
 }
 
 .edit-eyebrow {
   color: #008db1;
+
   font-size: 12px;
   font-weight: 900;
+
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -362,6 +379,10 @@ input[readonly] {
     background: #fee2e2;
   }
 }
+
+/* =========================
+   EDIT SECTIONS
+========================= */
 
 .edit-section {
   padding: 22px 0;
@@ -395,6 +416,7 @@ input[readonly] {
     color: #94a3b8;
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.5;
   }
 }
 
@@ -417,6 +439,10 @@ input[readonly] {
   }
 }
 
+/* =========================
+   INDEXED NOTES
+========================= */
+
 .indexed-note {
   display: flex;
   align-items: center;
@@ -432,6 +458,7 @@ input[readonly] {
 
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.5;
 
   .material-symbols-rounded {
     flex-shrink: 0;
@@ -443,6 +470,128 @@ input[readonly] {
     background: #faf5ff;
   }
 }
+
+/* =========================
+   DISCOUNTS
+========================= */
+
+.discounts-section {
+  margin-top: 22px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+.discounts-toggle {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  border: 0;
+  background: transparent;
+  color: #243646;
+
+  padding: 0;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    color: #64748b;
+    font-size: 22px;
+  }
+}
+
+.discounts-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin-top: 18px;
+}
+
+.percentage-input {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) 42px;
+
+  input {
+    min-width: 0;
+    border-radius: 14px 0 0 14px;
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+
+    border: 1px solid #cbd5e1;
+    border-left: 0;
+    border-radius: 0 14px 14px 0;
+
+    background: #f8fafc;
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  &:focus-within {
+    input,
+    span {
+      border-color: #008db1;
+    }
+  }
+}
+
+/* =========================
+   CHECKBOX
+========================= */
+
+.form-footer {
+  margin-top: 22px;
+}
+
+.checkbox-label {
+  width: fit-content;
+
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  color: #243646;
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  input {
+    width: 17px;
+    height: 17px;
+
+    margin: 0;
+
+    accent-color: #00b894;
+
+    cursor: pointer;
+  }
+
+  span {
+    user-select: none;
+  }
+}
+
+/* =========================
+   EDIT FOOTER
+========================= */
 
 .edit-footer {
   display: flex;
@@ -468,12 +617,16 @@ input[readonly] {
 
     cursor: pointer;
 
+    transition:
+      background 0.2s ease,
+      opacity 0.2s ease;
+
     .material-symbols-rounded {
       font-size: 19px;
     }
 
     &:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       cursor: not-allowed;
     }
   }
@@ -497,7 +650,40 @@ input[readonly] {
   }
 }
 
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1400px) {
+  .form-grid,
+  .discounts-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .results-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-card {
+    position: static;
+  }
+
+  .form-grid,
+  .discounts-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 700px) {
+  .form-grid,
+  .discounts-grid {
+    grid-template-columns: 1fr;
+  }
+
   .edit-card-header,
   .edit-section-header,
   .edit-footer {
@@ -506,5 +692,13 @@ input[readonly] {
 
   .edit-footer button {
     width: 100%;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
   }
 }

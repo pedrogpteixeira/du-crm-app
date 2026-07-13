@@ -40,9 +40,7 @@
       <label>
         Empresa *
 
-        <select
-          formControlName="companyId"
-        >
+        <select formControlName="companyId">
           <option
             [ngValue]="null"
             disabled
@@ -142,6 +140,8 @@
     </div>
   </article>
 
+  <!-- ELETRICIDADE -->
+
   <article
     class="card energy-card"
     *ngIf="shouldShowElectricityFields()"
@@ -159,7 +159,10 @@
 
       <span
         class="mode-pill"
-        *ngIf="form.controls.electricityPriceMode.value as mode"
+        *ngIf="
+          form.controls.electricityPriceMode.value
+            as mode
+        "
         [class.indexed]="mode === 'indexed'"
       >
         {{
@@ -340,24 +343,141 @@
           formControlName="superVazioEnergyPrice"
         />
       </label>
+
+      <label
+        *ngIf="shouldShowIndexedElectricityFields()"
+      >
+        Fator de adequação *
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="electricityAdjustmentFactor"
+        />
+      </label>
+
+      <label
+        *ngIf="shouldShowIndexedElectricityFields()"
+      >
+        Custo adicional por kWh *
+
+        <input
+          type="number"
+          min="0"
+          step="0.00001"
+          formControlName="electricityAdditionalCostPerKwh"
+        />
+      </label>
     </div>
 
     <div
       class="indexed-note"
-      *ngIf="
-        form.controls.electricityPriceMode.value ===
-        'indexed'
-      "
+      *ngIf="shouldShowIndexedElectricityFields()"
     >
       <span class="material-symbols-rounded">
         query_stats
       </span>
 
       <span>
-        O preço de consumo será calculado com base nos valores OMIE persistidos.
+        O preço de consumo será calculado com base nos valores OMIE persistidos,
+        aplicando o fator de adequação e o custo adicional configurado.
       </span>
     </div>
+
+    <section
+      class="discounts-section"
+      *ngIf="shouldShowFixedElectricityPrices()"
+      formGroupName="electricityDiscounts"
+    >
+      <button
+        type="button"
+        class="discounts-toggle"
+        (click)="toggleElectricityDiscounts()"
+      >
+        <span>Descontos sobre o consumo</span>
+
+        <span class="material-symbols-rounded">
+          {{
+            showElectricityDiscounts
+              ? 'expand_less'
+              : 'expand_more'
+          }}
+        </span>
+      </button>
+
+      <div
+        class="discounts-grid"
+        *ngIf="showElectricityDiscounts"
+      >
+        <label>
+          Fatura eletrónica
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="electronicInvoice"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Débito direto
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="directDebit"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Bónus de boas-vindas
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="welcomeBonus"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Serviço de valor acrescentado
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="sva"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+      </div>
+    </section>
   </article>
+
+  <!-- GÁS -->
 
   <article
     class="card energy-card"
@@ -376,7 +496,10 @@
 
       <span
         class="mode-pill"
-        *ngIf="form.controls.gasPriceMode.value as mode"
+        *ngIf="
+          form.controls.gasPriceMode.value
+            as mode
+        "
         [class.indexed]="mode === 'indexed'"
       >
         {{
@@ -443,23 +566,154 @@
           formControlName="gasEnergyPrice"
         />
       </label>
+
+      <label *ngIf="shouldShowIndexedGasFields()">
+        Percentagem de perdas *
+
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          formControlName="gasLossPercentage"
+        />
+
+        <small class="field-help">
+          Introduz em formato decimal. Ex.: 0,40% = 0.004.
+        </small>
+      </label>
+
+      <label *ngIf="shouldShowIndexedGasFields()">
+        Custo adicional por kWh *
+
+        <input
+          type="number"
+          min="0"
+          step="0.00001"
+          formControlName="gasAdditionalCostPerKwh"
+        />
+      </label>
     </div>
 
     <div
-      class="indexed-note"
-      *ngIf="
-        form.controls.gasPriceMode.value ===
-        'indexed'
-      "
+      class="indexed-note gas-note"
+      *ngIf="shouldShowIndexedGasFields()"
     >
       <span class="material-symbols-rounded">
         query_stats
       </span>
 
       <span>
-        O preço de consumo será calculado com base nos valores MIBGAS persistidos.
+        O preço de consumo será calculado com base nos valores MIBGAS persistidos,
+        aplicando a percentagem de perdas e o custo adicional configurado.
       </span>
     </div>
+
+    <section
+      class="discounts-section"
+      *ngIf="shouldShowFixedGasPrice()"
+      formGroupName="gasDiscounts"
+    >
+      <button
+        type="button"
+        class="discounts-toggle"
+        (click)="toggleGasDiscounts()"
+      >
+        <span>Descontos sobre o consumo</span>
+
+        <span class="material-symbols-rounded">
+          {{
+            showGasDiscounts
+              ? 'expand_less'
+              : 'expand_more'
+          }}
+        </span>
+      </button>
+
+      <div
+        class="discounts-grid"
+        *ngIf="showGasDiscounts"
+      >
+        <label>
+          Fatura eletrónica
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="electronicInvoice"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Débito direto
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="directDebit"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Bónus de boas-vindas
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="welcomeBonus"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Serviço de valor acrescentado
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="sva"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+
+        <label>
+          Bónus de gás
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="gasBonus"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
+      </div>
+    </section>
   </article>
 
   <div class="actions">

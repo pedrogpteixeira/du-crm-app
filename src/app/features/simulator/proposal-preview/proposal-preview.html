@@ -119,16 +119,73 @@
         </div>
       </div>
 
-      <button type="button" class="generate-btn" (click)="exportPdf()">
-        <span class="material-symbols-rounded">description</span>
-
-        <span>
-          <strong>Gerar proposta</strong>
-          <small>Exportar proposta comercial em PDF</small>
+      <button
+        type="button"
+        class="generate-btn"
+        [class.is-loading]="isGeneratingPdf"
+        [disabled]="isGeneratingPdf"
+        (click)="exportPdf()"
+      >
+        <span
+          class="material-symbols-rounded"
+          *ngIf="!isGeneratingPdf"
+        >
+          description
         </span>
 
-        <span class="material-symbols-rounded">arrow_forward</span>
+        <span
+          class="button-spinner"
+          *ngIf="isGeneratingPdf"
+        ></span>
+
+        <span>
+          <strong>
+            {{
+              isGeneratingPdf
+                ? 'A gerar proposta...'
+                : 'Gerar proposta'
+            }}
+          </strong>
+
+          <small>
+            {{
+              isGeneratingPdf
+                ? 'A preparar o documento PDF'
+                : 'Exportar proposta comercial em PDF'
+            }}
+          </small>
+        </span>
+
+        <span
+          class="material-symbols-rounded"
+          *ngIf="!isGeneratingPdf"
+        >
+          arrow_forward
+        </span>
       </button>
+
+      <p
+        class="pdf-error-message"
+        *ngIf="pdfErrorMessage"
+      >
+        {{ pdfErrorMessage }}
+      </p>
     </aside>
+
+    <div
+      class="pdf-loading-overlay"
+      *ngIf="isGeneratingPdf"
+    >
+      <div class="pdf-loading-card">
+        <span class="pdf-loading-spinner"></span>
+
+        <strong>A gerar a proposta</strong>
+
+        <p>
+          Estamos a preparar o documento PDF. Este processo poderá demorar alguns segundos.
+        </p>
+      </div>
+    </div>
+
   </section>
 </section>

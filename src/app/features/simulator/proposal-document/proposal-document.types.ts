@@ -1,4 +1,7 @@
-import { InvoiceComparisonOffer } from '../../../core/services/simulator';
+import {
+  InvoiceComparisonOffer,
+  SimulationDiscountConditions,
+} from '../../../core/services/simulator';
 
 export interface ProposalClient {
   name: string;
@@ -24,6 +27,9 @@ export interface ProposalCurrent {
 export interface ProposalData {
   offer: InvoiceComparisonOffer;
   current: ProposalCurrent;
+
   client: ProposalClient;
   commercial: ProposalCommercial;
+
+  discountConditions?: SimulationDiscountConditions;
 }

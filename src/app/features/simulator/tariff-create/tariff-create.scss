@@ -40,7 +40,8 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -48,7 +49,9 @@ label {
   display: flex;
   flex-direction: column;
   gap: 7px;
+
   color: #64748b;
+
   font-size: 13px;
   font-weight: 700;
 }
@@ -56,18 +59,24 @@ label {
 input,
 select {
   height: 42px;
+
   border: 1px solid #cbd5e1;
   border-radius: 14px;
+
   padding: 0 12px;
+
   color: #243646;
+
   font-family: inherit;
+
   outline: none;
 }
 
 input:focus,
 select:focus {
   border-color: #008db1;
-  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+  box-shadow:
+    0 0 0 4px rgba(0, 141, 177, 0.1);
 }
 
 .actions {
@@ -77,11 +86,19 @@ select:focus {
   button {
     border: 0;
     border-radius: 999px;
+
     background: #00b894;
     color: #ffffff;
+
     padding: 12px 26px;
+
     font-weight: 900;
+
     cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #00a885;
+    }
 
     &:disabled {
       opacity: 0.65;
@@ -93,8 +110,11 @@ select:focus {
 .error-message,
 .success-message {
   width: fit-content;
+
   border-radius: 12px;
+
   padding: 10px 14px;
+
   font-size: 14px;
   font-weight: 800;
 }
@@ -107,18 +127,6 @@ select:focus {
 .success-message {
   color: #16a34a;
   background: #dcfce7;
-}
-
-@media (max-width: 1200px) {
-  .form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .section-heading {
@@ -179,6 +187,11 @@ select:focus {
     flex-shrink: 0;
     font-size: 21px;
   }
+
+  &.gas-note {
+    color: #6b21a8;
+    background: #faf5ff;
+  }
 }
 
 .field-error {
@@ -187,10 +200,119 @@ select:focus {
   font-weight: 800;
 }
 
+.field-help {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+}
+
 input.ng-invalid.ng-touched,
 select.ng-invalid.ng-touched {
   border-color: #dc2626;
 
   box-shadow:
     0 0 0 4px rgba(220, 38, 38, 0.08);
+}
+
+.discounts-section {
+  margin-top: 22px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+.discounts-toggle {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  border: 0;
+
+  background: transparent;
+  color: #243646;
+
+  padding: 0;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    color: #64748b;
+    font-size: 22px;
+  }
+}
+
+.discounts-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 18px;
+
+  margin-top: 18px;
+}
+
+.percentage-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+
+  input {
+    width: 100%;
+    min-width: 0;
+
+    border-radius: 14px 0 0 14px;
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+
+    border: 1px solid #cbd5e1;
+    border-left: 0;
+    border-radius: 0 14px 14px 0;
+
+    background: #f8fafc;
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  &:focus-within {
+    input {
+      border-color: #008db1;
+    }
+
+    span {
+      border-color: #008db1;
+    }
+  }
+}
+
+@media (max-width: 1200px) {
+  .form-grid,
+  .discounts-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .form-grid,
+  .discounts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
 }

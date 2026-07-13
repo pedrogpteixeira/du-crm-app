@@ -4,12 +4,40 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment.development';
 
-export type ProductType = 'electricity' | 'gas' | 'dual';
-export type ElectricityPriceMode = 'fixed' | 'indexed';
-export type GasPriceMode = 'fixed' | 'indexed';
-export type Segment = 'residential' | 'business' | 'condominium';
-export type TariffType = 'simple' | 'bi_hourly' | 'tri_hourly' | 'tetra_hourly';
-export type CycleType = 'daily' | 'weekly';
+export type ProductType =
+  | 'electricity'
+  | 'gas'
+  | 'dual';
+
+export type PriceMode =
+  | 'fixed'
+  | 'indexed';
+
+export type ElectricityPriceMode = PriceMode;
+export type GasPriceMode = PriceMode;
+
+export type Segment =
+  | 'residential'
+  | 'business'
+  | 'condominium';
+
+export type TariffType =
+  | 'simple'
+  | 'bi_hourly'
+  | 'tri_hourly'
+  | 'tetra_hourly';
+
+export type CycleType =
+  | 'daily'
+  | 'weekly';
+
+export interface SimulationDiscountConditions {
+  electronicInvoice?: boolean;
+  directDebit?: boolean;
+  welcomeBonus?: boolean;
+  sva?: boolean;
+  gasBonus?: boolean;
+}
 
 export interface InvoiceComparisonRequest {
   currentProvider?: string;
@@ -37,16 +65,37 @@ export interface InvoiceComparisonRequest {
     ponta?: number;
     cheias?: number;
   };
+
+  discountConditions?: SimulationDiscountConditions;
 }
 
-export type SimulationProductType = 'electricity' | 'gas' | 'dual';
-export type SimulationSegment = 'residential' | 'business' | 'condominium';
+export type SimulationProductType =
+  | 'electricity'
+  | 'gas'
+  | 'dual';
+
+export type SimulationSegment =
+  | 'residential'
+  | 'business'
+  | 'condominium';
+
 export type SimulationTariffType =
   | 'simple'
   | 'bi_hourly'
   | 'tri_hourly'
   | 'tetra_hourly';
-export type SimulationCycleType = 'daily' | 'weekly';
+
+export type SimulationCycleType =
+  | 'daily'
+  | 'weekly';
+
+export interface TariffDiscounts {
+  electronicInvoice?: number;
+  directDebit?: number;
+  welcomeBonus?: number;
+  sva?: number;
+  gasBonus?: number;
+}
 
 export interface CreateSimulationTariffRequest {
   companyId: string;
@@ -54,8 +103,8 @@ export interface CreateSimulationTariffRequest {
 
   productType: SimulationProductType;
 
-  electricityPriceMode?: ElectricityPriceMode;
-  gasPriceMode?: GasPriceMode;
+  electricityPriceMode?: PriceMode;
+  gasPriceMode?: PriceMode;
 
   segment?: SimulationSegment;
 
@@ -69,18 +118,77 @@ export interface CreateSimulationTariffRequest {
   fixedTermPerDay?: number;
 
   singleEnergyPrice?: number;
-  gasEnergyPrice?: number;
-
   foraVazioEnergyPrice?: number;
   vazioEnergyPrice?: number;
   pontaEnergyPrice?: number;
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
 
-  salesCommission?: number;
+  gasEnergyPrice?: number;
+
+  electricityAdjustmentFactor?: number;
+  electricityAdditionalCostPerKwh?: number;
+
+  gasLossPercentage?: number;
+  gasAdditionalCostPerKwh?: number;
+
+  electricityDiscounts?: TariffDiscounts;
+  gasDiscounts?: TariffDiscounts;
+
+  salesCommission: number;
 
   startDate?: string;
   endDate?: string;
+}
+
+export interface IndexedSimulationScenario {
+  marketPriceKwh: number;
+  finalEnergyPriceKwh: number;
+  energyCost: number;
+  totalCost: number;
+}
+
+export interface IndexedElectricityScenarios {
+  daily: IndexedSimulationScenario;
+  weekly: IndexedSimulationScenario;
+  monthly: IndexedSimulationScenario;
+}
+
+export interface IndexedGasScenarios {
+  daily: IndexedSimulationScenario;
+  nextMonth: IndexedSimulationScenario;
+  nextQuarter: IndexedSimulationScenario;
+}
+
+export interface SimulationEnergyCostDetails {
+  fixedCost: number;
+  energyCostBeforeDiscount: number;
+  discountPercentage: number;
+  discountValue: number;
+  energyCost: number;
+  totalCost: number;
+}
+
+export interface SimulationDetails {
+  days: number;
+
+  fixedCost: number;
+
+  energyCostBeforeDiscount: number;
+
+  discountPercentage?: number;
+
+  discountValue: number;
+
+  energyCost: number;
+
+  totalCost: number;
+
+  electricityCost?: SimulationEnergyCostDetails;
+  gasCost?: SimulationEnergyCostDetails;
+
+  indexedElectricityScenarios?: IndexedElectricityScenarios;
+  indexedGasScenarios?: IndexedGasScenarios;
 }
 
 export interface InvoiceComparisonResponse {
@@ -98,24 +206,7 @@ export interface InvoiceComparisonOffer {
 
   simulation: {
     estimatedMonthlyCost: number;
-    details: {
-      days: number;
-      fixedCost: number;
-      energyCost: number;
-      totalCost: number;
-
-      electricityCost?: {
-        fixedCost: number;
-        energyCost: number;
-        totalCost: number;
-      };
-
-      gasCost?: {
-        fixedCost: number;
-        energyCost: number;
-        totalCost: number;
-      };
-    };
+    details: SimulationDetails;
   };
 
   commissionValue?: number;
@@ -131,9 +222,15 @@ export interface InvoiceComparisonOffer {
 export interface SimulatorRequest {
   productType: 'electricity' | 'gas' | 'dual';
   segment: 'residential' | 'business';
-  tariffType: 'simple' | 'bi_hourly' | 'tri_hourly';
+
+  tariffType:
+    | 'simple'
+    | 'bi_hourly'
+    | 'tri_hourly';
+
   powerKva?: number;
   monthlyConsumptionKwh?: number;
+
   gasTier?: number;
   gasConsumptionKwh?: number;
 }
@@ -155,6 +252,7 @@ export interface SimulatorResult {
 
 export interface SimulationTariff {
   id: string;
+  companyId?: string;
 
   provider: {
     id: string;
@@ -164,8 +262,10 @@ export interface SimulationTariff {
   name: string;
 
   productType: ProductType;
+
   electricityPriceMode?: ElectricityPriceMode;
   gasPriceMode?: GasPriceMode;
+
   segment?: Segment;
 
   tariffType?: TariffType;
@@ -186,12 +286,24 @@ export interface SimulationTariff {
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
 
+  electricityAdjustmentFactor?: number;
+  electricityAdditionalCostPerKwh?: number;
+
+  gasLossPercentage?: number;
+  gasAdditionalCostPerKwh?: number;
+
+  electricityDiscounts?: TariffDiscounts;
+  gasDiscounts?: TariffDiscounts;
+
   salesCommission?: number;
 
-  startDate?: string;
-  endDate?: string;
+  startDate?: string | null;
+  endDate?: string | null;
 
   active: boolean;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SimulationTariffFilters {
@@ -206,7 +318,14 @@ export interface SimulationTariffFilters {
 }
 
 export type UpdateSimulationTariffRequest =
-  Partial<CreateSimulationTariffRequest> & {
+  Partial<
+    Omit<
+      CreateSimulationTariffRequest,
+      'startDate' | 'endDate'
+    >
+  > & {
+    startDate?: string | null;
+    endDate?: string | null;
     active?: boolean;
   };
 
@@ -265,6 +384,14 @@ export class SimulatorService {
     );
   }
 
+  getSimulationTariffById(
+    id: string,
+  ): Observable<SimulationTariff> {
+    return this.http.get<SimulationTariff>(
+      `${this.apiUrl}/api/simulator/tariffs/${id}`,
+    );
+  }
+
   updateSimulationTariff(
     id: string,
     payload: UpdateSimulationTariffRequest,
@@ -275,7 +402,9 @@ export class SimulatorService {
     );
   }
 
-  deleteSimulationTariff(id: string): Observable<{ message: string }> {
+  deleteSimulationTariff(
+    id: string,
+  ): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(
       `${this.apiUrl}/api/simulator/tariffs/${id}`,
     );

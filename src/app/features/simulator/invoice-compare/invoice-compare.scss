@@ -24,21 +24,36 @@
   font-weight: 700;
 }
 
+/* =========================
+   CARDS
+========================= */
+
 .card,
 .offer-card {
+  box-sizing: border-box;
+
   background: #ffffff;
+
   border: 1px solid #dbeafe;
   border-radius: 22px;
+
   padding: 24px;
+
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
 }
 
 .section-title {
   color: #243646;
+
   font-size: 15px;
   font-weight: 800;
+
   margin-bottom: 20px;
 }
+
+/* =========================
+   FORM
+========================= */
 
 .form-grid {
   display: grid;
@@ -47,28 +62,47 @@
 }
 
 label {
+  min-width: 0;
+
   display: flex;
   flex-direction: column;
   gap: 7px;
 
   color: #64748b;
+
   font-size: 13px;
   font-weight: 700;
 }
 
 input,
 select {
+  box-sizing: border-box;
+
+  width: 100%;
+  min-width: 0;
   height: 42px;
 
   border: 1px solid #cbd5e1;
   border-radius: 14px;
 
+  background: #ffffff;
+  color: #243646;
+
   padding: 0 12px;
 
-  color: #243646;
   font-family: inherit;
+  font-size: 14px;
 
   outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+input::placeholder {
+  color: #94a3b8;
 }
 
 input:focus,
@@ -76,6 +110,88 @@ select:focus {
   border-color: #008db1;
   box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
 }
+
+/* =========================
+   COMMERCIAL CONDITIONS
+========================= */
+
+.commercial-conditions-card {
+  .section-title {
+    margin-bottom: 16px;
+  }
+}
+
+.conditions-grid {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkbox-label {
+  width: fit-content;
+  min-height: 44px;
+
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  background: #f8fafc;
+  color: #243646;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background: #eef6fa;
+    border-color: #bfdbfe;
+    transform: translateY(-1px);
+  }
+
+  input {
+    flex-shrink: 0;
+
+    width: 17px;
+    height: 17px;
+
+    margin: 0;
+    padding: 0;
+
+    border-radius: 4px;
+
+    accent-color: #00b894;
+
+    cursor: pointer;
+  }
+
+  span {
+    user-select: none;
+    line-height: 1.3;
+  }
+
+  &:has(input:checked) {
+    color: #047857;
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+  }
+}
+
+/* =========================
+   ACTIONS
+========================= */
 
 .actions {
   display: flex;
@@ -90,9 +206,21 @@ select:focus {
 
     padding: 12px 26px;
 
+    font-family: inherit;
+    font-size: 14px;
     font-weight: 900;
 
     cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      transform 0.15s ease,
+      opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #00a885;
+      transform: translateY(-1px);
+    }
 
     &:disabled {
       opacity: 0.65;
@@ -101,8 +229,14 @@ select:focus {
   }
 }
 
+/* =========================
+   FEEDBACK
+========================= */
+
 .error-message {
   width: fit-content;
+
+  margin: 0;
 
   color: #dc2626;
   background: #fee2e2;
@@ -115,15 +249,58 @@ select:focus {
   font-weight: 800;
 }
 
+/* =========================
+   ESTIMATE NOTICE
+========================= */
+
+.partial-estimate-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  padding: 13px 15px;
+
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+
+  background: #f0f9ff;
+  color: #0369a1;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+
+  .material-symbols-rounded {
+    flex-shrink: 0;
+
+    margin-top: 1px;
+
+    font-size: 20px;
+  }
+
+  &.modal-notice {
+    margin: 0;
+  }
+}
+
+/* =========================
+   RESULTS
+========================= */
+
 .results-section {
   display: flex;
   flex-direction: column;
   gap: 18px;
 
   h2 {
+    margin: 0;
+
     text-align: center;
+
     color: #243646;
+
     font-size: 22px;
+    font-weight: 900;
   }
 }
 
@@ -148,21 +325,34 @@ select:focus {
   &.better {
     border-color: #bbf7d0;
   }
+
+  &.different-cycle {
+    border-left: 6px solid #f59e0b;
+  }
 }
 
+/* =========================
+   PROVIDER
+========================= */
+
 .provider {
+  min-width: 0;
+
   display: flex;
   align-items: center;
   gap: 18px;
 
   h3 {
     color: #0f172a;
+
     font-size: 22px;
+
     margin: 0;
   }
 
   p {
     color: #64748b;
+
     margin: 4px 0;
   }
 }
@@ -170,6 +360,7 @@ select:focus {
 .provider-logo {
   width: 72px;
   height: 72px;
+  min-width: 72px;
 
   display: grid;
   place-items: center;
@@ -184,11 +375,13 @@ select:focus {
   img {
     width: 80%;
     height: 80%;
+
     object-fit: contain;
   }
 
   span {
     color: #008db1;
+
     font-size: 28px;
     font-weight: 900;
   }
@@ -200,12 +393,26 @@ select:focus {
   }
 }
 
+/* =========================
+   BADGES
+========================= */
+
+.offer-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  margin-top: 12px;
+}
+
 .product-pill {
   width: fit-content;
 
   display: inline-flex;
 
   color: #008db1;
+
   border: 1px solid #bfdbfe;
   border-radius: 999px;
 
@@ -214,6 +421,70 @@ select:focus {
   font-size: 13px;
   font-weight: 800;
 }
+
+.mode-badge {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 10px;
+
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+
+  background: #f8fafc;
+  color: #475569;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.discount-summary {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 10px;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+
+  background: #f0fdf4;
+  color: #15803d;
+
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cycle-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 14px;
+
+  border: 1px solid #facc15;
+  border-radius: 999px;
+
+  background: #fff8e6;
+  color: #b45309;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.15);
+
+  .material-symbols-rounded {
+    color: #d97706;
+    font-size: 16px;
+  }
+}
+
+/* =========================
+   OFFER DETAILS
+========================= */
 
 .offer-details {
   display: flex;
@@ -239,8 +510,11 @@ select:focus {
 
   span {
     display: block;
+
     color: #64748b;
+
     font-size: 12px;
+
     margin-top: 4px;
   }
 }
@@ -248,13 +522,16 @@ select:focus {
 .price-block {
   text-align: right;
 
-  strong {
+  > strong {
+    display: block;
+
     color: #0f172a;
+
     font-size: 32px;
     font-weight: 900;
   }
 
-  span {
+  > span {
     display: block;
 
     color: #64748b;
@@ -281,6 +558,32 @@ select:focus {
   }
 }
 
+.commission-pill {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 8px;
+  margin-left: auto;
+
+  color: #7c3aed;
+  background: #f3e8ff;
+
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+
+  padding: 5px 10px;
+
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* =========================
+   EMPTY RESULTS
+========================= */
+
 .empty-results {
   display: flex;
   flex-direction: column;
@@ -297,8 +600,8 @@ select:focus {
   text-align: center;
 
   .material-symbols-rounded {
-    font-size: 64px;
     color: #94a3b8;
+    font-size: 64px;
   }
 
   h2 {
@@ -364,6 +667,7 @@ select:focus {
   position: absolute;
   top: 18px;
   right: 18px;
+
   z-index: 2;
 
   width: 36px;
@@ -400,13 +704,16 @@ select:focus {
 
   h2 {
     color: #243646;
+
     font-size: 26px;
+
     margin: 4px 0 10px;
   }
 }
 
 .modal-provider {
   color: #008db1;
+
   font-size: 13px;
   font-weight: 900;
 }
@@ -459,6 +766,10 @@ select:focus {
   }
 }
 
+/* =========================
+   MODAL SECTIONS
+========================= */
+
 .modal-section {
   display: flex;
   flex-direction: column;
@@ -473,8 +784,10 @@ select:focus {
 
   h3 {
     color: #243646;
+
     font-size: 17px;
     font-weight: 900;
+
     margin: 0;
   }
 }
@@ -490,6 +803,8 @@ select:focus {
   gap: 14px;
 
   div {
+    min-width: 0;
+
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -504,12 +819,14 @@ select:focus {
 
   span {
     color: #64748b;
+
     font-size: 12px;
     font-weight: 700;
   }
 
   strong {
     color: #243646;
+
     font-size: 17px;
     font-weight: 900;
 
@@ -524,52 +841,51 @@ select:focus {
 }
 
 /* =========================
-   RESPONSIVE
+   CYCLE ALERT
 ========================= */
 
-@media (max-width: 1300px) {
-  .form-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+.cycle-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  padding: 18px;
+
+  background: #fffbeb;
+
+  border: 1px solid #fde68a;
+  border-left: 6px solid #f59e0b;
+  border-radius: 16px;
+
+  .material-symbols-rounded {
+    color: #d97706;
+    font-size: 28px;
   }
 
-  .offer-card {
-    grid-template-columns: 1fr;
+  strong {
+    display: block;
+
+    color: #92400e;
+
+    font-size: 15px;
+    font-weight: 900;
+
+    margin-bottom: 4px;
   }
 
-  .price-block {
-    text-align: left;
-  }
+  p {
+    margin: 0;
 
-  .commission-pill {
-    margin-left: 0;
+    color: #78350f;
+
+    font-size: 13px;
+    line-height: 1.5;
   }
 }
 
-@media (max-width: 900px) {
-  .modal-backdrop {
-    padding: 10px;
-  }
-
-  .offer-modal {
-    width: 96vw;
-    max-height: 95vh;
-  }
-
-  .offer-modal-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 800px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* =========================
+   DUAL COST
+========================= */
 
 .dual-cost-grid {
   display: grid;
@@ -578,18 +894,22 @@ select:focus {
 }
 
 .dual-cost-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px;
-
   display: flex;
   flex-direction: column;
   gap: 12px;
 
+  background: #f8fafc;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  padding: 16px;
+
   h4 {
     margin: 0 0 4px;
+
     color: #243646;
+
     font-size: 15px;
     font-weight: 900;
   }
@@ -601,27 +921,118 @@ select:focus {
     gap: 14px;
 
     padding-top: 10px;
+
     border-top: 1px solid #e2e8f0;
   }
 
   span {
     color: #64748b;
+
     font-size: 12px;
     font-weight: 800;
   }
 
   strong {
     color: #243646;
+
     font-size: 15px;
+    font-weight: 900;
+
+    &.positive {
+      color: #16a34a;
+    }
+  }
+}
+
+/* =========================
+   INDEXED SCENARIOS
+========================= */
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scenario-item {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 15px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+
+  background: #f8fafc;
+
+  &.reference {
+    border-color: #7dd3fc;
+    background: #f0f9ff;
+  }
+
+  > div:not(.scenario-heading) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding-top: 9px;
+
+    border-top: 1px solid #e2e8f0;
+  }
+
+  span {
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #243646;
+
+    font-size: 12px;
+    font-weight: 900;
+
+    text-align: right;
+  }
+}
+
+.scenario-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  > strong {
+    color: #243646;
+
+    font-size: 14px;
+
+    text-align: left;
+  }
+
+  > span {
+    width: fit-content;
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    background: #e0f2fe;
+    color: #0369a1;
+
+    font-size: 10px;
     font-weight: 900;
   }
 }
 
-@media (max-width: 900px) {
-  .dual-cost-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* =========================
+   MODAL FOOTER
+========================= */
 
 .offer-modal-footer {
   flex-shrink: 0;
@@ -693,12 +1104,78 @@ select:focus {
 
   small {
     color: rgba(255, 255, 255, 0.88);
+
     font-size: 13px;
     font-weight: 700;
   }
 }
 
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1300px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .offer-card {
+    grid-template-columns: 1fr;
+  }
+
+  .price-block {
+    text-align: left;
+  }
+
+  .commission-pill {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .offer-modal {
+    width: 96vw;
+    max-height: 95vh;
+  }
+
+  .offer-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .details-grid,
+  .dual-cost-grid,
+  .scenario-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
+  .conditions-grid {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checkbox-label {
+    width: 100%;
+  }
+
+  .actions {
+    button {
+      width: 100%;
+    }
+  }
+
   .offer-modal-footer {
     padding: 14px;
   }
@@ -717,98 +1194,4 @@ select:focus {
       font-size: 12px;
     }
   }
-}
-
-.commission-pill {
-  width: fit-content;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  margin-top: 8px;
-  margin-left: auto;
-
-  color: #7c3aed;
-  background: #f3e8ff;
-
-  border: 1px solid #ddd6fe;
-  border-radius: 999px;
-
-  padding: 5px 10px;
-
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.offer-card.different-cycle {
-  border-left: 6px solid #f59e0b;
-}
-
-.cycle-warning {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  padding: 7px 14px;
-
-  border-radius: 999px;
-
-  background: #fff8e6;
-  color: #b45309;
-
-  border: 1px solid #facc15;
-
-  font-size: 12px;
-  font-weight: 800;
-
-  box-shadow: inset 0 0 0 1px rgba(250, 204, 21, .15);
-
-  .material-symbols-rounded {
-    font-size: 16px;
-    color: #d97706;
-  }
-}
-
-.cycle-alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-
-  padding: 18px;
-
-  background: #fffbeb;
-
-  border: 1px solid #fde68a;
-  border-left: 6px solid #f59e0b;
-  border-radius: 16px;
-
-  .material-symbols-rounded {
-    font-size: 28px;
-    color: #d97706;
-  }
-
-  strong {
-    display: block;
-    color: #92400e;
-    font-size: 15px;
-    font-weight: 900;
-    margin-bottom: 4px;
-  }
-
-  p {
-    margin: 0;
-    color: #78350f;
-    line-height: 1.5;
-    font-size: 13px;
-  }
-}
-
-.offer-badges {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-
-  margin-top: 12px;
 }

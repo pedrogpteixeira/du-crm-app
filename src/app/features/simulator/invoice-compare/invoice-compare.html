@@ -1,7 +1,9 @@
 <section class="invoice-compare-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Simulador › Comparação de Fatura</span>
+      <span class="breadcrumb">
+        Simulador › Comparação de Fatura
+      </span>
 
       <h1>Comparação de Fatura</h1>
 
@@ -12,11 +14,14 @@
   </header>
 
   <article class="card">
-    <div class="section-title">Dados da fatura atual</div>
+    <div class="section-title">
+      Dados da fatura atual
+    </div>
 
     <div class="form-grid">
       <label>
         Comercializador atual
+
         <input
           type="text"
           [(ngModel)]="form.currentProvider"
@@ -26,27 +31,46 @@
 
       <label>
         Tipo de produto
+
         <select
           [(ngModel)]="form.productType"
           (ngModelChange)="onProductTypeChange()"
         >
-          <option value="electricity">Eletricidade</option>
-          <option value="gas">Gás</option>
-          <option value="dual">Luz + Gás</option>
+          <option value="electricity">
+            Eletricidade
+          </option>
+
+          <option value="gas">
+            Gás
+          </option>
+
+          <option value="dual">
+            Luz + Gás
+          </option>
         </select>
       </label>
 
       <label>
         Segmento
+
         <select [(ngModel)]="form.segment">
-          <option value="residential">Residencial</option>
-          <option value="business">Empresarial</option>
-          <option value="condominium">Condomínio</option>
+          <option value="residential">
+            Residencial
+          </option>
+
+          <option value="business">
+            Empresarial
+          </option>
+
+          <option value="condominium">
+            Condomínio
+          </option>
         </select>
       </label>
 
       <label>
         Dias faturados
+
         <input
           type="number"
           min="1"
@@ -56,6 +80,7 @@
 
       <label>
         Valor atual da fatura *
+
         <input
           type="number"
           min="0"
@@ -66,33 +91,57 @@
     </div>
   </article>
 
-  <article class="card" *ngIf="shouldShowElectricityFields()">
-    <div class="section-title">Dados de eletricidade</div>
+  <article
+    class="card"
+    *ngIf="shouldShowElectricityFields()"
+  >
+    <div class="section-title">
+      Dados de eletricidade
+    </div>
 
     <div class="form-grid">
       <label>
         Tipo horário
+
         <select
           [(ngModel)]="form.tariffType"
           (ngModelChange)="onTariffTypeChange()"
         >
-          <option value="simple">Simples</option>
-          <option value="bi_hourly">Bi-horário</option>
-          <option value="tri_hourly">Tri-horário</option>
-          <option value="tetra_hourly">Tetra-horário</option>
+          <option value="simple">
+            Simples
+          </option>
+
+          <option value="bi_hourly">
+            Bi-horário
+          </option>
+
+          <option value="tri_hourly">
+            Tri-horário
+          </option>
+
+          <option value="tetra_hourly">
+            Tetra-horário
+          </option>
         </select>
       </label>
 
       <label *ngIf="shouldShowCycleType()">
         Ciclo
+
         <select [(ngModel)]="form.cycleType">
-          <option value="daily">Diário</option>
-          <option value="weekly">Semanal</option>
+          <option value="daily">
+            Diário
+          </option>
+
+          <option value="weekly">
+            Semanal
+          </option>
         </select>
       </label>
 
       <label>
         Potência contratada
+
         <select [(ngModel)]="form.powerKva">
           <option
             *ngFor="let power of availablePowers"
@@ -107,8 +156,13 @@
         </select>
       </label>
 
-      <label *ngIf="form.powerKva === otherPowerValue">
+      <label
+        *ngIf="
+          form.powerKva === otherPowerValue
+        "
+      >
         Outra potência
+
         <input
           type="number"
           min="0"
@@ -118,17 +172,25 @@
         />
       </label>
 
-      <label *ngIf="shouldShowSimpleConsumption()">
+      <label
+        *ngIf="shouldShowSimpleConsumption()"
+      >
         Consumo eletricidade
+
         <input
           type="number"
           min="0"
-          [(ngModel)]="form.electricityConsumptionKwh"
+          [(ngModel)]="
+            form.electricityConsumptionKwh
+          "
         />
       </label>
 
-      <label *ngIf="shouldShowBiHourlyConsumption()">
+      <label
+        *ngIf="shouldShowBiHourlyConsumption()"
+      >
         Fora vazio
+
         <input
           type="number"
           min="0"
@@ -144,6 +206,7 @@
         "
       >
         Vazio
+
         <input
           type="number"
           min="0"
@@ -158,6 +221,7 @@
         "
       >
         Ponta
+
         <input
           type="number"
           min="0"
@@ -172,6 +236,7 @@
         "
       >
         Cheias
+
         <input
           type="number"
           min="0"
@@ -179,8 +244,11 @@
         />
       </label>
 
-      <label *ngIf="shouldShowTetraHourlyConsumption()">
+      <label
+        *ngIf="shouldShowTetraHourlyConsumption()"
+      >
         Super vazio
+
         <input
           type="number"
           min="0"
@@ -190,12 +258,18 @@
     </div>
   </article>
 
-  <article class="card" *ngIf="shouldShowGasFields()">
-    <div class="section-title">Dados de gás</div>
+  <article
+    class="card"
+    *ngIf="shouldShowGasFields()"
+  >
+    <div class="section-title">
+      Dados de gás
+    </div>
 
     <div class="form-grid">
       <label>
         Escalão de gás
+
         <select [(ngModel)]="form.gasTier">
           <option
             *ngFor="let level of availableGasLevels"
@@ -210,8 +284,13 @@
         </select>
       </label>
 
-      <label *ngIf="form.gasTier === otherGasLevelValue">
+      <label
+        *ngIf="
+          form.gasTier === otherGasLevelValue
+        "
+      >
         Outro escalão
+
         <input
           type="number"
           min="1"
@@ -221,11 +300,78 @@
 
       <label>
         Consumo gás
+
         <input
           type="number"
           min="0"
           [(ngModel)]="form.gasConsumptionKwh"
         />
+      </label>
+    </div>
+  </article>
+
+  <article class="card commercial-conditions-card">
+    <div class="section-title">
+      Condições comerciais
+    </div>
+
+    <div class="conditions-grid">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.electronicInvoice
+          "
+        />
+
+        <span>Fatura eletrónica</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.directDebit
+          "
+        />
+
+        <span>Débito direto</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.welcomeBonus
+          "
+        />
+
+        <span>Bónus de boas-vindas</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.sva
+          "
+        />
+
+        <span>Serviço de valor acrescentado</span>
+      </label>
+
+      <label
+        class="checkbox-label"
+        *ngIf="shouldShowGasBonus()"
+      >
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.gasBonus
+          "
+        />
+
+        <span>Bónus de gás</span>
       </label>
     </div>
   </article>
@@ -236,47 +382,143 @@
       [disabled]="isLoading"
       (click)="compareInvoice()"
     >
-      {{ isLoading ? 'A comparar...' : 'Comparar fatura' }}
+      {{
+        isLoading
+          ? 'A comparar...'
+          : 'Comparar fatura'
+      }}
     </button>
   </div>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <section class="results-section" *ngIf="offers.length">
+  <section
+    class="results-section"
+    *ngIf="offers.length"
+  >
     <h2>
-      Encontrámos {{ offers.length }} oferta{{ offers.length > 1 ? 's' : '' }}
+      Encontrámos {{ offers.length }}
+      oferta{{ offers.length > 1 ? 's' : '' }}
     </h2>
+
+    <div class="partial-estimate-notice">
+      <span class="material-symbols-rounded">
+        info
+      </span>
+
+      <span>
+        {{ partialEstimateNotice }}
+      </span>
+    </div>
 
     <article
       class="offer-card"
       *ngFor="let offer of offers"
-      [class.better]="offer.comparison.isBetterOffer"
-      [class.different-cycle]="isDifferentCycle(offer)"
+      [class.better]="
+        offer.comparison.isBetterOffer
+      "
+      [class.different-cycle]="
+        isDifferentCycle(offer)
+      "
       (click)="openOfferDetails(offer)"
     >
       <div class="provider">
         <div class="provider-logo">
           <img
-            *ngIf="!hasLogoError[offer.tariff.provider.name]"
-            [src]="getProviderLogo(offer.tariff.provider.name)"
-            [alt]="offer.tariff.provider.name"
-            (error)="onLogoError(offer.tariff.provider.name)"
+            *ngIf="
+              !hasLogoError[
+                offer.tariff.provider.name
+              ]
+            "
+            [src]="
+              getProviderLogo(
+                offer.tariff.provider.name
+              )
+            "
+            [alt]="
+              offer.tariff.provider.name
+            "
+            (error)="
+              onLogoError(
+                offer.tariff.provider.name
+              )
+            "
           />
 
-          <span *ngIf="hasLogoError[offer.tariff.provider.name]">
-            {{ offer.tariff.provider.name.charAt(0) }}
+          <span
+            *ngIf="
+              hasLogoError[
+                offer.tariff.provider.name
+              ]
+            "
+          >
+            {{
+              offer.tariff.provider.name.charAt(0)
+            }}
           </span>
         </div>
 
         <div>
-          <h3>{{ offer.tariff.provider.name }}</h3>
+          <h3>
+            {{ offer.tariff.provider.name }}
+          </h3>
+
           <p>{{ offer.tariff.name }}</p>
 
           <div class="offer-badges">
             <span class="product-pill">
-              {{ getProductTypeLabel(offer.tariff.productType) }}
+              {{
+                getProductTypeLabel(
+                  offer.tariff.productType
+                )
+              }}
+            </span>
+
+            <span
+              class="mode-badge"
+              *ngIf="
+                offer.tariff.electricityPriceMode
+              "
+            >
+              Eletricidade:
+              {{
+                getPriceModeLabel(
+                  offer.tariff
+                    .electricityPriceMode
+                )
+              }}
+            </span>
+
+            <span
+              class="mode-badge"
+              *ngIf="offer.tariff.gasPriceMode"
+            >
+              Gás:
+              {{
+                getPriceModeLabel(
+                  offer.tariff.gasPriceMode
+                )
+              }}
+            </span>
+
+            <span
+              class="discount-summary"
+              *ngIf="
+                hasGeneralDiscount(offer)
+              "
+            >
+              Desconto
+              {{
+                formatPercentage(
+                  offer.simulation.details
+                    .discountPercentage
+                )
+              }}%
             </span>
 
             <span
@@ -287,7 +529,9 @@
                 sync_alt
               </span>
 
-              {{ getCycleDifferenceText(offer) }}
+              {{
+                getCycleDifferenceText(offer)
+              }}
             </span>
           </div>
         </div>
@@ -295,50 +539,105 @@
 
       <div class="offer-details">
         <div>
-          <strong>{{ getTariffTypeLabel(offer.tariff.tariffType) }}</strong>
+          <strong>
+            {{
+              getTariffTypeLabel(
+                offer.tariff.tariffType
+              )
+            }}
+          </strong>
+
           <span>Tipo tarifa</span>
         </div>
 
-        <div *ngIf="offer.tariff.cycleType">
-          <strong>{{ getCycleTypeLabel(offer.tariff.cycleType) }}</strong>
+        <div
+          *ngIf="offer.tariff.cycleType"
+        >
+          <strong>
+            {{
+              getCycleTypeLabel(
+                offer.tariff.cycleType
+              )
+            }}
+          </strong>
+
           <span>Ciclo</span>
         </div>
 
-        <div *ngIf="offer.tariff.powerKva">
-          <strong>{{ offer.tariff.powerKva }} kVA</strong>
+        <div
+          *ngIf="
+            offer.tariff.powerKva !==
+            undefined
+          "
+        >
+          <strong>
+            {{ offer.tariff.powerKva }} kVA
+          </strong>
+
           <span>Potência</span>
         </div>
 
-        <div *ngIf="offer.tariff.gasTier">
-          <strong>Escalão {{ offer.tariff.gasTier }}</strong>
+        <div
+          *ngIf="
+            offer.tariff.gasTier !==
+            undefined
+          "
+        >
+          <strong>
+            Escalão {{ offer.tariff.gasTier }}
+          </strong>
+
           <span>Gás</span>
         </div>
       </div>
 
       <div class="price-block">
         <strong>
-          {{ formatCurrency(offer.simulation.estimatedMonthlyCost) }}
+          {{
+            formatCurrency(
+              offer.simulation
+                .estimatedMonthlyCost
+            )
+          }}
         </strong>
 
-        <span>Estimativa mensal</span>
+        <span>Estimativa mensal parcial</span>
 
         <span
           class="commission-pill"
-          *ngIf="offer.commissionValue !== undefined && offer.commissionValue !== null"
+          *ngIf="
+            offer.commissionValue !==
+              undefined &&
+            offer.commissionValue !== null
+          "
         >
-          Comissão {{ formatCurrency(offer.commissionValue) }}
+          Comissão
+          {{
+            formatCurrency(
+              offer.commissionValue
+            )
+          }}
         </span>
 
         <small
-          [class.positive]="offer.comparison.isBetterOffer"
-          [class.negative]="!offer.comparison.isBetterOffer"
+          [class.positive]="
+            offer.comparison.isBetterOffer
+          "
+          [class.negative]="
+            !offer.comparison.isBetterOffer
+          "
         >
           {{
             offer.comparison.isBetterOffer
               ? 'Poupa '
               : 'Mais caro '
           }}
-          {{ formatCurrency(offer.comparison.monthlySaving) }}/mês
+
+          {{
+            formatCurrency(
+              offer.comparison.monthlySaving
+            )
+          }}/mês
         </small>
       </div>
     </article>
@@ -346,7 +645,10 @@
 
   <section
     class="empty-results"
-    *ngIf="hasSimulation && !offers.length"
+    *ngIf="
+      hasSimulation &&
+      !offers.length
+    "
   >
     <span class="material-symbols-rounded">
       search_off
@@ -360,7 +662,10 @@
   </section>
 </section>
 
-<div class="modal-backdrop" *ngIf="selectedOffer">
+<div
+  class="modal-backdrop"
+  *ngIf="selectedOffer"
+>
   <div class="modal offer-modal">
     <button
       type="button"
@@ -373,20 +678,45 @@
     <header class="offer-modal-header">
       <div class="provider-logo large">
         <img
-          *ngIf="!hasLogoError[selectedOffer.tariff.provider.name]"
-          [src]="getProviderLogo(selectedOffer.tariff.provider.name)"
-          [alt]="selectedOffer.tariff.provider.name"
-          (error)="onLogoError(selectedOffer.tariff.provider.name)"
+          *ngIf="
+            !hasLogoError[
+              selectedOffer.tariff.provider.name
+            ]
+          "
+          [src]="
+            getProviderLogo(
+              selectedOffer.tariff.provider.name
+            )
+          "
+          [alt]="
+            selectedOffer.tariff.provider.name
+          "
+          (error)="
+            onLogoError(
+              selectedOffer.tariff.provider.name
+            )
+          "
         />
 
-        <span *ngIf="hasLogoError[selectedOffer.tariff.provider.name]">
-          {{ selectedOffer.tariff.provider.name.charAt(0) }}
+        <span
+          *ngIf="
+            hasLogoError[
+              selectedOffer.tariff.provider.name
+            ]
+          "
+        >
+          {{
+            selectedOffer.tariff.provider.name
+              .charAt(0)
+          }}
         </span>
       </div>
 
       <div>
         <span class="modal-provider">
-          {{ selectedOffer.tariff.provider.name }}
+          {{
+            selectedOffer.tariff.provider.name
+          }}
         </span>
 
         <h2>
@@ -394,310 +724,982 @@
         </h2>
 
         <div class="modal-tags">
-          <span>{{ getProductTypeLabel(selectedOffer.tariff.productType) }}</span>
-
-          <span *ngIf="selectedOffer.tariff.tariffType">
-            {{ getTariffTypeLabel(selectedOffer.tariff.tariffType) }}
+          <span>
+            {{
+              getProductTypeLabel(
+                selectedOffer.tariff.productType
+              )
+            }}
           </span>
 
-          <span *ngIf="selectedOffer.tariff.cycleType">
-            {{ getCycleTypeLabel(selectedOffer.tariff.cycleType) }}
+          <span
+            *ngIf="
+              selectedOffer.tariff.tariffType
+            "
+          >
+            {{
+              getTariffTypeLabel(
+                selectedOffer.tariff.tariffType
+              )
+            }}
+          </span>
+
+          <span
+            *ngIf="
+              selectedOffer.tariff.cycleType
+            "
+          >
+            {{
+              getCycleTypeLabel(
+                selectedOffer.tariff.cycleType
+              )
+            }}
+          </span>
+
+          <span
+            *ngIf="
+              selectedOffer.tariff
+                .electricityPriceMode
+            "
+          >
+            Eletricidade:
+            {{
+              getPriceModeLabel(
+                selectedOffer.tariff
+                  .electricityPriceMode
+              )
+            }}
+          </span>
+
+          <span
+            *ngIf="
+              selectedOffer.tariff.gasPriceMode
+            "
+          >
+            Gás:
+            {{
+              getPriceModeLabel(
+                selectedOffer.tariff.gasPriceMode
+              )
+            }}
           </span>
         </div>
       </div>
     </header>
 
     <div class="offer-modal-content">
+      <section
+        class="cycle-alert"
+        *ngIf="isDifferentCycle(selectedOffer)"
+      >
+        <span class="material-symbols-rounded">
+          sync_alt
+        </span>
 
-    <section
-      class="cycle-alert"
-      *ngIf="isDifferentCycle(selectedOffer)"
-    >
-      <span class="material-symbols-rounded">
-        sync_alt
-      </span>
-
-      <div>
-        <strong>
-          Esta oferta utiliza um ciclo diferente.
-        </strong>
-
-        <p>
-          O cliente encontra-se atualmente em ciclo
-          <b>{{ getCycleTypeLabel(form.cycleType) }}</b>,
-          enquanto esta proposta utiliza
-          <b>{{ getCycleTypeLabel(selectedOffer.tariff.cycleType) }}</b>.
-        </p>
-      </div>
-    </section>  
-
-    <section class="modal-section highlight-section">
-      <h3>Resultado da simulação</h3>
-
-      <div class="details-grid">
         <div>
-          <span>Estimativa mensal</span>
           <strong>
-            {{ formatCurrency(selectedOffer.simulation.estimatedMonthlyCost) }}
+            Esta oferta utiliza um ciclo diferente.
           </strong>
-        </div>
 
-        <div>
-          <span>Total simulado</span>
-          <strong>
-            {{ formatCurrency(selectedOffer.simulation.details.totalCost) }}
-          </strong>
+          <p>
+            O cliente encontra-se atualmente em ciclo
+            <b>
+              {{
+                getCycleTypeLabel(
+                  form.cycleType
+                )
+              }}
+            </b>,
+            enquanto esta proposta utiliza
+            <b>
+              {{
+                getCycleTypeLabel(
+                  selectedOffer.tariff.cycleType
+                )
+              }}
+            </b>.
+          </p>
         </div>
+      </section>
 
-        <div>
-          <span>Poupança mensal</span>
-          <strong
-            [class.positive]="selectedOffer.comparison.isBetterOffer"
-            [class.negative]="!selectedOffer.comparison.isBetterOffer"
+      <section class="partial-estimate-notice modal-notice">
+        <span class="material-symbols-rounded">
+          info
+        </span>
+
+        <span>
+          {{ partialEstimateNotice }}
+        </span>
+      </section>
+
+      <section class="modal-section highlight-section">
+        <h3>Resultado da simulação</h3>
+
+        <div class="details-grid">
+          <div>
+            <span>Estimativa mensal parcial</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  selectedOffer.simulation
+                    .estimatedMonthlyCost
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Total comercial estimado</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .totalCost
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Poupança mensal estimada</span>
+
+            <strong
+              [class.positive]="
+                selectedOffer.comparison
+                  .isBetterOffer
+              "
+              [class.negative]="
+                !selectedOffer.comparison
+                  .isBetterOffer
+              "
+            >
+              {{
+                formatCurrency(
+                  selectedOffer.comparison
+                    .monthlySaving
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Poupança anual estimada</span>
+
+            <strong
+              [class.positive]="
+                selectedOffer.comparison
+                  .isBetterOffer
+              "
+              [class.negative]="
+                !selectedOffer.comparison
+                  .isBetterOffer
+              "
+            >
+              {{
+                formatCurrency(
+                  selectedOffer.comparison
+                    .yearlySaving
+                )
+              }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Percentagem estimada</span>
+
+            <strong>
+              {{
+                selectedOffer.comparison
+                  .savingPercentage
+              }}%
+            </strong>
+          </div>
+
+          <div>
+            <span>Dias considerados</span>
+
+            <strong>
+              {{
+                selectedOffer.simulation.details
+                  .days
+              }}
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.commissionValue !==
+                undefined &&
+              selectedOffer.commissionValue !==
+                null
+            "
           >
-            {{ formatCurrency(selectedOffer.comparison.monthlySaving) }}
-          </strong>
-        </div>
+            <span>Comissão comercial</span>
 
-        <div>
-          <span>Poupança anual</span>
-          <strong
-            [class.positive]="selectedOffer.comparison.isBetterOffer"
-            [class.negative]="!selectedOffer.comparison.isBetterOffer"
+            <strong>
+              {{
+                formatCurrency(
+                  selectedOffer.commissionValue
+                )
+              }}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="
+          hasDualCostBreakdown(selectedOffer)
+        "
+      >
+        <h3>Detalhe Luz + Gás</h3>
+
+        <div class="dual-cost-grid">
+          <div
+            class="dual-cost-card"
+            *ngIf="
+              selectedOffer.simulation.details
+                .electricityCost as electricityCost
+            "
           >
-            {{ formatCurrency(selectedOffer.comparison.yearlySaving) }}
-          </strong>
+            <h4>Eletricidade</h4>
+
+            <div>
+              <span>Custo fixo</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    electricityCost.fixedCost
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Consumo antes do desconto
+              </span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    electricityCost
+                      .energyCostBeforeDiscount
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div
+              *ngIf="
+                hasElectricityDiscount(
+                  selectedOffer
+                )
+              "
+            >
+              <span>
+                Desconto aplicado
+                {{
+                  formatPercentage(
+                    electricityCost
+                      .discountPercentage
+                  )
+                }}%
+              </span>
+
+              <strong class="positive">
+                -
+                {{
+                  formatCurrency(
+                    electricityCost.discountValue
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Consumo após desconto
+              </span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    electricityCost.energyCost
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total eletricidade</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    electricityCost.totalCost
+                  )
+                }}
+              </strong>
+            </div>
+          </div>
+
+          <div
+            class="dual-cost-card"
+            *ngIf="
+              selectedOffer.simulation.details
+                .gasCost as gasCost
+            "
+          >
+            <h4>Gás</h4>
+
+            <div>
+              <span>Custo fixo</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    gasCost.fixedCost
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Consumo antes do desconto
+              </span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    gasCost
+                      .energyCostBeforeDiscount
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div
+              *ngIf="
+                hasGasDiscount(
+                  selectedOffer
+                )
+              "
+            >
+              <span>
+                Desconto aplicado
+                {{
+                  formatPercentage(
+                    gasCost.discountPercentage
+                  )
+                }}%
+              </span>
+
+              <strong class="positive">
+                -
+                {{
+                  formatCurrency(
+                    gasCost.discountValue
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>
+                Consumo após desconto
+              </span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    gasCost.energyCost
+                  )
+                }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Total gás</span>
+
+              <strong>
+                {{
+                  formatCurrency(
+                    gasCost.totalCost
+                  )
+                }}
+              </strong>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div>
-          <span>Percentagem</span>
-          <strong>
-            {{ selectedOffer.comparison.savingPercentage }}%
-          </strong>
-        </div>
+      <section class="modal-section">
+        <h3>Composição do preço</h3>
 
-        <div>
-          <span>Dias considerados</span>
-          <strong>
-            {{ selectedOffer.simulation.details.days }}
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.commissionValue !== undefined && selectedOffer.commissionValue !== null">
-          <span>Comissão comercial</span>
-          <strong>
-            {{ formatCurrency(selectedOffer.commissionValue) }}
-          </strong>
-        </div>
-      </div>
-    </section>
-
-    <section
-      class="modal-section"
-      *ngIf="hasDualCostBreakdown(selectedOffer)"
-    >
-      <h3>Detalhe Luz + Gás</h3>
-
-      <div class="dual-cost-grid">
-        <div
-          class="dual-cost-card"
-          *ngIf="selectedOffer.simulation.details.electricityCost"
-        >
-          <h4>Eletricidade</h4>
-
+        <div class="details-grid">
           <div>
             <span>Custo fixo</span>
+
             <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.fixedCost) }}
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .fixedCost
+                )
+              }}
             </strong>
           </div>
 
           <div>
-            <span>Custo energia</span>
+            <span>
+              Consumo antes do desconto
+            </span>
+
             <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.energyCost) }}
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .energyCostBeforeDiscount
+                )
+              }}
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              hasGeneralDiscount(selectedOffer)
+            "
+          >
+            <span>
+              Desconto aplicado
+              {{
+                formatPercentage(
+                  selectedOffer.simulation.details
+                    .discountPercentage
+                )
+              }}%
+            </span>
+
+            <strong class="positive">
+              -
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .discountValue
+                )
+              }}
             </strong>
           </div>
 
           <div>
-            <span>Total eletricidade</span>
-            <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.electricityCost.totalCost) }}
-            </strong>
-          </div>
-        </div>
+            <span>
+              Consumo após desconto
+            </span>
 
-        <div
-          class="dual-cost-card"
-          *ngIf="selectedOffer.simulation.details.gasCost"
-        >
-          <h4>Gás</h4>
-
-          <div>
-            <span>Custo fixo</span>
             <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.fixedCost) }}
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .energyCost
+                )
+              }}
             </strong>
           </div>
 
           <div>
-            <span>Custo energia</span>
+            <span>Total comercial estimado</span>
+
             <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.energyCost) }}
+              {{
+                formatCurrency(
+                  selectedOffer.simulation.details
+                    .totalCost
+                )
+              }}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="
+          hasIndexedElectricityScenarios(
+            selectedOffer
+          )
+        "
+      >
+        <h3>Cenários OMIE</h3>
+
+        <div class="scenario-grid">
+          <article
+            class="scenario-item"
+            *ngFor="
+              let key of electricityScenarioKeys
+            "
+            [class.reference]="
+              isMainElectricityScenario(key)
+            "
+          >
+            <div class="scenario-heading">
+              <strong>
+                {{
+                  getElectricityScenarioLabel(
+                    key
+                  )
+                }}
+              </strong>
+
+              <span
+                *ngIf="
+                  isMainElectricityScenario(
+                    key
+                  )
+                "
+              >
+                Referência principal
+              </span>
+            </div>
+
+            <ng-container
+              *ngIf="
+                getElectricityScenario(
+                  selectedOffer,
+                  key
+                ) as scenario
+              "
+            >
+              <div>
+                <span>Preço de mercado</span>
+
+                <strong>
+                  {{
+                    formatScenarioPrice(
+                      scenario.marketPriceKwh
+                    )
+                  }}
+                  €/kWh
+                </strong>
+              </div>
+
+              <div>
+                <span>Preço final de energia</span>
+
+                <strong>
+                  {{
+                    formatScenarioPrice(
+                      scenario.finalEnergyPriceKwh
+                    )
+                  }}
+                  €/kWh
+                </strong>
+              </div>
+
+              <div>
+                <span>Custo de consumo</span>
+
+                <strong>
+                  {{
+                    formatCurrency(
+                      scenario.energyCost
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div>
+                <span>Total estimado</span>
+
+                <strong>
+                  {{
+                    formatCurrency(
+                      scenario.totalCost
+                    )
+                  }}
+                </strong>
+              </div>
+            </ng-container>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="
+          hasIndexedGasScenarios(
+            selectedOffer
+          )
+        "
+      >
+        <h3>Cenários MIBGAS</h3>
+
+        <div class="scenario-grid">
+          <article
+            class="scenario-item"
+            *ngFor="
+              let key of gasScenarioKeys
+            "
+            [class.reference]="
+              isMainGasScenario(key)
+            "
+          >
+            <div class="scenario-heading">
+              <strong>
+                {{
+                  getGasScenarioLabel(key)
+                }}
+              </strong>
+
+              <span
+                *ngIf="
+                  isMainGasScenario(key)
+                "
+              >
+                Referência principal
+              </span>
+            </div>
+
+            <ng-container
+              *ngIf="
+                getGasScenario(
+                  selectedOffer,
+                  key
+                ) as scenario
+              "
+            >
+              <div>
+                <span>Preço de mercado</span>
+
+                <strong>
+                  {{
+                    formatScenarioPrice(
+                      scenario.marketPriceKwh
+                    )
+                  }}
+                  €/kWh
+                </strong>
+              </div>
+
+              <div>
+                <span>Preço final de energia</span>
+
+                <strong>
+                  {{
+                    formatScenarioPrice(
+                      scenario.finalEnergyPriceKwh
+                    )
+                  }}
+                  €/kWh
+                </strong>
+              </div>
+
+              <div>
+                <span>Custo de consumo</span>
+
+                <strong>
+                  {{
+                    formatCurrency(
+                      scenario.energyCost
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div>
+                <span>Total estimado</span>
+
+                <strong>
+                  {{
+                    formatCurrency(
+                      scenario.totalCost
+                    )
+                  }}
+                </strong>
+              </div>
+            </ng-container>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="
+          hasElectricityPrices(selectedOffer)
+        "
+      >
+        <h3>Preços de eletricidade</h3>
+
+        <div class="details-grid">
+          <div
+            *ngIf="
+              selectedOffer.tariff.powerKva !==
+              undefined
+            "
+          >
+            <span>Potência contratada</span>
+
+            <strong>
+              {{
+                selectedOffer.tariff.powerKva
+              }}
+              kVA
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .powerPricePerDay !==
+              undefined
+            "
+          >
+            <span>Preço potência/dia</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .powerPricePerDay
+                )
+              }}
+              €/dia
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .singleEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Energia simples</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .singleEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .foraVazioEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Fora vazio</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .foraVazioEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .pontaEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Ponta</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .pontaEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .cheiasEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Cheias</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .cheiasEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .vazioEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Vazio</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .vazioEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .superVazioEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Super vazio</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .superVazioEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="hasGasPrices(selectedOffer)"
+      >
+        <h3>Preços de gás</h3>
+
+        <div class="details-grid">
+          <div
+            *ngIf="
+              selectedOffer.tariff.gasTier !==
+              undefined
+            "
+          >
+            <span>Escalão</span>
+
+            <strong>
+              Escalão
+              {{ selectedOffer.tariff.gasTier }}
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .fixedTermPerDay !==
+              undefined
+            "
+          >
+            <span>Termo fixo/dia</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .fixedTermPerDay
+                )
+              }}
+              €/dia
+            </strong>
+          </div>
+
+          <div
+            *ngIf="
+              selectedOffer.tariff
+                .gasEnergyPrice !==
+              undefined
+            "
+          >
+            <span>Energia gás</span>
+
+            <strong>
+              {{
+                formatDecimalPrice(
+                  selectedOffer.tariff
+                    .gasEnergyPrice
+                )
+              }}
+              €/kWh
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="modal-section"
+        *ngIf="
+          hasCampaignDates(selectedOffer)
+        "
+      >
+        <h3>Validade da campanha</h3>
+
+        <div class="details-grid">
+          <div>
+            <span>Início</span>
+
+            <strong>
+              {{
+                formatDate(
+                  selectedOffer.tariff.startDate
+                )
+              }}
             </strong>
           </div>
 
           <div>
-            <span>Total gás</span>
+            <span>Fim</span>
+
             <strong>
-              {{ formatCurrency(selectedOffer.simulation.details.gasCost.totalCost) }}
+              {{
+                formatDate(
+                  selectedOffer.tariff.endDate
+                )
+              }}
             </strong>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <section class="modal-section">
-      <h3>Composição do preço</h3>
-
-      <div class="details-grid">
-        <div>
-          <span>Custo fixo</span>
-          <strong>
-            {{ formatCurrency(selectedOffer.simulation.details.fixedCost) }}
-          </strong>
-        </div>
-
-        <div>
-          <span>Custo energia</span>
-          <strong>
-            {{ formatCurrency(selectedOffer.simulation.details.energyCost) }}
-          </strong>
-        </div>
-
-        <div>
-          <span>Total</span>
-          <strong>
-            {{ formatCurrency(selectedOffer.simulation.details.totalCost) }}
-          </strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="modal-section" *ngIf="hasElectricityPrices(selectedOffer)">
-      <h3>Preços de eletricidade</h3>
-
-      <div class="details-grid">
-        <div *ngIf="selectedOffer.tariff.powerKva">
-          <span>Potência contratada</span>
-          <strong>
-            {{ selectedOffer.tariff.powerKva }} kVA
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.powerPricePerDay">
-          <span>Preço potência/dia</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.powerPricePerDay) }} €/dia
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.singleEnergyPrice">
-          <span>Energia simples</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.singleEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.foraVazioEnergyPrice">
-          <span>Fora vazio</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.foraVazioEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.pontaEnergyPrice">
-          <span>Ponta</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.pontaEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.cheiasEnergyPrice">
-          <span>Cheias</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.cheiasEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.vazioEnergyPrice">
-          <span>Vazio</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.vazioEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.superVazioEnergyPrice">
-          <span>Super vazio</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.superVazioEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="modal-section" *ngIf="hasGasPrices(selectedOffer)">
-      <h3>Preços de gás</h3>
-
-      <div class="details-grid">
-        <div *ngIf="selectedOffer.tariff.gasTier">
-          <span>Escalão</span>
-          <strong>
-            Escalão {{ selectedOffer.tariff.gasTier }}
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.fixedTermPerDay">
-          <span>Termo fixo/dia</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.fixedTermPerDay) }} €/dia
-          </strong>
-        </div>
-
-        <div *ngIf="selectedOffer.tariff.gasEnergyPrice">
-          <span>Energia gás</span>
-          <strong>
-            {{ formatDecimalPrice(selectedOffer.tariff.gasEnergyPrice) }} €/kWh
-          </strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="modal-section" *ngIf="hasCampaignDates(selectedOffer)">
-      <h3>Validade da campanha</h3>
-
-      <div class="details-grid">
-        <div>
-          <span>Início</span>
-          <strong>
-            {{ formatDate(selectedOffer.tariff.startDate) }}
-          </strong>
-        </div>
-
-        <div>
-          <span>Fim</span>
-          <strong>
-            {{ formatDate(selectedOffer.tariff.endDate) }}
-          </strong>
-        </div>
-      </div>
-    </section>
-  </div>
     <footer class="offer-modal-footer">
       <button
         type="button"
         class="proposal-btn"
-        (click)="openProposalPreview(selectedOffer)"
+        (click)="
+          openProposalPreview(selectedOffer)
+        "
       >
         <span class="material-symbols-rounded">
           description
@@ -705,7 +1707,10 @@
 
         <span class="proposal-btn-text">
           <strong>Gerar proposta</strong>
-          <small>Criar proposta comercial em PDF</small>
+
+          <small>
+            Criar proposta comercial em PDF
+          </small>
         </span>
 
         <span class="material-symbols-rounded arrow-icon">
