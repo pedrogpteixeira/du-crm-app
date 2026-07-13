@@ -40,7 +40,7 @@ export class KnowledgeBaseHome implements OnInit {
     },
     {
       companyId: 'cmp_StOnumtpT5',
-      name: 'Wallbox',
+      name: 'wallbox',
       logo: 'assets/companies/wallbox.png',
       formsFolderId: '',
       trainingFolderId: '',
