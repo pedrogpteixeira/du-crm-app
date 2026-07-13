@@ -22,10 +22,10 @@ export class Auth {
 
   currentUser$ = this.currentUserSubject.asObservable();
 
-  login(username: string, password: string): Observable<LoginResponse> {
+  login(identifier: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.apiUrl}/api/auth/signin`, {
-        username,
+        identifier,
         password,
       })
       .pipe(
