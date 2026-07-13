@@ -54,7 +54,7 @@ export class ProposalDocument {
   proposal!: ProposalData;
 
   readonly partialEstimateNotice =
-    'Estimativa parcial: os valores apresentados incluem os termos comerciais de energia e os termos fixos configurados, mas ainda não incluem todas as tarifas de acesso às redes, impostos, IVA, contribuição audiovisual e outras taxas legalmente aplicáveis. O valor final da fatura poderá ser superior.';
+    'Estimativa parcial: Os Preços de potência é o valor definido pelas entidades competentes em relação às Tarifas de Acesso às Redes (Energia e Potência). As variações que se venham a verificar nos elementos regulados (tarifas de acesso e outros) aplicáveis, assim como os novos que possam surgir, transferir-se-ão para o cliente, tanto no caso de acréscimo como de decréscimo. Os preços de potência incluem a tarifa de acessos às redes, nos termos definidos pela ERSE, os quais, caso sejam objeto de alteração, serão refletidos diretamente no preço final. Não incluem  Impostos, IVA, contribuição audiovisual e outras taxas legalmente aplicáveis.';
 
   readonly electricityScenarioKeys:
     ElectricityScenarioKey[] = [
@@ -441,7 +441,7 @@ export class ProposalDocument {
           'Bónus de boas-vindas',
 
         sva:
-          'Serviço de valor acrescentado',
+          'SVA',
 
         gasBonus:
           'Bónus de gás',
@@ -569,7 +569,7 @@ export class ProposalDocument {
       'pt-PT',
       {
         minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 6,
       },
     ).format(Number(value || 0));
   }
