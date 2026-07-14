@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 import { Auth } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
 import { SocketService } from '../../core/services/socket';

@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 
 import { Auth } from '../../../core/services/auth';
 import { ProposalPdfService } from '../../../core/services/proposal-pdf';
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-proposal-preview',

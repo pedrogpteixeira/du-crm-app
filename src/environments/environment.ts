@@ -1,5 +1,8 @@
 export const environment = {
-  production: true,
+  production: false,
 
-  apiUrl: 'https://api.ducrm.com',
+  apiUrl: 'https://du-crm-api.onrender.com',
+  socketUrl: 'https://du-crm-api.onrender.com',
+
+  repsolId: 'cmp_njRqliQBpR'
 };

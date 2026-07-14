@@ -12,7 +12,7 @@ import {
 } from '../../../core/services/repsol-contract';
 import { SocketService } from '../../../core/services/socket';
 import { PreferencesService } from '../../../core/services/preferences';
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-repsol-contracts',

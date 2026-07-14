@@ -2,7 +2,7 @@ import { Injectable, NgZone, inject } from '@angular/core';
 import { BehaviorSubject, Observable, map } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 export interface RepsolContractSocketEvent {
   contractId: string;

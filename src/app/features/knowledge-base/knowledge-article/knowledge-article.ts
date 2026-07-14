@@ -11,7 +11,7 @@ import {
 
 import { Company, CompanyService } from '../../../core/services/company';
 
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-knowledge-article',

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 
 import { Client, ClientService } from '../../../core/services/client';
 

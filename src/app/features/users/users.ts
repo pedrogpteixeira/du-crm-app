@@ -15,7 +15,7 @@ import {
   UserService,
 } from '../../core/services/user';
 
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 interface UserFilters {
   name: string;

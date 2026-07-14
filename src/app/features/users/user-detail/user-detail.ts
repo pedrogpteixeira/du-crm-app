@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 
 import { SocketService } from '../../../core/services/socket';
 import { ProfileUser, UserService } from '../../../core/services/user';
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 
 import { UserCompanyCommissions } from '../user-company-commissions/user-company-commissions';
 import { Auth } from '../../../core/services/auth';

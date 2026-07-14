@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
-import { environment } from '../../../../environments/environment.development';
+import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
 import { AuthUser } from '../../../core/models/auth-user';
 

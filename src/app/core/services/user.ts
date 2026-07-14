@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs';
 
-import { environment } from '../../../environments/environment.development';
+import { environment } from '../../../environments/environment';
 
 export interface UpdateProfilePictureResponse {
   profilePicture: string;
