@@ -30,6 +30,11 @@ export interface CreateTeamRequest {
   positionList: string[];
 }
 
+export interface AddUserToTeamRequest {
+  teamId: string;
+  userId: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -38,10 +43,14 @@ export class TeamService {
   private readonly apiUrl = environment.apiUrl;
 
   getTeams(): Observable<Team[]> {
-    return this.http.get<Team[]>(`${this.apiUrl}/api/teams`);
+    return this.http.get<Team[]>(
+      `${this.apiUrl}/api/teams`,
+    );
   }
 
-  getTeamUsers(teamId: string): Observable<TeamDetailResponse> {
+  getTeamUsers(
+    teamId: string,
+  ): Observable<TeamDetailResponse> {
     return this.http.get<TeamDetailResponse>(
       `${this.apiUrl}/api/team-users/team/${teamId}`,
     );
@@ -52,6 +61,15 @@ export class TeamService {
   ): Observable<Team> {
     return this.http.post<Team>(
       `${this.apiUrl}/api/teams`,
+      payload,
+    );
+  }
+
+  addUserToTeam(
+    payload: AddUserToTeamRequest,
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.apiUrl}/api/team-users`,
       payload,
     );
   }

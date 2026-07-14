@@ -1,9 +1,15 @@
 <section class="team-detail-page">
-  <p class="loading" *ngIf="isLoading">
+  <p
+    class="loading"
+    *ngIf="isLoading"
+  >
     A carregar equipa...
   </p>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
@@ -22,10 +28,29 @@
 
     <header class="page-header">
       <div>
-        <h1>{{ team.name }}</h1>
+        <h1>
+          {{ team.name }}
+        </h1>
 
-        <p>{{ team.role }}</p>
+        <p>
+          {{ team.role }}
+        </p>
       </div>
+
+      <button
+        type="button"
+        class="add-user-button"
+        *ngIf="canManageTeamUsers"
+        (click)="openAddUserModal()"
+      >
+        <span
+          class="material-symbols-rounded"
+        >
+          person_add
+        </span>
+
+        Adicionar utilizadores
+      </button>
     </header>
 
     <div class="detail-grid">
@@ -37,25 +62,52 @@
         <div class="info-grid">
           <label>
             Nome
-            <strong>{{ team.name }}</strong>
+
+            <strong>
+              {{ team.name }}
+            </strong>
           </label>
 
           <label>
             Função
-            <strong>{{ team.role }}</strong>
+
+            <strong>
+              {{ team.role }}
+            </strong>
           </label>
 
           <label>
             Estado
-            <strong>{{ team.active ? 'Ativa' : 'Inativa' }}</strong>
+
+            <strong
+              class="team-status"
+              [class.is-active]="
+                team.active
+              "
+              [class.is-inactive]="
+                !team.active
+              "
+            >
+              <span></span>
+
+              {{
+                team.active
+                  ? 'Ativa'
+                  : 'Inativa'
+              }}
+            </strong>
           </label>
 
           <label>
             Cargos
+
             <div class="positions-stack">
               <span
                 class="position-item"
-                *ngFor="let position of team.positionList"
+                *ngFor="
+                  let position of
+                    team.positionList
+                "
               >
                 {{ position }}
               </span>
@@ -65,43 +117,389 @@
       </article>
 
       <article class="card users-card">
-        <div class="section-title">
-          Utilizadores da equipa
+        <div class="users-card-header">
+          <div>
+            <div class="section-title">
+              Utilizadores da equipa
+            </div>
+
+            <span
+              class="users-count"
+              *ngIf="users.length"
+            >
+              {{ users.length }}
+              utilizador{{
+                users.length === 1
+                  ? ''
+                  : 'es'
+              }}
+            </span>
+          </div>
         </div>
 
-        <div class="users-list" *ngIf="users.length; else noUsers">
-            <a
+        <div
+          class="users-list"
+          *ngIf="
+            users.length;
+            else noUsers
+          "
+        >
+          <a
             class="user-row"
-            *ngFor="let user of users"
-            [routerLink]="['/home/users', user.id]"
-            >
+            *ngFor="
+              let user of users;
+              trackBy: trackTeamUserById
+            "
+            [routerLink]="[
+              '/home/users',
+              user.id
+            ]"
+          >
             <div class="user-cell">
-                <div class="avatar">
+              <div class="avatar">
                 <img
-                    *ngIf="getProfilePictureUrl(user); else initials"
-                    [src]="getProfilePictureUrl(user)"
-                    [alt]="user.name"
+                  *ngIf="
+                    getProfilePictureUrl(
+                      user
+                    );
+                    else initials
+                  "
+                  [src]="
+                    getProfilePictureUrl(
+                      user
+                    )
+                  "
+                  [alt]="user.name"
                 />
 
                 <ng-template #initials>
-                    {{ getInitial(user.name) }}
+                  {{
+                    getInitial(
+                      user.name
+                    )
+                  }}
                 </ng-template>
-                </div>
+              </div>
 
-                <div>
-                <strong>{{ user.name }}</strong>
-                <span>{{ user.role || 'Sem cargo selecionado' }}</span>
-                </div>
+              <div>
+                <strong>
+                  {{ user.name }}
+                </strong>
+
+                <span>
+                  {{
+                    user.role ||
+                    'Sem cargo selecionado'
+                  }}
+                </span>
+              </div>
             </div>
-            </a>
+
+            <span
+              class="material-symbols-rounded user-arrow"
+            >
+              chevron_right
+            </span>
+          </a>
         </div>
 
         <ng-template #noUsers>
-          <p class="empty-state">
-            Esta equipa ainda não tem utilizadores.
-          </p>
+          <div class="empty-state">
+            <span
+              class="material-symbols-rounded"
+            >
+              group_off
+            </span>
+
+            <strong>
+              Sem utilizadores
+            </strong>
+
+            <p>
+              Esta equipa ainda não tem
+              utilizadores associados.
+            </p>
+          </div>
         </ng-template>
       </article>
     </div>
   </ng-container>
 </section>
+
+<!-- MODAL ADICIONAR UTILIZADORES -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="
+    showAddUserModal &&
+    canManageTeamUsers
+  "
+  (click)="closeAddUserModal()"
+>
+  <section
+    class="add-user-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="add-user-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">
+          {{ team?.name }}
+        </span>
+
+        <h2 id="add-user-modal-title">
+          Adicionar utilizadores
+        </h2>
+
+        <p>
+          Seleciona um ou mais utilizadores
+          para associar a esta equipa.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isAddingUser"
+        aria-label="Fechar"
+        (click)="closeAddUserModal()"
+      >
+        <span
+          class="material-symbols-rounded"
+        >
+          close
+        </span>
+      </button>
+    </header>
+
+    <div class="modal-content">
+      <p
+        class="modal-error-message"
+        *ngIf="addUserErrorMessage"
+      >
+        {{ addUserErrorMessage }}
+      </p>
+
+      <div class="user-search">
+        <span
+          class="material-symbols-rounded"
+        >
+          search
+        </span>
+
+        <input
+          type="search"
+          placeholder="Pesquisar por nome, email ou cargo..."
+          [(ngModel)]="userSearch"
+          (ngModelChange)="applyUserSearch()"
+        />
+      </div>
+
+      <div
+        class="selection-toolbar"
+        *ngIf="
+          !isLoadingUsers &&
+          availableUsers.length
+        "
+      >
+        <button
+          type="button"
+          class="select-visible-button"
+          [disabled]="isAddingUser"
+          (click)="toggleAllVisibleUsers()"
+        >
+          <span
+            class="material-symbols-rounded"
+          >
+            {{
+              areAllVisibleUsersSelected()
+                ? 'deselect'
+                : 'select_all'
+            }}
+          </span>
+
+          {{
+            areAllVisibleUsersSelected()
+              ? 'Desmarcar visíveis'
+              : 'Selecionar visíveis'
+          }}
+        </button>
+
+        <div
+          class="selected-users-summary"
+          *ngIf="selectedUsersCount"
+        >
+          <span>
+            {{ selectedUsersCount }}
+            selecionado{{
+              selectedUsersCount === 1
+                ? ''
+                : 's'
+            }}
+          </span>
+
+          <button
+            type="button"
+            [disabled]="isAddingUser"
+            (click)="clearSelectedUsers()"
+          >
+            Limpar seleção
+          </button>
+        </div>
+      </div>
+
+      <p
+        class="modal-loading"
+        *ngIf="isLoadingUsers"
+      >
+        <span
+          class="loading-spinner"
+        ></span>
+
+        A carregar utilizadores...
+      </p>
+
+      <div
+        class="available-users-list"
+        *ngIf="
+          !isLoadingUsers &&
+          filteredAvailableUsers.length
+        "
+      >
+        <button
+          type="button"
+          class="available-user"
+          *ngFor="
+            let user of
+              filteredAvailableUsers;
+            trackBy: trackUserById
+          "
+          [class.selected]="
+            isUserSelected(user.id)
+          "
+          [disabled]="isAddingUser"
+          (click)="
+            toggleUserSelection(
+              user.id
+            )
+          "
+        >
+          <div class="avatar">
+            <img
+              *ngIf="
+                getProfilePictureUrl(
+                  user
+                );
+                else availableInitials
+              "
+              [src]="
+                getProfilePictureUrl(
+                  user
+                )
+              "
+              [alt]="user.name"
+            />
+
+            <ng-template
+              #availableInitials
+            >
+              {{
+                getInitial(
+                  user.name
+                )
+              }}
+            </ng-template>
+          </div>
+
+          <div class="available-user-info">
+            <strong>
+              {{ user.name }}
+            </strong>
+
+            <span>
+              {{ user.email }}
+            </span>
+
+            <small>
+              {{
+                user.role ||
+                'Sem cargo selecionado'
+              }}
+            </small>
+          </div>
+
+          <span
+            class="selection-indicator material-symbols-rounded"
+          >
+            {{
+              isUserSelected(user.id)
+                ? 'check_circle'
+                : 'radio_button_unchecked'
+            }}
+          </span>
+        </button>
+      </div>
+
+      <div
+        class="modal-empty-state"
+        *ngIf="
+          !isLoadingUsers &&
+          !filteredAvailableUsers.length
+        "
+      >
+        <span
+          class="material-symbols-rounded"
+        >
+          person_off
+        </span>
+
+        <strong>
+          Nenhum utilizador disponível
+        </strong>
+
+        <p>
+          Todos os utilizadores ativos já
+          pertencem à equipa ou nenhum
+          corresponde à pesquisa.
+        </p>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="isAddingUser"
+        (click)="closeAddUserModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="confirm-user-button"
+        [disabled]="
+          !selectedUsersCount ||
+          isAddingUser
+        "
+        (click)="addSelectedUsers()"
+      >
+        <span
+          class="button-spinner"
+          *ngIf="isAddingUser"
+        ></span>
+
+        <span
+          class="material-symbols-rounded"
+          *ngIf="!isAddingUser"
+        >
+          group_add
+        </span>
+
+        {{ getAddUsersButtonText() }}
+      </button>
+    </footer>
+  </section>
+</div>
