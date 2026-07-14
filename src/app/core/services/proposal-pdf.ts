@@ -7,9 +7,6 @@ import {
   inject,
 } from '@angular/core';
 
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
 import { ProposalDocument } from '../../features/simulator/proposal-document/proposal-document';
 import { ProposalData } from '../../features/simulator/proposal-document/proposal-document.types';
 
@@ -23,6 +20,12 @@ export class ProposalPdfService {
     inject(EnvironmentInjector);
 
   async generate(data: ProposalData): Promise<void> {
+    const [{ default: html2canvas }, { default: jsPDF }] =
+    await Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ]);
+    
     const componentRef =
       this.createDocumentComponent(data);
 
