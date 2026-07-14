@@ -5,9 +5,7 @@
         Equipas
       </span>
 
-      <h1>
-        Equipas
-      </h1>
+      <h1>Equipas</h1>
 
       <p>
         Gestão das equipas da plataforma.
@@ -17,10 +15,30 @@
     <div class="header-actions">
       <button
         type="button"
+        class="create-team-button"
+        *ngIf="canCreateTeam"
+        (click)="openCreateTeamModal()"
+      >
+        <span class="material-symbols-rounded">
+          group_add
+        </span>
+
+        Nova equipa
+      </button>
+
+      <button
+        type="button"
         class="filters-toggle-button"
-        [class.is-active]="showFilters || hasActiveFilters()"
+        [class.is-active]="
+          showFilters ||
+          hasActiveFilters()
+        "
         (click)="toggleFilters()"
       >
+        <span class="material-symbols-rounded">
+          filter_alt
+        </span>
+
         Filtros
 
         <span
@@ -37,9 +55,9 @@
   </header>
 
   <section
-   class="filters-card"
-   *ngIf="showFilters"
-   >
+    class="filters-card"
+    *ngIf="showFilters"
+  >
     <div class="filter-field">
       <label for="team-name-filter">
         Nome
@@ -69,7 +87,9 @@
         </option>
 
         <option
-          *ngFor="let role of availableRoles"
+          *ngFor="
+            let role of availableRoles
+          "
           [value]="role"
         >
           {{ role }}
@@ -80,7 +100,9 @@
     <button
       type="button"
       class="clear-filters-button"
-      [disabled]="!hasActiveFilters()"
+      [disabled]="
+        !hasActiveFilters()
+      "
       (click)="clearFilters()"
     >
       Limpar filtros
@@ -110,9 +132,14 @@
     </p>
 
     <a
-      *ngFor="let team of filteredTeams"
+      *ngFor="
+        let team of filteredTeams
+      "
       class="team-row"
-      [routerLink]="['/home/teams', team.id]"
+      [routerLink]="[
+        '/home/teams',
+        team.id
+      ]"
     >
       <div class="team-cell">
         <strong>
@@ -131,12 +158,20 @@
       <div>
         <div
           class="status-badge"
-          [class.is-active]="team.active"
-          [class.is-inactive]="!team.active"
+          [class.is-active]="
+            team.active
+          "
+          [class.is-inactive]="
+            !team.active
+          "
         >
           <span></span>
 
-          {{ team.active ? 'Ativa' : 'Inativa' }}
+          {{
+            team.active
+              ? 'Ativa'
+              : 'Inativa'
+          }}
         </div>
       </div>
     </a>
@@ -149,22 +184,213 @@
       "
       class="empty-state"
     >
-      <strong>Nenhuma equipa encontrada</strong>
+      <strong>
+        Nenhuma equipa encontrada
+      </strong>
 
       <span>
-        Não existem equipas que correspondam aos filtros selecionados.
+        Não existem equipas que
+        correspondam aos filtros
+        selecionados.
       </span>
     </div>
 
     <footer
       class="table-footer"
-      *ngIf="!isLoading && teams.length"
+      *ngIf="
+        !isLoading &&
+        teams.length
+      "
     >
       A mostrar
-      <strong>{{ filteredTeams.length }}</strong>
+      <strong>
+        {{ filteredTeams.length }}
+      </strong>
       de
-      <strong>{{ teams.length }}</strong>
+      <strong>
+        {{ teams.length }}
+      </strong>
       equipas
     </footer>
   </div>
 </section>
+
+<!-- MODAL CRIAR EQUIPA -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showCreateTeamModal"
+  (click)="closeCreateTeamModal()"
+>
+  <section
+    class="create-team-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-team-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">
+          Gestão de equipas
+        </span>
+
+        <h2 id="create-team-title">
+          Criar nova equipa
+        </h2>
+
+        <p>
+          Define o nome, a função base
+          e os cargos disponíveis.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isCreatingTeam"
+        aria-label="Fechar modal"
+        (click)="closeCreateTeamModal()"
+      >
+        <span class="material-symbols-rounded">
+          close
+        </span>
+      </button>
+    </header>
+
+    <div class="modal-content">
+      <p
+        class="modal-error-message"
+        *ngIf="createTeamErrorMessage"
+      >
+        {{ createTeamErrorMessage }}
+      </p>
+
+      <div class="create-team-form">
+        <label>
+          Nome da equipa *
+
+          <input
+            type="text"
+            placeholder="Ex.: Equipa Comercial Norte"
+            [(ngModel)]="
+              createTeamForm.name
+            "
+          />
+        </label>
+
+        <label>
+          Função base *
+
+          <input
+            type="text"
+            placeholder="Ex.: Comercial"
+            [(ngModel)]="
+              createTeamForm.role
+            "
+          />
+        </label>
+
+        <div class="positions-section">
+          <div class="positions-header">
+            <div>
+              <strong>
+                Cargos disponíveis
+              </strong>
+
+              <span>
+                Adiciona os cargos que
+                poderão ser atribuídos
+                aos membros da equipa.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="add-position-button"
+              (click)="addPosition()"
+            >
+              <span class="material-symbols-rounded">
+                add
+              </span>
+
+              Adicionar cargo
+            </button>
+          </div>
+
+          <div class="positions-list">
+            <div
+              class="position-row"
+              *ngFor="
+                let position of
+                  createTeamForm.positionList;
+                let index = index;
+                trackBy: trackPositionByIndex
+              "
+            >
+              <input
+                type="text"
+                [placeholder]="
+                  'Cargo ' + (index + 1)
+                "
+                [(ngModel)]="
+                  createTeamForm
+                    .positionList[index]
+                "
+              />
+
+              <button
+                type="button"
+                class="remove-position-button"
+                aria-label="Remover cargo"
+                (click)="
+                  removePosition(index)
+                "
+              >
+                <span class="material-symbols-rounded">
+                  delete
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="isCreatingTeam"
+        (click)="closeCreateTeamModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="submit-team-button"
+        [disabled]="isCreatingTeam"
+        (click)="createTeam()"
+      >
+        <span
+          class="button-spinner"
+          *ngIf="isCreatingTeam"
+        ></span>
+
+        <span
+          class="material-symbols-rounded"
+          *ngIf="!isCreatingTeam"
+        >
+          group_add
+        </span>
+
+        {{
+          isCreatingTeam
+            ? 'A criar equipa...'
+            : 'Criar equipa'
+        }}
+      </button>
+    </footer>
+  </section>
+</div>

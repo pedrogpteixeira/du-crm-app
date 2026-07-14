@@ -24,6 +24,12 @@ export interface TeamDetailResponse {
   users: TeamUser[];
 }
 
+export interface CreateTeamRequest {
+  name: string;
+  role: string;
+  positionList: string[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -38,6 +44,15 @@ export class TeamService {
   getTeamUsers(teamId: string): Observable<TeamDetailResponse> {
     return this.http.get<TeamDetailResponse>(
       `${this.apiUrl}/api/team-users/team/${teamId}`,
+    );
+  }
+
+  createTeam(
+    payload: CreateTeamRequest,
+  ): Observable<Team> {
+    return this.http.post<Team>(
+      `${this.apiUrl}/api/teams`,
+      payload,
     );
   }
 }
