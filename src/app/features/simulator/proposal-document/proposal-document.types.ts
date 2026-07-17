@@ -9,6 +9,10 @@ export interface ProposalClient {
   email: string;
   phone: string;
   address: string;
+
+  crc?: string;
+  cpe?: string;
+  cui?: string;
 }
 
 export interface ProposalCommercial {
@@ -31,5 +35,6 @@ export interface ProposalData {
   client: ProposalClient;
   commercial: ProposalCommercial;
 
-  discountConditions?: SimulationDiscountConditions;
+  discountConditions?:
+    SimulationDiscountConditions;
 }

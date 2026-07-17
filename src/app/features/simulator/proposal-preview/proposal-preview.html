@@ -1,62 +1,251 @@
 <section class="proposal-preview-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Simulador › Proposta Comercial</span>
-      <h1>Preparar proposta</h1>
-      <p>Confirma os dados antes de gerar o PDF comercial.</p>
+      <span class="breadcrumb">
+        Simulador › Proposta Comercial
+      </span>
+
+      <h1>
+        Preparar proposta
+      </h1>
+
+      <p>
+        Confirma os dados antes de gerar
+        o PDF comercial.
+      </p>
     </div>
   </header>
+
+  <p
+    class="validation-error-message"
+    *ngIf="validationErrorMessage"
+  >
+    {{ validationErrorMessage }}
+  </p>
 
   <section class="proposal-layout">
     <div class="left-column">
       <article class="form-card">
-        <h2>Dados do cliente</h2>
+        <div class="form-card-header">
+          <div>
+            <h2>
+              Dados do cliente
+            </h2>
+
+            <p>
+              Os campos assinalados são
+              obrigatórios.
+            </p>
+          </div>
+
+          <span class="required-note">
+            * Obrigatório
+          </span>
+        </div>
 
         <div class="form-grid">
           <label>
-            Nome / Empresa
-            <input type="text" [(ngModel)]="client.name" />
+            Nome / Empresa *
+
+            <input
+              type="text"
+              [(ngModel)]="client.name"
+              [class.invalid]="
+                isClientFieldInvalid('name')
+              "
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('name')
+              "
+            >
+              O nome é obrigatório.
+            </small>
           </label>
 
           <label>
-            NIF
-            <input type="text" [(ngModel)]="client.nif" />
+            NIF *
+
+            <input
+              type="text"
+              [(ngModel)]="client.nif"
+              [class.invalid]="
+                isClientFieldInvalid('nif')
+              "
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('nif')
+              "
+            >
+              O NIF é obrigatório.
+            </small>
           </label>
 
           <label>
-            Email
-            <input type="email" [(ngModel)]="client.email" />
+            Email *
+
+            <input
+              type="email"
+              [(ngModel)]="client.email"
+              [class.invalid]="
+                isClientFieldInvalid('email')
+              "
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('email')
+              "
+            >
+              O email é obrigatório.
+            </small>
           </label>
 
           <label>
-            Telemóvel
-            <input type="text" [(ngModel)]="client.phone" />
+            Telemóvel *
+
+            <input
+              type="text"
+              [(ngModel)]="client.phone"
+              [class.invalid]="
+                isClientFieldInvalid('phone')
+              "
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('phone')
+              "
+            >
+              O telemóvel é obrigatório.
+            </small>
+          </label>
+
+          <label
+            *ngIf="isBusinessProposal"
+          >
+            CRC
+
+            <input
+              type="text"
+              [(ngModel)]="client.crc"
+              [class.invalid]="
+                isClientFieldInvalid('crc')
+              "
+              placeholder="Código da Certidão Permanente"
+            />
+          </label>
+
+          <label
+            *ngIf="hasElectricity"
+          >
+            CPE *
+
+            <input
+              type="text"
+              [(ngModel)]="client.cpe"
+              [class.invalid]="
+                isClientFieldInvalid('cpe')
+              "
+              placeholder="PT0002..."
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('cpe')
+              "
+            >
+              O CPE é obrigatório para
+              eletricidade.
+            </small>
+          </label>
+
+          <label
+            *ngIf="hasGas"
+          >
+            CUI *
+
+            <input
+              type="text"
+              [(ngModel)]="client.cui"
+              [class.invalid]="
+                isClientFieldInvalid('cui')
+              "
+              placeholder="PT1601..."
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('cui')
+              "
+            >
+              O CUI é obrigatório para gás.
+            </small>
           </label>
 
           <label class="full">
-            Morada
-            <input type="text" [(ngModel)]="client.address" />
+            Morada de consumo *
+
+            <input
+              type="text"
+              [(ngModel)]="client.address"
+              [class.invalid]="
+                isClientFieldInvalid('address')
+              "
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                isClientFieldInvalid('address')
+              "
+            >
+              A morada de consumo é obrigatória.
+            </small>
           </label>
         </div>
       </article>
 
       <article class="form-card">
-        <h2>Dados do comercial</h2>
+        <h2>
+          Dados do comercial
+        </h2>
 
         <div class="form-grid">
           <label>
             Nome
-            <input type="text" [(ngModel)]="commercial.name" />
+
+            <input
+              type="text"
+              [(ngModel)]="commercial.name"
+            />
           </label>
 
           <label>
             Email
-            <input type="email" [(ngModel)]="commercial.email" />
+
+            <input
+              type="email"
+              [(ngModel)]="commercial.email"
+            />
           </label>
 
           <label>
             Telemóvel
-            <input type="text" [(ngModel)]="commercial.phone" />
+
+            <input
+              type="text"
+              [(ngModel)]="commercial.phone"
+            />
           </label>
         </div>
       </article>
@@ -65,65 +254,171 @@
     <aside class="proposal-summary-card">
       <div class="provider-header">
         <div class="provider-logo">
-          <img [src]="getProviderLogo(offer.tariff.provider.name)" [alt]="offer.tariff.provider.name" />
+          <img
+            [src]="
+              getProviderLogo(
+                offer.tariff.provider.name
+              )
+            "
+            [alt]="
+              offer.tariff.provider.name
+            "
+          />
         </div>
 
         <div>
-          <span>Oferta selecionada</span>
-          <h2>{{ offer.tariff.provider.name }}</h2>
-          <p>{{ offer.tariff.name }}</p>
+          <span>
+            Oferta selecionada
+          </span>
+
+          <h2>
+            {{
+              offer.tariff.provider.name
+            }}
+          </h2>
+
+          <p>
+            {{ offer.tariff.name }}
+          </p>
         </div>
       </div>
 
       <div class="summary-metrics">
         <div>
-          <span>Estimativa mensal</span>
-          <strong>{{ formatCurrency(offer.simulation.estimatedMonthlyCost) }}</strong>
+          <span>
+            Estimativa mensal
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                offer.simulation
+                  .estimatedMonthlyCost
+              )
+            }}
+          </strong>
         </div>
 
         <div class="saving">
-          <span>Poupança mensal</span>
-          <strong>{{ formatCurrency(offer.comparison.monthlySaving) }}</strong>
+          <span>
+            Poupança mensal
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                offer.comparison
+                  .monthlySaving
+              )
+            }}
+          </strong>
         </div>
 
         <div class="saving">
-          <span>Poupança anual</span>
-          <strong>{{ formatCurrency(offer.comparison.yearlySaving) }}</strong>
+          <span>
+            Poupança anual
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                offer.comparison
+                  .yearlySaving
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="offer.commissionValue">
-          <span>Comissão</span>
-          <strong>{{ formatCurrency(offer.commissionValue) }}</strong>
+        <div
+          *ngIf="offer.commissionValue"
+        >
+          <span>
+            Comissão
+          </span>
+
+          <strong>
+            {{
+              formatCurrency(
+                offer.commissionValue
+              )
+            }}
+          </strong>
         </div>
       </div>
 
       <div class="offer-details">
         <div>
-          <span>Produto</span>
-          <strong>{{ getProductLabel(offer.tariff.productType) }}</strong>
+          <span>
+            Produto
+          </span>
+
+          <strong>
+            {{
+              getProductLabel(
+                offer.tariff.productType
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="offer.tariff.tariffType">
-          <span>Tarifário</span>
-          <strong>{{ getTariffLabel(offer.tariff.tariffType) }}</strong>
+        <div
+          *ngIf="
+            offer.tariff.tariffType
+          "
+        >
+          <span>
+            Tarifário
+          </span>
+
+          <strong>
+            {{
+              getTariffLabel(
+                offer.tariff.tariffType
+              )
+            }}
+          </strong>
         </div>
 
-        <div *ngIf="offer.tariff.powerKva">
-          <span>Potência</span>
-          <strong>{{ offer.tariff.powerKva }} kVA</strong>
+        <div
+          *ngIf="
+            offer.tariff.powerKva
+          "
+        >
+          <span>
+            Potência
+          </span>
+
+          <strong>
+            {{ offer.tariff.powerKva }}
+            kVA
+          </strong>
         </div>
 
-        <div *ngIf="offer.tariff.gasTier">
-          <span>Gás</span>
-          <strong>Escalão {{ offer.tariff.gasTier }}</strong>
+        <div
+          *ngIf="
+            offer.tariff.gasTier
+          "
+        >
+          <span>
+            Gás
+          </span>
+
+          <strong>
+            Escalão
+            {{ offer.tariff.gasTier }}
+          </strong>
         </div>
       </div>
 
       <button
         type="button"
         class="generate-btn"
-        [class.is-loading]="isGeneratingPdf"
-        [disabled]="isGeneratingPdf"
+        [class.is-loading]="
+          isGeneratingPdf
+        "
+        [disabled]="
+          isGeneratingPdf
+        "
         (click)="exportPdf()"
       >
         <span
@@ -171,21 +466,26 @@
         {{ pdfErrorMessage }}
       </p>
     </aside>
-
-    <div
-      class="pdf-loading-overlay"
-      *ngIf="isGeneratingPdf"
-    >
-      <div class="pdf-loading-card">
-        <span class="pdf-loading-spinner"></span>
-
-        <strong>A gerar a proposta</strong>
-
-        <p>
-          Estamos a preparar o documento PDF. Este processo poderá demorar alguns segundos.
-        </p>
-      </div>
-    </div>
-
   </section>
+
+  <div
+    class="pdf-loading-overlay"
+    *ngIf="isGeneratingPdf"
+  >
+    <div class="pdf-loading-card">
+      <span
+        class="pdf-loading-spinner"
+      ></span>
+
+      <strong>
+        A gerar a proposta
+      </strong>
+
+      <p>
+        Estamos a preparar o documento PDF.
+        Este processo poderá demorar alguns
+        segundos.
+      </p>
+    </div>
+  </div>
 </section>

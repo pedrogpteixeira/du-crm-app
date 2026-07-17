@@ -123,7 +123,7 @@
         }}
       </div>
 
-      <div class="pdf-grid">
+      <div class="pdf-grid client-identification-grid">
         <div>
           <span>
             {{
@@ -166,8 +166,38 @@
           </strong>
         </div>
 
+        <div *ngIf="hasElectricity()">
+          <span>CPE</span>
+
+          <strong>
+            {{ proposal.client.cpe || '-' }}
+          </strong>
+        </div>
+
+        <div *ngIf="hasGas()">
+          <span>CUI</span>
+
+          <strong>
+            {{ proposal.client.cui || '-' }}
+          </strong>
+        </div>
+
+        <div
+          class="full"
+          *ngIf="
+            proposal.offer.tariff.segment ===
+              'business'
+          "
+        >
+          <span>CRC</span>
+
+          <strong>
+            {{ proposal.client.crc || '-' }}
+          </strong>
+        </div>
+
         <div class="full">
-          <span>Morada</span>
+          <span>Morada de consumo</span>
 
           <strong>
             {{ proposal.client.address || '-' }}
@@ -220,14 +250,6 @@
           </strong>
         </div>
       </div>
-    </div>
-
-    <div class="estimate-notice">
-      <strong>Nota importante</strong>
-
-      <span>
-        {{ partialEstimateNotice }}
-      </span>
     </div>
 
     <div class="pdf-box commercial-box">
@@ -452,7 +474,7 @@
         Condições económicas
       </div>
 
-      <div class="pdf-grid">
+      <div class="pdf-grid economic-grid">
         <div
           *ngIf="
             proposal.offer.tariff
@@ -680,54 +702,43 @@
     </div>
 
     <div
-      class="pdf-box"
+      class="pdf-box commercial-conditions-box"
       *ngIf="
         hasElectricityDiscounts() ||
-        hasGasDiscounts() ||
-        hasSelectedConditions()
+        hasGasDiscounts()
       "
     >
       <div class="box-title">
         Condições comerciais
       </div>
 
-      <div class="conditions-content">
+      <div
+        class="conditions-content"
+        [class.single-condition-column]="
+          !(
+            hasElectricityDiscounts() &&
+            hasGasDiscounts()
+          )
+        "
+      >
         <div
           class="condition-group"
-          *ngIf="hasSelectedConditions()"
+          *ngIf="hasElectricityDiscounts()"
         >
           <strong>
-            Condições consideradas
+            Descontos de eletricidade considerados
           </strong>
 
-          <div class="condition-pills">
-            <span
-              *ngFor="
-                let condition of getSelectedConditions()
-              "
-            >
-              {{ condition.label }}
-            </span>
-          </div>
-        </div>
-
-        <div
-          class="condition-group"
-          *ngIf="
-            hasElectricityDiscounts()
-          "
-        >
-          <strong>
-            Descontos de eletricidade
-          </strong>
-
-          <div class="discount-list">
+          <div class="discount-grid">
             <div
               *ngFor="
-                let discount of getElectricityDiscounts()
+                let discount of
+                  getElectricityDiscounts()
               "
             >
-              <span>{{ discount.label }}</span>
+              <span>
+                {{ discount.label }}
+              </span>
 
               <strong>
                 {{
@@ -744,15 +755,20 @@
           class="condition-group"
           *ngIf="hasGasDiscounts()"
         >
-          <strong>Descontos de gás</strong>
+          <strong>
+            Descontos de gás considerados
+          </strong>
 
-          <div class="discount-list">
+          <div class="discount-grid">
             <div
               *ngFor="
-                let discount of getGasDiscounts()
+                let discount of
+                  getGasDiscounts()
               "
             >
-              <span>{{ discount.label }}</span>
+              <span>
+                {{ discount.label }}
+              </span>
 
               <strong>
                 {{
@@ -775,7 +791,7 @@
     </footer>
   </section>
 
-  <!-- PÁGINA 4: DETALHE DA SIMULAÇÃO -->
+  <!-- PÁGINA 4: RESUMO DA SIMULAÇÃO -->
 
   <section
     class="proposal-page content"
@@ -831,9 +847,7 @@
           </strong>
         </div>
 
-        <div
-          *ngIf="hasGeneralDiscount()"
-        >
+        <div *ngIf="hasGeneralDiscount()">
           <span>Desconto aplicado</span>
 
           <strong class="discount-value">
@@ -1048,15 +1062,48 @@
       </div>
     </div>
 
-    <div
-      class="pdf-box"
-      *ngIf="hasElectricityScenarios()"
-    >
+    <div class="estimate-notice">
+      <strong>Nota importante</strong>
+
+      <span>
+        {{ partialEstimateNotice }}
+      </span>
+    </div>
+
+    <footer>
+      Detalhe da simulação ·
+      {{ formatDate() }}
+    </footer>
+  </section>
+
+  <!-- PÁGINA 5: ELETRICIDADE INDEXADA -->
+
+  <section
+    class="proposal-page content scenario-page"
+    *ngIf="hasElectricityScenarios()"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
+    <header class="page-top page-top-between">
+      <span>Detalhe da simulação</span>
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
+    </header>
+
+    <h2 class="page-title">
+      Eletricidade indexada
+    </h2>
+
+    <div class="pdf-box">
       <div class="box-title">
         Cenários de eletricidade indexada
       </div>
 
-      <div class="scenario-grid">
+      <div class="scenario-grid scenario-grid-large">
         <div
           class="scenario-card"
           *ngFor="
@@ -1133,15 +1180,40 @@
       </div>
     </div>
 
-    <div
-      class="pdf-box"
-      *ngIf="hasGasScenarios()"
-    >
+    <footer>
+      Cenários de eletricidade ·
+      {{ formatDate() }}
+    </footer>
+  </section>
+
+  <!-- PÁGINA 6: GÁS INDEXADO -->
+
+  <section
+    class="proposal-page content scenario-page"
+    *ngIf="hasGasScenarios()"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
+    <header class="page-top page-top-between">
+      <span>Detalhe da simulação</span>
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
+    </header>
+
+    <h2 class="page-title">
+      Gás indexado
+    </h2>
+
+    <div class="pdf-box">
       <div class="box-title">
         Cenários de gás indexado
       </div>
 
-      <div class="scenario-grid">
+      <div class="scenario-grid scenario-grid-large">
         <div
           class="scenario-card"
           *ngFor="
@@ -1211,7 +1283,7 @@
     </div>
 
     <footer>
-      Detalhe da simulação ·
+      Cenários de gás ·
       {{ formatDate() }}
     </footer>
   </section>

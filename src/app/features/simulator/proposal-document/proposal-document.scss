@@ -504,79 +504,94 @@ h3 {
    COMMERCIAL CONDITIONS
 ========================= */
 
+.commercial-conditions-box {
+  margin-bottom: 0;
+}
+
 .conditions-content {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 5mm;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 4mm;
 
-  padding: 5mm;
+  padding: 4mm;
+}
+
+.conditions-content.single-condition-column {
+  grid-template-columns: 1fr;
 }
 
 .condition-group {
   min-width: 0;
+
+  padding: 4mm;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 4mm;
+
+  background: #f8fafc;
 
   > strong {
     display: block;
 
     margin-bottom: 3mm;
 
-    color: #243646;
+    color: var(--secondary);
 
     font-size: 10.5px;
     font-weight: 900;
   }
-
-  &:first-child:last-child {
-    grid-column: 1 / -1;
-  }
 }
 
-.condition-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2mm;
-
-  span {
-    padding: 2mm 3mm;
-
-    border-radius: 999px;
-
-    background: var(--light);
-    color: var(--secondary);
-
-    font-size: 8.5px;
-    font-weight: 900;
-  }
-}
-
-.discount-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2mm;
+.discount-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 2.5mm;
 
   div {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4mm;
+    gap: 2mm;
 
-    padding-bottom: 2mm;
+    padding: 2.5mm 3mm;
 
-    border-bottom: 1px solid #e2e8f0;
+    border-radius: 3mm;
+
+    background: #ffffff;
   }
 
   span {
+    min-width: 0;
+
     color: #64748b;
 
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
+    line-height: 1.25;
   }
 
   strong {
+    flex-shrink: 0;
+
     color: #16a34a;
 
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 900;
+  }
+}
+
+.conditions-content.single-condition-column {
+  .condition-group {
+    padding: 4mm 5mm;
+  }
+
+  .discount-grid {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -739,4 +754,250 @@ footer {
   font-weight: 700;
 
   text-align: center;
+}
+
+/* =========================
+   DYNAMIC PAGE LAYOUTS
+========================= */
+
+.client-identification-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.economic-grid {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  padding: 3.5mm;
+
+  div {
+    padding: 3mm;
+  }
+
+  span {
+    font-size: 8.5px;
+  }
+
+  strong {
+    font-size: 10.5px;
+  }
+}
+
+.scenario-page {
+  .page-title {
+    margin-bottom: 12mm;
+  }
+
+  .pdf-box {
+    margin-bottom: 0;
+  }
+}
+
+.scenario-grid-large {
+  gap: 5mm;
+
+  padding: 7mm;
+
+  .scenario-card {
+    padding: 6mm;
+  }
+
+  .scenario-title {
+    min-height: 14mm;
+
+    > strong {
+      font-size: 12px;
+    }
+
+    > span {
+      font-size: 7.5px;
+    }
+  }
+
+  .scenario-card {
+    > div:not(.scenario-title) {
+      padding: 4mm 0;
+    }
+
+    span {
+      font-size: 9px;
+    }
+
+    strong {
+      font-size: 10px;
+    }
+  }
+}
+
+/* =========================
+   OVERRIDE FINAL:
+   CENÁRIOS INDEXADOS COMPACTOS
+========================= */
+
+.scenario-page {
+  .page-title {
+    margin-bottom: 7mm;
+  }
+
+  .pdf-box {
+    margin-bottom: 0;
+  }
+}
+
+.scenario-page .scenario-grid,
+.scenario-page .scenario-grid-large {
+  display: grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  grid-auto-rows: auto !important;
+
+  align-items: start !important;
+
+  gap: 3mm !important;
+  padding: 4mm !important;
+}
+
+.scenario-page .scenario-card,
+.scenario-page .scenario-grid-large .scenario-card {
+  width: auto !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  align-self: start !important;
+
+  padding: 3.5mm !important;
+
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4mm !important;
+
+  background: #f8fafc !important;
+
+  box-sizing: border-box !important;
+}
+
+.scenario-page .scenario-card.reference,
+.scenario-page
+  .scenario-grid-large
+  .scenario-card.reference {
+  border-color:
+    var(--secondary) !important;
+
+  background:
+    var(--light) !important;
+}
+
+.scenario-page .scenario-title,
+.scenario-page
+  .scenario-grid-large
+  .scenario-title {
+  min-height: 0 !important;
+  height: auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content:
+    space-between !important;
+
+  gap: 2mm !important;
+
+  padding: 0 0 2.5mm !important;
+  margin: 0 !important;
+}
+
+.scenario-page .scenario-title > strong,
+.scenario-page
+  .scenario-grid-large
+  .scenario-title
+  > strong {
+  margin: 0 !important;
+
+  color:
+    var(--secondary) !important;
+
+  font-size: 9.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+
+  text-align: left !important;
+}
+
+.scenario-page .scenario-title > span,
+.scenario-page
+  .scenario-grid-large
+  .scenario-title
+  > span {
+  flex-shrink: 0 !important;
+
+  padding: 1mm 1.5mm !important;
+
+  border-radius: 999px !important;
+
+  background:
+    var(--secondary) !important;
+
+  color: #ffffff !important;
+
+  font-size: 6.5px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+.scenario-page
+  .scenario-card
+  > div:not(.scenario-title),
+.scenario-page
+  .scenario-grid-large
+  .scenario-card
+  > div:not(.scenario-title) {
+  min-height: 0 !important;
+  height: auto !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto !important;
+
+  align-items: center !important;
+
+  gap: 2mm !important;
+
+  padding: 2.2mm 0 !important;
+  margin: 0 !important;
+
+  border-top:
+    1px solid #e2e8f0 !important;
+}
+
+.scenario-page .scenario-card span,
+.scenario-page
+  .scenario-grid-large
+  .scenario-card span {
+  margin: 0 !important;
+
+  color: #64748b !important;
+
+  font-size: 7.8px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.scenario-page .scenario-card strong,
+.scenario-page
+  .scenario-grid-large
+  .scenario-card strong {
+  margin: 0 !important;
+
+  color: #243646 !important;
+
+  font-size: 8.5px !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+
+  text-align: right !important;
+
+  white-space: nowrap !important;
 }

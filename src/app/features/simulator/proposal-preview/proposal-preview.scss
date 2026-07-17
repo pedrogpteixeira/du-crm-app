@@ -367,3 +367,77 @@ input {
     transform: rotate(360deg);
   }
 }
+
+.form-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0 0 4px;
+  }
+
+  p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.required-note {
+  flex-shrink: 0;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background: #fff7ed;
+  color: #c2410c;
+
+  font-size: 11px;
+  font-weight: 900;
+}
+
+input.invalid {
+  border-color: #dc2626;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(220, 38, 38, 0.08);
+}
+
+.field-error {
+  color: #dc2626;
+
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.validation-error-message {
+  width: fit-content;
+
+  margin: 0;
+  padding: 11px 14px;
+
+  border-radius: 12px;
+
+  background: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+@media (max-width: 700px) {
+  .form-card-header {
+    flex-direction: column;
+  }
+}

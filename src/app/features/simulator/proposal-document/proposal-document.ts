@@ -417,59 +417,6 @@ export class ProposalDocument {
     );
   }
 
-  getSelectedConditions():
-    ConditionDisplayItem[] {
-    const conditions =
-      this.proposal.discountConditions;
-
-    if (!conditions) {
-      return [];
-    }
-
-    const labels:
-      Record<
-        keyof SimulationDiscountConditions,
-        string
-      > = {
-        electronicInvoice:
-          'Fatura eletrónica',
-
-        directDebit:
-          'Débito direto',
-
-        welcomeBonus:
-          'Bónus de boas-vindas',
-
-        sva:
-          'SVA',
-
-        gasBonus:
-          'Bónus de gás',
-      };
-
-    return (
-      Object.entries(conditions) as Array<
-        [
-          keyof SimulationDiscountConditions,
-          boolean | undefined,
-        ]
-      >
-    )
-      .filter(([, active]) =>
-        Boolean(active),
-      )
-      .map(([key, active]) => ({
-        label: labels[key],
-        active: Boolean(active),
-      }));
-  }
-
-  hasSelectedConditions(): boolean {
-    return (
-      this.getSelectedConditions().length > 0
-    );
-  }
-
   hasGeneralDiscount(): boolean {
     return (
       Number(
