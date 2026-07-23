@@ -11,6 +11,8 @@ import {
   BehaviorSubject,
   distinctUntilChanged,
   map,
+  Observable,
+  tap,
 } from 'rxjs';
 
 import {
@@ -152,6 +154,19 @@ export class NotificationService {
           );
         },
       });
+  }
+
+  markAllAsRead(): Observable<void> {
+    return this.http
+      .patch<void>(
+        `${this.apiUrl}/api/notifications/read-all`,
+        {},
+      )
+      .pipe(
+        tap(() => {
+          this.notificationsSubject.next([]);
+        }),
+      );
   }
 
   handleNewNotification(

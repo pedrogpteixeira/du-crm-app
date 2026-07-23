@@ -78,24 +78,101 @@
   z-index: 1000;
 
   header {
-    padding: 18px 20px;
+    min-height: 76px;
+    padding: 16px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 
     border-bottom: 1px solid #e2e8f0;
+  }
+}
 
-    strong {
-      display: block;
-      color: #243646;
-      font-size: 17px;
-      font-weight: 900;
-    }
+.notification-heading {
+  min-width: 0;
 
-    span {
-      display: block;
-      margin-top: 3px;
-      color: #64748b;
-      font-size: 13px;
-      font-weight: 600;
-    }
+  strong {
+    display: block;
+
+    color: #243646;
+
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+.mark-all-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  padding: 7px 9px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+  color: #008db1;
+
+  cursor: pointer;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #e0f2fe;
+    color: #036f8b;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.notification-error {
+  padding: 10px 16px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: #fef2f2;
+  color: #b91c1c;
+
+  border-bottom: 1px solid #fecaca;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  .material-symbols-rounded {
+    flex-shrink: 0;
+    font-size: 18px;
   }
 }
 
@@ -169,13 +246,16 @@
 
   p {
     margin: 5px 0 6px;
+
     color: #64748b;
+
     font-size: 13px;
     line-height: 1.45;
   }
 
   small {
     color: #94a3b8;
+
     font-size: 12px;
     font-weight: 700;
   }
@@ -188,6 +268,7 @@
 
   strong {
     color: #243646;
+
     font-size: 14px;
     font-weight: 900;
   }
@@ -221,6 +302,7 @@
 
   strong {
     color: #243646;
+
     font-size: 16px;
     font-weight: 900;
   }
@@ -228,7 +310,9 @@
   p {
     max-width: 260px;
     margin: 0;
+
     color: #64748b;
+
     font-size: 13px;
   }
 }

@@ -1,6 +1,8 @@
 <div class="notification-wrapper">
   <button
+    type="button"
     class="notification-trigger"
+    aria-label="Abrir notificações"
     (click)="toggleDropdown($event)"
   >
     <span class="material-symbols-rounded">
@@ -21,11 +23,48 @@
     (click)="$event.stopPropagation()"
   >
     <header>
-      <div>
+      <div class="notification-heading">
         <strong>Notificações</strong>
         <span>Atualizações recentes do CRM</span>
       </div>
+
+      <ng-container
+        *ngIf="(unreadCount$ | async) as unreadCount"
+      >
+        <button
+          *ngIf="unreadCount > 0"
+          type="button"
+          class="mark-all-button"
+          [disabled]="isMarkingAllAsRead"
+          (click)="markAllAsRead($event)"
+        >
+          <span class="material-symbols-rounded">
+            done_all
+          </span>
+
+          <span>
+            {{
+              isMarkingAllAsRead
+                ? 'A marcar...'
+                : 'Ler todas'
+            }}
+          </span>
+        </button>
+      </ng-container>
     </header>
+
+    <div
+      class="notification-error"
+      *ngIf="markAllErrorMessage"
+    >
+      <span class="material-symbols-rounded">
+        error
+      </span>
+
+      <span>
+        {{ markAllErrorMessage }}
+      </span>
+    </div>
 
     <section
       class="notification-list"
@@ -49,7 +88,9 @@
 
         <div class="notification-content">
           <div class="notification-title-row">
-            <strong>{{ notification.title }}</strong>
+            <strong>
+              {{ notification.title }}
+            </strong>
 
             <span
               class="unread-dot"
@@ -57,7 +98,9 @@
             ></span>
           </div>
 
-          <p>{{ notification.message }}</p>
+          <p>
+            {{ notification.message }}
+          </p>
 
           <small>
             {{ formatDate(notification.createdAt) }}
@@ -74,7 +117,10 @@
         </span>
 
         <strong>Sem notificações</strong>
-        <p>Ainda não existem notificações para apresentar.</p>
+
+        <p>
+          Ainda não existem notificações para apresentar.
+        </p>
       </div>
     </section>
   </div>

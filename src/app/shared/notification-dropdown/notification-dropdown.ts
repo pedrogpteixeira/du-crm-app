@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, HostListener, ElementRef} from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+} from '@angular/core';
+
+import { finalize } from 'rxjs';
 
 import { Notification } from '../../core/models/notification.model';
 import { Auth } from '../../core/services/auth';
@@ -12,19 +19,30 @@ import { NotificationService } from '../../core/services/notification';
   styleUrl: './notification-dropdown.scss',
 })
 export class NotificationDropdown {
-  private readonly notificationService = inject(NotificationService);
-  private readonly elementRef = inject(ElementRef);
-  private readonly auth = inject(Auth);
+  private readonly notificationService =
+    inject(NotificationService);
 
-  notifications$ = this.notificationService.notifications$;
-  unreadCount$ = this.notificationService.unreadCount$;
+  private readonly elementRef =
+    inject(ElementRef);
+
+  private readonly auth =
+    inject(Auth);
+
+  readonly notifications$ =
+    this.notificationService.notifications$;
+
+  readonly unreadCount$ =
+    this.notificationService.unreadCount$;
 
   isOpen = false;
+  isMarkingAllAsRead = false;
+  markAllErrorMessage = '';
 
   toggleDropdown(event: MouseEvent): void {
     event.stopPropagation();
 
     this.isOpen = !this.isOpen;
+    this.markAllErrorMessage = '';
   }
 
   closeDropdown(): void {
@@ -36,17 +54,47 @@ export class NotificationDropdown {
       return;
     }
 
-    this.notificationService.markAsRead(notification.id);
+    this.notificationService.markAsRead(
+      notification.id,
+    );
+  }
+
+  markAllAsRead(event: MouseEvent): void {
+    event.stopPropagation();
+
+    if (this.isMarkingAllAsRead) {
+      return;
+    }
+
+    this.isMarkingAllAsRead = true;
+    this.markAllErrorMessage = '';
+
+    this.notificationService
+      .markAllAsRead()
+      .pipe(
+        finalize(() => {
+          this.isMarkingAllAsRead = false;
+        }),
+      )
+      .subscribe({
+        error: () => {
+          this.markAllErrorMessage =
+            'Não foi possível marcar todas as notificações como lidas.';
+        },
+      });
   }
 
   isRead(notification: Notification): boolean {
-    const currentUser = this.auth.getCurrentUser();
+    const currentUser =
+      this.auth.getCurrentUser();
 
     if (!currentUser?.id) {
       return false;
     }
 
-    return notification.readBy?.includes(currentUser.id);
+    return notification.readBy?.includes(
+      currentUser.id,
+    );
   }
 
   getNotificationIcon(type: string): string {
@@ -79,9 +127,10 @@ export class NotificationDropdown {
       return;
     }
 
-    const clickedInside = this.elementRef.nativeElement.contains(
-      event.target,
-    );
+    const clickedInside =
+      this.elementRef.nativeElement.contains(
+        event.target,
+      );
 
     if (!clickedInside) {
       this.isOpen = false;
