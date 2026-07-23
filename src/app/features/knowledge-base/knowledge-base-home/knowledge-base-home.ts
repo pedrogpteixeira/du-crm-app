@@ -1,15 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Company, CompanyService } from '../../../core/services/company';
 
-type KnowledgeCompanyAction = 'campaigns' | 'forms' | 'training';
+type KnowledgeCompanyAction =
+  | 'campaigns'
+  | 'support'
+  | 'forms'
+  | 'training';
 
 interface KnowledgeCompanyConfig {
   companyId: string;
   name: string;
   logo: string;
+  supportFolderId: string;
   formsFolderId: string;
   trainingFolderId: string;
 }
@@ -35,85 +45,97 @@ export class KnowledgeBaseHome implements OnInit {
       companyId: 'cmp_njRqliQBpR',
       name: 'Repsol',
       logo: 'assets/companies/repsol.png',
-      formsFolderId: 'COLOCAR_ID_PASTA_FORMULARIOS_REPSOL',
-      trainingFolderId: 'COLOCAR_ID_PASTA_FORMACOES_REPSOL',
+      supportFolderId: 'kfo_dg07x7l18v',
+      formsFolderId: 'kfo_i35rytegr3',
+      trainingFolderId: 'kfo_i0z03220l9',
     },
     {
       companyId: 'cmp_StOnumtpT5',
       name: 'wallbox',
       logo: 'assets/companies/wallbox.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_x60fzc7xlh',
+      formsFolderId: 'kfo_yuicpeb2ok',
+      trainingFolderId: 'kfo_lv7nw6cywu',
     },
     {
       companyId: 'cmp_KCnjrA0i-U',
       name: 'Meo Energias',
       logo: 'assets/companies/meo.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_fg00yogo42',
+      formsFolderId: 'kfo_k3d6olqieh',
+      trainingFolderId: 'kfo_u30hhp4joj',
     },
     {
       companyId: 'cmp_cYTHohh7uo',
       name: 'Ezu',
       logo: 'assets/companies/ezu.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_rw8suqgvg9',
+      formsFolderId: 'kfo_v2960oyoj1',
+      trainingFolderId: 'kfo_c9s9h4pyan',
     },
     {
       companyId: 'cmp_Q5MgNAInW6',
       name: 'Galp',
       logo: 'assets/companies/galp.png',
-      formsFolderId: 'kfo_w4m6x9244j',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_yoxtelc7hj',
+      formsFolderId: 'kfo_dymwpxdy36',
+      trainingFolderId: 'kfo_ajzrw8mu2h',
     },
     {
       companyId: 'cmp_JHtuvY63fm',
       name: 'Iberdrola',
       logo: 'assets/companies/iberdrola.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_iabn8mqp2u',
+      formsFolderId: 'kfo_fo6btqzxy4',
+      trainingFolderId: 'kfo_9ndbemqtt9',
     },
     {
       companyId: 'cmp_1GdwakqCnA',
       name: 'Yes Energy',
       logo: 'assets/companies/yes.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_gjbx3z3c9a',
+      formsFolderId: 'kfo_8rujt3nd8e',
+      trainingFolderId: 'kfo_o8dvkh0ds6',
     },
     {
       companyId: 'cmp_4xFQ0RiwtJ',
       name: 'Endesa',
       logo: 'assets/companies/endesa.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_tlqa9gkhyk',
+      formsFolderId: 'kfo_d4uiwp3mjx',
+      trainingFolderId: 'kfo_kdx0txkw7x',
     },
     {
       companyId: 'cmp_2AH_yvQ8Wn',
       name: 'Portulogos',
       logo: 'assets/companies/portulogos.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_meil5tyc3k',
+      formsFolderId: 'kfo_tt767dkyph',
+      trainingFolderId: 'kfo_7gsz8xw1r2',
     },
     {
       companyId: 'cmp_s4mjPGw-gJ',
       name: 'Nossa Energia',
       logo: 'assets/companies/nossa-energia.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_88lrw1pbod',
+      formsFolderId: 'kfo_6k9pc8uuxa',
+      trainingFolderId: 'kfo_37keno5y89',
     },
     {
       companyId: 'cmp_r26ycsfqpu',
       name: 'Audax',
       logo: 'assets/companies/audax.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_mo9oz4l2t3',
+      formsFolderId: 'kfo_bexh6hfgcg',
+      trainingFolderId: 'kfo_y2ex3vyirg',
     },
     {
       companyId: 'cmp_KXGnjPcbx-',
       name: 'Plenitude',
       logo: 'assets/companies/plenitude.png',
-      formsFolderId: '',
-      trainingFolderId: '',
+      supportFolderId: 'kfo_ubgu6d5c6t',
+      formsFolderId: 'kfo_p9sorelxzk',
+      trainingFolderId: 'kfo_u2mhzsq9i9',
     },
   ];
 
@@ -131,6 +153,7 @@ export class KnowledgeBaseHome implements OnInit {
       },
       error: () => {
         this.errorMessage = 'Não foi possível carregar as empresas.';
+        this.isLoading = false;
       },
       complete: () => {
         this.isLoading = false;
@@ -147,37 +170,76 @@ export class KnowledgeBaseHome implements OnInit {
       this.companies.some(
         (company) =>
           company.id === config.companyId ||
-          company.name.trim().toLowerCase() === config.name.trim().toLowerCase(),
+          company.name.trim().toLowerCase() ===
+            config.name.trim().toLowerCase(),
       ),
     );
   }
 
-  openCompanyAction(company: KnowledgeCompanyConfig, action: KnowledgeCompanyAction): void {
+  openCompanyAction(
+    company: KnowledgeCompanyConfig,
+    action: KnowledgeCompanyAction,
+  ): void {
+    this.errorMessage = '';
+
     if (action === 'campaigns') {
-      this.router.navigate(['/home/knowledge-base/campaigns', company.companyId], {
-        queryParams: {
-          name: company.name,
+      this.router.navigate(
+        ['/home/knowledge-base/campaigns', company.companyId],
+        {
+          queryParams: {
+            name: company.name,
+          },
         },
-      });
+      );
 
       return;
     }
 
-    const folderId = action === 'forms' ? company.formsFolderId : company.trainingFolderId;
+    const folderId = this.getFolderId(company, action);
 
     if (!folderId) {
-      this.errorMessage = 'Ainda não existe uma pasta configurada para esta opção.';
+      this.errorMessage =
+        'Ainda não existe uma pasta configurada para esta opção.';
 
       return;
     }
 
     this.router.navigate(['/home/knowledge-base/folders', folderId], {
       queryParams: {
-        name:
-          action === 'forms'
-            ? `${company.name} - Formulários de Adesão`
-            : `${company.name} - Formações`,
+        name: this.getFolderName(company, action),
       },
     });
+  }
+
+  private getFolderId(
+    company: KnowledgeCompanyConfig,
+    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
+  ): string {
+    switch (action) {
+      case 'support':
+        return company.supportFolderId;
+
+      case 'forms':
+        return company.formsFolderId;
+
+      case 'training':
+        return company.trainingFolderId;
+    }
+  }
+
+  private getFolderName(
+    company: KnowledgeCompanyConfig,
+    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
+  ): string {
+    switch (action) {
+      case 'support':
+        return `${company.name} - Suporte`;
+
+      case 'forms':
+        return `${company.name} - Formulários de Adesão`;
+
+      case 'training':
+        return `${company.name} - Formações`;
+    }
   }
 }

@@ -46,6 +46,20 @@
       <button
         type="button"
         class="company-action"
+        (click)="openCompanyAction(company, 'support')"
+      >
+        <span class="action-icon material-symbols-rounded">
+          folder
+        </span>
+
+        <span>Recursos</span>
+
+        <strong>›</strong>
+      </button>
+
+      <button
+        type="button"
+        class="company-action"
         (click)="openCompanyAction(company, 'forms')"
       >
         <span class="action-icon material-symbols-rounded">
