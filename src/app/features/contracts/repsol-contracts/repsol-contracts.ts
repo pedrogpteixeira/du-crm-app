@@ -1,5 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import {
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 //import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +16,7 @@ import {
 import { SocketService } from '../../../core/services/socket';
 import { PreferencesService } from '../../../core/services/preferences';
 import { environment } from '../../../../environments/environment';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-repsol-contracts',
@@ -27,6 +31,8 @@ export class RepsolContracts implements OnInit {
   //private readonly destroyRef = inject(DestroyRef);
   private readonly preferencesService = inject(PreferencesService);
   private readonly clientService = inject(ClientService);
+  private readonly auth = inject(Auth);
+  private readonly destroyRef = inject(DestroyRef);
 
   contracts: RepsolContract[] = [];
 
@@ -69,33 +75,47 @@ export class RepsolContracts implements OnInit {
   ngOnInit(): void {
     this.loadContracts();
 
-    this.socketService.listenRepsolContractCreated().subscribe(() => {
-      this.loadContracts();
-    });
+    this.socketService
+      .listenRepsolContractCreated()
+      .pipe(
+        takeUntilDestroyed(
+          this.destroyRef,
+        ),
+      )
+      .subscribe(() => {
+        this.loadContracts();
+      });
 
-    this.socketService.listenRepsolContractUpdated().subscribe(() => {
-      this.loadContracts();
-    });
+    this.socketService
+      .listenRepsolContractUpdated()
+      .pipe(
+        takeUntilDestroyed(
+          this.destroyRef,
+        ),
+      )
+      .subscribe(() => {
+        this.loadContracts();
+      });
   }
 
   loadContracts(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const teamId = currentUser.defaultTeam?.id || currentUser.defaultTeam || '';
-
-    this.repsolContractService.getRepsolContracts().subscribe({
-      next: (contracts) => {
-        this.contracts = contracts;
-      },
-      error: () => {
-        this.errorMessage = 'Não foi possível carregar os contratos Repsol.';
-      },
-      complete: () => {
-        this.isLoading = false;
-      },
-    });
+    this.repsolContractService
+      .getRepsolContracts()
+      .subscribe({
+        next: (contracts) => {
+          this.contracts = contracts;
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar os contratos Repsol.';
+        },
+        complete: () => {
+          this.isLoading = false;
+        },
+      });
   }
 
   getStatusClass(status: RepsolContractStatus): string {
@@ -120,15 +140,33 @@ export class RepsolContracts implements OnInit {
   }
 
   openCreateContractModal(): void {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUser =
+      this.auth.getCurrentUser();
 
-    this.newContract.teams = currentUser.teams?.map((team: any) => team.id) || [];
+    if (!currentUser) {
+      this.errorMessage =
+        'Não foi possível identificar o utilizador autenticado.';
+
+      return;
+    }
+
+    this.newContract.teams =
+      currentUser.teams?.map(
+        (team) => team.id,
+      ) ?? [];
+
+    const defaultTeamId =
+      currentUser.defaultTeam?.id;
 
     if (
-      currentUser.defaultTeam?.id &&
-      !this.newContract.teams.includes(currentUser.defaultTeam.id)
+      defaultTeamId &&
+      !this.newContract.teams.includes(
+        defaultTeamId,
+      )
     ) {
-      this.newContract.teams.push(currentUser.defaultTeam.id);
+      this.newContract.teams.push(
+        defaultTeamId,
+      );
     }
 
     this.showCreateModal = true;

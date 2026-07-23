@@ -1,9 +1,25 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, map } from 'rxjs';
+
+import {
+  DestroyRef,
+  Injectable,
+  NgZone,
+  inject,
+} from '@angular/core';
+
+import {
+  BehaviorSubject,
+  distinctUntilChanged,
+  map,
+} from 'rxjs';
+
+import {
+  takeUntilDestroyed,
+} from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../environments/environment';
 import { Notification } from '../models/notification.model';
+
 import { Auth } from './auth';
 import { SocketService } from './socket';
 
@@ -14,8 +30,11 @@ export class NotificationService {
   private readonly http = inject(HttpClient);
   private readonly socketService = inject(SocketService);
   private readonly auth = inject(Auth);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly zone = inject(NgZone);
 
-  private readonly apiUrl = environment.apiUrl;
+  private readonly apiUrl =
+    environment.apiUrl;
 
   private readonly notificationsSubject =
     new BehaviorSubject<Notification[]>([]);
@@ -23,30 +42,55 @@ export class NotificationService {
   readonly notifications$ =
     this.notificationsSubject.asObservable();
 
-  readonly unreadCount$ = this.notifications$.pipe(
-    map((notifications) => {
-      const currentUser = this.auth.getCurrentUser();
+  readonly unreadCount$ =
+    this.notifications$.pipe(
+      map((notifications) => {
+        const currentUser =
+          this.auth.getCurrentUser();
 
-      if (!currentUser?.id) {
-        return 0;
-      }
+        if (!currentUser?.id) {
+          return 0;
+        }
 
-      return notifications.filter(
-        (notification) =>
-          !notification.readBy?.includes(currentUser.id),
-      ).length;
-    }),
-  );
+        return notifications.filter(
+          (notification) =>
+            !notification.readBy?.includes(
+              currentUser.id,
+            ),
+        ).length;
+      }),
+    );
+
+  private readonly newNotificationHandler = (
+    notification: Notification,
+  ): void => {
+    this.zone.run(() => {
+      this.handleNewNotification(
+        notification,
+      );
+    });
+  };
+
+  constructor() {
+    this.listenToSocketNotifications();
+    this.observeAuthentication();
+  }
 
   init(): void {
-    this.loadNotifications();
-    this.listenToSocketNotifications();
+    /*
+     * Mantido temporariamente para compatibilidade
+     * com o HomeLayout.
+     *
+     * A inicialização real é feita no constructor.
+     */
   }
 
   loadNotifications(): void {
-    const currentUser = this.auth.getCurrentUser();
+    const currentUser =
+      this.auth.getCurrentUser();
 
     if (!currentUser?.id) {
+      this.clearNotifications();
       return;
     }
 
@@ -56,19 +100,39 @@ export class NotificationService {
       )
       .subscribe({
         next: (notifications) => {
-          const unreadNotifications = notifications.filter(
-            (notification) =>
-              !notification.readBy?.includes(currentUser.id),
-          );
+          const authenticatedUser =
+            this.auth.getCurrentUser();
+
+          if (
+            authenticatedUser?.id !==
+            currentUser.id
+          ) {
+            return;
+          }
+
+          const unreadNotifications =
+            notifications.filter(
+              (notification) =>
+                !notification.readBy?.includes(
+                  currentUser.id,
+                ),
+            );
 
           this.notificationsSubject.next(
-            this.sortNotifications(unreadNotifications),
+            this.sortNotifications(
+              unreadNotifications,
+            ),
           );
+        },
+        error: () => {
+          this.clearNotifications();
         },
       });
   }
 
-  markAsRead(notificationId: string): void {
+  markAsRead(
+    notificationId: string,
+  ): void {
     this.http
       .patch<Notification>(
         `${this.apiUrl}/api/notifications/${notificationId}/read`,
@@ -76,21 +140,46 @@ export class NotificationService {
       )
       .subscribe({
         next: () => {
-          const notifications = this.notificationsSubject.value.filter(
-            (notification) => notification.id !== notificationId,
-          );
+          const notifications =
+            this.notificationsSubject.value.filter(
+              (notification) =>
+                notification.id !==
+                notificationId,
+            );
 
-          this.notificationsSubject.next(notifications);
+          this.notificationsSubject.next(
+            notifications,
+          );
         },
       });
   }
 
-  handleNewNotification(notification: Notification): void {
-    const currentNotifications = this.notificationsSubject.value;
+  handleNewNotification(
+    notification: Notification,
+  ): void {
+    const currentUser =
+      this.auth.getCurrentUser();
 
-    const alreadyExists = currentNotifications.some(
-      (item) => item.id === notification.id,
-    );
+    if (!currentUser?.id) {
+      return;
+    }
+
+    if (
+      notification.readBy?.includes(
+        currentUser.id,
+      )
+    ) {
+      return;
+    }
+
+    const currentNotifications =
+      this.notificationsSubject.value;
+
+    const alreadyExists =
+      currentNotifications.some(
+        (item) =>
+          item.id === notification.id,
+      );
 
     if (alreadyExists) {
       return;
@@ -103,47 +192,89 @@ export class NotificationService {
       ]),
     );
 
-    this.showBrowserToast(notification);
+    this.showBrowserToast(
+      notification,
+    );
   }
 
-  private listenToSocketNotifications(): void {
-    this.socketService.connect();
+  clearNotifications(): void {
+    this.notificationsSubject.next([]);
+  }
 
-    this.socketService.off('notifications:new');
+  private observeAuthentication(): void {
+    this.auth.authenticationState$
+      .pipe(
+        distinctUntilChanged(),
+        takeUntilDestroyed(
+          this.destroyRef,
+        ),
+      )
+      .subscribe(
+        (authenticationState) => {
+          if (
+            authenticationState ===
+            'authenticated'
+          ) {
+            this.loadNotifications();
+            return;
+          }
+
+          this.clearNotifications();
+        },
+      );
+  }
+
+  private listenToSocketNotifications():
+    void {
+    this.socketService.off(
+      'notifications:new',
+      this.newNotificationHandler,
+    );
 
     this.socketService.on<Notification>(
       'notifications:new',
-      (notification) => {
-        this.handleNewNotification(notification);
-      },
+      this.newNotificationHandler,
     );
   }
 
   private sortNotifications(
     notifications: Notification[],
   ): Notification[] {
-    return [...notifications].sort((a, b) => {
-      const dateA = a.createdAt
-        ? new Date(a.createdAt).getTime()
-        : 0;
+    return [...notifications].sort(
+      (a, b) => {
+        const dateA = a.createdAt
+          ? new Date(a.createdAt).getTime()
+          : 0;
 
-      const dateB = b.createdAt
-        ? new Date(b.createdAt).getTime()
-        : 0;
+        const dateB = b.createdAt
+          ? new Date(b.createdAt).getTime()
+          : 0;
 
-      return dateB - dateA;
-    });
+        return dateB - dateA;
+      },
+    );
   }
 
-  private showBrowserToast(notification: Notification): void {
-    if (!('Notification' in window)) {
+  private showBrowserToast(
+    notification: Notification,
+  ): void {
+    if (
+      typeof window === 'undefined' ||
+      !('Notification' in window)
+    ) {
       return;
     }
 
-    if (window.Notification.permission === 'granted') {
-      new window.Notification(notification.title, {
-        body: notification.message,
-      });
+    if (
+      window.Notification.permission ===
+      'granted'
+    ) {
+      new window.Notification(
+        notification.title,
+        {
+          body: notification.message,
+        },
+      );
     }
   }
 }

@@ -1,26 +1,17 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+} from '@angular/core';
 
-import { SocketService } from './core/services/socket';
-import { Auth } from './core/services/auth';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [
+    RouterOutlet,
+  ],
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.scss',
 })
-export class App implements OnInit {
-  private readonly auth = inject(Auth);
-
-  constructor(private socketService: SocketService) {
-    this.socketService.connect();
-  }
-
-  ngOnInit(): void {
-    if (this.auth.hasToken() && !this.auth.getCurrentUser()) {
-      this.auth.loadCurrentUser().subscribe();
-    }
-  }
-}
+export class App {}

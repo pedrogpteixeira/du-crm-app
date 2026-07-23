@@ -189,7 +189,10 @@ export class Profile implements OnInit {
 
   logout(): void {
     this.auth.logout();
-    this.router.navigate(['/login']);
+
+    this.router.navigate(['/login'], {
+      replaceUrl: true,
+    });
   }
 
   onProfilePictureSelected(event: Event): void {

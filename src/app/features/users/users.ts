@@ -16,6 +16,7 @@ import {
 } from '../../core/services/user';
 
 import { environment } from '../../../environments/environment';
+import { Auth } from '../../core/services/auth';
 
 interface UserFilters {
   name: string;
@@ -37,6 +38,7 @@ interface UserFilters {
 export class Users implements OnInit {
   private readonly userService = inject(UserService);
   private readonly socketService = inject(SocketService);
+  private readonly auth = inject(Auth);
 
   users: ProfileUser[] = [];
   filteredUsers: ProfileUser[] = [];
@@ -56,7 +58,7 @@ export class Users implements OnInit {
   errorMessage = '';
   showFilters = false;
 
-  readonly currentUserId = this.getCurrentUserId();
+  readonly currentUserId = this.auth.getCurrentUser()?.id ?? null;
 
   ngOnInit(): void {
     this.loadUsers();
@@ -200,21 +202,6 @@ export class Users implements OnInit {
     }
 
     return teamId;
-  }
-
-  private getCurrentUserId(): string | null {
-    const storedUser = localStorage.getItem('user');
-
-    if (!storedUser) {
-      return null;
-    }
-
-    try {
-      const parsedUser = JSON.parse(storedUser);
-      return parsedUser?.id || null;
-    } catch {
-      return null;
-    }
   }
 
   private normalizeText(value: string | null | undefined): string {

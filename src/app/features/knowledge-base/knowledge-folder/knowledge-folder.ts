@@ -11,6 +11,7 @@ import {
   KnowledgeFolder as KnowledgeFolderModel,
 } from '../../../core/services/knowledge-base';
 import { Company, CompanyService } from '../../../core/services/company';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-knowledge-folder',
@@ -24,6 +25,7 @@ export class KnowledgeFolder implements OnInit {
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly router = inject(Router);
   private readonly companyService = inject(CompanyService);
+  private readonly auth = inject(Auth);
   // readonly breadcrumbService = inject(KnowledgeBreadcrumbService);
 
   folderId: string | null = null;
@@ -185,20 +187,27 @@ export class KnowledgeFolder implements OnInit {
   }
 
   createArticle(): void {
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUser =
+      this.auth.getCurrentUser();
 
     if (!this.newArticle.name.trim()) {
-      this.errorMessage = 'O nome do artigo é obrigatório.';
+      this.errorMessage =
+        'O nome do artigo é obrigatório.';
+
       return;
     }
 
-    if (!currentUser.id) {
-      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
+    if (!currentUser?.id) {
+      this.errorMessage =
+        'Não foi possível identificar o utilizador autenticado.';
+
       return;
     }
 
     if (!this.newArticle.supplier) {
-      this.errorMessage = 'O fornecedor é obrigatório.';
+      this.errorMessage =
+        'O fornecedor é obrigatório.';
+
       return;
     }
 
