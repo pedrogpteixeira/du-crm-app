@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import {
@@ -10,46 +14,64 @@ import {
   KnowledgeBaseService,
   KnowledgeFolder as KnowledgeFolderModel,
 } from '../../../core/services/knowledge-base';
-import { Company, CompanyService } from '../../../core/services/company';
+
+import {
+  Company,
+  CompanyService,
+} from '../../../core/services/company';
+
 import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-knowledge-folder',
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+  ],
   templateUrl: './knowledge-folder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-folder.scss',
 })
 export class KnowledgeFolder implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly router = inject(Router);
-  private readonly companyService = inject(CompanyService);
+
+  private readonly knowledgeBaseService =
+    inject(KnowledgeBaseService);
+
+  private readonly companyService =
+    inject(CompanyService);
+
   private readonly auth = inject(Auth);
-  // readonly breadcrumbService = inject(KnowledgeBreadcrumbService);
 
   folderId: string | null = null;
 
   subfolders: KnowledgeFolderModel[] = [];
   articles: KnowledgeArticle[] = [];
+
   currentFolder: CurrentKnowledgeFolder | null = null;
+
   folderName = 'Pasta';
+
+  selectedSupplier = '';
+  selectedCompanyId = '';
 
   companies: Company[] = [];
 
   isLoading = false;
   isDeleting = false;
+  isCreatingArticle = false;
+
   errorMessage = '';
 
   showCreateFolderModal = false;
+  showCreateArticleModal = false;
 
   newFolder = {
     name: '',
     description: '',
   };
-
-  showCreateArticleModal = false;
-  isCreatingArticle = false;
 
   newArticle = {
     name: '',
@@ -62,11 +84,23 @@ export class KnowledgeFolder implements OnInit {
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
 
-      this.folderName = this.route.snapshot.queryParamMap.get('name') || 'Pasta';
-
       if (this.folderId) {
         this.loadFolderContents(this.folderId);
       }
+    });
+
+    this.route.queryParamMap.subscribe((params) => {
+      this.folderName =
+        params.get('name') || 'Pasta';
+
+      this.selectedSupplier =
+        params.get('supplier') || '';
+
+      this.selectedCompanyId =
+        params.get('companyId') || '';
+
+      this.newArticle.supplier =
+        this.selectedSupplier;
     });
 
     this.loadCompanies();
@@ -76,23 +110,33 @@ export class KnowledgeFolder implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.knowledgeBaseService.getFolderContents(folderId).subscribe({
-      next: (contents) => {
-        this.currentFolder = contents.currentFolder ?? null;
+    this.knowledgeBaseService
+      .getFolderContents(folderId)
+      .subscribe({
+        next: (contents) => {
+          this.currentFolder =
+            contents.currentFolder ?? null;
 
-        this.folderName =
-          contents.currentFolder?.name || this.route.snapshot.queryParamMap.get('name') || 'Pasta';
+          this.folderName =
+            contents.currentFolder?.name ||
+            this.route.snapshot.queryParamMap.get(
+              'name',
+            ) ||
+            'Pasta';
 
-        this.subfolders = contents.folders;
-        this.articles = contents.articles;
-      },
-      error: () => {
-        this.errorMessage = 'Não foi possível carregar o conteúdo da pasta.';
-      },
-      complete: () => {
-        this.isLoading = false;
-      },
-    });
+          this.subfolders = contents.folders;
+          this.articles = contents.articles;
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar o conteúdo da pasta.';
+
+          this.isLoading = false;
+        },
+        complete: () => {
+          this.isLoading = false;
+        },
+      });
   }
 
   getStatusLabel(status: string): string {
@@ -106,28 +150,9 @@ export class KnowledgeFolder implements OnInit {
     return labels[status] || status;
   }
 
-  createFolder(): void {
-    const duplicate = this.subfolders.some(
-      (folder) => folder.name.trim().toLowerCase() === this.newFolder.name.trim().toLowerCase(),
-    );
-
-    if (duplicate) {
-      this.errorMessage = 'Já existe uma pasta com esse nome.';
-      return;
-    }
-
-    this.knowledgeBaseService
-      .createFolder({
-        name: this.newFolder.name.trim(),
-        description: this.newFolder.description.trim(),
-        parentFolder: this.folderId ?? '',
-      })
-      .subscribe({
-        next: () => {
-          this.closeCreateFolderModal();
-          this.loadFolderContents(this.folderId!);
-        },
-      });
+  openCreateFolderModal(): void {
+    this.errorMessage = '';
+    this.showCreateFolderModal = true;
   }
 
   closeCreateFolderModal(): void {
@@ -139,12 +164,66 @@ export class KnowledgeFolder implements OnInit {
     };
   }
 
+  createFolder(): void {
+    const folderName =
+      this.newFolder.name.trim();
+
+    if (!folderName) {
+      this.errorMessage =
+        'O nome da pasta é obrigatório.';
+
+      return;
+    }
+
+    if (!this.folderId) {
+      this.errorMessage =
+        'Não foi possível identificar a pasta atual.';
+
+      return;
+    }
+
+    const duplicate = this.subfolders.some(
+      (folder) =>
+        folder.name.trim().toLowerCase() ===
+        folderName.toLowerCase(),
+    );
+
+    if (duplicate) {
+      this.errorMessage =
+        'Já existe uma pasta com esse nome.';
+
+      return;
+    }
+
+    this.errorMessage = '';
+
+    this.knowledgeBaseService
+      .createFolder({
+        name: folderName,
+        description:
+          this.newFolder.description.trim(),
+        parentFolder: this.folderId,
+      })
+      .subscribe({
+        next: () => {
+          this.closeCreateFolderModal();
+          this.loadFolderContents(this.folderId!);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível criar a pasta.';
+        },
+      });
+  }
+
   deleteFolder(): void {
     if (!this.folderId) {
       return;
     }
 
-    const hasContents = this.subfolders.length > 0 || this.articles.length > 0;
+    const hasContents =
+      this.subfolders.length > 0 ||
+      this.articles.length > 0;
 
     if (hasContents) {
       const confirmed = confirm(
@@ -157,21 +236,37 @@ export class KnowledgeFolder implements OnInit {
     }
 
     this.isDeleting = true;
+    this.errorMessage = '';
 
-    this.knowledgeBaseService.deleteFolder(this.folderId, hasContents).subscribe({
-      next: () => {
-        this.router.navigate(['/home/knowledge-base']);
-      },
-      error: () => {
-        this.errorMessage = 'Não foi possível eliminar a pasta.';
-      },
-      complete: () => {
-        this.isDeleting = false;
-      },
-    });
+    this.knowledgeBaseService
+      .deleteFolder(
+        this.folderId,
+        hasContents,
+      )
+      .subscribe({
+        next: () => {
+          this.router.navigate([
+            '/home/knowledge-base',
+          ]);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível eliminar a pasta.';
+
+          this.isDeleting = false;
+        },
+        complete: () => {
+          this.isDeleting = false;
+        },
+      });
   }
 
   openCreateArticleModal(): void {
+    this.errorMessage = '';
+
+    this.newArticle.supplier =
+      this.selectedSupplier;
+
     this.showCreateArticleModal = true;
   }
 
@@ -180,7 +275,7 @@ export class KnowledgeFolder implements OnInit {
 
     this.newArticle = {
       name: '',
-      supplier: '',
+      supplier: this.selectedSupplier,
       status: 'campaign_active',
       message: '',
     };
@@ -190,9 +285,23 @@ export class KnowledgeFolder implements OnInit {
     const currentUser =
       this.auth.getCurrentUser();
 
-    if (!this.newArticle.name.trim()) {
+    const articleName =
+      this.newArticle.name.trim();
+
+    const supplier =
+      this.newArticle.supplier.trim() ||
+      this.selectedSupplier.trim();
+
+    if (!articleName) {
       this.errorMessage =
         'O nome do artigo é obrigatório.';
+
+      return;
+    }
+
+    if (!this.folderId) {
+      this.errorMessage =
+        'Não foi possível identificar a pasta atual.';
 
       return;
     }
@@ -204,7 +313,7 @@ export class KnowledgeFolder implements OnInit {
       return;
     }
 
-    if (!this.newArticle.supplier) {
+    if (!supplier) {
       this.errorMessage =
         'O fornecedor é obrigatório.';
 
@@ -212,14 +321,16 @@ export class KnowledgeFolder implements OnInit {
     }
 
     this.isCreatingArticle = true;
+    this.errorMessage = '';
 
     this.knowledgeBaseService
       .createArticle({
-        folderId: this.folderId ?? '',
-        name: this.newArticle.name.trim(),
-        supplier: this.newArticle.supplier.trim(),
+        folderId: this.folderId,
+        name: articleName,
+        supplier,
         status: this.newArticle.status,
-        message: this.newArticle.message.trim(),
+        message:
+          this.newArticle.message.trim(),
         createdBy: currentUser.id,
       })
       .subscribe({
@@ -228,7 +339,10 @@ export class KnowledgeFolder implements OnInit {
           this.loadFolderContents(this.folderId!);
         },
         error: () => {
-          this.errorMessage = 'Não foi possível criar o artigo.';
+          this.errorMessage =
+            'Não foi possível criar o artigo.';
+
+          this.isCreatingArticle = false;
         },
         complete: () => {
           this.isCreatingArticle = false;
@@ -237,20 +351,77 @@ export class KnowledgeFolder implements OnInit {
   }
 
   formatDate(date: string): string {
-    return new Intl.DateTimeFormat('pt-PT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(date));
+    return new Intl.DateTimeFormat(
+      'pt-PT',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      },
+    ).format(new Date(date));
   }
 
   loadCompanies(): void {
-    this.companyService.getCompanies().subscribe({
-      next: (companies) => {
-        this.companies = companies.filter((company) => company.active);
-      },
-    });
+    this.companyService
+      .getCompanies()
+      .subscribe({
+        next: (companies) => {
+          this.companies =
+            companies.filter(
+              (company) => company.active,
+            );
+
+          this.ensureSelectedSupplierExists();
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar os fornecedores.';
+        },
+      });
+  }
+
+  getSubfolderQueryParams(
+    subfolder: KnowledgeFolderModel,
+  ): Record<string, string> {
+    return {
+      name: subfolder.name,
+      supplier: this.selectedSupplier,
+      companyId: this.selectedCompanyId,
+    };
+  }
+
+  getArticleQueryParams(
+    article: KnowledgeArticle,
+  ): Record<string, string> {
+    return {
+      name: article.name,
+      supplier:
+        article.supplier ||
+        this.selectedSupplier,
+      companyId: this.selectedCompanyId,
+    };
+  }
+
+  private ensureSelectedSupplierExists(): void {
+    if (!this.selectedSupplier) {
+      return;
+    }
+
+    const supplierExists =
+      this.companies.some(
+        (company) =>
+          company.name
+            .trim()
+            .toLowerCase() ===
+          this.selectedSupplier
+            .trim()
+            .toLowerCase(),
+      );
+
+    if (!supplierExists) {
+      this.newArticle.supplier = '';
+    }
   }
 }

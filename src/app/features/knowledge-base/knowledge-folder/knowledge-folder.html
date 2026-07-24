@@ -1,7 +1,11 @@
 <section class="knowledge-folder-page">
   <header class="page-header">
     <div class="breadcrumb">
-      <a routerLink="/home/knowledge-base">
+      <a
+        [routerLink]="[
+          '/home/knowledge-base'
+        ]"
+      >
         Base de Conhecimento
       </a>
 
@@ -16,12 +20,15 @@
       <button
         type="button"
         class="secondary"
-        (click)="showCreateFolderModal = true"
+        (click)="openCreateFolderModal()"
       >
         + Criar pasta
       </button>
 
-      <button type="button" (click)="openCreateArticleModal()">
+      <button
+        type="button"
+        (click)="openCreateArticleModal()"
+      >
         + Criar artigo
       </button>
 
@@ -31,7 +38,11 @@
         [disabled]="isDeleting"
         (click)="deleteFolder()"
       >
-        {{ isDeleting ? 'A eliminar...' : 'Eliminar pasta' }}
+        {{
+          isDeleting
+            ? 'A eliminar...'
+            : 'Eliminar pasta'
+        }}
       </button>
     </div>
   </header>
@@ -41,42 +52,72 @@
       <option>Todos</option>
     </select>
 
-    <input type="text" placeholder="Pesquisar..." />
+    <input
+      type="text"
+      placeholder="Pesquisar..."
+    />
 
-    <button type="button">🔍</button>
+    <button type="button">
+      🔍
+    </button>
   </div>
 
-  <p class="loading" *ngIf="isLoading">
+  <p
+    class="loading"
+    *ngIf="isLoading"
+  >
     A carregar conteúdo da pasta...
   </p>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <section class="subfolders-section" *ngIf="subfolders.length">
+  <section
+    class="subfolders-section"
+    *ngIf="subfolders.length"
+  >
     <h2>Subpastas</h2>
 
     <div class="subfolders-grid">
-        <a
-          class="subfolder-card"
-          *ngFor="let subfolder of subfolders"
-          [routerLink]="['/home/knowledge-base/folders', subfolder.id]"
-          [queryParams]="{
-            name: subfolder.name
-          }"
-        >
-        <span class="folder-icon">▰</span>
+      <a
+        class="subfolder-card"
+        *ngFor="let subfolder of subfolders"
+        [routerLink]="[
+          '/home/knowledge-base/folders',
+          subfolder.id
+        ]"
+        [queryParams]="
+          getSubfolderQueryParams(subfolder)
+        "
+      >
+        <span class="folder-icon">
+          ▰
+        </span>
 
         <div>
-          <strong>{{ subfolder.name }}</strong>
-          <small>{{ subfolder.description || 'Sem descrição' }}</small>
+          <strong>
+            {{ subfolder.name }}
+          </strong>
+
+          <small>
+            {{
+              subfolder.description ||
+                'Sem descrição'
+            }}
+          </small>
         </div>
       </a>
     </div>
   </section>
 
-  <section class="articles-section" *ngIf="articles.length">
+  <section
+    class="articles-section"
+    *ngIf="articles.length"
+  >
     <h2>Artigos</h2>
 
     <div class="table-card">
@@ -87,32 +128,60 @@
         <span>Criado em</span>
       </div>
 
-        <a
-          class="article-row"
-          *ngFor="let article of articles"
-          [routerLink]="['/home/knowledge-base/articles', article.id]"
-          [queryParams]="{
-            name: article.name
-          }"
-        >
-        <strong>{{ article.name }}</strong>
-        <span>{{ article.supplier }}</span>
-        <span>{{ getStatusLabel(article.status) }}</span>
-        <span>{{ formatDate(article.createdAt) }}</span>
+      <a
+        class="article-row"
+        *ngFor="let article of articles"
+        [routerLink]="[
+          '/home/knowledge-base/articles',
+          article.id
+        ]"
+        [queryParams]="
+          getArticleQueryParams(article)
+        "
+      >
+        <strong>
+          {{ article.name }}
+        </strong>
+
+        <span>
+          {{ article.supplier }}
+        </span>
+
+        <span>
+          {{
+            getStatusLabel(
+              article.status
+            )
+          }}
+        </span>
+
+        <span>
+          {{
+            formatDate(
+              article.createdAt
+            )
+          }}
+        </span>
       </a>
     </div>
   </section>
 
   <p
     class="empty-state"
-    *ngIf="!isLoading && !subfolders.length && !articles.length"
+    *ngIf="
+      !isLoading &&
+      !subfolders.length &&
+      !articles.length
+    "
   >
-    Esta pasta ainda não tem subpastas ou artigos.
+    Esta pasta ainda não tem subpastas
+    ou artigos.
   </p>
 </section>
 
 <!-- Modal de criação de pasta -->
- <div
+
+<div
   class="modal-backdrop"
   *ngIf="showCreateFolderModal"
 >
@@ -121,6 +190,7 @@
 
     <label>
       Nome
+
       <input
         type="text"
         [(ngModel)]="newFolder.name"
@@ -129,9 +199,12 @@
 
     <label>
       Descrição
+
       <textarea
         rows="3"
-        [(ngModel)]="newFolder.description"
+        [(ngModel)]="
+          newFolder.description
+        "
       ></textarea>
     </label>
 
@@ -139,7 +212,9 @@
       <button
         type="button"
         class="secondary"
-        (click)="closeCreateFolderModal()"
+        (click)="
+          closeCreateFolderModal()
+        "
       >
         Cancelar
       </button>
@@ -154,25 +229,43 @@
   </div>
 </div>
 
-<div class="modal-backdrop" *ngIf="showCreateArticleModal">
+<!-- Modal de criação de artigo -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showCreateArticleModal"
+>
   <div class="modal">
     <h2>Criar artigo</h2>
 
     <label>
       Nome
-      <input type="text" [(ngModel)]="newArticle.name" />
+
+      <input
+        type="text"
+        [(ngModel)]="newArticle.name"
+      />
     </label>
 
     <label>
       Fornecedor
 
-      <select [(ngModel)]="newArticle.supplier">
-        <option value="" disabled>
+      <select
+        [(ngModel)]="
+          newArticle.supplier
+        "
+      >
+        <option
+          value=""
+          disabled
+        >
           Selecionar fornecedor
         </option>
 
         <option
-          *ngFor="let company of companies"
+          *ngFor="
+            let company of companies
+          "
           [value]="company.name"
         >
           {{ company.name }}
@@ -182,24 +275,58 @@
 
     <label>
       Estado
-      <select [(ngModel)]="newArticle.status">
-        <option value="campaign_active">Campanha ativa</option>
-        <option value="campaign_inactive">Campanha inativa</option>
+
+      <select
+        [(ngModel)]="
+          newArticle.status
+        "
+      >
+        <option
+          value="campaign_active"
+        >
+          Campanha ativa
+        </option>
+
+        <option
+          value="campaign_inactive"
+        >
+          Campanha inativa
+        </option>
       </select>
     </label>
 
     <label>
       Mensagem
-      <textarea rows="5" [(ngModel)]="newArticle.message"></textarea>
+
+      <textarea
+        rows="5"
+        [(ngModel)]="
+          newArticle.message
+        "
+      ></textarea>
     </label>
 
     <div class="modal-actions">
-      <button type="button" class="secondary" (click)="closeCreateArticleModal()">
+      <button
+        type="button"
+        class="secondary"
+        (click)="
+          closeCreateArticleModal()
+        "
+      >
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isCreatingArticle" (click)="createArticle()">
-        {{ isCreatingArticle ? 'A criar...' : 'Criar artigo' }}
+      <button
+        type="button"
+        [disabled]="isCreatingArticle"
+        (click)="createArticle()"
+      >
+        {{
+          isCreatingArticle
+            ? 'A criar...'
+            : 'Criar artigo'
+        }}
       </button>
     </div>
   </div>

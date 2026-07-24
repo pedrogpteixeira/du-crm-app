@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Company, CompanyService } from '../../../core/services/company';
+import {
+  Company,
+  CompanyService,
+} from '../../../core/services/company';
 
 type KnowledgeCompanyAction =
   | 'campaigns'
@@ -40,7 +43,7 @@ export class KnowledgeBaseHome implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  companyConfigs: KnowledgeCompanyConfig[] = [
+  readonly companyConfigs: KnowledgeCompanyConfig[] = [
     {
       companyId: 'cmp_njRqliQBpR',
       name: 'Repsol',
@@ -149,10 +152,14 @@ export class KnowledgeBaseHome implements OnInit {
 
     this.companyService.getCompanies().subscribe({
       next: (companies) => {
-        this.companies = companies.filter((company) => company.active);
+        this.companies = companies.filter(
+          (company) => company.active,
+        );
       },
       error: () => {
-        this.errorMessage = 'Não foi possível carregar as empresas.';
+        this.errorMessage =
+          'Não foi possível carregar as empresas.';
+
         this.isLoading = false;
       },
       complete: () => {
@@ -184,10 +191,15 @@ export class KnowledgeBaseHome implements OnInit {
 
     if (action === 'campaigns') {
       this.router.navigate(
-        ['/home/knowledge-base/campaigns', company.companyId],
+        [
+          '/home/knowledge-base/campaigns',
+          company.companyId,
+        ],
         {
           queryParams: {
             name: company.name,
+            supplier: company.name,
+            companyId: company.companyId,
           },
         },
       );
@@ -195,7 +207,10 @@ export class KnowledgeBaseHome implements OnInit {
       return;
     }
 
-    const folderId = this.getFolderId(company, action);
+    const folderId = this.getFolderId(
+      company,
+      action,
+    );
 
     if (!folderId) {
       this.errorMessage =
@@ -204,16 +219,30 @@ export class KnowledgeBaseHome implements OnInit {
       return;
     }
 
-    this.router.navigate(['/home/knowledge-base/folders', folderId], {
-      queryParams: {
-        name: this.getFolderName(company, action),
+    this.router.navigate(
+      [
+        '/home/knowledge-base/folders',
+        folderId,
+      ],
+      {
+        queryParams: {
+          name: this.getFolderName(
+            company,
+            action,
+          ),
+          supplier: company.name,
+          companyId: company.companyId,
+        },
       },
-    });
+    );
   }
 
   private getFolderId(
     company: KnowledgeCompanyConfig,
-    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
+    action: Exclude<
+      KnowledgeCompanyAction,
+      'campaigns'
+    >,
   ): string {
     switch (action) {
       case 'support':
@@ -229,11 +258,14 @@ export class KnowledgeBaseHome implements OnInit {
 
   private getFolderName(
     company: KnowledgeCompanyConfig,
-    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
+    action: Exclude<
+      KnowledgeCompanyAction,
+      'campaigns'
+    >,
   ): string {
     switch (action) {
       case 'support':
-        return `${company.name} - Suporte`;
+        return `${company.name} - Recursos`;
 
       case 'forms':
         return `${company.name} - Formulários de Adesão`;

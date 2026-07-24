@@ -4,23 +4,35 @@
       <h1>Base de Conhecimento</h1>
 
       <p>
-        Consulta campanhas, formulários de adesão e formações por empresa.
+        Consulta campanhas, formulários de adesão,
+        recursos e formações por empresa.
       </p>
     </div>
   </header>
 
-  <p class="loading" *ngIf="isLoading">
+  <p
+    class="loading"
+    *ngIf="isLoading"
+  >
     A carregar base de conhecimento...
   </p>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <section class="companies-grid" *ngIf="!isLoading">
+  <section
+    class="companies-grid"
+    *ngIf="!isLoading"
+  >
     <article
       class="company-card"
-      *ngFor="let company of getVisibleCompanies()"
+      *ngFor="
+        let company of getVisibleCompanies()
+      "
     >
       <div class="company-logo">
         <img
@@ -32,9 +44,16 @@
       <button
         type="button"
         class="company-action"
-        (click)="openCompanyAction(company, 'campaigns')"
+        (click)="
+          openCompanyAction(
+            company,
+            'campaigns'
+          )
+        "
       >
-        <span class="action-icon material-symbols-rounded">
+        <span
+          class="action-icon material-symbols-rounded"
+        >
           business_center
         </span>
 
@@ -46,9 +65,16 @@
       <button
         type="button"
         class="company-action"
-        (click)="openCompanyAction(company, 'support')"
+        (click)="
+          openCompanyAction(
+            company,
+            'support'
+          )
+        "
       >
-        <span class="action-icon material-symbols-rounded">
+        <span
+          class="action-icon material-symbols-rounded"
+        >
           folder
         </span>
 
@@ -60,9 +86,16 @@
       <button
         type="button"
         class="company-action"
-        (click)="openCompanyAction(company, 'forms')"
+        (click)="
+          openCompanyAction(
+            company,
+            'forms'
+          )
+        "
       >
-        <span class="action-icon material-symbols-rounded">
+        <span
+          class="action-icon material-symbols-rounded"
+        >
           description
         </span>
 
@@ -74,9 +107,16 @@
       <button
         type="button"
         class="company-action"
-        (click)="openCompanyAction(company, 'training')"
+        (click)="
+          openCompanyAction(
+            company,
+            'training'
+          )
+        "
       >
-        <span class="action-icon material-symbols-rounded">
+        <span
+          class="action-icon material-symbols-rounded"
+        >
           school
         </span>
 
@@ -89,8 +129,12 @@
 
   <p
     class="empty-state"
-    *ngIf="!isLoading && !getVisibleCompanies().length"
+    *ngIf="
+      !isLoading &&
+      !getVisibleCompanies().length
+    "
   >
-    Ainda não existem empresas disponíveis na base de conhecimento.
+    Ainda não existem empresas disponíveis na
+    base de conhecimento.
   </p>
 </section>
