@@ -16,7 +16,10 @@
       </strong>
     </div>
 
-    <div class="actions">
+    <div 
+    class="actions"
+    *ngIf="canManageKnowledgeBase"
+    >
       <button
         type="button"
         class="secondary"

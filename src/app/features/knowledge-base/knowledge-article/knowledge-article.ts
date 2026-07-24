@@ -12,6 +12,7 @@ import {
 import { Company, CompanyService } from '../../../core/services/company';
 
 import { environment } from '../../../../environments/environment';
+import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-knowledge-article',
@@ -25,6 +26,7 @@ export class KnowledgeArticle implements OnInit {
   private readonly knowledgeBaseService = inject(KnowledgeBaseService);
   private readonly router = inject(Router);
   private readonly companyService = inject(CompanyService);
+  private readonly auth = inject(Auth);
 
   readonly apiUrl = environment.apiUrl;
 
@@ -44,6 +46,7 @@ export class KnowledgeArticle implements OnInit {
   isSaving = false;
   isDraggingFiles = false;
   isUploadingAttachments = false;
+  canManageKnowledgeBase = false;
 
   deletingAttachmentFileName: string | null = null;
 
@@ -57,6 +60,8 @@ export class KnowledgeArticle implements OnInit {
   };
 
   ngOnInit(): void {
+    this.initializePermissions();
+
     this.route.paramMap.subscribe((params) => {
       this.articleId = params.get('id');
 
@@ -70,6 +75,27 @@ export class KnowledgeArticle implements OnInit {
 
       this.loadCompanies();
     });
+  }
+
+  private initializePermissions(): void {
+    const currentUser = this.auth.getCurrentUser();
+
+    const role = currentUser?.role ?? '';
+
+    this.canManageKnowledgeBase = role
+      .toLowerCase()
+      .includes('super admin');
+  }
+
+  private ensureCanManageKnowledgeBase(): boolean {
+    if (this.canManageKnowledgeBase) {
+      return true;
+    }
+
+    this.errorMessage =
+      'Não tens permissão para realizar esta operação.';
+
+    return false;
   }
 
   loadArticle(articleId: string): void {
@@ -106,6 +132,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   startEditing(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.article) {
       return;
     }
@@ -138,6 +168,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   saveArticle(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.article?.id) {
       return;
     }
@@ -181,6 +215,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   deleteArticle(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.article?.id) {
       return;
     }
@@ -215,6 +253,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   deleteAttachment(fileName: string): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.article?.id || !this.isEditing) {
       return;
     }
@@ -267,6 +309,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   onDragOver(event: DragEvent): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.isEditing) {
       return;
     }
@@ -276,6 +322,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   onDragLeave(event: DragEvent): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.isEditing) {
       return;
     }
@@ -285,6 +335,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   onDropFiles(event: DragEvent): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+    
     if (!this.isEditing) {
       return;
     }
@@ -323,6 +377,10 @@ export class KnowledgeArticle implements OnInit {
   }
 
   uploadSelectedAttachments(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.article?.id || !this.selectedFiles.length || !this.isEditing) {
       return;
     }

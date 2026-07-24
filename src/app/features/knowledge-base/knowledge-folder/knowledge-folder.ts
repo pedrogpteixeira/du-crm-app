@@ -63,6 +63,8 @@ export class KnowledgeFolder implements OnInit {
   isDeleting = false;
   isCreatingArticle = false;
 
+  canManageKnowledgeBase = false;
+
   errorMessage = '';
 
   showCreateFolderModal = false;
@@ -81,6 +83,8 @@ export class KnowledgeFolder implements OnInit {
   };
 
   ngOnInit(): void {
+    this.initializePermissions();
+    
     this.route.paramMap.subscribe((params) => {
       this.folderId = params.get('id');
 
@@ -104,6 +108,27 @@ export class KnowledgeFolder implements OnInit {
     });
 
     this.loadCompanies();
+  }
+
+  private initializePermissions(): void {
+    const currentUser = this.auth.getCurrentUser();
+
+    const role = currentUser?.role ?? '';
+
+    this.canManageKnowledgeBase = role
+      .toLowerCase()
+      .includes('super admin');
+  }
+
+  private ensureCanManageKnowledgeBase(): boolean {
+    if (this.canManageKnowledgeBase) {
+      return true;
+    }
+
+    this.errorMessage =
+      'Não tens permissão para realizar esta operação.';
+
+    return false;
   }
 
   loadFolderContents(folderId: string): void {
@@ -151,6 +176,10 @@ export class KnowledgeFolder implements OnInit {
   }
 
   openCreateFolderModal(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     this.errorMessage = '';
     this.showCreateFolderModal = true;
   }
@@ -165,6 +194,10 @@ export class KnowledgeFolder implements OnInit {
   }
 
   createFolder(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+    
     const folderName =
       this.newFolder.name.trim();
 
@@ -217,6 +250,10 @@ export class KnowledgeFolder implements OnInit {
   }
 
   deleteFolder(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     if (!this.folderId) {
       return;
     }
@@ -262,6 +299,10 @@ export class KnowledgeFolder implements OnInit {
   }
 
   openCreateArticleModal(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+
     this.errorMessage = '';
 
     this.newArticle.supplier =
@@ -282,6 +323,10 @@ export class KnowledgeFolder implements OnInit {
   }
 
   createArticle(): void {
+    if (!this.ensureCanManageKnowledgeBase()) {
+      return;
+    }
+    
     const currentUser =
       this.auth.getCurrentUser();
 
