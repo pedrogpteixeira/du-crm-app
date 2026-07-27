@@ -7,15 +7,27 @@
 
       <h1>Novo contrato Repsol</h1>
 
-      <p>Preenche os dados necessários para criar um novo contrato.</p>
+      <p>
+        {{
+          isLightLayout()
+            ? 'Preenche os dados essenciais para criar um pedido de chamada.'
+            : 'Preenche os dados necessários para criar um novo contrato.'
+        }}
+      </p>
     </div>
   </header>
 
-  <p class="error-message" *ngIf="errorMessage">
+  <p
+    class="error-message"
+    *ngIf="errorMessage"
+  >
     {{ errorMessage }}
   </p>
 
-  <p class="success-message" *ngIf="successMessage">
+  <p
+    class="success-message"
+    *ngIf="successMessage"
+  >
     {{ successMessage }}
   </p>
 
@@ -29,32 +41,63 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="number"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+          />
 
           <button
             type="button"
-            [disabled]="isCheckingClient || !!client"
+            [disabled]="
+              isCheckingClient ||
+              !!client
+            "
             (click)="checkClientByNif()"
           >
-            {{ isCheckingClient ? 'A procurar...' : 'Verificar' }}
+            {{
+              isCheckingClient
+                ? 'A procurar...'
+                : 'Verificar'
+            }}
           </button>
         </div>
       </label>
 
-      <div class="client-result" *ngIf="client">
-        <span>Cliente identificado</span>
-        <strong>{{ client.name }}</strong>
-        <small>{{ client.id }} · NIF {{ client.nif }}</small>
+      <div
+        class="client-result"
+        *ngIf="client"
+      >
+        <span>
+          Cliente identificado
+        </span>
+
+        <strong>
+          {{ client.name }}
+        </strong>
+
+        <small>
+          {{ client.id }} ·
+          NIF {{ client.nif }}
+        </small>
       </div>
 
-      <ng-container *ngIf="clientNotFound">
+      <ng-container
+        *ngIf="clientNotFound"
+      >
         <p class="warning-message">
-          Cliente não encontrado. Preenche o nome para criar uma ficha de cliente.
+          Cliente não encontrado.
+          Preenche o nome para criar uma
+          ficha de cliente.
         </p>
 
         <label>
           Nome Cliente / Empresa *
-          <input type="text" [(ngModel)]="clientName" />
+
+          <input
+            type="text"
+            [(ngModel)]="clientName"
+          />
         </label>
 
         <div class="actions">
@@ -63,7 +106,11 @@
             [disabled]="isCreatingClient"
             (click)="createClient()"
           >
-            {{ isCreatingClient ? 'A criar cliente...' : 'Criar cliente' }}
+            {{
+              isCreatingClient
+                ? 'A criar cliente...'
+                : 'Criar cliente'
+            }}
           </button>
         </div>
       </ng-container>
@@ -73,14 +120,25 @@
   <ng-container *ngIf="client">
     <article class="card">
       <div class="section-title">
-        Selecione Tipo de Segmento
+        Dados do contrato
       </div>
 
       <div class="form-grid three-columns">
         <label>
           Tipo Segmento *
-          <select [(ngModel)]="contractForm.tipoSegmento">
-            <option *ngFor="let option of tipoSegmentoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm.tipoSegmento
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  tipoSegmentoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
@@ -88,8 +146,19 @@
 
         <label>
           Tipo Produto *
-          <select [(ngModel)]="contractForm.tipoProduto">
-            <option *ngFor="let option of tipoProdutoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm.tipoProduto
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  tipoProdutoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
@@ -97,44 +166,110 @@
 
         <label>
           Contratação *
-          <select [(ngModel)]="contractForm.contratacao">
-            <option *ngFor="let option of contratacaoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm.contratacao
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  contratacaoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
         </label>
 
-        <label *ngIf="shouldShowLuzFields()">
+        <label
+          *ngIf="
+            isProLayout() &&
+            shouldShowLuzFields()
+          "
+        >
           Tipo Contratação Luz
-          <select [(ngModel)]="contractForm.tipoContratacaoLuz">
-            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .tipoContratacaoLuz
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  tipoContratacaoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
         </label>
 
-        <label *ngIf="shouldShowGasFields()">
+        <label
+          *ngIf="
+            isProLayout() &&
+            shouldShowGasFields()
+          "
+        >
           Tipo Contratação Gás
-          <select [(ngModel)]="contractForm.tipoContratacaoGas">
-            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .tipoContratacaoGas
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  tipoContratacaoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Controle de Qualidade
-          <input type="text" [(ngModel)]="contractForm.controleQualidade" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm
+                .controleQualidade
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Código Registo C.E.
-          <input type="text" [(ngModel)]="contractForm.codigoRegistoCE" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm
+                .codigoRegistoCE
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Nome Registo C.E.
-          <input type="text" [(ngModel)]="contractForm.nomeRegistoCE" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm
+                .nomeRegistoCE
+            "
+          />
         </label>
       </div>
     </article>
@@ -147,51 +282,120 @@
       <div class="form-grid three-columns">
         <label>
           Estado
-          <select [(ngModel)]="contractForm.estado">
-            <option *ngFor="let option of estadoOptions" [value]="option">
+
+          <select
+            *ngIf="isProLayout()"
+            [(ngModel)]="
+              contractForm.estado
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  estadoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
+
+          <input
+            *ngIf="isLightLayout()"
+            type="text"
+            value="Pedido de Chamada"
+            readonly
+          />
         </label>
 
         <label>
           Agendamento
-          <input type="datetime-local" [(ngModel)]="contractForm.agendamento" />
+
+          <input
+            type="datetime-local"
+            [(ngModel)]="
+              contractForm.agendamento
+            "
+          />
         </label>
 
         <label>
           Data Assinatura
-          <input type="date" [(ngModel)]="contractForm.dataAssinatura" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm.dataAssinatura
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data Contrato
-          <input type="date" [(ngModel)]="contractForm.dataContrato" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm.dataContrato
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data de Registo
-          <input type="date" [(ngModel)]="contractForm.dataRegisto" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm.dataRegisto
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data de Ativação CPE
-          <input type="date" [(ngModel)]="contractForm.dataAtivacaoCPE" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm
+                .dataAtivacaoCPE
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data Baixa CPE
-          <input type="date" [(ngModel)]="contractForm.dataBaixaCPE" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm.dataBaixaCPE
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data de Ativação CUI
-          <input type="date" [(ngModel)]="contractForm.dataAtivacaoCUI" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm
+                .dataAtivacaoCUI
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Data Baixa CUI
-          <input type="date" [(ngModel)]="contractForm.dataBaixaCUI" />
+
+          <input
+            type="date"
+            [(ngModel)]="
+              contractForm.dataBaixaCUI
+            "
+          />
         </label>
       </div>
     </article>
@@ -204,37 +408,74 @@
       <div class="form-grid two-columns">
         <label>
           Nome Cliente / Empresa *
-          <input type="text" [value]="client.name" readonly />
+
+          <input
+            type="text"
+            [value]="client.name"
+            readonly
+          />
         </label>
 
         <label>
           NIF *
-          <input type="number" [value]="client.nif" readonly />
+
+          <input
+            type="number"
+            [value]="client.nif"
+            readonly
+          />
         </label>
 
         <label>
           Telefone
-          <input type="number" [(ngModel)]="contractForm.telefone" />
+
+          <input
+            type="number"
+            [(ngModel)]="
+              contractForm.telefone
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           Email
-          <input type="email" [(ngModel)]="contractForm.email" />
+
+          <input
+            type="email"
+            [(ngModel)]="
+              contractForm.email
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           CAE
-          <input type="text" [(ngModel)]="contractForm.cae" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm.cae
+            "
+          />
         </label>
 
-        <label>
+        <label *ngIf="isProLayout()">
           CRC
-          <input type="text" [(ngModel)]="contractForm.crc" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm.crc
+            "
+          />
         </label>
       </div>
     </article>
 
-    <article class="card">
+    <article
+      class="card"
+      *ngIf="isProLayout()"
+    >
       <div class="section-title">
         Dados Morada / Faturação
       </div>
@@ -243,9 +484,17 @@
         <label>
           Morada Faturação - Seleção
 
-          <select [(ngModel)]="contractForm.moradaFaturacaoSelecao">
+          <select
+            [(ngModel)]="
+              contractForm
+                .moradaFaturacaoSelecao
+            "
+          >
             <option
-              *ngFor="let option of moradaFaturacaoOptions"
+              *ngFor="
+                let option of
+                  moradaFaturacaoOptions
+              "
               [value]="option"
             >
               {{ option }}
@@ -256,15 +505,21 @@
 
       <div
         class="address-grid"
-        [class.two-addresses]="shouldShowBillingAddress()"
+        [class.two-addresses]="
+          shouldShowBillingAddress()
+        "
       >
         <div class="address-block">
           <label>
             Morada Instalação
+
             <input
               type="text"
               placeholder="Rua"
-              [(ngModel)]="contractForm.moradaInstalacaoRua"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoRua
+              "
             />
           </label>
 
@@ -272,36 +527,57 @@
             <input
               type="text"
               placeholder="Cidade"
-              [(ngModel)]="contractForm.moradaInstalacaoCidade"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoCidade
+              "
             />
 
             <input
               type="text"
               placeholder="Distrito"
-              [(ngModel)]="contractForm.moradaInstalacaoDistrito"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoDistrito
+              "
             />
 
             <input
               type="text"
               placeholder="Código postal"
-              [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoCodigoPostal
+              "
             />
           </div>
 
           <input
             type="text"
             placeholder="País"
-            [(ngModel)]="contractForm.moradaInstalacaoPais"
+            [(ngModel)]="
+              contractForm
+                .moradaInstalacaoPais
+            "
           />
         </div>
 
-        <div class="address-block" *ngIf="shouldShowBillingAddress()">
+        <div
+          class="address-block"
+          *ngIf="
+            shouldShowBillingAddress()
+          "
+        >
           <label>
             Morada Faturação
+
             <input
               type="text"
               placeholder="Rua"
-              [(ngModel)]="contractForm.moradaFaturacaoRua"
+              [(ngModel)]="
+                contractForm
+                  .moradaFaturacaoRua
+              "
             />
           </label>
 
@@ -309,60 +585,113 @@
             <input
               type="text"
               placeholder="Cidade"
-              [(ngModel)]="contractForm.moradaFaturacaoCidade"
+              [(ngModel)]="
+                contractForm
+                  .moradaFaturacaoCidade
+              "
             />
 
             <input
               type="text"
               placeholder="Distrito"
-              [(ngModel)]="contractForm.moradaFaturacaoDistrito"
+              [(ngModel)]="
+                contractForm
+                  .moradaFaturacaoDistrito
+              "
             />
 
             <input
               type="text"
               placeholder="Código postal"
-              [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
+              [(ngModel)]="
+                contractForm
+                  .moradaFaturacaoCodigoPostal
+              "
             />
           </div>
 
           <input
             type="text"
             placeholder="País"
-            [(ngModel)]="contractForm.moradaFaturacaoPais"
+            [(ngModel)]="
+              contractForm
+                .moradaFaturacaoPais
+            "
           />
         </div>
       </div>
+    </article>
 
-      <div class="form-grid two-columns billing-options">
+    <article class="card">
+      <div class="section-title">
+        Faturação e Serviços
+      </div>
+
+      <div class="form-grid two-columns">
         <label>
           Fatura Eletrónica
-          <select [(ngModel)]="contractForm.faturaEletronica">
-            <option [ngValue]="false">Não</option>
-            <option [ngValue]="true">Sim</option>
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .faturaEletronica
+            "
+          >
+            <option [ngValue]="false">
+              Não
+            </option>
+
+            <option [ngValue]="true">
+              Sim
+            </option>
           </select>
         </label>
 
         <label>
           SVA
-          <select [(ngModel)]="contractForm.sva">
-            <option [ngValue]="false">Não</option>
-            <option [ngValue]="true">Sim</option>
+
+          <select
+            [(ngModel)]="
+              contractForm.sva
+            "
+          >
+            <option [ngValue]="false">
+              Não
+            </option>
+
+            <option [ngValue]="true">
+              Sim
+            </option>
           </select>
         </label>
 
         <label>
           Débito Direto
-          <select [(ngModel)]="contractForm.debitoDireto">
-            <option [ngValue]="false">Não</option>
-            <option [ngValue]="true">Sim</option>
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .debitoDireto
+            "
+          >
+            <option [ngValue]="false">
+              Não
+            </option>
+
+            <option [ngValue]="true">
+              Sim
+            </option>
           </select>
         </label>
 
         <label>
           IBAN
+
           <input
             type="text"
-            [(ngModel)]="contractForm.iban"
+            [(ngModel)]="
+              contractForm.iban
+            "
           />
         </label>
       </div>
@@ -370,14 +699,18 @@
 
     <article class="card">
       <div class="section-title">
-        Dados Produto
+        Campanha
       </div>
 
       <div class="form-grid two-columns">
         <label>
           Tipo de campanha
 
-          <select [(ngModel)]="campaignSelectionMode">
+          <select
+            [(ngModel)]="
+              campaignSelectionMode
+            "
+          >
             <option value="existing">
               Campanha existente
             </option>
@@ -388,68 +721,135 @@
           </select>
         </label>
 
-        <label *ngIf="campaignSelectionMode === 'existing'">
+        <label
+          *ngIf="
+            campaignSelectionMode ===
+            'existing'
+          "
+        >
           Campanha
 
-          <select [(ngModel)]="contractForm.campanha">
+          <select
+            [(ngModel)]="
+              contractForm.campanha
+            "
+          >
             <option value="">
               Selecionar campanha
             </option>
 
             <option
-              *ngFor="let campaign of campaigns"
-              [value]="campaign.name"
+              *ngFor="
+                let campaign of campaigns
+              "
+              [value]="campaign.id"
             >
               {{ campaign.name }}
             </option>
           </select>
         </label>
 
-        <label *ngIf="campaignSelectionMode === 'other'">
+        <label
+          *ngIf="
+            campaignSelectionMode ===
+            'other'
+          "
+        >
           Nome da campanha
 
           <input
             type="text"
-            [(ngModel)]="customCampaign"
+            [(ngModel)]="
+              customCampaign
+            "
             placeholder="Nome da campanha"
           />
         </label>
+      </div>
+    </article>
 
+    <article
+      class="card"
+      *ngIf="isProLayout()"
+    >
+      <div class="section-title">
+        Dados Produto
+      </div>
+
+      <div class="form-grid two-columns">
         <label>
           Antiga Comercializadora
+
           <input
             type="text"
-            [(ngModel)]="contractForm.antigaComercializadora"
+            [(ngModel)]="
+              contractForm
+                .antigaComercializadora
+            "
           />
         </label>
 
         <label>
           CPE
-          <input type="text" [(ngModel)]="contractForm.cpe" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm.cpe
+            "
+          />
         </label>
 
         <label>
           CUI
-          <input type="text" [(ngModel)]="contractForm.cui" />
+
+          <input
+            type="text"
+            [(ngModel)]="
+              contractForm.cui
+            "
+          />
         </label>
 
         <label>
           Potência
-          <select [(ngModel)]="contractForm.potencia">
+
+          <select
+            [(ngModel)]="
+              contractForm.potencia
+            "
+          >
             <option
-              *ngFor="let power of availablePowers"
-              [ngValue]="formatPowerValue(power)"
+              *ngFor="
+                let power of
+                  availablePowers
+              "
+              [ngValue]="
+                formatPowerValue(power)
+              "
             >
-              {{ power.toFixed(2) }} kVA
+              {{
+                power.toFixed(2)
+              }}
+              kVA
             </option>
 
-            <option [ngValue]="otherPowerValue">
+            <option
+              [ngValue]="
+                otherPowerValue
+              "
+            >
               Outra...
             </option>
           </select>
         </label>
 
-        <label *ngIf="contractForm.potencia === otherPowerValue">
+        <label
+          *ngIf="
+            contractForm.potencia ===
+            otherPowerValue
+          "
+        >
           Outra potência
 
           <input
@@ -457,42 +857,74 @@
             step="0.01"
             min="0"
             placeholder="Ex.: 9.20"
-            [(ngModel)]="customPower"
+            [(ngModel)]="
+              customPower
+            "
           />
         </label>
 
         <label>
           Escalão
 
-          <select [(ngModel)]="contractForm.escalao">
+          <select
+            [(ngModel)]="
+              contractForm.escalao
+            "
+          >
             <option
-              *ngFor="let level of availableGasLevels"
+              *ngFor="
+                let level of
+                  availableGasLevels
+              "
               [ngValue]="level"
             >
               Escalão {{ level }}
             </option>
 
-            <option [ngValue]="otherGasLevelValue">
+            <option
+              [ngValue]="
+                otherGasLevelValue
+              "
+            >
               Outro...
             </option>
           </select>
         </label>
 
-        <label *ngIf="contractForm.escalao === otherGasLevelValue">
+        <label
+          *ngIf="
+            contractForm.escalao ===
+            otherGasLevelValue
+          "
+        >
           Outro escalão
 
           <input
             type="number"
             min="1"
             placeholder="Ex.: 5"
-            [(ngModel)]="customGasLevel"
+            [(ngModel)]="
+              customGasLevel
+            "
           />
         </label>
 
         <label>
           Ciclo Horário
-          <select [(ngModel)]="contractForm.cicloHorario">
-            <option *ngFor="let option of cicloHorarioOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .cicloHorario
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  cicloHorarioOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
@@ -500,8 +932,20 @@
 
         <label>
           Nível Tensão
-          <select [(ngModel)]="contractForm.nivelTensao">
-            <option *ngFor="let option of nivelTensaoOptions" [value]="option">
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .nivelTensao
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  nivelTensaoOptions
+              "
+              [value]="option"
+            >
               {{ option }}
             </option>
           </select>
@@ -515,18 +959,93 @@
       </div>
 
       <p class="muted">
-        Os documentos serão associados depois da criação do contrato.
+        Seleciona os documentos que serão
+        enviados depois da criação do
+        contrato.
       </p>
 
       <div class="documents-grid">
-        <button type="button" disabled>
-          📎 Carregar Documentos
-        </button>
+        <label
+          class="file-upload-button"
+          [class.disabled]="
+            isCreatingContract
+          "
+        >
+          <input
+            type="file"
+            multiple
+            [disabled]="
+              isCreatingContract
+            "
+            (change)="
+              onFilesSelected($event)
+            "
+          />
 
-        <button type="button" disabled>
-          🎧 Audio MP3
+          📎 Selecionar documentos
+        </label>
+
+        <button
+          type="button"
+          class="secondary"
+          *ngIf="selectedFiles.length"
+          [disabled]="
+            isCreatingContract
+          "
+          (click)="
+            clearSelectedFiles()
+          "
+        >
+          Limpar seleção
         </button>
       </div>
+
+      <div
+        class="selected-files"
+        *ngIf="selectedFiles.length"
+      >
+        <div
+          class="selected-file"
+          *ngFor="
+            let file of selectedFiles;
+            let index = index
+          "
+        >
+          <div>
+            <strong>
+              {{ file.name }}
+            </strong>
+
+            <small>
+              {{
+                formatFileSize(
+                  file.size
+                )
+              }}
+            </small>
+          </div>
+
+          <button
+            type="button"
+            class="remove-file"
+            [disabled]="
+              isCreatingContract
+            "
+            (click)="
+              removeSelectedFile(index)
+            "
+          >
+            Remover
+          </button>
+        </div>
+      </div>
+
+      <p
+        class="muted"
+        *ngIf="isUploadingDocuments"
+      >
+        A carregar documentos...
+      </p>
     </article>
 
     <article class="card">
@@ -536,7 +1055,13 @@
 
       <label>
         Tipo de Pendência / Observações
-        <textarea rows="6" [(ngModel)]="contractForm.observacoes"></textarea>
+
+        <textarea
+          rows="6"
+          [(ngModel)]="
+            contractForm.observacoes
+          "
+        ></textarea>
       </label>
     </article>
 
@@ -545,16 +1070,27 @@
         type="button"
         class="secondary"
         routerLink="/home/contracts/repsol"
+        [disabled]="
+          isCreatingContract
+        "
       >
         Cancelar
       </button>
 
       <button
         type="button"
-        [disabled]="isCreatingContract"
+        [disabled]="
+          isCreatingContract
+        "
         (click)="createContract()"
       >
-        {{ isCreatingContract ? 'A criar contrato...' : 'Criar contrato' }}
+        {{
+          isUploadingDocuments
+            ? 'A carregar documentos...'
+            : isCreatingContract
+              ? 'A criar contrato...'
+              : 'Criar contrato'
+        }}
       </button>
     </div>
   </ng-container>

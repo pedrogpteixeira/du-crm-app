@@ -73,6 +73,15 @@ export interface RepsolContractDetail {
 
   estado: RepsolContractStatus;
 
+  agendamento?: string;
+  dataAssinatura?: string;
+  dataContrato?: string;
+  dataRegisto?: string;
+  dataAtivacaoCPE?: string;
+  dataBaixaCPE?: string;
+  dataAtivacaoCUI?: string;
+  dataBaixaCUI?: string;
+
   nomeClienteEmpresa: string;
   nif: number;
   telefone: number;
@@ -88,12 +97,13 @@ export interface RepsolContractDetail {
   debitoDireto: boolean;
   iban: string;
 
-  campaign: RepsolContractCampaign
+  campaign: RepsolContractCampaign | null;
   antigaComercializadora: string;
 
   cpe: string;
   cui: string;
   potencia: string;
+  escalao?: number;
   cicloHorario: string;
   nivelTensao: string;
 
@@ -180,21 +190,11 @@ export class RepsolContractService {
     );
   }
 
-  getRepsolContractById(contractId: string): Observable<RepsolContractDetail> {
+  getRepsolContractById(
+    contractId: string,
+  ): Observable<RepsolContractDetail> {
     return this.http.get<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}`,
-    );
-  }
-
-  downloadDocument(
-    contractId: string,
-    document: RepsolContractDocument,
-  ): Observable<Blob> {
-    return this.http.get(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${document.fileName}/download`,
-      {
-        responseType: 'blob',
-      },
     );
   }
 
@@ -204,6 +204,36 @@ export class RepsolContractService {
     return this.http.post<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol`,
       payload,
+    );
+  }
+
+  uploadAttachments(
+    contractId: string,
+    files: File[],
+  ): Observable<RepsolContractDetail> {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+      formData.append('files', file, file.name);
+    });
+
+    return this.http.post<RepsolContractDetail>(
+      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments`,
+      formData,
+    );
+  }
+
+  downloadDocument(
+    contractId: string,
+    document: RepsolContractDocument,
+  ): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
+        document.fileName,
+      )}/download`,
+      {
+        responseType: 'blob',
+      },
     );
   }
 }

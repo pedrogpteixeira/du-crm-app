@@ -251,3 +251,97 @@ button:disabled {
 .billing-options {
   margin-top: 18px;
 }
+
+.file-upload-button {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: fit-content;
+
+  border: 0;
+  border-radius: 12px;
+
+  background: #2f4050;
+  color: #ffffff;
+
+  padding: 11px 18px;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  input {
+    display: none;
+  }
+
+  &:hover {
+    background: #243646;
+  }
+
+  &.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.selected-files {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  margin-top: 18px;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #f8fafc;
+
+  div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    overflow: hidden;
+    color: #243646;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.remove-file {
+  flex-shrink: 0;
+
+  background: #fee2e2;
+  color: #dc2626;
+
+  padding: 8px 12px;
+
+  &:hover {
+    background: #fecaca;
+  }
+}

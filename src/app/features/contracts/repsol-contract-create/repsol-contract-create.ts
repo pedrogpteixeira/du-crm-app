@@ -1,16 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  finalize,
+  map,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
-import { Client, ClientService } from '../../../core/services/client';
-
-import { Campaign, CampaignService } from '../../../core/services/campaign';
+import {
+  Client,
+  ClientService,
+} from '../../../core/services/client';
 
 import {
+  Campaign,
+  CampaignService,
+} from '../../../core/services/campaign';
+
+import {
+  CreateRepsolContractRequest,
+  RepsolContractDetail,
   RepsolContractService,
   RepsolContractStatus,
 } from '../../../core/services/repsol-contract';
@@ -18,37 +39,80 @@ import {
 import { Auth } from '../../../core/services/auth';
 
 import {
+  ContractLayout,
+  PreferencesService,
+} from '../../../core/services/preferences';
+
+import {
   ELECTRICITY_POWERS,
-  OTHER_POWER,
   GAS_LEVELS,
   OTHER_GAS_LEVEL,
+  OTHER_POWER,
 } from '../../../core/constants/energy';
 
-type TipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
-type TipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
-type Contratacao = 'Contratação Papel' | 'Contratação Digital';
+type TipoSegmento =
+  | 'Residencial'
+  | 'Empresarial'
+  | 'Condomínios';
+
+type TipoProduto =
+  | 'Luz'
+  | 'Luz + Gás'
+  | 'Gás';
+
+type Contratacao =
+  | 'Contratação Papel'
+  | 'Contratação Digital';
 
 type TipoContratacao =
   | 'Mudança de Comercializadora'
   | 'Mudança de Comercializadora & AT'
   | 'Entrada Direta';
 
-type MoradaFaturacaoSelecao = 'Igual à de Instalação' | 'Outra';
-type ContractPowerSelection = string | typeof OTHER_POWER;
+type MoradaFaturacaoSelecao =
+  | 'Igual à de Instalação'
+  | 'Outra';
+
+type ContractPowerSelection =
+  | string
+  | typeof OTHER_POWER;
+
+interface CurrentUserWithTeams {
+  id?: string;
+
+  teams?: Array<{
+    id: string;
+  }>;
+}
 
 @Component({
   selector: 'app-repsol-contract-create',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+  ],
   templateUrl: './repsol-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './repsol-contract-create.scss',
 })
 export class RepsolContractCreate implements OnInit {
-  private readonly clientService = inject(ClientService);
-  private readonly campaignService = inject(CampaignService);
-  private readonly repsolContractService = inject(RepsolContractService);
+  private readonly clientService =
+    inject(ClientService);
+
+  private readonly campaignService =
+    inject(CampaignService);
+
+  private readonly repsolContractService =
+    inject(RepsolContractService);
+
+  private readonly preferencesService =
+    inject(PreferencesService);
+
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+
+  contractLayout: ContractLayout = 'light';
 
   nif: number | null = null;
   clientName = '';
@@ -56,9 +120,12 @@ export class RepsolContractCreate implements OnInit {
 
   campaigns: Campaign[] = [];
 
+  selectedFiles: File[] = [];
+
   isCheckingClient = false;
   isCreatingClient = false;
   isCreatingContract = false;
+  isUploadingDocuments = false;
 
   clientChecked = false;
   clientNotFound = false;
@@ -66,26 +133,43 @@ export class RepsolContractCreate implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  readonly availablePowers = ELECTRICITY_POWERS;
-  readonly otherPowerValue = OTHER_POWER;
+  readonly availablePowers =
+    ELECTRICITY_POWERS;
 
-  readonly availableGasLevels = GAS_LEVELS;
+  readonly otherPowerValue =
+    OTHER_POWER;
 
-  readonly otherGasLevelValue = OTHER_GAS_LEVEL;
+  readonly availableGasLevels =
+    GAS_LEVELS;
+
+  readonly otherGasLevelValue =
+    OTHER_GAS_LEVEL;
 
   customGasLevel: number | null = null;
-
   customPower: number | null = null;
 
-  campaignSelectionMode: 'existing' | 'other' = 'existing';
+  campaignSelectionMode:
+    | 'existing'
+    | 'other' = 'existing';
 
   customCampaign = '';
 
-  tipoSegmentoOptions: TipoSegmento[] = ['Residencial', 'Empresarial', 'Condomínios'];
+  tipoSegmentoOptions: TipoSegmento[] = [
+    'Residencial',
+    'Empresarial',
+    'Condomínios',
+  ];
 
-  tipoProdutoOptions: TipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
+  tipoProdutoOptions: TipoProduto[] = [
+    'Luz',
+    'Luz + Gás',
+    'Gás',
+  ];
 
-  contratacaoOptions: Contratacao[] = ['Contratação Papel', 'Contratação Digital'];
+  contratacaoOptions: Contratacao[] = [
+    'Contratação Papel',
+    'Contratação Digital',
+  ];
 
   tipoContratacaoOptions: TipoContratacao[] = [
     'Mudança de Comercializadora',
@@ -113,27 +197,41 @@ export class RepsolContractCreate implements OnInit {
     'Tetra-Horário',
   ];
 
-  nivelTensaoOptions = ['Monofásico', 'Trifásico'];
+  nivelTensaoOptions = [
+    'Monofásico',
+    'Trifásico',
+  ];
 
-  escalaoOptions = [1, 2, 3, 4];
-
-  moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
+  moradaFaturacaoOptions:
+    MoradaFaturacaoSelecao[] = [
+      'Igual à de Instalação',
+      'Outra',
+    ];
 
   contractForm = {
     companyId: environment.repsolId,
 
-    tipoSegmento: 'Empresarial' as TipoSegmento,
-    tipoProduto: 'Luz + Gás' as TipoProduto,
-    contratacao: 'Contratação Digital' as Contratacao,
+    tipoSegmento:
+      'Empresarial' as TipoSegmento,
 
-    tipoContratacaoLuz: 'Mudança de Comercializadora' as TipoContratacao,
-    tipoContratacaoGas: 'Mudança de Comercializadora' as TipoContratacao,
+    tipoProduto:
+      'Luz + Gás' as TipoProduto,
+
+    contratacao:
+      'Contratação Digital' as Contratacao,
+
+    tipoContratacaoLuz:
+      'Mudança de Comercializadora' as TipoContratacao,
+
+    tipoContratacaoGas:
+      'Mudança de Comercializadora' as TipoContratacao,
 
     controleQualidade: '',
     codigoRegistoCE: '',
     nomeRegistoCE: '',
 
-    estado: 'Pedido de Chamada' as RepsolContractStatus,
+    estado:
+      'Pedido de Chamada' as RepsolContractStatus,
 
     agendamento: '',
     dataAssinatura: '',
@@ -149,7 +247,8 @@ export class RepsolContractCreate implements OnInit {
     cae: '',
     crc: '',
 
-    moradaFaturacaoSelecao: 'Igual à de Instalação' as MoradaFaturacaoSelecao,
+    moradaFaturacaoSelecao:
+      'Igual à de Instalação' as MoradaFaturacaoSelecao,
 
     moradaInstalacaoRua: '',
     moradaInstalacaoCidade: '',
@@ -173,9 +272,12 @@ export class RepsolContractCreate implements OnInit {
     cpe: '',
     cui: '',
 
-    potencia: '6.90' as ContractPowerSelection,
+    potencia:
+      '6.90' as ContractPowerSelection,
 
-    escalao: 1 as number | typeof OTHER_GAS_LEVEL,
+    escalao:
+      1 as number | typeof OTHER_GAS_LEVEL,
+
     cicloHorario: 'Simples',
     nivelTensao: 'Monofásico',
 
@@ -185,25 +287,58 @@ export class RepsolContractCreate implements OnInit {
   };
 
   ngOnInit(): void {
+    this.loadContractLayout();
     this.loadCampaigns();
   }
 
+  isLightLayout(): boolean {
+    return this.contractLayout === 'light';
+  }
+
+  isProLayout(): boolean {
+    return this.contractLayout === 'pro';
+  }
+
+  private loadContractLayout(): void {
+    this.contractLayout =
+      this.preferencesService.getContractLayout();
+
+    if (this.isLightLayout()) {
+      this.contractForm.estado =
+        'Pedido de Chamada';
+    }
+  }
+
   private loadCampaigns(): void {
-    this.campaignService.getCampaignsByCompanyId(environment.repsolId).pipe(
-      map((campaigns) =>
-        campaigns.filter((campaign) => campaign.active),
-      ),
-    )
-    .subscribe({
-      next: (campaigns) => {
-        this.campaigns = campaigns;
-      },
-    });
+    this.campaignService
+      .getCampaignsByCompanyId(
+        environment.repsolId,
+      )
+      .pipe(
+        map((campaigns) =>
+          campaigns.filter(
+            (campaign) =>
+              campaign.active,
+          ),
+        ),
+      )
+      .subscribe({
+        next: (campaigns) => {
+          this.campaigns = campaigns;
+        },
+
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar as campanhas.';
+        },
+      });
   }
 
   checkClientByNif(): void {
     if (!this.nif) {
-      this.errorMessage = 'O NIF é obrigatório.';
+      this.errorMessage =
+        'O NIF é obrigatório.';
+
       return;
     }
 
@@ -214,35 +349,49 @@ export class RepsolContractCreate implements OnInit {
     this.clientChecked = false;
     this.clientNotFound = false;
 
-    this.clientService.getClientByNif(this.nif).subscribe({
-      next: (client) => {
-        this.client = client;
-        this.clientName = client.name;
-        this.clientChecked = true;
-        this.clientNotFound = false;
-        this.successMessage = 'Cliente encontrado.';
-      },
-      error: (error) => {
-        this.clientChecked = true;
+    this.clientService
+      .getClientByNif(this.nif)
+      .pipe(
+        finalize(() => {
+          this.isCheckingClient = false;
+        }),
+      )
+      .subscribe({
+        next: (client) => {
+          this.client = client;
+          this.clientName = client.name;
+          this.clientChecked = true;
+          this.clientNotFound = false;
 
-        if (error?.status === 404) {
-          this.clientNotFound = true;
-          this.client = null;
-          this.clientName = '';
-          return;
-        }
+          this.successMessage =
+            'Cliente encontrado.';
+        },
 
-        this.errorMessage = 'Não foi possível verificar o cliente.';
-      },
-      complete: () => {
-        this.isCheckingClient = false;
-      },
-    });
+        error: (error) => {
+          this.clientChecked = true;
+
+          if (error?.status === 404) {
+            this.clientNotFound = true;
+            this.client = null;
+            this.clientName = '';
+
+            return;
+          }
+
+          this.errorMessage =
+            'Não foi possível verificar o cliente.';
+        },
+      });
   }
 
   createClient(): void {
-    if (!this.nif || !this.clientName.trim()) {
-      this.errorMessage = 'O NIF e o nome do cliente são obrigatórios.';
+    if (
+      !this.nif ||
+      !this.clientName.trim()
+    ) {
+      this.errorMessage =
+        'O NIF e o nome do cliente são obrigatórios.';
+
       return;
     }
 
@@ -255,152 +404,578 @@ export class RepsolContractCreate implements OnInit {
         name: this.clientName.trim(),
         nif: this.nif,
       })
+      .pipe(
+        finalize(() => {
+          this.isCreatingClient = false;
+        }),
+      )
       .subscribe({
         next: (client) => {
           this.client = client;
           this.clientName = client.name;
           this.clientNotFound = false;
           this.clientChecked = true;
-          this.successMessage = 'Cliente criado com sucesso.';
+
+          this.successMessage =
+            'Cliente criado com sucesso.';
         },
+
         error: () => {
-          this.errorMessage = 'Não foi possível criar o cliente.';
-        },
-        complete: () => {
-          this.isCreatingClient = false;
+          this.errorMessage =
+            'Não foi possível criar o cliente.';
         },
       });
   }
 
+  onFilesSelected(
+    event: Event,
+  ): void {
+    const input =
+      event.target as HTMLInputElement;
+
+    const files =
+      input.files
+        ? Array.from(input.files)
+        : [];
+
+    if (!files.length) {
+      return;
+    }
+
+    const existingFileKeys =
+      new Set(
+        this.selectedFiles.map(
+          (file) =>
+            this.getFileKey(file),
+        ),
+      );
+
+    const newFiles =
+      files.filter(
+        (file) =>
+          !existingFileKeys.has(
+            this.getFileKey(file),
+          ),
+      );
+
+    this.selectedFiles = [
+      ...this.selectedFiles,
+      ...newFiles,
+    ];
+
+    input.value = '';
+  }
+
+  removeSelectedFile(
+    index: number,
+  ): void {
+    this.selectedFiles =
+      this.selectedFiles.filter(
+        (_, fileIndex) =>
+          fileIndex !== index,
+      );
+  }
+
+  clearSelectedFiles(): void {
+    this.selectedFiles = [];
+  }
+
+  formatFileSize(
+    size: number,
+  ): string {
+    if (size < 1024) {
+      return `${size} B`;
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(
+        size / 1024
+      ).toFixed(1)} KB`;
+    }
+
+    return `${(
+      size /
+      (1024 * 1024)
+    ).toFixed(1)} MB`;
+  }
+
   createContract(): void {
     if (!this.client) {
-      this.errorMessage = 'É necessário identificar ou criar o cliente.';
+      this.errorMessage =
+        'É necessário identificar ou criar o cliente.';
+
       return;
     }
 
-    const currentUser = this.auth.getCurrentUser();
+    const currentUser =
+      this.auth.getCurrentUser() as
+        | CurrentUserWithTeams
+        | null;
 
     if (!currentUser?.id) {
-      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
+      this.errorMessage =
+        'Não foi possível identificar o utilizador autenticado.';
+
       return;
     }
 
-    const contractPower = this.getContractPowerValue();
-
-    const teams = currentUser.teams?.map((team) => team.id) || [];
-
-    const payload: Record<string, unknown> = {
-      clientId: this.client.id,
-      companyId: this.contractForm.companyId,
-      nomeClienteEmpresa: this.client.name,
-      nif: this.client.nif,
-      userId: currentUser.id,
-      teams,
-      estado: this.contractForm.estado,
-    };
-
-    this.addIfFilled(payload, 'tipoSegmento', this.contractForm.tipoSegmento);
-    this.addIfFilled(payload, 'tipoProduto', this.contractForm.tipoProduto);
-    this.addIfFilled(payload, 'contratacao', this.contractForm.contratacao);
-
-    if (this.shouldShowLuzFields()) {
-      this.addIfFilled(payload, 'tipoContratacaoLuz', this.contractForm.tipoContratacaoLuz);
+    if (this.isLightLayout()) {
+      this.contractForm.estado =
+        'Pedido de Chamada';
     }
 
-    if (this.shouldShowGasFields()) {
-      this.addIfFilled(payload, 'tipoContratacaoGas', this.contractForm.tipoContratacaoGas);
-    }
-
-    this.addIfFilled(payload, 'controleQualidade', this.contractForm.controleQualidade);
-
-    this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE);
-
-    this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE);
-
-    this.addIfFilled(payload, 'agendamento', this.contractForm.agendamento);
-    this.addIfFilled(payload, 'dataAssinatura', this.contractForm.dataAssinatura);
-    this.addIfFilled(payload, 'dataContrato', this.contractForm.dataContrato);
-    this.addIfFilled(payload, 'dataRegisto', this.contractForm.dataRegisto);
-    this.addIfFilled(payload, 'dataAtivacaoCPE', this.contractForm.dataAtivacaoCPE);
-    this.addIfFilled(payload, 'dataBaixaCPE', this.contractForm.dataBaixaCPE);
-    this.addIfFilled(payload, 'dataAtivacaoCUI', this.contractForm.dataAtivacaoCUI);
-    this.addIfFilled(payload, 'dataBaixaCUI', this.contractForm.dataBaixaCUI);
-
-    this.addIfFilled(payload, 'telefone', this.contractForm.telefone);
-    this.addIfFilled(payload, 'email', this.contractForm.email);
-    this.addIfFilled(payload, 'cae', this.contractForm.cae);
-    this.addIfFilled(payload, 'crc', this.contractForm.crc);
-
-    this.addIfFilled(payload, 'moradaInstalacao', this.getMoradaInstalacao());
-    this.addIfFilled(payload, 'moradaFaturacao', this.getMoradaFaturacao());
-
-    this.addBoolean(payload, 'faturaEletronica', this.contractForm.faturaEletronica);
-
-    this.addBoolean(payload, 'sva', this.contractForm.sva);
-
-    this.addBoolean(payload, 'debitoDireto', this.contractForm.debitoDireto);
-
-    this.addIfFilled(payload, 'iban', this.contractForm.iban);
-
-    const campaign =
-      this.campaignSelectionMode === 'other'
-        ? this.customCampaign.trim()
-        : this.contractForm.campanha;
-
-    this.addIfFilled(payload, 'campanha', campaign);
-
-    this.addIfFilled(payload, 'antigaComercializadora', this.contractForm.antigaComercializadora);
-    this.addIfFilled(payload, 'cpe', this.contractForm.cpe);
-    this.addIfFilled(payload, 'cui', this.contractForm.cui);
-    this.addIfFilled(payload, 'potencia', contractPower);
-
-    const gasLevel =
-      this.contractForm.escalao === OTHER_GAS_LEVEL
-        ? this.customGasLevel
-        : this.contractForm.escalao;
-
-    this.addIfFilled(payload, 'escalao', gasLevel);
-
-    this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
-    this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
-    this.addIfFilled(payload, 'observacoes', this.contractForm.observacoes);
+    const payload =
+      this.buildContractPayload(
+        currentUser,
+      );
 
     this.isCreatingContract = true;
+    this.isUploadingDocuments = false;
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.repsolContractService.createRepsolContract(payload as any).subscribe({
-      next: (contract) => {
-        this.router.navigate(['/home/contracts/repsol', contract.id]);
-      },
-      error: (error) => {
-        this.errorMessage =
-          error?.error?.details?.join(' ') ||
-          error?.error?.message ||
-          'Não foi possível criar o contrato Repsol.';
-      },
-      complete: () => {
-        this.isCreatingContract = false;
-      },
-    });
+    let createdContract:
+      RepsolContractDetail | null = null;
+
+    this.repsolContractService
+      .createRepsolContract(payload)
+      .pipe(
+        tap((contract) => {
+          createdContract = contract;
+        }),
+
+        switchMap((contract) => {
+          if (
+            !this.selectedFiles.length
+          ) {
+            return of(contract);
+          }
+
+          this.isUploadingDocuments =
+            true;
+
+          return this.repsolContractService
+            .uploadAttachments(
+              contract.id,
+              this.selectedFiles,
+            )
+            .pipe(
+              tap(() => {
+                this.isUploadingDocuments =
+                  false;
+              }),
+
+              catchError((error) => {
+                this.isUploadingDocuments =
+                  false;
+
+                this.errorMessage =
+                  error?.error?.message ||
+                  'O contrato foi criado, mas não foi possível carregar os documentos.';
+
+                return EMPTY;
+              }),
+            );
+        }),
+
+        finalize(() => {
+          this.isCreatingContract = false;
+          this.isUploadingDocuments = false;
+        }),
+      )
+      .subscribe({
+        next: (contract) => {
+          this.successMessage =
+            this.selectedFiles.length
+              ? 'Contrato e documentos criados com sucesso.'
+              : 'Contrato criado com sucesso.';
+
+          this.router.navigate([
+            '/home/contracts/repsol',
+            contract.id,
+          ]);
+        },
+
+        error: (error) => {
+          this.errorMessage =
+            error?.error?.details?.join(
+              ' ',
+            ) ||
+            error?.error?.message ||
+            'Não foi possível criar o contrato Repsol.';
+        },
+
+        complete: () => {
+          if (
+            createdContract &&
+            this.errorMessage.includes(
+              'O contrato foi criado',
+            )
+          ) {
+            this.successMessage =
+              `Contrato ${createdContract.id} criado com sucesso.`;
+          }
+        },
+      });
   }
 
   shouldShowLuzFields(): boolean {
-    return this.contractForm.tipoProduto === 'Luz' || this.contractForm.tipoProduto === 'Luz + Gás';
+    return (
+      this.contractForm
+        .tipoProduto === 'Luz' ||
+      this.contractForm
+        .tipoProduto === 'Luz + Gás'
+    );
   }
 
   shouldShowGasFields(): boolean {
-    return this.contractForm.tipoProduto === 'Gás' || this.contractForm.tipoProduto === 'Luz + Gás';
+    return (
+      this.contractForm
+        .tipoProduto === 'Gás' ||
+      this.contractForm
+        .tipoProduto === 'Luz + Gás'
+    );
   }
 
   shouldShowBillingAddress(): boolean {
-    return this.contractForm.moradaFaturacaoSelecao === 'Outra';
+    return (
+      this.contractForm
+        .moradaFaturacaoSelecao ===
+      'Outra'
+    );
   }
 
-  private getContractPowerValue(): string | number {
-    return this.contractForm.potencia === OTHER_POWER
-      ? this.customPower!
-      : this.contractForm.potencia;
+  formatPowerValue(
+    power: number,
+  ): string {
+    return power.toFixed(2);
+  }
+
+  private buildContractPayload(
+    currentUser: CurrentUserWithTeams,
+  ): CreateRepsolContractRequest {
+    if (!this.client) {
+      throw new Error(
+        'Cliente não identificado.',
+      );
+    }
+
+    const teams =
+      currentUser.teams?.map(
+        (team) => team.id,
+      ) || [];
+
+    const estado:
+      RepsolContractStatus =
+        this.isLightLayout()
+          ? 'Pedido de Chamada'
+          : this.contractForm.estado;
+
+    const payload:
+      CreateRepsolContractRequest = {
+        clientId: this.client.id,
+        companyId:
+          this.contractForm.companyId,
+
+        nomeClienteEmpresa:
+          this.client.name,
+
+        nif: this.client.nif,
+
+        userId: currentUser.id!,
+
+        teams,
+
+        estado,
+      };
+
+    this.addSharedFields(payload);
+
+    if (this.isProLayout()) {
+      this.addProFields(payload);
+    }
+
+    return payload;
+  }
+
+  private addSharedFields(
+    payload:
+      CreateRepsolContractRequest,
+  ): void {
+    this.addIfFilled(
+      payload,
+      'tipoSegmento',
+      this.contractForm
+        .tipoSegmento,
+    );
+
+    this.addIfFilled(
+      payload,
+      'tipoProduto',
+      this.contractForm
+        .tipoProduto,
+    );
+
+    this.addIfFilled(
+      payload,
+      'contratacao',
+      this.contractForm
+        .contratacao,
+    );
+
+    this.addIfFilled(
+      payload,
+      'agendamento',
+      this.contractForm
+        .agendamento,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataAssinatura',
+      this.contractForm
+        .dataAssinatura,
+    );
+
+    this.addIfFilled(
+      payload,
+      'telefone',
+      this.contractForm.telefone,
+    );
+
+    this.addBoolean(
+      payload,
+      'faturaEletronica',
+      this.contractForm
+        .faturaEletronica,
+    );
+
+    this.addBoolean(
+      payload,
+      'sva',
+      this.contractForm.sva,
+    );
+
+    this.addBoolean(
+      payload,
+      'debitoDireto',
+      this.contractForm
+        .debitoDireto,
+    );
+
+    this.addIfFilled(
+      payload,
+      'iban',
+      this.contractForm.iban
+        .trim(),
+    );
+
+    const campaign =
+      this.campaignSelectionMode ===
+      'other'
+        ? this.customCampaign.trim()
+        : this.contractForm
+            .campanha;
+
+    this.addIfFilled(
+      payload,
+      'campanha',
+      campaign,
+    );
+
+    this.addIfFilled(
+      payload,
+      'observacoes',
+      this.contractForm
+        .observacoes.trim(),
+    );
+  }
+
+  private addProFields(
+    payload:
+      CreateRepsolContractRequest,
+  ): void {
+    if (
+      this.shouldShowLuzFields()
+    ) {
+      this.addIfFilled(
+        payload,
+        'tipoContratacaoLuz',
+        this.contractForm
+          .tipoContratacaoLuz,
+      );
+    }
+
+    if (
+      this.shouldShowGasFields()
+    ) {
+      this.addIfFilled(
+        payload,
+        'tipoContratacaoGas',
+        this.contractForm
+          .tipoContratacaoGas,
+      );
+    }
+
+    this.addIfFilled(
+      payload,
+      'controleQualidade',
+      this.contractForm
+        .controleQualidade,
+    );
+
+    this.addIfFilled(
+      payload,
+      'codigoRegistoCE',
+      this.contractForm
+        .codigoRegistoCE,
+    );
+
+    this.addIfFilled(
+      payload,
+      'nomeRegistoCE',
+      this.contractForm
+        .nomeRegistoCE,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataContrato',
+      this.contractForm
+        .dataContrato,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataRegisto',
+      this.contractForm
+        .dataRegisto,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataAtivacaoCPE',
+      this.contractForm
+        .dataAtivacaoCPE,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataBaixaCPE',
+      this.contractForm
+        .dataBaixaCPE,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataAtivacaoCUI',
+      this.contractForm
+        .dataAtivacaoCUI,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataBaixaCUI',
+      this.contractForm
+        .dataBaixaCUI,
+    );
+
+    this.addIfFilled(
+      payload,
+      'email',
+      this.contractForm.email,
+    );
+
+    this.addIfFilled(
+      payload,
+      'cae',
+      this.contractForm.cae,
+    );
+
+    this.addIfFilled(
+      payload,
+      'crc',
+      this.contractForm.crc,
+    );
+
+    this.addIfFilled(
+      payload,
+      'moradaInstalacao',
+      this.getMoradaInstalacao(),
+    );
+
+    this.addIfFilled(
+      payload,
+      'moradaFaturacao',
+      this.getMoradaFaturacao(),
+    );
+
+    this.addIfFilled(
+      payload,
+      'antigaComercializadora',
+      this.contractForm
+        .antigaComercializadora,
+    );
+
+    this.addIfFilled(
+      payload,
+      'cpe',
+      this.contractForm.cpe,
+    );
+
+    this.addIfFilled(
+      payload,
+      'cui',
+      this.contractForm.cui,
+    );
+
+    this.addIfFilled(
+      payload,
+      'potencia',
+      this.getContractPowerValue(),
+    );
+
+    const gasLevel =
+      this.contractForm.escalao ===
+      OTHER_GAS_LEVEL
+        ? this.customGasLevel
+        : this.contractForm
+            .escalao;
+
+    this.addIfFilled(
+      payload,
+      'escalao',
+      gasLevel,
+    );
+
+    this.addIfFilled(
+      payload,
+      'cicloHorario',
+      this.contractForm
+        .cicloHorario,
+    );
+
+    this.addIfFilled(
+      payload,
+      'nivelTensao',
+      this.contractForm
+        .nivelTensao,
+    );
+  }
+
+  private getContractPowerValue():
+    | string
+    | number
+    | null {
+    if (
+      this.contractForm.potencia ===
+      OTHER_POWER
+    ) {
+      return this.customPower;
+    }
+
+    return this.contractForm
+      .potencia;
   }
 
   private buildAddress(
@@ -410,49 +985,113 @@ export class RepsolContractCreate implements OnInit {
     codigoPostal: string,
     pais: string,
   ): string {
-    return [rua, cidade, distrito, codigoPostal, pais]
-      .map((value) => value.trim())
+    return [
+      rua,
+      cidade,
+      distrito,
+      codigoPostal,
+      pais,
+    ]
+      .map((value) =>
+        value.trim(),
+      )
       .filter(Boolean)
       .join(', ');
   }
 
-  private getMoradaInstalacao(): string {
+  private getMoradaInstalacao():
+    string {
     return this.buildAddress(
-      this.contractForm.moradaInstalacaoRua,
-      this.contractForm.moradaInstalacaoCidade,
-      this.contractForm.moradaInstalacaoDistrito,
-      this.contractForm.moradaInstalacaoCodigoPostal,
-      this.contractForm.moradaInstalacaoPais,
+      this.contractForm
+        .moradaInstalacaoRua,
+
+      this.contractForm
+        .moradaInstalacaoCidade,
+
+      this.contractForm
+        .moradaInstalacaoDistrito,
+
+      this.contractForm
+        .moradaInstalacaoCodigoPostal,
+
+      this.contractForm
+        .moradaInstalacaoPais,
     );
   }
 
-  private getMoradaFaturacao(): string {
-    if (this.contractForm.moradaFaturacaoSelecao === 'Igual à de Instalação') {
+  private getMoradaFaturacao():
+    string {
+    if (
+      this.contractForm
+        .moradaFaturacaoSelecao ===
+      'Igual à de Instalação'
+    ) {
       return this.getMoradaInstalacao();
     }
 
     return this.buildAddress(
-      this.contractForm.moradaFaturacaoRua,
-      this.contractForm.moradaFaturacaoCidade,
-      this.contractForm.moradaFaturacaoDistrito,
-      this.contractForm.moradaFaturacaoCodigoPostal,
-      this.contractForm.moradaFaturacaoPais,
+      this.contractForm
+        .moradaFaturacaoRua,
+
+      this.contractForm
+        .moradaFaturacaoCidade,
+
+      this.contractForm
+        .moradaFaturacaoDistrito,
+
+      this.contractForm
+        .moradaFaturacaoCodigoPostal,
+
+      this.contractForm
+        .moradaFaturacaoPais,
     );
   }
 
-  private addIfFilled(payload: Record<string, unknown>, key: string, value: unknown): void {
-    if (value === null || value === undefined || value === '') {
+  private addIfFilled<
+    T extends object,
+  >(
+    payload: T,
+    key: keyof T,
+    value: unknown,
+  ): void {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
       return;
     }
 
-    payload[key] = value;
+    (
+      payload as Record<
+        string,
+        unknown
+      >
+    )[key as string] = value;
   }
 
-  private addBoolean(payload: Record<string, unknown>, key: string, value: boolean): void {
-    payload[key] = value;
+  private addBoolean<
+    T extends object,
+  >(
+    payload: T,
+    key: keyof T,
+    value: boolean,
+  ): void {
+    (
+      payload as Record<
+        string,
+        unknown
+      >
+    )[key as string] = value;
   }
 
-  formatPowerValue(power: number): string {
-    return power.toFixed(2);
+  private getFileKey(
+    file: File,
+  ): string {
+    return [
+      file.name,
+      file.size,
+      file.lastModified,
+    ].join('-');
   }
 }
