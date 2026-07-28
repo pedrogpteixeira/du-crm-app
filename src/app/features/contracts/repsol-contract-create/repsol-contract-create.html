@@ -120,6 +120,140 @@
   <ng-container *ngIf="client">
     <article class="card">
       <div class="section-title">
+        Atribuição
+      </div>
+
+      <p
+        class="error-message"
+        *ngIf="assignmentErrorMessage"
+      >
+        {{ assignmentErrorMessage }}
+      </p>
+
+      <p
+        class="muted"
+        *ngIf="isLoadingAssignment"
+      >
+        A carregar utilizadores e equipas...
+      </p>
+
+      <div
+        class="form-grid two-columns"
+        *ngIf="!isLoadingAssignment"
+      >
+        <label>
+          Utilizador atribuído *
+
+          <select
+            [(ngModel)]="assignedUserId"
+            [disabled]="!isSuperAdmin()"
+            (ngModelChange)="
+              onAssignedUserChange()
+            "
+          >
+            <option
+              value=""
+              disabled
+            >
+              Selecionar utilizador
+            </option>
+
+            <option
+              *ngFor="
+                let user of assignableUsers
+              "
+              [value]="user.id"
+            >
+              {{ user.name }}
+              — {{ user.username }}
+            </option>
+          </select>
+        </label>
+
+        <div class="team-selection-field">
+          <span class="field-label">
+            Equipas
+          </span>
+
+          <div
+            class="selected-team-tags"
+            *ngIf="selectedTeams.length"
+          >
+            <span
+              class="team-tag"
+              *ngFor="let team of selectedTeams"
+            >
+              {{ team.name }}
+
+              <button
+                type="button"
+                class="remove-team"
+                [attr.aria-label]="
+                  'Remover equipa ' + team.name
+                "
+                (click)="
+                  removeSelectedTeam(team.id)
+                "
+              >
+                ×
+              </button>
+            </span>
+          </div>
+
+          <div class="team-add-row">
+            <select
+              [(ngModel)]="teamToAddId"
+              [disabled]="
+                !teamsAvailableToAdd.length
+              "
+            >
+              <option value="">
+                {{
+                  teamsAvailableToAdd.length
+                    ? 'Adicionar equipa...'
+                    : 'Sem mais equipas disponíveis'
+                }}
+              </option>
+
+              <option
+                *ngFor="
+                  let team of teamsAvailableToAdd
+                "
+                [value]="team.id"
+              >
+                {{ team.name }}
+              </option>
+            </select>
+
+            <button
+              type="button"
+              [disabled]="!teamToAddId"
+              (click)="addSelectedTeam()"
+            >
+              Adicionar
+            </button>
+          </div>
+
+          <p
+            class="muted no-teams-message"
+            *ngIf="
+              !selectedTeams.length &&
+              !availableTeams.length
+            "
+          >
+            Não existem equipas disponíveis.
+          </p>
+        </div>
+      </div>
+
+      <p class="assignment-helper">
+        As equipas internas obrigatórias são
+        adicionadas automaticamente ao contrato.
+      </p>
+    </article>
+
+    <article class="card">
+      <div class="section-title">
         Dados do contrato
       </div>
 
@@ -427,7 +561,7 @@
         </label>
 
         <label>
-          Telefone
+          Telefone *
 
           <input
             type="number"
@@ -704,7 +838,7 @@
 
       <div class="form-grid two-columns">
         <label>
-          Tipo de campanha
+          Tipo de campanha *
 
           <select
             [(ngModel)]="
@@ -727,7 +861,7 @@
             'existing'
           "
         >
-          Campanha
+          Campanha *
 
           <select
             [(ngModel)]="
@@ -755,7 +889,7 @@
             'other'
           "
         >
-          Nome da campanha
+          Nome da campanha *
 
           <input
             type="text"

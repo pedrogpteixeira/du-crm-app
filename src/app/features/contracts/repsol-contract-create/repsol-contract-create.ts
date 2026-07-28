@@ -11,6 +11,7 @@ import {
   EMPTY,
   catchError,
   finalize,
+  forkJoin,
   map,
   of,
   switchMap,
@@ -37,6 +38,16 @@ import {
 } from '../../../core/services/repsol-contract';
 
 import { Auth } from '../../../core/services/auth';
+
+import {
+  ProfileUser,
+  UserService,
+} from '../../../core/services/user';
+
+import {
+  Team,
+  TeamService,
+} from '../../../core/services/team';
 
 import {
   ContractLayout,
@@ -77,14 +88,6 @@ type ContractPowerSelection =
   | string
   | typeof OTHER_POWER;
 
-interface CurrentUserWithTeams {
-  id?: string;
-
-  teams?: Array<{
-    id: string;
-  }>;
-}
-
 @Component({
   selector: 'app-repsol-contract-create',
   imports: [
@@ -109,6 +112,12 @@ export class RepsolContractCreate implements OnInit {
   private readonly preferencesService =
     inject(PreferencesService);
 
+  private readonly userService =
+    inject(UserService);
+
+  private readonly teamService =
+    inject(TeamService);
+
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
 
@@ -119,6 +128,17 @@ export class RepsolContractCreate implements OnInit {
   client: Client | null = null;
 
   campaigns: Campaign[] = [];
+
+  currentUser: ProfileUser | null = null;
+  assignableUsers: ProfileUser[] = [];
+  availableTeams: Team[] = [];
+
+  assignedUserId = '';
+  selectedTeamIds: string[] = [];
+  teamToAddId = '';
+
+  isLoadingAssignment = false;
+  assignmentErrorMessage = '';
 
   selectedFiles: File[] = [];
 
@@ -289,6 +309,7 @@ export class RepsolContractCreate implements OnInit {
   ngOnInit(): void {
     this.loadContractLayout();
     this.loadCampaigns();
+    this.loadAssignmentData();
   }
 
   isLightLayout(): boolean {
@@ -299,6 +320,78 @@ export class RepsolContractCreate implements OnInit {
     return this.contractLayout === 'pro';
   }
 
+
+  isSuperAdmin(): boolean {
+    return Boolean(
+      this.currentUser?.role.includes(
+        'Super Admin',
+      ),
+    );
+  }
+
+  get selectedTeams(): Team[] {
+    return this.selectedTeamIds
+      .map((teamId) =>
+        this.availableTeams.find(
+          (team) => team.id === teamId,
+        ),
+      )
+      .filter((team): team is Team =>
+        Boolean(team),
+      );
+  }
+
+  get teamsAvailableToAdd(): Team[] {
+    return this.availableTeams.filter(
+      (team) =>
+        !this.selectedTeamIds.includes(
+          team.id,
+        ),
+    );
+  }
+
+  onAssignedUserChange(): void {
+    if (!this.isSuperAdmin()) {
+      return;
+    }
+
+    const selectedUser =
+      this.assignableUsers.find(
+        (user) =>
+          user.id === this.assignedUserId,
+      );
+
+    this.teamToAddId = '';
+    this.selectedTeamIds = selectedUser
+      ? this.resolveInitialTeamIds(
+          selectedUser,
+        )
+      : [];
+  }
+
+  addSelectedTeam(): void {
+    if (!this.teamToAddId) {
+      return;
+    }
+
+    this.selectedTeamIds = [
+      ...new Set([
+        ...this.selectedTeamIds,
+        this.teamToAddId,
+      ]),
+    ];
+
+    this.teamToAddId = '';
+  }
+
+  removeSelectedTeam(teamId: string): void {
+    this.selectedTeamIds =
+      this.selectedTeamIds.filter(
+        (selectedTeamId) =>
+          selectedTeamId !== teamId,
+      );
+  }
+
   private loadContractLayout(): void {
     this.contractLayout =
       this.preferencesService.getContractLayout();
@@ -307,6 +400,123 @@ export class RepsolContractCreate implements OnInit {
       this.contractForm.estado =
         'Pedido de Chamada';
     }
+  }
+
+
+  private loadAssignmentData(): void {
+    const authenticatedUser =
+      this.auth.getCurrentUser() as
+        | Partial<ProfileUser>
+        | null;
+
+    if (!authenticatedUser?.id) {
+      this.assignmentErrorMessage =
+        'Não foi possível identificar o utilizador autenticado.';
+
+      return;
+    }
+
+    this.isLoadingAssignment = true;
+    this.assignmentErrorMessage = '';
+
+    this.userService
+      .getUserById(authenticatedUser.id)
+      .pipe(
+        switchMap((currentUser) => {
+          this.currentUser = currentUser;
+
+          if (
+            currentUser.role.includes(
+              'Super Admin',
+            )
+          ) {
+            return forkJoin({
+              users: this.userService.getUsers(),
+              teams: this.teamService.getTeams(),
+            });
+          }
+
+          const userTeams: Team[] =
+            currentUser.teams.map(
+              (team) => ({
+                id: team.id,
+                name: team.name,
+                role: '',
+                positionList: [],
+                active: true,
+              }),
+            );
+
+          return of({
+            users: [currentUser],
+            teams: userTeams,
+          });
+        }),
+        finalize(() => {
+          this.isLoadingAssignment = false;
+        }),
+      )
+      .subscribe({
+        next: ({ users, teams }) => {
+          this.assignableUsers =
+            users.filter(
+              (user) => user.active,
+            );
+
+          this.availableTeams =
+            teams.filter(
+              (team) => team.active,
+            );
+
+          if (this.currentUser) {
+            this.initializeAssignment(
+              this.currentUser,
+            );
+          }
+        },
+        error: () => {
+          this.assignmentErrorMessage =
+            'Não foi possível carregar os dados de atribuição do contrato.';
+        },
+      });
+  }
+
+  private initializeAssignment(
+    user: ProfileUser,
+  ): void {
+    this.assignedUserId = user.id;
+    this.selectedTeamIds =
+      this.resolveInitialTeamIds(user);
+    this.teamToAddId = '';
+  }
+
+  private resolveInitialTeamIds(
+    user: ProfileUser,
+  ): string[] {
+    if (user.defaultTeam?.id) {
+      return [user.defaultTeam.id];
+    }
+
+    return user.teams[0]?.id
+      ? [user.teams[0].id]
+      : [];
+  }
+
+  private resolveContractTeamIds(): string[] {
+    const requiredTeamIds = [
+      environment.EQUIPA_CRM_ID,
+      environment.EQUIPA_DU_ID,
+    ].filter(
+      (teamId): teamId is string =>
+        Boolean(teamId),
+    );
+
+    return [
+      ...new Set([
+        ...this.selectedTeamIds,
+        ...requiredTeamIds,
+      ]),
+    ];
   }
 
   private loadCampaigns(): void {
@@ -507,14 +717,35 @@ export class RepsolContractCreate implements OnInit {
       return;
     }
 
-    const currentUser =
-      this.auth.getCurrentUser() as
-        | CurrentUserWithTeams
-        | null;
-
-    if (!currentUser?.id) {
+    if (!this.currentUser?.id) {
       this.errorMessage =
         'Não foi possível identificar o utilizador autenticado.';
+
+      return;
+    }
+
+    if (!this.assignedUserId) {
+      this.errorMessage =
+        'É obrigatório selecionar o utilizador atribuído.';
+
+      return;
+    }
+
+    if (!this.contractForm.telefone) {
+      this.errorMessage =
+        'O telefone é obrigatório.';
+
+      return;
+    }
+
+    const campaignIsMissing =
+      this.campaignSelectionMode === 'existing'
+        ? !this.contractForm.campanha
+        : !this.customCampaign.trim();
+
+    if (campaignIsMissing) {
+      this.errorMessage =
+        'É obrigatório selecionar ou indicar uma campanha.';
 
       return;
     }
@@ -525,9 +756,7 @@ export class RepsolContractCreate implements OnInit {
     }
 
     const payload =
-      this.buildContractPayload(
-        currentUser,
-      );
+      this.buildContractPayload();
 
     this.isCreatingContract = true;
     this.isUploadingDocuments = false;
@@ -651,19 +880,14 @@ export class RepsolContractCreate implements OnInit {
     return power.toFixed(2);
   }
 
-  private buildContractPayload(
-    currentUser: CurrentUserWithTeams,
-  ): CreateRepsolContractRequest {
+  private buildContractPayload():
+    CreateRepsolContractRequest {
     if (!this.client) {
       throw new Error(
         'Cliente não identificado.',
       );
     }
 
-    const teams =
-      currentUser.teams?.map(
-        (team) => team.id,
-      ) || [];
 
     const estado:
       RepsolContractStatus =
@@ -682,9 +906,10 @@ export class RepsolContractCreate implements OnInit {
 
         nif: this.client.nif,
 
-        userId: currentUser.id!,
+        userId: this.assignedUserId,
 
-        teams,
+        teams:
+          this.resolveContractTeamIds(),
 
         estado,
       };

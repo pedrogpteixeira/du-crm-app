@@ -71,6 +71,7 @@ textarea {
   font-size: 14px;
   outline: none;
   background: #ffffff;
+  box-sizing: border-box;
 }
 
 input,
@@ -93,8 +94,10 @@ textarea:focus {
 }
 
 input:disabled,
+select:disabled,
 input[readonly] {
   background: #f8fafc;
+  color: #64748b;
   cursor: not-allowed;
 }
 
@@ -104,6 +107,7 @@ input[readonly] {
 
   input {
     flex: 1;
+    min-width: 0;
   }
 }
 
@@ -113,6 +117,7 @@ button {
   background: #2f4050;
   color: #ffffff;
   padding: 11px 18px;
+  font-family: inherit;
   font-weight: 800;
   cursor: pointer;
 }
@@ -171,6 +176,7 @@ button:disabled {
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 800;
+  margin: 0;
 }
 
 .success-message {
@@ -181,6 +187,7 @@ button:disabled {
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 800;
+  margin: 0;
 }
 
 .actions {
@@ -207,12 +214,14 @@ button:disabled {
   gap: 12px;
 }
 
-.final-actions button.secondary {
+.final-actions button.secondary,
+.documents-grid button.secondary {
   background: #e2e8f0;
   color: #243646;
 }
 
-.final-actions button.secondary:hover {
+.final-actions button.secondary:hover,
+.documents-grid button.secondary:hover {
   background: #cbd5e1;
 }
 
@@ -223,6 +232,7 @@ button:disabled {
 
   label {
     width: 320px;
+    max-width: 100%;
   }
 }
 
@@ -258,20 +268,14 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   width: fit-content;
-
   border: 0;
   border-radius: 12px;
-
   background: #2f4050;
   color: #ffffff;
-
   padding: 11px 18px;
-
   font-size: 13px;
   font-weight: 800;
-
   cursor: pointer;
 
   input {
@@ -293,7 +297,6 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 10px;
-
   margin-top: 18px;
 }
 
@@ -302,17 +305,13 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-
   padding: 12px 14px;
-
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-
   background: #f8fafc;
 
   div {
     min-width: 0;
-
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -335,13 +334,158 @@ button:disabled {
 
 .remove-file {
   flex-shrink: 0;
-
   background: #fee2e2;
   color: #dc2626;
-
   padding: 8px 12px;
 
   &:hover {
     background: #fecaca;
+  }
+}
+
+/* =========================
+   ATRIBUIÇÃO E EQUIPAS
+========================= */
+
+.team-selection-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selected-team-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.team-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid rgba(0, 141, 177, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 141, 177, 0.1);
+  color: #006f8c;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.remove-team {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #006f8c;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+
+  &:hover {
+    background: rgba(0, 141, 177, 0.16);
+    color: #00566d;
+  }
+}
+
+.team-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+
+  select {
+    min-width: 0;
+  }
+
+  button {
+    min-height: 42px;
+    white-space: nowrap;
+  }
+}
+
+.no-teams-message {
+  margin: 0;
+}
+
+.assignment-helper {
+  margin: 16px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+  .three-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .address-grid.two-addresses {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .create-contract-page {
+    gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .two-columns,
+  .three-columns,
+  .address-row {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-field,
+  .documents-grid,
+  .final-actions {
+    flex-direction: column;
+  }
+
+  .inline-field button,
+  .documents-grid button,
+  .file-upload-button,
+  .final-actions button {
+    width: 100%;
+  }
+
+  .team-add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .team-add-row button {
+    width: 100%;
+  }
+
+  .selected-file {
+    align-items: flex-start;
   }
 }

@@ -4,5 +4,7 @@ export const environment = {
   apiUrl: 'http://localhost:5000',
   socketUrl: 'http://localhost:5000',
 
-  repsolId: 'cmp_njRqliQBpR'
+  repsolId: 'cmp_njRqliQBpR',
+  EQUIPA_CRM_ID: 'tea_cvktr8yba0',
+  EQUIPA_DU_ID: 'tea_SeFFNTVrG_'
 };
