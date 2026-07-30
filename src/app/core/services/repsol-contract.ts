@@ -52,7 +52,7 @@ export interface RepsolContractFollower {
 }
 
 export interface RepsolContractCampaign {
-  id: string;
+  id: string | null;
   name: string;
 }
 
@@ -102,7 +102,7 @@ export interface RepsolContractDetail {
 
   cpe: string;
   cui: string;
-  potencia: string;
+  potencia: string | number;
   escalao?: number;
   cicloHorario: string;
   nivelTensao: string;
@@ -111,7 +111,6 @@ export interface RepsolContractDetail {
   observacoes: string;
 
   user: RepsolContractUser | null;
-
   teams: RepsolContractTeam[];
   followers: RepsolContractFollower[];
 
@@ -126,7 +125,6 @@ export interface CreateRepsolContractRequest {
   tipoSegmento?: string;
   tipoProduto?: string;
   contratacao?: string;
-
   tipoContratacaoLuz?: string;
   tipoContratacaoGas?: string;
 
@@ -147,7 +145,6 @@ export interface CreateRepsolContractRequest {
 
   nomeClienteEmpresa: string;
   nif: number;
-
   telefone?: number;
   email?: string;
   cae?: string;
@@ -166,7 +163,7 @@ export interface CreateRepsolContractRequest {
 
   cpe?: string;
   cui?: string;
-  potencia?: string;
+  potencia?: string | number;
   escalao?: number;
   cicloHorario?: string;
   nivelTensao?: string;
@@ -176,6 +173,25 @@ export interface CreateRepsolContractRequest {
   userId: string;
   teams?: string[];
 }
+
+export type UpdateRepsolContractRequest = Partial<
+  Omit<
+    CreateRepsolContractRequest,
+    | 'clientId'
+    | 'companyId'
+    | 'userId'
+    | 'teams'
+    | 'nif'
+    | 'telefone'
+    | 'potencia'
+    | 'escalao'
+  >
+> & {
+  nif?: number | null;
+  telefone?: number | null;
+  potencia?: string | number | null;
+  escalao?: number | null;
+};
 
 @Injectable({
   providedIn: 'root',
@@ -207,6 +223,16 @@ export class RepsolContractService {
     );
   }
 
+  updateRepsolContract(
+    contractId: string,
+    payload: UpdateRepsolContractRequest,
+  ): Observable<RepsolContractDetail> {
+    return this.http.patch<RepsolContractDetail>(
+      `${this.apiUrl}/api/contracts/repsol/${contractId}`,
+      payload,
+    );
+  }
+
   uploadAttachments(
     contractId: string,
     files: File[],
@@ -220,6 +246,17 @@ export class RepsolContractService {
     return this.http.post<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments`,
       formData,
+    );
+  }
+
+  deleteAttachment(
+    contractId: string,
+    fileName: string,
+  ): Observable<RepsolContractDetail> {
+    return this.http.delete<RepsolContractDetail>(
+      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
+        fileName,
+      )}`,
     );
   }
 
