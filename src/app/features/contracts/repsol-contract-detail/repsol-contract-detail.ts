@@ -6,7 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
@@ -83,6 +83,10 @@ interface AuthenticatedUserLike {
   username?: string;
 }
 
+interface RepsolContractApiShape extends RepsolContractDetailModel {
+  campanha?: string | null;
+}
+
 @Component({
   selector: 'app-repsol-contract-detail',
   imports: [
@@ -109,6 +113,8 @@ export class RepsolContractDetail implements OnInit {
   private suppressNextOwnSocketUpdate = false;
   private ownSocketSuppressionTimer:
     ReturnType<typeof setTimeout> | null = null;
+
+  private readonly router = inject(Router);
 
   contract: RepsolContractDetailModel | null = null;
   campaigns: Campaign[] = [];
@@ -258,6 +264,21 @@ export class RepsolContractDetail implements OnInit {
       )
       .subscribe({
         next: (contract) => {
+          if (!this.hasContractAccess(contract)) {
+            this.contract = null;
+            this.isLoading = false;
+
+            this.showError(
+              'Não tem permissão para aceder a este contrato.',
+            );
+
+            this.router.navigateByUrl('/home', {
+              replaceUrl: true,
+            });
+
+            return;
+          }
+
           this.contract = contract;
           this.initializeEditForm(contract);
           this.loadCampaigns(contract.companyId);
@@ -383,8 +404,11 @@ export class RepsolContractDetail implements OnInit {
           uploadFailed,
           uploadError,
         }) => {
-          this.contract = updatedContract;
-          this.initializeEditForm(updatedContract);
+          const normalizedContract =
+            this.normalizeContractResponse(updatedContract);
+
+          this.contract = normalizedContract;
+          this.initializeEditForm(normalizedContract);
           this.observationDraft = '';
 
           if (uploadFailed) {
@@ -524,7 +548,8 @@ export class RepsolContractDetail implements OnInit {
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = updatedContract;
+          this.contract =
+            this.normalizeContractResponse(updatedContract);
           this.showSuccess(
             `O ficheiro "${document.originalName}" foi removido com sucesso.`,
           );
@@ -802,6 +827,64 @@ export class RepsolContractDetail implements OnInit {
           );
         },
       });
+  }
+
+  private hasContractAccess(
+    contract: RepsolContractDetailModel,
+  ): boolean {
+    if (this.isSuperAdmin) {
+      return true;
+    }
+
+    return (contract.followers ?? []).some((follower: any) => {
+      const followerId =
+        typeof follower === 'string'
+          ? follower
+          : follower.id ?? follower._id ?? follower.userId ?? '';
+
+      return followerId === this.currentUserId;
+    });
+  }
+
+  private normalizeContractResponse(
+    contract: RepsolContractDetailModel,
+  ): RepsolContractDetailModel {
+    const apiContract = contract as RepsolContractApiShape;
+    const rawCampaign = apiContract.campanha?.trim() ?? '';
+
+    if (!rawCampaign) {
+      return contract;
+    }
+
+    if (!rawCampaign.startsWith('cam_')) {
+      return {
+        ...contract,
+        campaign: {
+          id: null,
+          name: rawCampaign,
+        },
+      };
+    }
+
+    const matchedCampaign = this.campaigns.find(
+      (campaign) => campaign.id === rawCampaign,
+    );
+
+    const currentCampaign =
+      this.contract?.campaign?.id === rawCampaign
+        ? this.contract.campaign
+        : null;
+
+    return {
+      ...contract,
+      campaign: {
+        id: rawCampaign,
+        name:
+          matchedCampaign?.name ??
+          currentCampaign?.name ??
+          rawCampaign,
+      },
+    };
   }
 
   private initializeEditForm(

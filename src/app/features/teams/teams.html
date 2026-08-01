@@ -12,11 +12,14 @@
       </p>
     </div>
 
-    <div class="header-actions">
+    <div
+      class="header-actions"
+
+    >
       <button
         type="button"
         class="create-team-button"
-        *ngIf="canCreateTeam"
+        *ngIf="isSuperAdmin"
         (click)="openCreateTeamModal()"
       >
         <span class="material-symbols-rounded">

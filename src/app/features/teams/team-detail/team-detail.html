@@ -13,6 +13,13 @@
     {{ errorMessage }}
   </p>
 
+  <p
+    class="success-message"
+    *ngIf="successMessage"
+  >
+    {{ successMessage }}
+  </p>
+
   <ng-container *ngIf="team">
     <div class="breadcrumb">
       <a routerLink="/home/teams">
@@ -144,63 +151,123 @@
             else noUsers
           "
         >
-          <a
-            class="user-row"
+          <ng-container
             *ngFor="
               let user of users;
+              let userIndex = index;
               trackBy: trackTeamUserById
             "
-            [routerLink]="[
-              '/home/users',
-              user.id
-            ]"
           >
-            <div class="user-cell">
-              <div class="avatar">
-                <img
-                  *ngIf="
-                    getProfilePictureUrl(
-                      user
-                    );
-                    else initials
-                  "
-                  [src]="
-                    getProfilePictureUrl(
-                      user
-                    )
-                  "
-                  [alt]="user.name"
-                />
+            <div
+              class="position-group-divider"
+              *ngIf="
+                isFirstUserOfPosition(
+                  userIndex,
+                  user
+                )
+              "
+            >
+              <span>
+                {{
+                  getPositionGroupLabel(
+                    user
+                  )
+                }}
+              </span>
 
-                <ng-template #initials>
-                  {{
-                    getInitial(
-                      user.name
-                    )
-                  }}
-                </ng-template>
-              </div>
-
-              <div>
-                <strong>
-                  {{ user.name }}
-                </strong>
-
-                <span>
-                  {{
-                    user.role ||
-                    'Sem cargo selecionado'
-                  }}
-                </span>
-              </div>
+              <div></div>
             </div>
 
-            <span
-              class="material-symbols-rounded user-arrow"
+            <div
+              class="user-row"
+              [class.is-removing]="
+                isRemovingUser(user.id)
+              "
             >
-              chevron_right
-            </span>
-          </a>
+              <a
+                class="user-row-link"
+                [routerLink]="[
+                  '/home/users',
+                  user.id
+                ]"
+              >
+                <div class="user-cell">
+                  <div class="avatar">
+                    <img
+                      *ngIf="
+                        getProfilePictureUrl(user);
+                        else initials
+                      "
+                      [src]="
+                        getProfilePictureUrl(user)
+                      "
+                      [alt]="user.name"
+                    />
+
+                    <ng-template #initials>
+                      {{ getInitial(user.name) }}
+                    </ng-template>
+                  </div>
+
+                  <div>
+                    <strong>
+                      {{ user.name }}
+                    </strong>
+
+                    <span>
+                      {{
+                        getTeamUserPositionLabel(
+                          user
+                        )
+                      }}
+                    </span>
+                  </div>
+                </div>
+
+                <span
+                  class="material-symbols-rounded user-arrow"
+                >
+                  chevron_right
+                </span>
+              </a>
+
+              <button
+                type="button"
+                class="remove-user-button"
+                *ngIf="canManageTeamUsers"
+                [disabled]="
+                  isRemovingUser(user.id)
+                "
+                [attr.aria-label]="
+                  'Remover ' + user.name +
+                  ' da equipa'
+                "
+                [attr.title]="
+                  'Remover ' + user.name +
+                  ' da equipa'
+                "
+                (click)="
+                  removeUserFromTeam(user)
+                "
+              >
+                <span
+                  class="button-spinner"
+                  *ngIf="
+                    isRemovingUser(user.id)
+                  "
+                ></span>
+
+                <span
+                  class="material-symbols-rounded"
+                  *ngIf="
+                    !isRemovingUser(user.id)
+                  "
+                >
+                  delete
+                </span>
+              </button>
+            </div>
+          </ng-container>
         </div>
 
         <ng-template #noUsers>
@@ -368,8 +435,7 @@
           filteredAvailableUsers.length
         "
       >
-        <button
-          type="button"
+        <article
           class="available-user"
           *ngFor="
             let user of
@@ -379,67 +445,121 @@
           [class.selected]="
             isUserSelected(user.id)
           "
-          [disabled]="isAddingUser"
-          (click)="
-            toggleUserSelection(
-              user.id
-            )
-          "
         >
-          <div class="avatar">
-            <img
-              *ngIf="
-                getProfilePictureUrl(
-                  user
-                );
-                else availableInitials
-              "
-              [src]="
-                getProfilePictureUrl(
-                  user
-                )
-              "
-              [alt]="user.name"
-            />
+          <button
+            type="button"
+            class="available-user-selector"
+            [disabled]="isAddingUser"
+            (click)="
+              toggleUserSelection(
+                user.id
+              )
+            "
+          >
+            <div class="avatar">
+              <img
+                *ngIf="
+                  getProfilePictureUrl(
+                    user
+                  );
+                  else availableInitials
+                "
+                [src]="
+                  getProfilePictureUrl(
+                    user
+                  )
+                "
+                [alt]="user.name"
+              />
 
-            <ng-template
-              #availableInitials
+              <ng-template
+                #availableInitials
+              >
+                {{
+                  getInitial(
+                    user.name
+                  )
+                }}
+              </ng-template>
+            </div>
+
+            <div class="available-user-info">
+              <strong>
+                {{ user.name }}
+              </strong>
+
+              <span>
+                {{ user.email }}
+              </span>
+
+              <small>
+                Seleciona a posição
+                dentro da equipa
+              </small>
+            </div>
+
+            <span
+              class="selection-indicator material-symbols-rounded"
             >
               {{
-                getInitial(
-                  user.name
-                )
+                isUserSelected(user.id)
+                  ? 'check_circle'
+                  : 'radio_button_unchecked'
               }}
-            </ng-template>
-          </div>
-
-          <div class="available-user-info">
-            <strong>
-              {{ user.name }}
-            </strong>
-
-            <span>
-              {{ user.email }}
             </span>
+          </button>
 
-            <small>
-              {{
-                user.role ||
-                'Sem cargo selecionado'
-              }}
-            </small>
-          </div>
-
-          <span
-            class="selection-indicator material-symbols-rounded"
+          <div
+            class="user-position-field"
+            *ngIf="isUserSelected(user.id)"
           >
-            {{
-              isUserSelected(user.id)
-                ? 'check_circle'
-                : 'radio_button_unchecked'
-            }}
-          </span>
-        </button>
+            <label
+              [for]="
+                'team-position-' + user.id
+              "
+            >
+              Posição na equipa *
+            </label>
+
+            <select
+              [id]="
+                'team-position-' + user.id
+              "
+              [disabled]="isAddingUser"
+              [ngModel]="
+                getSelectedUserPosition(
+                  user.id
+                )
+              "
+              (ngModelChange)="
+                setSelectedUserPosition(
+                  user.id,
+                  $event
+                )
+              "
+            >
+              <option
+                [ngValue]="null"
+                disabled
+              >
+                Selecionar posição
+              </option>
+
+              <option
+                *ngFor="
+                  let position of
+                    team?.positionList;
+                  let positionIndex =
+                    index
+                "
+                [ngValue]="positionIndex"
+              >
+                {{ team?.role }} -
+                {{ position }}
+              </option>
+            </select>
+          </div>
+        </article>
       </div>
 
       <div
@@ -481,7 +601,7 @@
         type="button"
         class="confirm-user-button"
         [disabled]="
-          !selectedUsersCount ||
+          !canSubmitSelectedUsers ||
           isAddingUser
         "
         (click)="addSelectedUsers()"

@@ -14,15 +14,25 @@ export type RepsolContractStatus =
   | 'Documentos Enviados'
   | 'Atribuído';
 
+export interface RepsolContractListUser {
+  id: string;
+  name: string;
+}
+
 export interface RepsolContract {
   id: string;
-  clientId: string;
+
   nomeClienteEmpresa: string;
   nif: number;
+
   estado: RepsolContractStatus;
-  cpe: string;
-  cui: string;
-  nomeRegistoCE: string;
+
+  tipoSegmento?: string;
+  tipoProduto?: string;
+
+  user: RepsolContractListUser | null;
+
+  nomeRegistoCE?: string;
 }
 
 export interface RepsolContractUser {
@@ -41,9 +51,17 @@ export interface RepsolContractDocument {
   _id: string;
 }
 
+export interface RepsolContractTeamVisibility {
+  teamId: string;
+  minimumPositionIndex: number;
+}
+
 export interface RepsolContractTeam {
   id: string;
   name: string;
+  minimumPositionIndex: number;
+  minimumPosition?: string;
+  teamId?: string;
 }
 
 export interface RepsolContractFollower {
@@ -171,7 +189,7 @@ export interface CreateRepsolContractRequest {
   observacoes?: string;
 
   userId: string;
-  teams?: string[];
+  teams?: RepsolContractTeamVisibility[];
 }
 
 export type UpdateRepsolContractRequest = Partial<
@@ -200,9 +218,11 @@ export class RepsolContractService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  getRepsolContracts(): Observable<RepsolContract[]> {
+  getRepsolContracts(
+    userId: string,
+  ): Observable<RepsolContract[]> {
     return this.http.get<RepsolContract[]>(
-      `${this.apiUrl}/api/contracts/repsol`,
+      `${this.apiUrl}/api/contracts/repsol/followers/${userId}`,
     );
   }
 
@@ -240,7 +260,11 @@ export class RepsolContractService {
     const formData = new FormData();
 
     files.forEach((file) => {
-      formData.append('files', file, file.name);
+      formData.append(
+        'files',
+        file,
+        file.name,
+      );
     });
 
     return this.http.post<RepsolContractDetail>(

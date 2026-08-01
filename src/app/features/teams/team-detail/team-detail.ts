@@ -78,15 +78,23 @@ export class TeamDetail implements OnInit {
   filteredAvailableUsers: ProfileUser[] = [];
 
   selectedUserIds: string[] = [];
+
+  selectedUserPositions: Record<
+    string,
+    number | null
+  > = {};
+
   userSearch = '';
 
   isLoading = false;
   isLoadingUsers = false;
   isAddingUser = false;
+  removingUserId = '';
 
   showAddUserModal = false;
 
   errorMessage = '';
+  successMessage = '';
   addUserErrorMessage = '';
 
   ngOnInit(): void {
@@ -111,6 +119,18 @@ export class TeamDetail implements OnInit {
     return this.selectedUserIds.length;
   }
 
+  get canSubmitSelectedUsers(): boolean {
+    return (
+      this.selectedUserIds.length > 0 &&
+      this.selectedUserIds.every(
+        (userId) =>
+          this.hasValidSelectedPosition(
+            userId,
+          ),
+      )
+    );
+  }
+
   loadTeam(teamId: string): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -126,7 +146,13 @@ export class TeamDetail implements OnInit {
       .subscribe({
         next: (response) => {
           this.team = response.team;
-          this.users = response.users || [];
+          this.users = [
+            ...(response.users || []),
+          ].sort(
+            (firstUser, secondUser) =>
+              firstUser.positionIndex -
+              secondUser.positionIndex,
+          );
         },
         error: () => {
           this.errorMessage =
@@ -144,7 +170,8 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    this.selectedUserIds = [];
+    this.resetUserSelection();
+
     this.userSearch = '';
     this.addUserErrorMessage = '';
 
@@ -163,7 +190,8 @@ export class TeamDetail implements OnInit {
 
     this.showAddUserModal = false;
 
-    this.selectedUserIds = [];
+    this.resetUserSelection();
+
     this.userSearch = '';
 
     this.availableUsers = [];
@@ -263,6 +291,10 @@ export class TeamDetail implements OnInit {
             selectedId !== userId,
         );
 
+      this.removeSelectedUserPosition(
+        userId,
+      );
+
       return;
     }
 
@@ -270,6 +302,11 @@ export class TeamDetail implements OnInit {
       ...this.selectedUserIds,
       userId,
     ];
+
+    this.selectedUserPositions = {
+      ...this.selectedUserPositions,
+      [userId]: null,
+    };
 
     this.addUserErrorMessage = '';
   }
@@ -282,12 +319,56 @@ export class TeamDetail implements OnInit {
     );
   }
 
+  setSelectedUserPosition(
+    userId: string,
+    positionIndex: number | null,
+  ): void {
+    if (
+      !this.isUserSelected(userId) ||
+      this.isAddingUser
+    ) {
+      return;
+    }
+
+    this.selectedUserPositions = {
+      ...this.selectedUserPositions,
+      [userId]: positionIndex,
+    };
+
+    this.addUserErrorMessage = '';
+  }
+
+  getSelectedUserPosition(
+    userId: string,
+  ): number | null {
+    return (
+      this.selectedUserPositions[userId] ??
+      null
+    );
+  }
+
+  hasValidSelectedPosition(
+    userId: string,
+  ): boolean {
+    const positionIndex =
+      this.getSelectedUserPosition(userId);
+
+    return Boolean(
+      this.team &&
+      Number.isInteger(positionIndex) &&
+      positionIndex !== null &&
+      positionIndex >= 0 &&
+      positionIndex <
+        this.team.positionList.length,
+    );
+  }
+
   clearSelectedUsers(): void {
     if (this.isAddingUser) {
       return;
     }
 
-    this.selectedUserIds = [];
+    this.resetUserSelection();
   }
 
   selectAllVisibleUsers(): void {
@@ -309,6 +390,24 @@ export class TeamDetail implements OnInit {
         ...visibleUserIds,
       ]),
     );
+
+    const nextPositions = {
+      ...this.selectedUserPositions,
+    };
+
+    visibleUserIds.forEach(
+      (userId) => {
+        if (
+          nextPositions[userId] ===
+          undefined
+        ) {
+          nextPositions[userId] = null;
+        }
+      },
+    );
+
+    this.selectedUserPositions =
+      nextPositions;
 
     this.addUserErrorMessage = '';
   }
@@ -349,6 +448,19 @@ export class TeamDetail implements OnInit {
             !visibleUserIds.has(userId),
         );
 
+      const nextPositions = {
+        ...this.selectedUserPositions,
+      };
+
+      visibleUserIds.forEach(
+        (userId) => {
+          delete nextPositions[userId];
+        },
+      );
+
+      this.selectedUserPositions =
+        nextPositions;
+
       return;
     }
 
@@ -373,6 +485,13 @@ export class TeamDetail implements OnInit {
       return;
     }
 
+    if (!this.canSubmitSelectedUsers) {
+      this.addUserErrorMessage =
+        'Seleciona uma posição para todos os utilizadores escolhidos.';
+
+      return;
+    }
+
     const teamId = this.teamId;
 
     const uniqueUserIds =
@@ -389,6 +508,10 @@ export class TeamDetail implements OnInit {
       const payload: AddUserToTeamRequest = {
         teamId,
         userId,
+        positionIndex:
+          this.selectedUserPositions[
+            userId
+          ] as number,
       };
 
       return this.teamService
@@ -476,6 +599,15 @@ export class TeamDetail implements OnInit {
                 failedUserIds.has(userId),
             );
 
+          this.selectedUserPositions =
+            Object.fromEntries(
+              Object.entries(
+                this.selectedUserPositions,
+              ).filter(([userId]) =>
+                failedUserIds.has(userId),
+              ),
+            );
+
           if (
             duplicatedUsers.length &&
             !otherFailures.length
@@ -512,6 +644,91 @@ export class TeamDetail implements OnInit {
             'Não foi possível adicionar os utilizadores à equipa.';
         },
       });
+  }
+
+  removeUserFromTeam(
+    user: TeamUser,
+  ): void {
+    if (
+      !this.canManageTeamUsers ||
+      !this.teamId ||
+      this.removingUserId
+    ) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Tens a certeza que pretendes remover ${user.name} desta equipa?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const previousUsers = [...this.users];
+
+    this.removingUserId = user.id;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.users = this.users.filter(
+      (teamUser) =>
+        teamUser.id !== user.id,
+    );
+
+    this.teamService
+      .removeUserFromTeam(
+        this.teamId,
+        user.id,
+      )
+      .pipe(
+        finalize(() => {
+          this.removingUserId = '';
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.successMessage =
+            `${user.name} foi removido da equipa com sucesso.`;
+
+          window.setTimeout(() => {
+            this.successMessage = '';
+            this.cdr.detectChanges();
+          }, 5000);
+        },
+        error: (error) => {
+          this.users = previousUsers;
+
+          this.errorMessage =
+            error?.error?.message ||
+            'Não foi possível remover o utilizador da equipa.';
+        },
+      });
+  }
+
+  isRemovingUser(
+    userId: string,
+  ): boolean {
+    return this.removingUserId === userId;
+  }
+
+  getTeamUserPositionLabel(
+    user: TeamUser,
+  ): string {
+    const position =
+      user.position?.trim() ||
+      this.team?.positionList[
+        user.positionIndex
+      ]?.trim() ||
+      'Sem posição selecionada';
+
+    const teamRole =
+      this.team?.role?.trim();
+
+    return teamRole
+      ? `${teamRole} - ${position}`
+      : position;
   }
 
   getAddUsersButtonText(): string {
@@ -565,10 +782,29 @@ export class TeamDetail implements OnInit {
     return user.id;
   }
 
+  private resetUserSelection(): void {
+    this.selectedUserIds = [];
+    this.selectedUserPositions = {};
+  }
+
+  private removeSelectedUserPosition(
+    userId: string,
+  ): void {
+    const nextPositions = {
+      ...this.selectedUserPositions,
+    };
+
+    delete nextPositions[userId];
+
+    this.selectedUserPositions =
+      nextPositions;
+  }
+
   private closeModalAfterSuccess(): void {
     this.showAddUserModal = false;
 
-    this.selectedUserIds = [];
+    this.resetUserSelection();
+
     this.userSearch = '';
 
     this.availableUsers = [];
@@ -588,5 +824,32 @@ export class TeamDetail implements OnInit {
         /[\u0300-\u036f]/g,
         '',
       );
+  }
+
+  isFirstUserOfPosition(
+    index: number,
+    user: TeamUser,
+  ): boolean {
+    if (index === 0) {
+      return true;
+    }
+
+    return (
+      this.users[index - 1]
+        ?.positionIndex !==
+      user.positionIndex
+    );
+  }
+
+  getPositionGroupLabel(
+    user: TeamUser,
+  ): string {
+    return (
+      user.position?.trim() ||
+      this.team?.positionList[
+        user.positionIndex
+      ]?.trim() ||
+      'Sem posição definida'
+    );
   }
 }

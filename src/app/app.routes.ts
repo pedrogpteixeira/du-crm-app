@@ -67,7 +67,7 @@ export const routes: Routes = [
         path: 'contracts/repsol',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin'],
+          allowedRoles: ['Super Admin', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contracts/repsol-contracts').then(
@@ -78,7 +78,7 @@ export const routes: Routes = [
         path: 'contracts/repsol/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin'],
+          allowedRoles: ['Super Admin', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-create/repsol-contract-create').then(
@@ -89,7 +89,7 @@ export const routes: Routes = [
         path: 'contracts/repsol/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin'],
+          allowedRoles: ['Super Admin', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-detail/repsol-contract-detail').then(

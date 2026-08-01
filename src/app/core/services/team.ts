@@ -15,8 +15,10 @@ export interface Team {
 export interface TeamUser {
   id: string;
   name: string;
-  role: string;
   profilePicture?: string;
+  positionIndex: number;
+  position: string;
+  role?: string;
 }
 
 export interface TeamDetailResponse {
@@ -33,6 +35,7 @@ export interface CreateTeamRequest {
 export interface AddUserToTeamRequest {
   teamId: string;
   userId: string;
+  positionIndex: number;
 }
 
 @Injectable({
@@ -67,10 +70,23 @@ export class TeamService {
 
   addUserToTeam(
     payload: AddUserToTeamRequest,
-  ): Observable<unknown> {
-    return this.http.post(
+  ): Observable<TeamUser> {
+    return this.http.post<TeamUser>(
       `${this.apiUrl}/api/team-users`,
       payload,
+    );
+  }
+
+  removeUserFromTeam(
+    teamId: string,
+    userId: string,
+  ): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/api/team-users/team/${encodeURIComponent(
+        teamId,
+      )}/user/${encodeURIComponent(
+        userId,
+      )}`,
     );
   }
 }

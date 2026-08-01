@@ -184,8 +184,12 @@
               *ngFor="let team of selectedTeams"
             >
               {{ team.name }}
+              — {{ team.position }}
 
               <button
+                *ngIf="
+                  !isRequiredTeam(team.id)
+                "
                 type="button"
                 class="remove-team"
                 [attr.aria-label]="
@@ -222,6 +226,7 @@
                 [value]="team.id"
               >
                 {{ team.name }}
+                — {{ team.position }}
               </option>
             </select>
 
@@ -247,8 +252,11 @@
       </div>
 
       <p class="assignment-helper">
-        As equipas internas obrigatórias são
-        adicionadas automaticamente ao contrato.
+        A posição hierárquica é obtida
+        automaticamente da relação do utilizador
+        com cada equipa. As equipas internas
+        obrigatórias são adicionadas sem permitir
+        a escolha manual do índice.
       </p>
     </article>
 

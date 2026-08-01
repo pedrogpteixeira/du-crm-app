@@ -67,6 +67,7 @@ export class Teams implements OnInit {
 
   isLoading = false;
   isCreatingTeam = false;
+  isSuperAdmin = false;
 
   errorMessage = '';
   createTeamErrorMessage = '';
@@ -75,13 +76,13 @@ export class Teams implements OnInit {
   showCreateTeamModal = false;
 
   ngOnInit(): void {
+    this.resolvePermissions();
     this.loadTeams();
   }
 
-  get canCreateTeam(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+  private resolvePermissions(): void {
+    this.isSuperAdmin =
+      this.auth.roleIncludes('Super Admin');
   }
 
   loadTeams(): void {
@@ -163,7 +164,7 @@ export class Teams implements OnInit {
   }
 
   openCreateTeamModal(): void {
-    if (!this.canCreateTeam) {
+    if (!this.isSuperAdmin) {
       return;
     }
 
@@ -208,7 +209,7 @@ export class Teams implements OnInit {
 
   createTeam(): void {
     if (
-      !this.canCreateTeam ||
+      !this.isSuperAdmin ||
       this.isCreatingTeam
     ) {
       return;

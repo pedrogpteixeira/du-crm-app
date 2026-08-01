@@ -1,27 +1,42 @@
 <section class="contracts-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Contratos › Repsol</span>
+      <span class="breadcrumb">
+        Contratos › Repsol
+      </span>
 
-      <h1>Contratos Repsol</h1>
+      <h1>
+        Contratos Repsol
+      </h1>
 
-      <p>Consulta e acompanha os contratos Repsol registados no CRM.</p>
+      <p>
+        Consulta e acompanha os contratos
+        Repsol registados no CRM.
+      </p>
     </div>
 
     <div class="header-actions">
       <div class="view-toggle">
         <button
           type="button"
-          [class.active]="viewMode === 'table'"
-          (click)="setViewMode('table')"
+          [class.active]="
+            viewMode === 'table'
+          "
+          (click)="
+            setViewMode('table')
+          "
         >
           Tabela
         </button>
 
         <button
           type="button"
-          [class.active]="viewMode === 'kanban'"
-          (click)="setViewMode('kanban')"
+          [class.active]="
+            viewMode === 'kanban'
+          "
+          (click)="
+            setViewMode('kanban')
+          "
         >
           Estados
         </button>
@@ -37,62 +52,119 @@
     </div>
   </header>
 
-  <div class="card" *ngIf="viewMode === 'table'">
+  <div
+    class="card"
+    *ngIf="viewMode === 'table'"
+  >
     <div class="table-header">
       <span>ID Contrato</span>
-      <span>ID Cliente</span>
       <span>Cliente / Empresa</span>
       <span>NIF</span>
+      <span>Segmento</span>
+      <span>Produto</span>
+      <span>Criado por</span>
       <span>Estado</span>
-      <span>CPE</span>
-      <span>CUI</span>
       <span>Nome de Registo C.E.</span>
     </div>
 
-    <p class="loading" *ngIf="isLoading">
+    <p
+      class="loading"
+      *ngIf="isLoading"
+    >
       A carregar contratos...
     </p>
 
-    <p class="error-message" *ngIf="errorMessage">
+    <p
+      class="error-message"
+      *ngIf="errorMessage"
+    >
       {{ errorMessage }}
     </p>
 
     <a
       class="contract-row"
       *ngFor="let contract of contracts"
-      [routerLink]="['/home/contracts/repsol', contract.id]"
+      [routerLink]="[
+        '/home/contracts/repsol',
+        contract.id
+      ]"
     >
-      <span>{{ contract.id }}</span>
+      <span>
+        {{ contract.id }}
+      </span>
 
-      <span>{{ contract.clientId }}</span>
+      <strong>
+        {{
+          getValue(
+            contract.nomeClienteEmpresa
+          )
+        }}
+      </strong>
 
-      <strong>{{ contract.nomeClienteEmpresa || '-' }}</strong>
+      <span>
+        {{ getValue(contract.nif) }}
+      </span>
 
-      <span>{{ contract.nif || '-' }}</span>
+      <span>
+        {{
+          getValue(
+            contract.tipoSegmento
+          )
+        }}
+      </span>
+
+      <span>
+        {{
+          getValue(
+            contract.tipoProduto
+          )
+        }}
+      </span>
+
+      <span>
+        {{
+          getContractUserName(
+            contract
+          )
+        }}
+      </span>
 
       <span
         class="status-badge"
-        [ngClass]="getStatusClass(contract.estado)"
+        [ngClass]="
+          getStatusClass(
+            contract.estado
+          )
+        "
       >
         {{ contract.estado }}
       </span>
 
-      <span>{{ contract.cpe || '-' }}</span>
-
-      <span>{{ contract.cui || '-' }}</span>
-
-      <span>{{ contract.nomeRegistoCE || '—' }}</span>
+      <span>
+        {{
+          getValue(
+            contract.nomeRegistoCE
+          )
+        }}
+      </span>
     </a>
 
     <p
       class="empty-state"
-      *ngIf="!isLoading && !errorMessage && !contracts.length"
+      *ngIf="
+        !isLoading &&
+        !errorMessage &&
+        !contracts.length
+      "
     >
       Ainda não existem contratos Repsol.
     </p>
   </div>
 
-  <div class="kanban-wrapper" *ngIf="viewMode === 'kanban'">
+  <div
+    class="kanban-wrapper"
+    *ngIf="viewMode === 'kanban'"
+  >
     <div class="kanban-board">
       <section
         class="kanban-column"
@@ -100,7 +172,9 @@
       >
         <header
           class="kanban-column-header"
-          [ngClass]="getStatusClass(status)"
+          [ngClass]="
+            getStatusClass(status)
+          "
         >
           {{ status }}
         </header>
@@ -108,23 +182,78 @@
         <div class="kanban-list">
           <a
             class="kanban-card"
-            *ngFor="let contract of getContractsByStatus(status)"
-            [routerLink]="['/home/contracts/repsol', contract.id]"
+            *ngFor="
+              let contract of
+                getContractsByStatus(
+                  status
+                )
+            "
+            [routerLink]="[
+              '/home/contracts/repsol',
+              contract.id
+            ]"
           >
-            <span class="contract-id">{{ contract.id }}</span>
+            <span class="contract-id">
+              {{ contract.id }}
+            </span>
 
-            <strong>{{ contract.nomeClienteEmpresa || '-' }}</strong>
+            <strong>
+              {{
+                getValue(
+                  contract
+                    .nomeClienteEmpresa
+                )
+              }}
+            </strong>
 
-            <span>{{ contract.nif || '-' }}</span>
+            <span>
+              NIF:
+              {{ getValue(contract.nif) }}
+            </span>
 
-            <span>{{ contract.nomeRegistoCE || 'Sem nome de registo' }}</span>
+            <span>
+              Segmento:
+              {{
+                getValue(
+                  contract.tipoSegmento
+                )
+              }}
+            </span>
 
-            <span>{{ contract.clientId }}</span>
+            <span>
+              Produto:
+              {{
+                getValue(
+                  contract.tipoProduto
+                )
+              }}
+            </span>
+
+            <span>
+              Criado por:
+              {{
+                getContractUserName(
+                  contract
+                )
+              }}
+            </span>
+
+            <span>
+              {{
+                getValue(
+                  contract.nomeRegistoCE
+                )
+              }}
+            </span>
           </a>
 
           <p
             class="empty-column"
-            *ngIf="!getContractsByStatus(status).length"
+            *ngIf="
+              !getContractsByStatus(
+                status
+              ).length
+            "
           >
             Sem contratos.
           </p>
