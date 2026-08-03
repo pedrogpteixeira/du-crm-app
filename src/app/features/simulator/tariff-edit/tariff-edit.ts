@@ -374,7 +374,7 @@ export class TariffEdit implements OnInit {
     if (this.shouldEditShowElectricityFields()) {
       controls.powerKva.setValidators([
         Validators.required,
-        Validators.min(0),
+        Validators.min(0.01),
       ]);
 
       controls.powerPricePerDay.setValidators([

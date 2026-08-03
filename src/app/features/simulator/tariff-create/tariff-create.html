@@ -241,14 +241,34 @@
       <label>
         Potência *
 
-        <select formControlName="powerKva">
+        <div class="power-input">
+          <input
+            type="number"
+            min="0.01"
+            step="0.01"
+            list="electricity-power-options"
+            formControlName="powerKva"
+            placeholder="Seleciona ou escreve uma potência"
+          />
+
+          <span>kVA</span>
+        </div>
+
+        <datalist id="electricity-power-options">
           <option
             *ngFor="let power of availablePowers"
-            [ngValue]="power"
+            [value]="power"
           >
             {{ power.toFixed(2) }} kVA
           </option>
-        </select>
+        </datalist>
+
+        <small
+          class="field-error"
+          *ngIf="isInvalid('powerKva')"
+        >
+          Introduz uma potência válida e superior a zero.
+        </small>
       </label>
 
       <label>

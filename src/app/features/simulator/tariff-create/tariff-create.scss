@@ -50,6 +50,8 @@ label {
   flex-direction: column;
   gap: 7px;
 
+  min-width: 0;
+
   color: #64748b;
 
   font-size: 13px;
@@ -58,16 +60,21 @@ label {
 
 input,
 select {
+  width: 100%;
   height: 42px;
+
+  box-sizing: border-box;
 
   border: 1px solid #cbd5e1;
   border-radius: 14px;
 
   padding: 0 12px;
 
+  background: #ffffff;
   color: #243646;
 
   font-family: inherit;
+  font-size: 14px;
 
   outline: none;
 }
@@ -77,6 +84,36 @@ select:focus {
   border-color: #008db1;
   box-shadow:
     0 0 0 4px rgba(0, 141, 177, 0.1);
+}
+
+/* =========================
+   POTÊNCIA EDITÁVEL
+========================= */
+
+.power-input {
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+
+  input {
+    padding-right: 54px;
+  }
+
+  span {
+    position: absolute;
+    top: 50%;
+    right: 13px;
+
+    transform: translateY(-50%);
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    pointer-events: none;
+  }
 }
 
 .actions {

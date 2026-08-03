@@ -485,7 +485,7 @@ export class TariffCreate implements OnInit {
 
       controls.powerKva.setValidators([
         Validators.required,
-        Validators.min(0),
+        Validators.min(0.01),
       ]);
 
       controls.powerPricePerDay.setValidators([
@@ -794,10 +794,14 @@ export class TariffCreate implements OnInit {
 
       if (
         value.powerKva === null ||
+        !Number.isFinite(
+          Number(value.powerKva),
+        ) ||
+        Number(value.powerKva) <= 0 ||
         value.powerPricePerDay === null
       ) {
         this.showError(
-          'A potência e o preço de potência por dia são obrigatórios.',
+          'A potência deve ser um número superior a zero e o preço de potência por dia é obrigatório.',
         );
 
         return null;
