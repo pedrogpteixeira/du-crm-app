@@ -154,6 +154,9 @@ export class TariffCreate implements OnInit {
       sva:
         this.fb.control<number | null>(null),
 
+      loyalty:
+        this.fb.control<number | null>(null),
+
       gasBonus:
         this.fb.control<number | null>(null),
     }),
@@ -177,6 +180,9 @@ export class TariffCreate implements OnInit {
 
     salesCommission:
       this.fb.control<number | null>(null),
+
+    observations:
+      this.fb.nonNullable.control(''),
 
     startDate:
       this.fb.nonNullable.control(''),
@@ -783,6 +789,13 @@ export class TariffCreate implements OnInit {
         Number(value.salesCommission),
     };
 
+    const observations =
+      value.observations.trim();
+
+    if (observations) {
+      payload.observations = observations;
+    }
+
     if (this.shouldShowElectricityFields()) {
       if (!value.electricityPriceMode) {
         this.showError(
@@ -1030,6 +1043,7 @@ export class TariffCreate implements OnInit {
       directDebit: number | null;
       welcomeBonus: number | null;
       sva: number | null;
+      loyalty?: number | null;
       gasBonus: number | null;
     },
   ): TariffDiscounts | undefined {
@@ -1237,6 +1251,7 @@ export class TariffCreate implements OnInit {
         directDebit: null,
         welcomeBonus: null,
         sva: null,
+        loyalty: null,
         gasBonus: null,
       },
       {
@@ -1301,6 +1316,7 @@ export class TariffCreate implements OnInit {
           directDebit: null,
           welcomeBonus: null,
           sva: null,
+          loyalty: null,
           gasBonus: null,
         },
 
@@ -1313,6 +1329,8 @@ export class TariffCreate implements OnInit {
         },
 
         salesCommission: null,
+
+        observations: '',
 
         startDate: '',
         endDate: '',

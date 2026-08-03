@@ -156,6 +156,7 @@ export class InvoiceCompare {
       directDebit: false,
       welcomeBonus: false,
       sva: false,
+      loyalty: false,
       gasBonus: false,
     } as Required<SimulationDiscountConditions>,
   };
@@ -206,6 +207,8 @@ export class InvoiceCompare {
 
     if (this.form.productType === 'gas') {
       this.clearElectricityFields();
+      this.form.discountConditions.loyalty =
+        false;
       return;
     }
 
@@ -795,6 +798,14 @@ export class InvoiceCompare {
           this.form.discountConditions
             .sva,
         ),
+
+      loyalty:
+        this.shouldShowElectricityFields()
+          ? Boolean(
+              this.form.discountConditions
+                .loyalty,
+            )
+          : false,
 
       gasBonus:
         this.shouldShowGasBonus()

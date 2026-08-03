@@ -755,6 +755,22 @@
                 <span>%</span>
               </div>
             </label>
+
+            <label>
+              Fidelização
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="loyalty"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
           </div>
         </section>
       </section>
@@ -1054,6 +1070,16 @@
             >
               Introduz uma comissão válida.
             </small>
+          </label>
+
+          <label class="observations-field">
+            Observações
+
+            <textarea
+              rows="5"
+              formControlName="observations"
+              placeholder="Fidelização, penalizações, validade dos descontos ou outras notas internas da campanha..."
+            ></textarea>
           </label>
         </div>
 

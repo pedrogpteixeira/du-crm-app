@@ -479,6 +479,9 @@ export class ProposalDocument {
         sva:
           'Serviço de valor acrescentado',
 
+        loyalty:
+          'Fidelização',
+
         gasBonus:
           'Bónus de gás',
       };

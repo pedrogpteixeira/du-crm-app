@@ -36,6 +36,7 @@ export interface SimulationDiscountConditions {
   directDebit?: boolean;
   welcomeBonus?: boolean;
   sva?: boolean;
+  loyalty?: boolean;
   gasBonus?: boolean;
 }
 
@@ -94,6 +95,7 @@ export interface TariffDiscounts {
   directDebit?: number;
   welcomeBonus?: number;
   sva?: number;
+  loyalty?: number;
   gasBonus?: number;
 }
 
@@ -136,6 +138,8 @@ export interface CreateSimulationTariffRequest {
   gasDiscounts?: TariffDiscounts;
 
   salesCommission: number;
+
+  observations?: string;
 
   startDate?: string;
   endDate?: string;
@@ -296,6 +300,8 @@ export interface SimulationTariff {
   gasDiscounts?: TariffDiscounts;
 
   salesCommission?: number;
+
+  observations?: string;
 
   startDate?: string | null;
   endDate?: string | null;

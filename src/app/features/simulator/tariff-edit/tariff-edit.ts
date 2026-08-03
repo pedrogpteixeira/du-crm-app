@@ -51,6 +51,7 @@ interface DiscountFormValue {
   directDebit: number | null;
   welcomeBonus: number | null;
   sva: number | null;
+  loyalty: number | null;
   gasBonus: number | null;
 }
 
@@ -142,6 +143,7 @@ export class TariffEdit implements OnInit {
       directDebit: this.fb.control<number | null>(null),
       welcomeBonus: this.fb.control<number | null>(null),
       sva: this.fb.control<number | null>(null),
+      loyalty: this.fb.control<number | null>(null),
       gasBonus: this.fb.control<number | null>(null),
     }),
 
@@ -150,6 +152,7 @@ export class TariffEdit implements OnInit {
       directDebit: this.fb.control<number | null>(null),
       welcomeBonus: this.fb.control<number | null>(null),
       sva: this.fb.control<number | null>(null),
+      loyalty: this.fb.control<number | null>(null),
       gasBonus: this.fb.control<number | null>(null),
     }),
 
@@ -157,6 +160,9 @@ export class TariffEdit implements OnInit {
       Validators.required,
       Validators.min(0),
     ]),
+
+    observations:
+      this.fb.nonNullable.control(''),
 
     startDate: this.fb.nonNullable.control(''),
     endDate: this.fb.nonNullable.control(''),
@@ -323,6 +329,9 @@ export class TariffEdit implements OnInit {
 
         salesCommission:
           tariff.salesCommission ?? null,
+
+        observations:
+          tariff.observations ?? '',
 
         startDate:
           this.toDateInputValue(tariff.startDate),
@@ -662,6 +671,13 @@ export class TariffEdit implements OnInit {
       current.salesCommission,
     );
 
+    this.addChangedStringAllowEmpty(
+      payload,
+      'observations',
+      original.observations,
+      current.observations.trim(),
+    );
+
     this.addChangedValue(
       payload,
       'active',
@@ -940,6 +956,23 @@ export class TariffEdit implements OnInit {
       currentValue &&
       currentValue !== originalValue
     ) {
+      (payload[key] as string | undefined) =
+        currentValue;
+    }
+  }
+
+  private addChangedStringAllowEmpty<
+    K extends keyof UpdateSimulationTariffRequest,
+  >(
+    payload: UpdateSimulationTariffRequest,
+    key: K,
+    originalValue: string | undefined,
+    currentValue: string,
+  ): void {
+    const normalizedOriginal =
+      originalValue?.trim() || '';
+
+    if (currentValue !== normalizedOriginal) {
       (payload[key] as string | undefined) =
         currentValue;
     }
@@ -1257,6 +1290,9 @@ export class TariffEdit implements OnInit {
 
       sva:
         discounts?.sva ?? null,
+
+      loyalty:
+        discounts?.loyalty ?? null,
 
       gasBonus:
         discounts?.gasBonus ?? null,

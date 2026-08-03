@@ -362,6 +362,20 @@
 
       <label
         class="checkbox-label"
+        *ngIf="shouldShowElectricityFields()"
+      >
+        <input
+          type="checkbox"
+          [(ngModel)]="
+            form.discountConditions.loyalty
+          "
+        />
+
+        <span>Fidelização</span>
+      </label>
+
+      <label
+        class="checkbox-label"
         *ngIf="shouldShowGasBonus()"
       >
         <input

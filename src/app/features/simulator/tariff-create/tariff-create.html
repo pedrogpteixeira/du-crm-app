@@ -493,6 +493,22 @@
             <span>%</span>
           </div>
         </label>
+
+        <label>
+          Fidelização
+
+          <div class="percentage-input">
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              formControlName="loyalty"
+            />
+
+            <span>%</span>
+          </div>
+        </label>
       </div>
     </section>
   </article>
@@ -734,6 +750,22 @@
         </label>
       </div>
     </section>
+  </article>
+
+  <article class="card">
+    <div class="section-title">
+      Observações
+    </div>
+
+    <label class="observations-field">
+      Notas comerciais
+
+      <textarea
+        rows="5"
+        formControlName="observations"
+        placeholder="Fidelização, penalizações, validade dos descontos ou outras notas internas da campanha..."
+      ></textarea>
+    </label>
   </article>
 
   <div class="actions">
