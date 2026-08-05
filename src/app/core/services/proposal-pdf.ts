@@ -74,6 +74,7 @@ export class ProposalPdfService {
         unit: 'mm',
         format: 'a4',
         compress: true,
+        putOnlyUsedFonts: true,
       });
 
       for (
@@ -85,7 +86,7 @@ export class ProposalPdfService {
           await html2canvas(
             pages[index],
             {
-              scale: 1.5,
+              scale: 2,
               useCORS: true,
               allowTaint: false,
               backgroundColor:
@@ -95,13 +96,19 @@ export class ProposalPdfService {
               imageTimeout: 8000,
 
               removeContainer: true,
+
+              windowWidth:
+                pages[index].scrollWidth,
+
+              windowHeight:
+                pages[index].scrollHeight,
             },
           );
 
         const image =
           canvas.toDataURL(
             'image/jpeg',
-            0.82,
+            0.9,
           );
 
         if (index > 0) {
@@ -116,7 +123,7 @@ export class ProposalPdfService {
           210,
           297,
           undefined,
-          'FAST',
+          'MEDIUM',
         );
 
         canvas.width = 0;
