@@ -310,6 +310,13 @@
     </div>
   </article>
 
+  <article class="card loyalty-filter-card">
+    <label class="checkbox-label loyalty-filter-option">
+      <input type="checkbox" [(ngModel)]="form.isLoyalty" />
+      <span>Mostrar apenas campanhas com fidelização obrigatória</span>
+    </label>
+  </article>
+
   <article class="card commercial-conditions-card">
     <div class="section-title">
       Condições comerciais
@@ -1704,6 +1711,21 @@
             </strong>
           </div>
         </div>
+      </section>
+
+      <section class="loyalty-warning" *ngIf="selectedOffer.tariff.isLoyalty">
+        <strong>Fidelização obrigatória</strong>
+        <p>Esta campanha tem um período de fidelização obrigatório.</p>
+      </section>
+
+      <section class="fixed-term-discount-info" *ngIf="selectedOffer.tariff.electricityDiscountAppliesToFixedTerm || selectedOffer.tariff.gasDiscountAppliesToFixedTerm">
+        <p *ngIf="selectedOffer.tariff.electricityDiscountAppliesToFixedTerm">O desconto da eletricidade é aplicado ao consumo e à potência contratada.</p>
+        <p *ngIf="selectedOffer.tariff.gasDiscountAppliesToFixedTerm">O desconto do gás é aplicado ao consumo e ao termo fixo.</p>
+      </section>
+
+      <section class="offer-observations" *ngIf="selectedOffer.tariff.observations?.trim()">
+        <h4>Observações</h4>
+        <p>{{ selectedOffer.tariff.observations }}</p>
       </section>
     </div>
 

@@ -67,6 +67,8 @@ export interface InvoiceComparisonRequest {
     cheias?: number;
   };
 
+  isLoyalty?: boolean;
+
   discountConditions?: SimulationDiscountConditions;
 }
 
@@ -137,6 +139,10 @@ export interface CreateSimulationTariffRequest {
   electricityDiscounts?: TariffDiscounts;
   gasDiscounts?: TariffDiscounts;
 
+  electricityDiscountAppliesToFixedTerm?: boolean;
+  gasDiscountAppliesToFixedTerm?: boolean;
+  isLoyalty?: boolean;
+
   salesCommission: number;
 
   observations?: string;
@@ -164,21 +170,36 @@ export interface IndexedGasScenarios {
   nextQuarter: IndexedSimulationScenario;
 }
 
-export interface SimulationEnergyCostDetails {
+export interface EnergyCostBreakdown {
+  fixedCostBeforeDiscount: number;
+  fixedTermDiscountValue: number;
   fixedCost: number;
   energyCostBeforeDiscount: number;
-  discountPercentage: number;
-  discountValue: number;
+  energyDiscountValue: number;
   energyCost: number;
+  discountPercentage?: number;
+  discountValue: number;
   totalCost: number;
 }
+
+export interface SingleEnergyCalculation extends EnergyCostBreakdown {}
+
+export interface DualEnergyCalculation extends EnergyCostBreakdown {
+  electricityCost: EnergyCostBreakdown;
+  gasCost: EnergyCostBreakdown;
+}
+
+export type SimulationEnergyCostDetails = EnergyCostBreakdown;
 
 export interface SimulationDetails {
   days: number;
 
+  fixedCostBeforeDiscount?: number;
+  fixedTermDiscountValue?: number;
   fixedCost: number;
 
   energyCostBeforeDiscount: number;
+  energyDiscountValue?: number;
 
   discountPercentage?: number;
 
@@ -298,6 +319,10 @@ export interface SimulationTariff {
 
   electricityDiscounts?: TariffDiscounts;
   gasDiscounts?: TariffDiscounts;
+
+  electricityDiscountAppliesToFixedTerm?: boolean;
+  gasDiscountAppliesToFixedTerm?: boolean;
+  isLoyalty?: boolean;
 
   salesCommission?: number;
 

@@ -161,6 +161,10 @@ export class TariffEdit implements OnInit {
       Validators.min(0),
     ]),
 
+    electricityDiscountAppliesToFixedTerm: this.fb.nonNullable.control(false),
+    gasDiscountAppliesToFixedTerm: this.fb.nonNullable.control(false),
+    isLoyalty: this.fb.nonNullable.control(false),
+
     observations:
       this.fb.nonNullable.control(''),
 
@@ -329,6 +333,10 @@ export class TariffEdit implements OnInit {
 
         salesCommission:
           tariff.salesCommission ?? null,
+
+        electricityDiscountAppliesToFixedTerm: tariff.electricityDiscountAppliesToFixedTerm ?? false,
+        gasDiscountAppliesToFixedTerm: tariff.gasDiscountAppliesToFixedTerm ?? false,
+        isLoyalty: tariff.isLoyalty ?? false,
 
         observations:
           tariff.observations ?? '',
@@ -671,10 +679,14 @@ export class TariffEdit implements OnInit {
       current.salesCommission,
     );
 
+    this.addChangedValue(payload, 'electricityDiscountAppliesToFixedTerm', original.electricityDiscountAppliesToFixedTerm ?? false, Boolean(current.electricityDiscountAppliesToFixedTerm));
+    this.addChangedValue(payload, 'gasDiscountAppliesToFixedTerm', original.gasDiscountAppliesToFixedTerm ?? false, Boolean(current.gasDiscountAppliesToFixedTerm));
+    this.addChangedValue(payload, 'isLoyalty', original.isLoyalty ?? false, Boolean(current.isLoyalty));
+
     this.addChangedStringAllowEmpty(
       payload,
       'observations',
-      original.observations,
+      original.observations ?? '',
       current.observations.trim(),
     );
 

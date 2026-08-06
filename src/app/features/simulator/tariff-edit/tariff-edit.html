@@ -1072,6 +1072,21 @@
             </small>
           </label>
 
+          <div class="boolean-options-grid full-width">
+            <label class="checkbox-label" *ngIf="shouldEditShowElectricityFields()">
+              <input type="checkbox" formControlName="electricityDiscountAppliesToFixedTerm" />
+              <span>Aplicar desconto ao termo fixo da eletricidade</span>
+            </label>
+            <label class="checkbox-label" *ngIf="shouldEditShowGasFields()">
+              <input type="checkbox" formControlName="gasDiscountAppliesToFixedTerm" />
+              <span>Aplicar desconto ao termo fixo do gás</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isLoyalty" />
+              <span>Campanha com fidelização obrigatória</span>
+            </label>
+          </div>
+
           <label class="observations-field">
             Observações
 

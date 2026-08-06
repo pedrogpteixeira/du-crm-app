@@ -751,3 +751,11 @@ textarea.ng-invalid.ng-touched {
     }
   }
 }
+
+.full-width { grid-column:1 / -1; }
+.boolean-options-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.boolean-options-grid .checkbox-label { width:auto; min-height:52px; align-items:flex-start; padding:13px 14px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc; }
+.boolean-options-grid .checkbox-label input { flex-shrink:0; margin-top:1px; }
+.boolean-options-grid .checkbox-label span { line-height:1.4; }
+@media (max-width:1200px){ .boolean-options-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:700px){ .boolean-options-grid{grid-template-columns:1fr;} }

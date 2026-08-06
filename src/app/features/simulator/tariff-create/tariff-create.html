@@ -753,6 +753,27 @@
   </article>
 
   <article class="card">
+    <div class="section-title">Condições da campanha</div>
+
+    <div class="boolean-options-grid">
+      <label class="checkbox-label" *ngIf="shouldShowElectricityFields()">
+        <input type="checkbox" formControlName="electricityDiscountAppliesToFixedTerm" />
+        <span>Aplicar desconto ao termo fixo da eletricidade</span>
+      </label>
+
+      <label class="checkbox-label" *ngIf="shouldShowGasFields()">
+        <input type="checkbox" formControlName="gasDiscountAppliesToFixedTerm" />
+        <span>Aplicar desconto ao termo fixo do gás</span>
+      </label>
+
+      <label class="checkbox-label">
+        <input type="checkbox" formControlName="isLoyalty" />
+        <span>Campanha com fidelização obrigatória</span>
+      </label>
+    </div>
+  </article>
+
+  <article class="card">
     <div class="section-title">
       Observações
     </div>

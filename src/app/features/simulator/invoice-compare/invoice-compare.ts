@@ -151,6 +151,8 @@ export class InvoiceCompare {
     cheias:
       null as number | null,
 
+    isLoyalty: false,
+
     discountConditions: {
       electronicInvoice: false,
       directDebit: false,
@@ -648,6 +650,8 @@ export class InvoiceCompare {
         days,
 
         currentInvoiceAmount,
+
+        isLoyalty: this.form.isLoyalty ? true : undefined,
 
         discountConditions:
           this.buildDiscountConditions(),

@@ -375,3 +375,10 @@ select.ng-invalid.ng-touched {
     width: 100%;
   }
 }
+
+.boolean-options-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.checkbox-label { display:flex; flex-direction:row; align-items:flex-start; gap:10px; min-height:52px; padding:13px 14px; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc; color:#243646; cursor:pointer; }
+.checkbox-label input { width:17px; height:17px; min-width:17px; margin:1px 0 0; padding:0; accent-color:#00b894; cursor:pointer; }
+.checkbox-label span { line-height:1.4; }
+@media (max-width:1200px){ .boolean-options-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:700px){ .boolean-options-grid{grid-template-columns:1fr;} }

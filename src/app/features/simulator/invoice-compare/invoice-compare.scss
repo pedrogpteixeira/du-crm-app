@@ -1195,3 +1195,84 @@ select:focus {
     }
   }
 }
+
+/* =========================
+   LOYALTY FILTER
+========================= */
+
+.loyalty-filter-card {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.loyalty-filter-option {
+  margin: 0;
+}
+
+/* =========================
+   OFFER CONDITIONS
+========================= */
+
+.loyalty-warning,
+.fixed-term-discount-info,
+.offer-observations {
+  margin-top: 16px;
+  padding: 14px 16px;
+
+  border-radius: 14px;
+}
+
+.loyalty-warning {
+  border: 1px solid #fed7aa;
+
+  background: #fff7ed;
+  color: #9a3412;
+
+  strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 14px;
+    font-weight: 900;
+  }
+}
+
+.loyalty-warning p,
+.fixed-term-discount-info p,
+.offer-observations p {
+  margin: 0;
+
+  line-height: 1.5;
+
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.fixed-term-discount-info {
+  border: 1px solid #bae6fd;
+
+  background: #f0f9ff;
+  color: #075985;
+
+  p + p {
+    margin-top: 7px;
+  }
+}
+
+.offer-observations {
+  border: 1px solid #e2e8f0;
+
+  background: #f7f9fc;
+  color: #334155;
+
+  h4 {
+    margin: 0 0 8px;
+
+    color: #243646;
+
+    font-size: 15px;
+    font-weight: 900;
+  }
+}

@@ -508,6 +508,36 @@ h3 {
   margin-bottom: 0;
 }
 
+.proposal-observations {
+  margin-top: 4mm;
+
+  page-break-inside: avoid;
+  break-inside: avoid;
+
+  .box-title {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  p {
+    margin: 0;
+    padding: 4mm;
+
+    color: #475569;
+
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.45;
+
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+}
+
 .conditions-content {
   display: grid;
   grid-template-columns:

@@ -181,6 +181,15 @@ export class TariffCreate implements OnInit {
     salesCommission:
       this.fb.control<number | null>(null),
 
+    electricityDiscountAppliesToFixedTerm:
+      this.fb.nonNullable.control(false),
+
+    gasDiscountAppliesToFixedTerm:
+      this.fb.nonNullable.control(false),
+
+    isLoyalty:
+      this.fb.nonNullable.control(false),
+
     observations:
       this.fb.nonNullable.control(''),
 
@@ -259,6 +268,7 @@ export class TariffCreate implements OnInit {
 
     if (productType === 'electricity') {
       this.clearGasFields();
+      this.form.controls.gasDiscountAppliesToFixedTerm.setValue(false, { emitEvent: false });
 
       this.form.patchValue(
         {
@@ -273,6 +283,7 @@ export class TariffCreate implements OnInit {
 
     if (productType === 'gas') {
       this.clearElectricityFields();
+      this.form.controls.electricityDiscountAppliesToFixedTerm.setValue(false, { emitEvent: false });
 
       this.form.patchValue(
         {
@@ -787,6 +798,9 @@ export class TariffCreate implements OnInit {
 
       salesCommission:
         Number(value.salesCommission),
+      electricityDiscountAppliesToFixedTerm: Boolean(value.electricityDiscountAppliesToFixedTerm),
+      gasDiscountAppliesToFixedTerm: Boolean(value.gasDiscountAppliesToFixedTerm),
+      isLoyalty: Boolean(value.isLoyalty),
     };
 
     const observations =
@@ -1329,6 +1343,10 @@ export class TariffCreate implements OnInit {
         },
 
         salesCommission: null,
+
+        electricityDiscountAppliesToFixedTerm: false,
+        gasDiscountAppliesToFixedTerm: false,
+        isLoyalty: false,
 
         observations: '',
 

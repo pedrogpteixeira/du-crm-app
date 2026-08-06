@@ -701,6 +701,33 @@
       </div>
     </div>
 
+    <footer>
+      Proposta Comercial ·
+      {{
+        proposal.offer.tariff.provider.name
+      }}
+    </footer>
+  </section>
+
+  <section
+    class="proposal-page content"
+    [style.--primary]="theme.primary"
+    [style.--secondary]="theme.secondary"
+    [style.--light]="theme.light"
+  >
+    <header class="page-top page-top-between">
+      <span>Oferta selecionada</span>
+
+      <img
+        [src]="theme.logo"
+        [alt]="theme.name"
+      />
+    </header>
+
+    <h2 class="page-title">
+      {{ proposal.offer.tariff.name }}
+    </h2>
+
     <div
       class="pdf-box commercial-conditions-box"
       *ngIf="
@@ -781,6 +808,21 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div
+      class="pdf-box proposal-observations"
+      *ngIf="
+        proposal.offer.tariff.observations?.trim()
+      "
+    >
+      <div class="box-title">
+        Observações da oferta
+      </div>
+
+      <p>
+        {{ proposal.offer.tariff.observations }}
+      </p>
     </div>
 
     <footer>
