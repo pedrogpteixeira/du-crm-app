@@ -264,16 +264,83 @@ textarea.ng-invalid.ng-touched {
 
   gap: 22px;
   align-items: start;
+
+  min-width: 0;
+  height: calc(100vh - 44px);
+  min-height: 560px;
 }
 
+/* =========================
+   RESULTS CARD
+========================= */
+
 .results-card {
+  position: sticky;
+  top: 22px;
+
+  min-width: 0;
+  height: 100%;
+
+  display: grid;
+  grid-template-rows:
+    auto minmax(0, 1fr);
+
+  padding: 0;
+
+  overflow: hidden;
+}
+
+.results-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 22px 24px 16px;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  background: #ffffff;
+
+  .section-title {
+    margin: 0;
+  }
+}
+
+.results-count {
+  flex-shrink: 0;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  background: #eef6fa;
+  color: #008db1;
+
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.results-list {
+  min-height: 0;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  padding: 14px 16px 18px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    #94a3b8 transparent;
 }
 
 .tariff-result {
   width: 100%;
+  flex-shrink: 0;
 
   display: block;
 
@@ -298,67 +365,88 @@ textarea.ng-invalid.ng-touched {
 
   &:hover {
     transform: translateY(-1px);
+
     border-color: #008db1;
+
     box-shadow:
-      0 12px 26px rgba(15, 23, 42, 0.08);
+      0 12px 26px
+      rgba(15, 23, 42, 0.08);
   }
 
   &.selected {
     border-color: #00b894;
+
     background: #f0fdf4;
+
     box-shadow:
-      0 0 0 3px rgba(0, 184, 148, 0.08);
+      0 0 0 3px
+      rgba(0, 184, 148, 0.08);
   }
 }
 
 .tariff-result-content {
+  min-width: 0;
+
   h3 {
-    color: #243646;
-    font-size: 16px;
     margin: 0 0 4px;
+
+    color: #243646;
+
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
   }
 
   p {
     margin: 0;
 
     color: #64748b;
+
     font-size: 13px;
     font-weight: 700;
     line-height: 1.5;
+
+    overflow-wrap: anywhere;
   }
 }
 
 .badges {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
 
   margin-top: 12px;
 
   span {
-    color: #008db1;
-    background: #eef6fa;
-
-    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
 
     padding: 5px 10px;
 
+    border-radius: 999px;
+
+    background: #eef6fa;
+    color: #008db1;
+
     font-size: 12px;
     font-weight: 900;
+    line-height: 1.2;
 
     &.inactive {
-      color: #dc2626;
       background: #fee2e2;
+      color: #dc2626;
     }
 
     &.fixed-mode {
-      color: #15803d;
       background: #dcfce7;
+      color: #15803d;
     }
 
     &.indexed-mode {
-      color: #0369a1;
       background: #e0f2fe;
+      color: #0369a1;
     }
   }
 }
@@ -370,6 +458,44 @@ textarea.ng-invalid.ng-touched {
 .edit-card {
   position: sticky;
   top: 22px;
+
+  min-width: 0;
+  height: 100%;
+
+  display: grid;
+  grid-template-rows:
+    auto minmax(0, 1fr) auto;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  scroll-behavior: smooth;
+}
+
+.results-list::-webkit-scrollbar,
+.edit-card-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.results-list::-webkit-scrollbar-track,
+.edit-card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.results-list::-webkit-scrollbar-thumb,
+.edit-card-body::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+.results-list::-webkit-scrollbar-thumb:hover,
+.edit-card-body::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+  background-clip: padding-box;
 }
 
 .edit-card-header {
@@ -378,10 +504,11 @@ textarea.ng-invalid.ng-touched {
   justify-content: space-between;
   gap: 18px;
 
-  padding-bottom: 22px;
-  margin-bottom: 22px;
+  padding: 20px 24px 18px;
 
   border-bottom: 1px solid #e2e8f0;
+
+  background: #ffffff;
 
   h2 {
     margin: 3px 0 5px;
@@ -398,6 +525,19 @@ textarea.ng-invalid.ng-touched {
     font-size: 13px;
     line-height: 1.5;
   }
+}
+
+.edit-card-body {
+  min-height: 0;
+
+  padding: 22px 24px 10px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    #94a3b8 transparent;
 }
 
 .edit-eyebrow {
@@ -440,6 +580,11 @@ textarea.ng-invalid.ng-touched {
 
   &:first-of-type {
     padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 12px;
+    border-bottom: 0;
   }
 }
 
@@ -648,7 +793,15 @@ textarea.ng-invalid.ng-touched {
   justify-content: space-between;
   gap: 14px;
 
-  padding-top: 24px;
+  padding: 16px 24px 20px;
+
+  border-top: 1px solid #e2e8f0;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 -8px 20px
+    rgba(15, 23, 42, 0.04);
 
   button {
     display: inline-flex;
@@ -714,10 +867,33 @@ textarea.ng-invalid.ng-touched {
 @media (max-width: 1200px) {
   .results-layout {
     grid-template-columns: 1fr;
+
+    height: auto;
+    min-height: 0;
+  }
+
+  .results-card,
+  .edit-card {
+    position: static;
+    height: auto;
+  }
+
+  .results-card {
+    display: grid;
+    grid-template-rows:
+      auto minmax(0, 1fr);
+  }
+
+  .results-list {
+    max-height: 520px;
   }
 
   .edit-card {
-    position: static;
+    display: block;
+  }
+
+  .edit-card-body {
+    overflow: visible;
   }
 
   .form-grid,
@@ -737,6 +913,13 @@ textarea.ng-invalid.ng-touched {
   .edit-section-header,
   .edit-footer {
     flex-direction: column;
+  }
+
+  .edit-card-header,
+  .edit-card-body,
+  .edit-footer {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 
   .edit-footer button {

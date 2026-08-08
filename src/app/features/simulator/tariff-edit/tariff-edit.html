@@ -225,10 +225,22 @@
     *ngIf="tariffs.length"
   >
     <article class="card results-card">
-      <div class="section-title">
-        Resultados encontrados
+      <div class="results-card-header">
+        <div class="section-title">
+          Resultados encontrados
+        </div>
+
+        <span class="results-count">
+          {{ tariffs.length }}
+          tarifário{{
+            tariffs.length === 1
+              ? ''
+              : 's'
+          }}
+        </span>
       </div>
 
+      <div class="results-list">
       <button
         type="button"
         class="tariff-result"
@@ -306,6 +318,7 @@
           </div>
         </div>
       </button>
+      </div>
     </article>
 
     <!-- FORMULÁRIO DE EDIÇÃO -->
@@ -345,6 +358,10 @@
         </span>
       </header>
 
+      <div
+        #editCardBody
+        class="edit-card-body"
+      >
       <!-- DADOS GERAIS -->
 
       <section class="edit-section">
@@ -1109,6 +1126,8 @@
           </label>
         </div>
       </section>
+
+      </div>
 
       <footer class="edit-footer">
         <button

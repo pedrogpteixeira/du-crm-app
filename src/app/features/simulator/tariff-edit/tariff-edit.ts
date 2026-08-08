@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
 import {
@@ -66,6 +68,9 @@ interface DiscountFormValue {
   styleUrl: './tariff-edit.scss',
 })
 export class TariffEdit implements OnInit {
+  @ViewChild('editCardBody')
+  private editCardBody?: ElementRef<HTMLElement>;
+
   private readonly fb = inject(FormBuilder);
   private readonly simulatorService = inject(SimulatorService);
   private readonly companyService = inject(CompanyService);
@@ -357,6 +362,8 @@ export class TariffEdit implements OnInit {
     this.configureValidators();
     this.editForm.markAsPristine();
     this.editForm.markAsUntouched();
+
+    this.scrollEditorToTop();
   }
 
   private configureValidators(): void {
@@ -1333,6 +1340,33 @@ export class TariffEdit implements OnInit {
     tariff: SimulationTariff,
   ): SimulationTariff {
     return structuredClone(tariff);
+  }
+
+  private scrollEditorToTop(): void {
+    requestAnimationFrame(() => {
+      const element =
+        this.editCardBody?.nativeElement;
+
+      if (!element) {
+        return;
+      }
+
+      element.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+
+      if (
+        window.matchMedia(
+          '(max-width: 1200px)',
+        ).matches
+      ) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    });
   }
 
   private clearSelection(): void {
