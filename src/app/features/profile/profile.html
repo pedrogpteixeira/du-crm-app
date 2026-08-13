@@ -82,12 +82,7 @@
         <label>
           Email
 
-          <input
-            *ngIf="isEditing"
-            [(ngModel)]="editableUser.email"
-          />
-
-          <strong *ngIf="!isEditing">
+          <strong>
             {{ user.email }}
           </strong>
         </label>

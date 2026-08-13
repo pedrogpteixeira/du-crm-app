@@ -530,16 +530,12 @@
             <span
               class="discount-summary"
               *ngIf="
-                hasGeneralDiscount(offer)
+                hasGeneralDiscount(offer) &&
+                getDiscountSummary(offer)
               "
             >
               Desconto
-              {{
-                formatPercentage(
-                  offer.simulation.details
-                    .discountPercentage
-                )
-              }}%
+              {{ getDiscountSummary(offer) }}
             </span>
 
             <span
@@ -1194,17 +1190,17 @@
 
           <div
             *ngIf="
-              hasGeneralDiscount(selectedOffer)
+              hasGeneralDiscount(selectedOffer) &&
+              getDiscountSummary(selectedOffer)
             "
           >
             <span>
               Desconto aplicado
               {{
-                formatPercentage(
-                  selectedOffer.simulation.details
-                    .discountPercentage
+                getDiscountSummary(
+                  selectedOffer
                 )
-              }}%
+              }}
             </span>
 
             <strong class="positive">

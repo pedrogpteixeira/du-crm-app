@@ -510,14 +510,23 @@ export class InvoiceCompare {
     ).format(Number(value || 0));
   }
 
-  formatPercentage(value?: number): string {
+  formatPercentage(
+    value?: number | null,
+  ): string {
+    if (
+      value === undefined ||
+      value === null
+    ) {
+      return '—';
+    }
+
     return new Intl.NumberFormat(
       'pt-PT',
       {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       },
-    ).format(Number(value || 0));
+    ).format(Number(value));
   }
 
   formatScenarioPrice(
@@ -1161,5 +1170,78 @@ export class InvoiceCompare {
     )} → ${this.getCycleTypeLabel(
       offer.tariff.cycleType,
     )}`;
+  }
+
+  getDiscountSummary(
+    offer: InvoiceComparisonOffer,
+  ): string {
+    const details =
+      offer.simulation.details;
+
+    if (
+      offer.tariff.productType !==
+      'dual'
+    ) {
+      const percentage =
+        details.discountPercentage;
+
+      return percentage !== undefined &&
+        percentage !== null
+        ? `${this.formatPercentage(
+            percentage,
+          )}%`
+        : '';
+    }
+
+    const electricityPercentage =
+      details.electricityCost
+        ?.discountPercentage;
+
+    const gasPercentage =
+      details.gasCost
+        ?.discountPercentage;
+
+    const hasElectricityPercentage =
+      electricityPercentage !==
+        undefined &&
+      electricityPercentage !== null;
+
+    const hasGasPercentage =
+      gasPercentage !== undefined &&
+      gasPercentage !== null;
+
+    if (
+      hasElectricityPercentage &&
+      hasGasPercentage
+    ) {
+      if (
+        Number(electricityPercentage) ===
+        Number(gasPercentage)
+      ) {
+        return `${this.formatPercentage(
+          electricityPercentage,
+        )}%`;
+      }
+
+      return `Luz ${this.formatPercentage(
+        electricityPercentage,
+      )}% · Gás ${this.formatPercentage(
+        gasPercentage,
+      )}%`;
+    }
+
+    if (hasElectricityPercentage) {
+      return `Luz ${this.formatPercentage(
+        electricityPercentage,
+      )}%`;
+    }
+
+    if (hasGasPercentage) {
+      return `Gás ${this.formatPercentage(
+        gasPercentage,
+      )}%`;
+    }
+
+    return '';
   }
 }
