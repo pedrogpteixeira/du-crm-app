@@ -23,10 +23,10 @@ export const roleIncludesGuard: CanActivateFn = (route) => {
   }
 
   const hasAccess = allowedRoles.some((allowedRole) =>
-    auth.roleIncludes(allowedRole),
+    auth.roleIncludes(allowedRole), 
   );
 
   return hasAccess
     ? true
-    : router.createUrlTree(['/home']);
+    : router.createUrlTree(['/error']);
 };

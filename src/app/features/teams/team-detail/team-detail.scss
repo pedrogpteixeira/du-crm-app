@@ -561,8 +561,6 @@ label {
 
   background:
     rgba(15, 23, 42, 0.5);
-
-  backdrop-filter: blur(3px);
 }
 
 .add-user-modal {
@@ -1204,6 +1202,711 @@ label {
 
     button {
       width: 100%;
+    }
+  }
+}
+
+/* =========================
+   TEAM COMMISSIONS
+========================= */
+
+.commissions-card {
+  grid-column: 1 / -1;
+}
+
+.commissions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  .section-title {
+    margin-bottom: 4px;
+  }
+}
+
+.commissions-count {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.add-commission-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 15px;
+
+  background: #00b894;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #00a885;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.commissions-loading {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  margin: 0;
+
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.commission-error-message {
+  margin: 16px 0 0;
+  padding: 11px 14px;
+
+  border-radius: 12px;
+
+  background: #fee2e2;
+  color: #b91c1c;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.commissions-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(320px, 1fr)
+    );
+  gap: 16px;
+
+  margin-top: 20px;
+}
+
+.commission-card {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+}
+
+.commission-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 16px;
+
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+
+  > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #243646;
+
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  > div > span {
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.commission-status {
+  flex-shrink: 0;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+
+  &.is-active {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.is-inactive {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.commission-block {
+  padding: 15px 16px;
+
+  border-bottom: 1px solid #eef2f7;
+
+  &:last-of-type {
+    border-bottom: 0;
+  }
+}
+
+.commission-block-title {
+  margin-bottom: 10px;
+
+  color: #243646;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.commission-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  min-height: 30px;
+
+  span {
+    min-width: 0;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  strong {
+    flex-shrink: 0;
+
+    color: #243646;
+
+    font-size: 12px;
+    font-weight: 900;
+  }
+}
+
+.commission-helper {
+  margin: 5px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.power-commissions {
+  margin-top: 14px;
+  padding-top: 12px;
+
+  border-top: 1px dashed #dbe3ec;
+}
+
+.power-commissions-title {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #475569;
+
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.power-line {
+  padding: 3px 0;
+}
+
+.commission-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  margin-top: auto;
+  padding: 13px 16px;
+
+  border-top: 1px solid #e2e8f0;
+
+  background: #f8fafc;
+
+  button {
+    border: 0;
+    border-radius: 9px;
+
+    padding: 7px 10px;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 900;
+
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.commission-state-button {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.commission-edit-button {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+.commission-delete-button {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.commissions-empty {
+  min-height: 190px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 16px;
+
+  text-align: center;
+
+  > .material-symbols-rounded {
+    color: #94a3b8;
+    font-size: 42px;
+  }
+
+  strong {
+    color: #243646;
+
+    font-size: 15px;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  button {
+    margin-top: 8px;
+
+    border: 0;
+    border-radius: 11px;
+
+    padding: 9px 13px;
+
+    background: #00b894;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 900;
+
+    cursor: pointer;
+  }
+}
+
+/* =========================
+   COMMISSION MODAL
+========================= */
+
+.commission-modal {
+  width: min(820px, 100%);
+  max-height: 92vh;
+
+  display: flex;
+  flex-direction: column;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 30px 70px
+    rgba(15, 23, 42, 0.25);
+
+  overflow: hidden;
+}
+
+.commission-form {
+  min-height: 0;
+
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.commission-modal-content {
+  min-height: 0;
+  overflow-y: auto;
+
+  padding: 24px;
+
+  scrollbar-width: thin;
+  scrollbar-color:
+    #cbd5e1 transparent;
+}
+
+.commission-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  label {
+    min-width: 0;
+  }
+
+  input,
+  select {
+    width: 100%;
+    height: 42px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+
+    padding: 0 12px;
+
+    background: #ffffff;
+    color: #243646;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 650;
+
+    outline: none;
+
+    &:focus {
+      border-color: #008db1;
+
+      box-shadow:
+        0 0 0 4px
+        rgba(0, 141, 177, 0.1);
+    }
+  }
+}
+
+.commission-form-section {
+  margin-top: 20px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+.commission-form-section-title {
+  margin-bottom: 14px;
+
+  color: #243646;
+
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.commission-extra-grid {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+.power-editor {
+  margin-top: 18px;
+}
+
+.power-editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  strong {
+    color: #243646;
+
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  > div > span {
+    color: #94a3b8;
+
+    font-size: 10px;
+    font-weight: 650;
+  }
+}
+
+.add-power-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  border: 0;
+  border-radius: 10px;
+
+  padding: 8px 10px;
+
+  background: #eef6fa;
+  color: #008db1;
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.power-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  margin-top: 12px;
+}
+
+.power-editor-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    42px;
+  align-items: end;
+  gap: 10px;
+
+  padding: 11px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+
+  background: #f8fafc;
+
+  label {
+    min-width: 0;
+  }
+}
+
+.unit-input {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    50px;
+
+  input {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 11px 0 0 11px;
+
+    padding: 0 10px;
+
+    background: #ffffff;
+    color: #243646;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+
+    outline: none;
+
+    &:focus {
+      z-index: 1;
+      border-color: #008db1;
+    }
+  }
+
+  span {
+    display: grid;
+    place-items: center;
+
+    border: 1px solid #cbd5e1;
+    border-left: 0;
+    border-radius: 0 11px 11px 0;
+
+    background: #ffffff;
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 900;
+  }
+}
+
+.remove-power-button {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 11px;
+
+  background: #fee2e2;
+  color: #dc2626;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.commission-active-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+
+  margin-top: 20px;
+  padding: 12px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #f8fafc;
+  color: #243646;
+
+  cursor: pointer;
+
+  input {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+
+    accent-color: #00b894;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 850;
+  }
+}
+
+@media (max-width: 700px) {
+  .commissions-header {
+    flex-direction: column;
+  }
+
+  .add-commission-button {
+    width: 100%;
+  }
+
+  .commissions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .commission-actions {
+    flex-wrap: wrap;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .commission-form-grid,
+  .commission-extra-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .power-editor-header {
+    flex-direction: column;
+  }
+
+  .add-power-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .power-editor-row {
+    grid-template-columns:
+      minmax(0, 1fr)
+      42px;
+
+    label:first-child,
+    label:nth-child(2) {
+      grid-column: 1 / -1;
+    }
+
+    .remove-power-button {
+      grid-column: 2;
+      justify-self: end;
     }
   }
 }

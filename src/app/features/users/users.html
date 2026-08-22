@@ -142,7 +142,7 @@
       <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
         <a
           class="user-row"
-          *ngFor="let user of filteredUsers"
+          *ngFor="let user of visibleUsers; trackBy: trackUserById"
           [routerLink]="
             user.id === currentUserId
               ? '/home/profile'
@@ -212,11 +212,42 @@
       class="table-footer"
       *ngIf="!isLoading && users.length"
     >
-      A mostrar
-      <strong>{{ filteredUsers.length }}</strong>
-      de
-      <strong>{{ users.length }}</strong>
-      utilizadores
+      <div>
+        A mostrar
+        <strong>
+          {{ visibleStart }}–{{ visibleEnd }}
+        </strong>
+        de
+        <strong>
+          {{ filteredUsers.length }}
+        </strong>
+        utilizadores
+      </div>
+
+      <div
+        class="pagination-controls"
+        *ngIf="filteredUsers.length > pageSize"
+      >
+        <button
+          type="button"
+          [disabled]="currentPage === 1"
+          (click)="previousPage()"
+        >
+          Anterior
+        </button>
+
+        <span>
+          {{ currentPage }} / {{ totalPages }}
+        </span>
+
+        <button
+          type="button"
+          [disabled]="currentPage === totalPages"
+          (click)="nextPage()"
+        >
+          Seguinte
+        </button>
+      </div>
     </footer>
   </div>
 </section>

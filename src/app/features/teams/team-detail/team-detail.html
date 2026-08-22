@@ -289,6 +289,380 @@
           </div>
         </ng-template>
       </article>
+
+
+      <article
+        class="card commissions-card"
+        *ngIf="canManageCommissions"
+      >
+        <div class="commissions-header">
+          <div>
+            <div class="section-title">
+              Comissões da Equipa
+            </div>
+
+            <span
+              class="commissions-count"
+              *ngIf="teamCommissions.length"
+            >
+              {{ teamCommissions.length }}
+              configuração{{
+                teamCommissions.length === 1
+                  ? ''
+                  : 'ões'
+              }}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="add-commission-button"
+            [disabled]="
+              isLoadingCommissions ||
+              isLoadingCompanies
+            "
+            (click)="openCreateCommissionModal()"
+          >
+            <span class="material-symbols-rounded">
+              add
+            </span>
+
+            Adicionar configuração
+          </button>
+        </div>
+
+        <p
+          class="commissions-loading"
+          *ngIf="isLoadingCommissions"
+        >
+          <span class="loading-spinner"></span>
+
+          A carregar comissões...
+        </p>
+
+        <p
+          class="commission-error-message"
+          *ngIf="commissionsError"
+        >
+          {{ commissionsError }}
+        </p>
+
+        <div
+          class="commissions-grid"
+          *ngIf="
+            !isLoadingCommissions &&
+            !commissionsError &&
+            teamCommissions.length
+          "
+        >
+          <article
+            class="commission-card"
+            *ngFor="
+              let commission of teamCommissions;
+              trackBy: trackCommissionById
+            "
+          >
+            <header class="commission-card-header">
+              <div>
+                <strong>
+                  {{
+                    getCompanyName(
+                      commission.companyId
+                    )
+                  }}
+                </strong>
+
+                <span>
+                  {{
+                    getSegmentLabel(
+                      commission.segment
+                    )
+                  }}
+                </span>
+              </div>
+
+              <span
+                class="commission-status"
+                [class.is-active]="
+                  commission.active
+                "
+                [class.is-inactive]="
+                  !commission.active
+                "
+              >
+                {{
+                  commission.active
+                    ? 'Ativa'
+                    : 'Inativa'
+                }}
+              </span>
+            </header>
+
+            <section class="commission-block">
+              <div class="commission-block-title">
+                Eletricidade
+              </div>
+
+              <div class="commission-line">
+                <span>
+                  Comissão base
+                </span>
+
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.electricityCommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <p class="commission-helper">
+                Aplicada quando não existe uma comissão
+                específica para a potência contratada.
+              </p>
+
+              <div class="power-commissions">
+                <span class="power-commissions-title">
+                  Comissões específicas por potência
+                </span>
+
+                <ng-container
+                  *ngIf="
+                    commission
+                      .electricityPowerCommissions
+                      .length;
+                    else noPowerCommissions
+                  "
+                >
+                  <div
+                    class="commission-line power-line"
+                    *ngFor="
+                      let powerCommission of
+                        commission
+                          .electricityPowerCommissions
+                    "
+                  >
+                    <span>
+                      {{
+                        formatPower(
+                          powerCommission.powerKva
+                        )
+                      }}
+                    </span>
+
+                    <strong>
+                      {{
+                        formatCommission(
+                          powerCommission.commission
+                        )
+                      }}
+                    </strong>
+                  </div>
+                </ng-container>
+
+                <ng-template #noPowerCommissions>
+                  <p class="commission-helper">
+                    Todas as potências utilizam a
+                    comissão base.
+                  </p>
+                </ng-template>
+              </div>
+            </section>
+
+            <section class="commission-block">
+              <div class="commission-block-title">
+                Gás
+              </div>
+
+              <div class="commission-line">
+                <span>Comissão</span>
+
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.gasCommission
+                    )
+                  }}
+                </strong>
+              </div>
+            </section>
+
+            <section class="commission-block">
+              <div class="commission-block-title">
+                Condições adicionais
+              </div>
+
+              <div class="commission-line">
+                <span>Débito Direto</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.directDebitCommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>Fatura Eletrónica</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission
+                        .electronicInvoiceCommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>SVA</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.SVACommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>PEL</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.PELCommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>PEL+</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.PELPlusCommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>PGI</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.PGICommission
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="commission-line">
+                <span>MGI</span>
+                <strong>
+                  {{
+                    formatCommission(
+                      commission.MGICommission
+                    )
+                  }}
+                </strong>
+              </div>
+            </section>
+
+            <footer class="commission-actions">
+              <button
+                type="button"
+                class="commission-state-button"
+                [disabled]="
+                  isSavingCommission ||
+                  deletingCommissionId ===
+                    commission.id
+                "
+                (click)="
+                  toggleCommissionActive(
+                    commission
+                  )
+                "
+              >
+                {{
+                  commission.active
+                    ? 'Desativar'
+                    : 'Ativar'
+                }}
+              </button>
+
+              <button
+                type="button"
+                class="commission-edit-button"
+                [disabled]="
+                  deletingCommissionId ===
+                    commission.id
+                "
+                (click)="
+                  openEditCommissionModal(
+                    commission
+                  )
+                "
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                class="commission-delete-button"
+                [disabled]="
+                  deletingCommissionId ===
+                    commission.id
+                "
+                (click)="
+                  deleteCommission(
+                    commission
+                  )
+                "
+              >
+                {{
+                  deletingCommissionId ===
+                    commission.id
+                    ? 'A eliminar...'
+                    : 'Eliminar'
+                }}
+              </button>
+            </footer>
+          </article>
+        </div>
+
+        <div
+          class="commissions-empty"
+          *ngIf="
+            !isLoadingCommissions &&
+            !commissionsError &&
+            !teamCommissions.length
+          "
+        >
+          <span class="material-symbols-rounded">
+            payments
+          </span>
+
+          <strong>
+            Sem comissões configuradas
+          </strong>
+
+          <p>
+            Esta equipa ainda não tem
+            configurações de comissões.
+          </p>
+
+          <button
+            type="button"
+            (click)="openCreateCommissionModal()"
+          >
+            Adicionar configuração
+          </button>
+        </div>
+      </article>
     </div>
   </ng-container>
 </section>
@@ -621,5 +995,389 @@
         {{ getAddUsersButtonText() }}
       </button>
     </footer>
+  </section>
+</div>
+
+<!-- MODAL CRIAR / EDITAR COMISSÕES -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="
+    showCommissionModal &&
+    canManageCommissions
+  "
+  (pointerdown)="
+    onCommissionBackdropPointerDown(
+      $event
+    )
+  "
+>
+  <section
+    class="commission-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="commission-modal-title"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">
+          {{ team?.name }}
+        </span>
+
+        <h2 id="commission-modal-title">
+          {{
+            editingCommission
+              ? 'Editar comissões'
+              : 'Adicionar comissões'
+          }}
+        </h2>
+
+        <p>
+          Define as comissões aplicáveis à
+          comercializadora e segmento.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isSavingCommission"
+        aria-label="Fechar"
+        (click)="closeCommissionModal()"
+      >
+        <span class="material-symbols-rounded">
+          close
+        </span>
+      </button>
+    </header>
+
+    <form
+      class="commission-form"
+      [formGroup]="commissionForm"
+      (ngSubmit)="saveCommission()"
+    >
+      <div class="commission-modal-content">
+        <p
+          class="modal-error-message"
+          *ngIf="commissionFormError"
+        >
+          {{ commissionFormError }}
+        </p>
+
+        <div class="commission-form-grid">
+          <label>
+            Comercializadora *
+
+            <select
+              formControlName="companyId"
+            >
+              <option value="">
+                Selecionar comercializadora
+              </option>
+
+              <option
+                *ngFor="
+                  let company of companies
+                "
+                [value]="company.id"
+              >
+                {{ company.name }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Segmento *
+
+            <select
+              formControlName="segment"
+            >
+              <option [ngValue]="null">
+                Selecionar segmento
+              </option>
+
+              <option value="residential">
+                Residencial
+              </option>
+
+              <option value="business">
+                Empresarial
+              </option>
+
+              <option value="condominium">
+                Condomínio
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <section class="commission-form-section">
+          <div class="commission-form-section-title">
+            Eletricidade
+          </div>
+
+          <div class="commission-form-grid">
+            <label>
+              Comissão base (€) *
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="electricityCommission"
+              />
+            </label>
+          </div>
+
+          <div class="power-editor">
+            <div class="power-editor-header">
+              <div>
+                <strong>
+                  Comissões específicas por potência
+                </strong>
+
+                <span>
+                  Opcional. Se não existir correspondência,
+                  será usada a comissão base.
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="add-power-button"
+                [disabled]="isSavingCommission"
+                (click)="addPowerCommission()"
+              >
+                <span class="material-symbols-rounded">
+                  add
+                </span>
+
+                Adicionar potência
+              </button>
+            </div>
+
+            <div
+              class="power-editor-list"
+              formArrayName="electricityPowerCommissions"
+            >
+              <div
+                class="power-editor-row"
+                *ngFor="
+                  let powerControl of
+                    powerCommissions.controls;
+                  let powerIndex = index;
+                  trackBy: trackPowerByIndex
+                "
+                [formGroupName]="powerIndex"
+              >
+                <label>
+                  Potência
+
+                  <div class="unit-input">
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      formControlName="powerKva"
+                    />
+
+                    <span>kVA</span>
+                  </div>
+                </label>
+
+                <label>
+                  Comissão
+
+                  <div class="unit-input">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      formControlName="commission"
+                    />
+
+                    <span>€</span>
+                  </div>
+                </label>
+
+                <button
+                  type="button"
+                  class="remove-power-button"
+                  [disabled]="isSavingCommission"
+                  aria-label="Remover potência"
+                  (click)="
+                    removePowerCommission(
+                      powerIndex
+                    )
+                  "
+                >
+                  <span class="material-symbols-rounded">
+                    delete
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="commission-form-section">
+          <div class="commission-form-section-title">
+            Gás
+          </div>
+
+          <div class="commission-form-grid">
+            <label>
+              Comissão (€) *
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="gasCommission"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="commission-form-section">
+          <div class="commission-form-section-title">
+            Condições adicionais
+          </div>
+
+          <div class="commission-form-grid commission-extra-grid">
+            <label>
+              Débito Direto (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="directDebitCommission"
+              />
+            </label>
+
+            <label>
+              Fatura Eletrónica (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="electronicInvoiceCommission"
+              />
+            </label>
+
+            <label>
+              SVA (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="SVACommission"
+              />
+            </label>
+
+            <label>
+              PEL (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="PELCommission"
+              />
+            </label>
+
+            <label>
+              PEL+ (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="PELPlusCommission"
+              />
+            </label>
+
+            <label>
+              PGI (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="PGICommission"
+              />
+            </label>
+
+            <label>
+              MGI (€)
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                formControlName="MGICommission"
+              />
+            </label>
+          </div>
+        </section>
+
+        <label
+          class="commission-active-option"
+          *ngIf="editingCommission"
+        >
+          <input
+            type="checkbox"
+            formControlName="active"
+          />
+
+          <span>
+            Configuração ativa
+          </span>
+        </label>
+      </div>
+
+      <footer class="modal-footer">
+        <button
+          type="button"
+          class="cancel-button"
+          [disabled]="isSavingCommission"
+          (click)="closeCommissionModal()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="confirm-user-button"
+          [disabled]="
+            isSavingCommission ||
+            commissionForm.invalid
+          "
+        >
+          <span
+            class="button-spinner"
+            *ngIf="isSavingCommission"
+          ></span>
+
+          <span
+            class="material-symbols-rounded"
+            *ngIf="!isSavingCommission"
+          >
+            save
+          </span>
+
+          {{
+            isSavingCommission
+              ? 'A guardar...'
+              : editingCommission
+                ? 'Guardar alterações'
+                : 'Criar configuração'
+          }}
+        </button>
+      </footer>
+    </form>
   </section>
 </div>

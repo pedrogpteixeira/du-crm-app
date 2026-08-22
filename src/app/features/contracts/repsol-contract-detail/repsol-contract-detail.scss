@@ -601,6 +601,9 @@ strong {
 
 .observations-history {
   min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #f8fafc;
@@ -608,9 +611,15 @@ strong {
   color: #334155;
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.65;
-  white-space: pre-wrap;
+  line-height: 1.5;
   word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.observation-entry {
+  margin: 0;
+  padding: 0;
+  white-space: normal;
 }
 
 .observations-history.empty {
@@ -656,4 +665,13 @@ strong {
     grid-template-columns: 1fr;
     gap: 18px;
   }
+}
+
+/* =========================
+   OBSERVAÇÕES INTERNAS
+========================= */
+
+.internal-observations-history {
+  border-color: #bfdbfe;
+  background: #f8fbff;
 }

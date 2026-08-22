@@ -9,15 +9,23 @@
       </div>
     </div>
 
+    <p class="success-message" *ngIf="successMessage">
+      {{ successMessage }}
+    </p>
+
+    <p class="info-message" *ngIf="infoMessage">
+      {{ infoMessage }}
+    </p>
+
     <form [formGroup]="form" (ngSubmit)="submit()">
       <label>
         Nome de utilizador
-        <input type="text" placeholder="Nome de utilizador" formControlName="username" />
+        <input type="text" placeholder="Nome de utilizador" formControlName="username" autocomplete="username" />
       </label>
 
       <label>
         Palavra-passe
-        <input type="password" placeholder="Digite a sua palavra-passe" formControlName="password" />
+        <input type="password" placeholder="Digite a sua palavra-passe" formControlName="password" autocomplete="current-password" />
       </label>
 
       <p class="error-message" *ngIf="errorMessage">

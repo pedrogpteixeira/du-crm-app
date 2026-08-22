@@ -86,6 +86,7 @@ type ContractPowerSelection =
 interface AssignableContractTeam {
   id: string;
   name: string;
+  registrationNumber: number | null;
   positionIndex: number;
   position: string;
   active?: boolean;
@@ -93,11 +94,7 @@ interface AssignableContractTeam {
 
 interface ProfileUserWithTeamPositions extends ProfileUser {
   teams: AssignableContractTeam[];
-  defaultTeam:
-    | (AssignableContractTeam & {
-        id: string;
-      })
-    | null;
+  defaultTeam: AssignableContractTeam | null;
 }
 
 @Component({
@@ -148,6 +145,8 @@ export class RepsolContractCreate implements OnInit {
 
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
+
+  canAccessInternalObservations = false;
 
   selectedFiles: File[] = [];
 
@@ -311,6 +310,7 @@ export class RepsolContractCreate implements OnInit {
     nivelTensao: 'Monofásico',
 
     observacoes: '',
+    observacoesInternas: '',
   };
 
   ngOnInit(): void {
@@ -367,6 +367,8 @@ export class RepsolContractCreate implements OnInit {
     ) {
       return;
     }
+
+    this.clearRegistrationFields();
 
     this.loadAssignedUserTeams(
       this.assignedUserId,
@@ -428,6 +430,7 @@ export class RepsolContractCreate implements OnInit {
       .pipe(
         switchMap((currentUser) => {
           this.currentUser = currentUser;
+          this.resolveInternalObservationsAccess(currentUser);
 
           if (
             currentUser.role.includes(
@@ -474,6 +477,29 @@ export class RepsolContractCreate implements OnInit {
       });
   }
 
+  private resolveInternalObservationsAccess(
+    user: ProfileUser,
+  ): void {
+    const authorizedTeamIds =
+      this.getRequiredTeamIds();
+
+    const userTeamIds =
+      (
+        user as ProfileUserWithTeamPositions
+      ).teams
+        ?.map((team) => team.id)
+        .filter(Boolean) ?? [];
+
+    this.canAccessInternalObservations =
+      userTeamIds.some((teamId) =>
+        authorizedTeamIds.includes(teamId),
+      );
+
+    if (!this.canAccessInternalObservations) {
+      this.contractForm.observacoesInternas = '';
+    }
+  }
+
   private loadAssignedUserTeams(
     userId: string,
   ): void {
@@ -518,6 +544,8 @@ export class RepsolContractCreate implements OnInit {
     this.selectedTeamIds =
       this.resolveInitialTeamIds(user);
 
+    this.syncRegistrationFields(user);
+
     this.teamToAddId = '';
   }
 
@@ -543,6 +571,9 @@ export class RepsolContractCreate implements OnInit {
       .map((team) => ({
         id: team.id,
         name: team.name,
+        registrationNumber:
+          team.registrationNumber ??
+          null,
         positionIndex:
           team.positionIndex,
         position:
@@ -552,11 +583,48 @@ export class RepsolContractCreate implements OnInit {
       }));
   }
 
+  private syncRegistrationFields(
+    user: ProfileUser,
+  ): void {
+    const defaultTeam =
+      (
+        user as ProfileUserWithTeamPositions
+      ).defaultTeam;
+
+    if (!defaultTeam) {
+      this.clearRegistrationFields();
+      return;
+    }
+
+    this.contractForm.codigoRegistoCE =
+      defaultTeam.registrationNumber !==
+        null &&
+      defaultTeam.registrationNumber !==
+        undefined
+        ? String(
+            defaultTeam.registrationNumber,
+          )
+        : '';
+
+    this.contractForm.nomeRegistoCE =
+      defaultTeam.name?.trim() ?? '';
+  }
+
+  private clearRegistrationFields(): void {
+    this.contractForm.codigoRegistoCE =
+      '';
+
+    this.contractForm.nomeRegistoCE =
+      '';
+  }
+
   private resolveInitialTeamIds(
     user: ProfileUser,
   ): string[] {
     const defaultTeamId =
-      user.defaultTeam?.id;
+      (
+        user as ProfileUserWithTeamPositions
+      ).defaultTeam?.id;
 
     const initialTeamId =
       defaultTeamId &&
@@ -1179,11 +1247,40 @@ export class RepsolContractCreate implements OnInit {
       'observacoes',
       this.buildInitialObservation(),
     );
+
+    if (this.canAccessInternalObservations) {
+      this.addIfFilled(
+        payload,
+        'observacoesInternas',
+        this.buildInitialInternalObservation(),
+      );
+    }
   }
 
   private buildInitialObservation(): string {
+    return this.buildFormattedObservation(
+      this.contractForm.observacoes,
+    );
+  }
+
+  private buildInitialInternalObservation(): string {
+    return this.buildFormattedObservation(
+      this.contractForm.observacoesInternas,
+    );
+  }
+
+  private buildFormattedObservation(
+    value: string,
+  ): string {
     const message =
-      this.contractForm.observacoes.trim();
+      value
+        .replace(/\r\n?/g, '\n')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
 
     if (!message) {
       return '';
@@ -1204,17 +1301,33 @@ export class RepsolContractCreate implements OnInit {
   private formatObservationDate(
     date: Date,
   ): string {
-    return new Intl.DateTimeFormat(
-      'pt-PT',
-      {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      },
-    ).format(date);
+    const day =
+      String(date.getDate()).padStart(
+        2,
+        '0',
+      );
+
+    const month =
+      String(date.getMonth() + 1).padStart(
+        2,
+        '0',
+      );
+
+    const year = date.getFullYear();
+
+    const hours =
+      String(date.getHours()).padStart(
+        2,
+        '0',
+      );
+
+    const minutes =
+      String(date.getMinutes()).padStart(
+        2,
+        '0',
+      );
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   private addProFields(

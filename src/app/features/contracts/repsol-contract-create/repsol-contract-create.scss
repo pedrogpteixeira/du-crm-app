@@ -434,6 +434,31 @@ button:disabled {
   font-weight: 700;
 }
 
+.product-provider-field {
+  grid-column: 1 / -1;
+}
+
+/* =========================
+   OBSERVAÇÕES INTERNAS
+========================= */
+
+.internal-observations-card {
+  border: 1px solid #dbeafe;
+  box-shadow: 0 14px 40px rgba(30, 64, 175, 0.07);
+}
+
+.internal-observations-hint {
+  margin: -8px 0 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.internal-observations-card textarea {
+  background: #f8fbff;
+}
+
 @media (max-width: 1024px) {
   .three-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));

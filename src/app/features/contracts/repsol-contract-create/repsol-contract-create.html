@@ -399,6 +399,9 @@
               contractForm
                 .codigoRegistoCE
             "
+            [readonly]="
+              !isSuperAdmin()
+            "
           />
         </label>
 
@@ -410,6 +413,9 @@
             [(ngModel)]="
               contractForm
                 .nomeRegistoCE
+            "
+            [readonly]="
+              !isSuperAdmin()
             "
           />
         </label>
@@ -915,11 +921,11 @@
       *ngIf="isProLayout()"
     >
       <div class="section-title">
-        Dados Produto
+        Dados do Produto
       </div>
 
-      <div class="form-grid two-columns">
-        <label>
+      <div class="form-grid two-columns product-data-grid">
+        <label class="product-provider-field">
           Antiga Comercializadora
 
           <input
@@ -954,58 +960,6 @@
         </label>
 
         <label>
-          Potência
-
-          <select
-            [(ngModel)]="
-              contractForm.potencia
-            "
-          >
-            <option
-              *ngFor="
-                let power of
-                  availablePowers
-              "
-              [ngValue]="
-                formatPowerValue(power)
-              "
-            >
-              {{
-                power.toFixed(2)
-              }}
-              kVA
-            </option>
-
-            <option
-              [ngValue]="
-                otherPowerValue
-              "
-            >
-              Outra...
-            </option>
-          </select>
-        </label>
-
-        <label
-          *ngIf="
-            contractForm.potencia ===
-            otherPowerValue
-          "
-        >
-          Outra potência
-
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Ex.: 9.20"
-            [(ngModel)]="
-              customPower
-            "
-          />
-        </label>
-
-        <label>
           Escalão
 
           <select
@@ -1033,6 +987,36 @@
           </select>
         </label>
 
+        <label>
+          Potência
+
+          <select
+            [(ngModel)]="
+              contractForm.potencia
+            "
+          >
+            <option
+              *ngFor="
+                let power of
+                  availablePowers
+              "
+              [ngValue]="
+                formatPowerValue(power)
+              "
+            >
+              {{ power.toFixed(2) }} kVA
+            </option>
+
+            <option
+              [ngValue]="
+                otherPowerValue
+              "
+            >
+              Outra...
+            </option>
+          </select>
+        </label>
+
         <label
           *ngIf="
             contractForm.escalao ===
@@ -1051,25 +1035,23 @@
           />
         </label>
 
-        <label>
-          Ciclo Horário
+        <label
+          *ngIf="
+            contractForm.potencia ===
+            otherPowerValue
+          "
+        >
+          Outra potência
 
-          <select
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Ex.: 9.20"
             [(ngModel)]="
-              contractForm
-                .cicloHorario
+              customPower
             "
-          >
-            <option
-              *ngFor="
-                let option of
-                  cicloHorarioOptions
-              "
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
+          />
         </label>
 
         <label>
@@ -1085,6 +1067,27 @@
               *ngFor="
                 let option of
                   nivelTensaoOptions
+              "
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Ciclo Horário
+
+          <select
+            [(ngModel)]="
+              contractForm
+                .cicloHorario
+            "
+          >
+            <option
+              *ngFor="
+                let option of
+                  cicloHorarioOptions
               "
               [value]="option"
             >
@@ -1203,6 +1206,31 @@
           [(ngModel)]="
             contractForm.observacoes
           "
+        ></textarea>
+      </label>
+    </article>
+
+    <article
+      class="card"
+      *ngIf="canAccessInternalObservations"
+    >
+      <div class="section-title">
+        Observações internas
+      </div>
+
+      <p class="muted">
+        Informação visível apenas para as equipas de Backoffice autorizadas.
+      </p>
+
+      <label>
+        Observações internas
+
+        <textarea
+          rows="6"
+          [(ngModel)]="
+            contractForm.observacoesInternas
+          "
+          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>

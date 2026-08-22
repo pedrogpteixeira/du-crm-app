@@ -328,7 +328,261 @@ strong.offline {
   background: #cbd5e1;
 }
 
-.commissions-card {
-  width: 100%;
-  box-sizing: border-box;
+
+/* =========================
+   SEGURANÇA
+========================= */
+
+.security-card {
+  grid-column: 1;
+}
+
+.security-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  > div {
+    min-width: 0;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.security-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.password-mask {
+  color: #243646;
+  letter-spacing: 2px;
+}
+
+.security-button {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.password-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.password-modal {
+  width: min(100%, 540px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+}
+
+.password-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid #e2e8f0;
+
+  h2 {
+    margin: 4px 0 6px;
+    color: #243646;
+    font-size: 24px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.modal-eyebrow {
+  color: #008db1;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.modal-close-button {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.modal-close-button:hover {
+  background: #e2e8f0;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+}
+
+.password-input-wrapper {
+  position: relative;
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding-right: 48px;
+  }
+}
+
+.password-visibility-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  padding: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+}
+
+.password-visibility-button:hover {
+  background: #f1f5f9;
+  color: #243646;
+}
+
+.password-requirements {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  > span {
+    color: #475569;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 14px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 700;
+
+    .material-symbols-rounded {
+      font-size: 17px;
+    }
+
+    &.valid {
+      color: #16a34a;
+    }
+  }
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.password-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-card,
+  .access-card,
+  .security-card,
+  .photo-card {
+    grid-column: 1;
+  }
+
+  .photo-card {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-header,
+  .security-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .security-button {
+    width: 100%;
+  }
+
+  .password-modal-backdrop {
+    padding: 12px;
+  }
+
+  .password-modal {
+    max-height: calc(100vh - 24px);
+    border-radius: 18px;
+  }
+
+  .password-requirements ul {
+    grid-template-columns: 1fr;
+  }
+
+  .password-modal-footer {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
 }

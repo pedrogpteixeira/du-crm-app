@@ -512,3 +512,57 @@
   font-size: 11px;
   font-weight: 900;
 }
+
+/* =========================
+   PAGINAÇÃO
+========================= */
+
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pagination-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  span {
+    min-width: 54px;
+    color: #64748b;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  button {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #243646;
+    padding: 7px 11px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .table-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

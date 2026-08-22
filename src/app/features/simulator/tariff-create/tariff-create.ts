@@ -181,6 +181,9 @@ export class TariffCreate implements OnInit {
     salesCommission:
       this.fb.control<number | null>(null),
 
+    crmCertoCommission:
+      this.fb.control<number | null>(null),
+
     electricityDiscountAppliesToFixedTerm:
       this.fb.nonNullable.control(false),
 
@@ -491,6 +494,10 @@ export class TariffCreate implements OnInit {
       Validators.min(0),
     ]);
 
+    controls.crmCertoCommission.setValidators([
+      Validators.min(0),
+    ]);
+
     if (this.shouldShowElectricityFields()) {
       controls.electricityPriceMode.setValidators(
         Validators.required,
@@ -784,7 +791,23 @@ export class TariffCreate implements OnInit {
       Number(value.salesCommission) < 0
     ) {
       this.showError(
-        'A comissão de venda é obrigatória.',
+        'A comissão comercial é obrigatória.',
+      );
+
+      return null;
+    }
+
+    if (
+      value.crmCertoCommission !== null &&
+      (
+        !Number.isFinite(
+          Number(value.crmCertoCommission),
+        ) ||
+        Number(value.crmCertoCommission) < 0
+      )
+    ) {
+      this.showError(
+        'A comissão CRM Certo deve ser um valor igual ou superior a zero.',
       );
 
       return null;
@@ -802,6 +825,15 @@ export class TariffCreate implements OnInit {
       gasDiscountAppliesToFixedTerm: Boolean(value.gasDiscountAppliesToFixedTerm),
       isLoyalty: Boolean(value.isLoyalty),
     };
+
+    if (
+      value.crmCertoCommission !== null
+    ) {
+      payload.crmCertoCommission =
+        Number(
+          value.crmCertoCommission,
+        );
+    }
 
     const observations =
       value.observations.trim();
@@ -1343,6 +1375,7 @@ export class TariffCreate implements OnInit {
         },
 
         salesCommission: null,
+        crmCertoCommission: null,
 
         electricityDiscountAppliesToFixedTerm: false,
         gasDiscountAppliesToFixedTerm: false,

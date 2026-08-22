@@ -38,27 +38,25 @@ export interface SimulationDiscountConditions {
   sva?: boolean;
   loyalty?: boolean;
   gasBonus?: boolean;
+
+  PEL?: boolean;
+  PELPlus?: boolean;
+  PGI?: boolean;
+  MGI?: boolean;
 }
 
 export interface InvoiceComparisonRequest {
   currentProvider?: string;
-
   productType: ProductType;
   segment?: Segment;
-
   tariffType?: TariffType;
   cycleType?: CycleType;
-
   powerKva?: number;
   gasTier?: number;
-
   days?: number;
-
   currentInvoiceAmount: number;
-
   electricityConsumptionKwh?: number;
   gasConsumptionKwh?: number;
-
   electricityConsumption?: {
     foraVazio?: number;
     vazio?: number;
@@ -66,9 +64,7 @@ export interface InvoiceComparisonRequest {
     ponta?: number;
     cheias?: number;
   };
-
   isLoyalty?: boolean;
-
   discountConditions?: SimulationDiscountConditions;
 }
 
@@ -104,49 +100,37 @@ export interface TariffDiscounts {
 export interface CreateSimulationTariffRequest {
   companyId: string;
   name: string;
-
   productType: SimulationProductType;
-
   electricityPriceMode?: PriceMode;
   gasPriceMode?: PriceMode;
-
   segment?: SimulationSegment;
-
   tariffType?: SimulationTariffType;
   cycleType?: SimulationCycleType;
-
   powerKva?: number;
   gasTier?: number;
-
   powerPricePerDay?: number;
   fixedTermPerDay?: number;
-
   singleEnergyPrice?: number;
   foraVazioEnergyPrice?: number;
   vazioEnergyPrice?: number;
   pontaEnergyPrice?: number;
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
-
   gasEnergyPrice?: number;
-
   electricityAdjustmentFactor?: number;
   electricityAdditionalCostPerKwh?: number;
-
   gasLossPercentage?: number;
   gasAdditionalCostPerKwh?: number;
-
   electricityDiscounts?: TariffDiscounts;
   gasDiscounts?: TariffDiscounts;
-
   electricityDiscountAppliesToFixedTerm?: boolean;
   gasDiscountAppliesToFixedTerm?: boolean;
   isLoyalty?: boolean;
 
   salesCommission: number;
+  crmCertoCommission?: number;
 
   observations?: string;
-
   startDate?: string;
   endDate?: string;
 }
@@ -182,36 +166,31 @@ export interface EnergyCostBreakdown {
   totalCost: number;
 }
 
-export interface SingleEnergyCalculation extends EnergyCostBreakdown {}
+export interface SingleEnergyCalculation
+  extends EnergyCostBreakdown {}
 
-export interface DualEnergyCalculation extends EnergyCostBreakdown {
+export interface DualEnergyCalculation
+  extends EnergyCostBreakdown {
   electricityCost: EnergyCostBreakdown;
   gasCost: EnergyCostBreakdown;
 }
 
-export type SimulationEnergyCostDetails = EnergyCostBreakdown;
+export type SimulationEnergyCostDetails =
+  EnergyCostBreakdown;
 
 export interface SimulationDetails {
   days: number;
-
   fixedCostBeforeDiscount?: number;
   fixedTermDiscountValue?: number;
   fixedCost: number;
-
   energyCostBeforeDiscount: number;
   energyDiscountValue?: number;
-
   discountPercentage?: number;
-
   discountValue: number;
-
   energyCost: number;
-
   totalCost: number;
-
   electricityCost?: SimulationEnergyCostDetails;
   gasCost?: SimulationEnergyCostDetails;
-
   indexedElectricityScenarios?: IndexedElectricityScenarios;
   indexedGasScenarios?: IndexedGasScenarios;
 }
@@ -234,7 +213,8 @@ export interface InvoiceComparisonOffer {
     details: SimulationDetails;
   };
 
-  commissionValue?: number;
+  salesCommission?: number;
+  crmCertoCommission?: number;
 
   comparison: {
     monthlySaving: number;
@@ -245,17 +225,19 @@ export interface InvoiceComparisonOffer {
 }
 
 export interface SimulatorRequest {
-  productType: 'electricity' | 'gas' | 'dual';
-  segment: 'residential' | 'business';
-
+  productType:
+    | 'electricity'
+    | 'gas'
+    | 'dual';
+  segment:
+    | 'residential'
+    | 'business';
   tariffType:
     | 'simple'
     | 'bi_hourly'
     | 'tri_hourly';
-
   powerKva?: number;
   monthlyConsumptionKwh?: number;
-
   gasTier?: number;
   gasConsumptionKwh?: number;
 }
@@ -265,7 +247,6 @@ export interface SimulatorResult {
 
   simulation: {
     estimatedMonthlyCost: number;
-
     details: {
       days: number;
       fixedCost: number;
@@ -285,54 +266,41 @@ export interface SimulationTariff {
   };
 
   name: string;
-
   productType: ProductType;
-
   electricityPriceMode?: ElectricityPriceMode;
   gasPriceMode?: GasPriceMode;
-
   segment?: Segment;
-
   tariffType?: TariffType;
   cycleType?: CycleType;
-
   powerKva?: number;
   gasTier?: number;
-
   powerPricePerDay?: number;
   fixedTermPerDay?: number;
-
   singleEnergyPrice?: number;
   gasEnergyPrice?: number;
-
   foraVazioEnergyPrice?: number;
   vazioEnergyPrice?: number;
   pontaEnergyPrice?: number;
   cheiasEnergyPrice?: number;
   superVazioEnergyPrice?: number;
-
   electricityAdjustmentFactor?: number;
   electricityAdditionalCostPerKwh?: number;
-
   gasLossPercentage?: number;
   gasAdditionalCostPerKwh?: number;
-
   electricityDiscounts?: TariffDiscounts;
   gasDiscounts?: TariffDiscounts;
-
   electricityDiscountAppliesToFixedTerm?: boolean;
   gasDiscountAppliesToFixedTerm?: boolean;
   isLoyalty?: boolean;
 
+  // Mantidos para os endpoints CRUD de tarifas.
   salesCommission?: number;
+  crmCertoCommission?: number;
 
   observations?: string;
-
   startDate?: string | null;
   endDate?: string | null;
-
   active: boolean;
-
   createdAt?: string;
   updatedAt?: string;
 }
@@ -343,7 +311,6 @@ export interface SimulationTariffFilters {
   segment?: Segment;
   productType?: ProductType;
   tariffType?: TariffType;
-
   electricityPriceMode?: ElectricityPriceMode;
   gasPriceMode?: GasPriceMode;
 }
@@ -364,8 +331,11 @@ export type UpdateSimulationTariffRequest =
   providedIn: 'root',
 })
 export class SimulatorService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = environment.apiUrl;
+  private readonly http =
+    inject(HttpClient);
+
+  private readonly apiUrl =
+    environment.apiUrl;
 
   simulate(
     payload: SimulatorRequest,

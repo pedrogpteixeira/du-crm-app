@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../../core/services/auth';
 
 @Component({
@@ -15,9 +15,26 @@ export class Login {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   isLoading = false;
   errorMessage = '';
+  successMessage = '';
+  infoMessage = '';
+
+  constructor() {
+    const params = this.route.snapshot.queryParamMap;
+
+    if (params.get('passwordChanged') === 'true') {
+      this.successMessage =
+        'Password alterada com sucesso. Inicie sessão novamente.';
+    }
+
+    if (params.get('sessionExpired') === 'true') {
+      this.infoMessage =
+        'A sua sessão expirou. Inicie sessão novamente.';
+    }
+  }
 
   form = this.fb.nonNullable.group({
     username: ['', [Validators.required]],

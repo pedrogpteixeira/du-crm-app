@@ -21,7 +21,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/home-layout/home-layout').then((m) => m.HomeLayout),
     children: [
       {
-        path: '',
+        path: 'dashboard',
         loadComponent: () =>
           import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
       },
@@ -67,7 +67,7 @@ export const routes: Routes = [
         path: 'contracts/repsol',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin', 'Repsol'],
+          allowedRoles: ['Super Admin', 'DU', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contracts/repsol-contracts').then(
@@ -78,7 +78,7 @@ export const routes: Routes = [
         path: 'contracts/repsol/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin', 'Repsol'],
+          allowedRoles: ['Super Admin', 'DU', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-create/repsol-contract-create').then(
@@ -89,7 +89,7 @@ export const routes: Routes = [
         path: 'contracts/repsol/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin', 'Repsol'],
+          allowedRoles: ['Super Admin', 'DU', 'Repsol'],
         },
         loadComponent: () =>
           import('./features/contracts/repsol-contract-detail/repsol-contract-detail').then(
@@ -101,42 +101,33 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),
       },
+     {
+        path: 'preferences',
+        loadComponent: () =>
+          import('./features/preferences/preferences').then(
+            (m) => m.Preferences,
+          ),
+      },
       {
         path: 'knowledge-base',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-base-home/knowledge-base-home')
             .then((m) => m.KnowledgeBaseHome),
       },
       {
         path: 'knowledge-base/folders/:id',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-folder/knowledge-folder')
             .then((m) => m.KnowledgeFolder),
       },
       {
         path: 'knowledge-base/articles/:id',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-article/knowledge-article')
             .then((m) => m.KnowledgeArticle),
       },
       {
         path: 'knowledge-base/campaigns/:companyId',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-campaigns/knowledge-campaigns').then(
             (m) => m.KnowledgeCampaigns,
@@ -195,15 +186,14 @@ export const routes: Routes = [
           import('./features/simulator/invoice-compare/invoice-compare').then(
             (m) => m.InvoiceCompare,
           ),
-      },
-      {
-        path: 'preferences',
-        loadComponent: () =>
-          import('./features/preferences/preferences').then(
-            (m) => m.Preferences,
-          ),
-      },
+      }
     ],
+  },
+  {
+    path: 'error',
+    loadComponent: () =>
+      import('./features/not-found/not-found')
+        .then((m) => m.NotFound),
   },
   {
     path: '',
@@ -212,6 +202,8 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'home',
+    loadComponent: () =>
+      import('./features/not-found/not-found')
+        .then((m) => m.NotFound),
   },
 ];

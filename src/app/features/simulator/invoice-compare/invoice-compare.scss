@@ -1276,3 +1276,294 @@ select:focus {
     font-weight: 900;
   }
 }
+
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 14px 18px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  background: #ffffff;
+}
+
+.results-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+
+  strong {
+    color: #243646;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
+.sort-control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  select {
+    width: auto;
+    min-width: 210px;
+    height: 40px;
+
+    padding: 0 36px 0 12px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+
+    background: #ffffff;
+    color: #243646;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+
+    outline: none;
+
+    cursor: pointer;
+
+    &:focus {
+      border-color: #008db1;
+
+      box-shadow:
+        0 0 0 4px rgba(0, 141, 177, 0.1);
+    }
+  }
+}
+
+.commission-detail {
+  strong {
+    color: #243646;
+  }
+}
+
+.crm-commission {
+  strong {
+    color: #008db1;
+  }
+}
+
+@media (max-width: 700px) {
+  .results-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sort-control {
+    align-items: stretch;
+    flex-direction: column;
+
+    select {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+}
+
+/* =========================
+   ASSOCIATED PRODUCTS
+========================= */
+
+.associated-products-card {
+  .section-title {
+    margin-bottom: 16px;
+  }
+}
+
+.associated-products-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.associated-product-group {
+  min-width: 0;
+
+  padding: 16px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  background: #f8fafc;
+}
+
+.associated-product-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  margin-bottom: 12px;
+
+  strong {
+    color: #243646;
+
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  span {
+    color: #94a3b8;
+
+    font-size: 11px;
+    font-weight: 650;
+  }
+}
+
+.radio-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.radio-option {
+  width: fit-content;
+  min-height: 42px;
+
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px 13px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #ffffff;
+  color: #243646;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+
+  span {
+    user-select: none;
+  }
+
+  /*
+   * Radio personalizado.
+   * Remove o desenho nativo do browser,
+   * evitando o aspeto pixelizado.
+   */
+  input[type='radio'] {
+    appearance: none;
+    -webkit-appearance: none;
+
+    flex-shrink: 0;
+
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+
+    display: grid;
+    place-content: center;
+
+    margin: 0;
+    padding: 0;
+
+    border: 1.5px solid #94a3b8;
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    box-shadow: none;
+
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease;
+
+    &::before {
+      content: '';
+
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: #10b981;
+
+      transform: scale(0);
+
+      transition:
+        transform 0.12s ease;
+    }
+
+    &:checked {
+      border-color: #10b981;
+    }
+
+    &:checked::before {
+      transform: scale(1);
+    }
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      box-shadow: none;
+    }
+  }
+
+  /*
+   * A opção selecionada já não fica
+   * com fundo/borda verdes.
+   */
+  &:has(
+    input[type='radio']:checked
+  ) {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    color: #243646;
+  }
+}
+
+@media (max-width: 900px) {
+  .associated-products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .radio-options {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .radio-option {
+    width: 100%;
+  }
+}

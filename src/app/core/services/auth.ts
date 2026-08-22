@@ -32,6 +32,10 @@ interface RefreshResponse {
   accessToken: string;
 }
 
+interface ChangePasswordResponse {
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -82,7 +86,7 @@ export class Auth {
       .post<LoginResponse>(
         `${this.apiUrl}/api/auth/signin`,
         {
-          identifier,
+          username: identifier,
           password,
         },
         {
@@ -98,6 +102,24 @@ export class Auth {
           this.saveUserPreferences(response.user);
         }),
       );
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // Password
+  // ---------------------------------------------------------------------------
+
+  changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }): Observable<ChangePasswordResponse> {
+    return this.http.patch<ChangePasswordResponse>(
+      `${this.apiUrl}/api/auth/password`,
+      payload,
+      {
+        withCredentials: true,
+      },
+    );
   }
 
   // ---------------------------------------------------------------------------

@@ -1069,7 +1069,7 @@
 
         <div class="form-grid">
           <label>
-            Comissão de venda (€)
+            Comissão comercial (€)
 
             <input
               type="number"
@@ -1085,7 +1085,28 @@
                 editForm.controls.salesCommission.touched
               "
             >
-              Introduz uma comissão válida.
+              Introduz uma comissão comercial válida.
+            </small>
+          </label>
+
+          <label>
+            Comissão CRM Certo (€)
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="crmCertoCommission"
+            />
+
+            <small
+              class="field-error"
+              *ngIf="
+                editForm.controls.crmCertoCommission.invalid &&
+                editForm.controls.crmCertoCommission.touched
+              "
+            >
+              Introduz uma comissão CRM Certo válida.
             </small>
           </label>
 

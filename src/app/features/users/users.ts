@@ -46,6 +46,12 @@ export class Users implements OnInit {
   availableRoles: string[] = [];
   availableTeams: string[] = [];
 
+  readonly pageSize = 20;
+  currentPage = 1;
+
+  private readonly teamNames =
+    new Map<string, string>();
+
   readonly onlineUsers$ = this.socketService.onlineUsers$;
 
   filters: UserFilters = {
@@ -59,6 +65,47 @@ export class Users implements OnInit {
   showFilters = false;
 
   readonly currentUserId = this.auth.getCurrentUser()?.id ?? null;
+
+  get totalPages(): number {
+    return Math.max(
+      1,
+      Math.ceil(
+        this.filteredUsers.length /
+        this.pageSize,
+      ),
+    );
+  }
+
+  get visibleUsers(): ProfileUser[] {
+    const start =
+      (this.currentPage - 1) *
+      this.pageSize;
+
+    return this.filteredUsers.slice(
+      start,
+      start + this.pageSize,
+    );
+  }
+
+  get visibleStart(): number {
+    if (!this.filteredUsers.length) {
+      return 0;
+    }
+
+    return (
+      (this.currentPage - 1) *
+        this.pageSize +
+      1
+    );
+  }
+
+  get visibleEnd(): number {
+    return Math.min(
+      this.currentPage *
+        this.pageSize,
+      this.filteredUsers.length,
+    );
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -93,6 +140,8 @@ export class Users implements OnInit {
   }
 
   applyFilters(): void {
+    this.currentPage = 1;
+
     const searchedName = this.normalizeText(this.filters.name);
     const selectedRole = this.filters.role;
     const selectedTeam = this.filters.team;
@@ -158,50 +207,77 @@ export class Users implements OnInit {
       new Set(
         this.users
           .map((user) => user.role?.trim())
-          .filter((role): role is string => Boolean(role)),
+          .filter(
+            (role): role is string =>
+              Boolean(role),
+          ),
       ),
     ).sort((first, second) =>
       first.localeCompare(second, 'pt'),
     );
 
-    const teamsMap = new Map<string, string>();
+    this.teamNames.clear();
 
     this.users.forEach((user) => {
       user.teams?.forEach((team) => {
-        teamsMap.set(team.id, team.name);
+        this.teamNames.set(
+          team.id,
+          team.name,
+        );
       });
 
       if (user.defaultTeam) {
-        teamsMap.set(
+        this.teamNames.set(
           user.defaultTeam.id,
           user.defaultTeam.name,
         );
       }
     });
 
-    this.availableTeams = Array.from(teamsMap.entries())
-      .sort((first, second) =>
-        first[1].localeCompare(second[1], 'pt'),
+    this.availableTeams =
+      Array.from(
+        this.teamNames.entries(),
       )
-      .map(([teamId]) => teamId);
+        .sort((first, second) =>
+          first[1].localeCompare(
+            second[1],
+            'pt',
+          ),
+        )
+        .map(([teamId]) => teamId);
   }
 
   getTeamName(teamId: string): string {
-    for (const user of this.users) {
-      const matchingTeam = user.teams?.find(
-        (team) => team.id === teamId,
-      );
+    return (
+      this.teamNames.get(teamId) ??
+      teamId
+    );
+  }
 
-      if (matchingTeam) {
-        return matchingTeam.name;
-      }
-
-      if (user.defaultTeam?.id === teamId) {
-        return user.defaultTeam.name;
-      }
+  previousPage(): void {
+    if (this.currentPage <= 1) {
+      return;
     }
 
-    return teamId;
+    this.currentPage -= 1;
+  }
+
+  nextPage(): void {
+    if (
+      this.currentPage >=
+      this.totalPages
+    ) {
+      return;
+    }
+
+    this.currentPage += 1;
+  }
+
+  trackUserById(
+    _index: number,
+    user: ProfileUser,
+  ): string {
+    return user.id;
   }
 
   private normalizeText(value: string | null | undefined): string {

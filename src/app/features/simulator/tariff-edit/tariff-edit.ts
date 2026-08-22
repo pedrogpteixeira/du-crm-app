@@ -166,6 +166,10 @@ export class TariffEdit implements OnInit {
       Validators.min(0),
     ]),
 
+    crmCertoCommission: this.fb.control<number | null>(null, [
+      Validators.min(0),
+    ]),
+
     electricityDiscountAppliesToFixedTerm: this.fb.nonNullable.control(false),
     gasDiscountAppliesToFixedTerm: this.fb.nonNullable.control(false),
     isLoyalty: this.fb.nonNullable.control(false),
@@ -339,6 +343,9 @@ export class TariffEdit implements OnInit {
         salesCommission:
           tariff.salesCommission ?? null,
 
+        crmCertoCommission:
+          tariff.crmCertoCommission ?? null,
+
         electricityDiscountAppliesToFixedTerm: tariff.electricityDiscountAppliesToFixedTerm ?? false,
         gasDiscountAppliesToFixedTerm: tariff.gasDiscountAppliesToFixedTerm ?? false,
         isLoyalty: tariff.isLoyalty ?? false,
@@ -394,6 +401,15 @@ export class TariffEdit implements OnInit {
     controls.segment.setValidators(
       Validators.required,
     );
+
+    controls.salesCommission.setValidators([
+      Validators.required,
+      Validators.min(0),
+    ]);
+
+    controls.crmCertoCommission.setValidators([
+      Validators.min(0),
+    ]);
 
     if (this.shouldEditShowElectricityFields()) {
       controls.powerKva.setValidators([
@@ -473,6 +489,14 @@ export class TariffEdit implements OnInit {
     });
 
     controls.cycleType.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    controls.salesCommission.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    controls.crmCertoCommission.updateValueAndValidity({
       emitEvent: false,
     });
 
@@ -684,6 +708,13 @@ export class TariffEdit implements OnInit {
       'salesCommission',
       original.salesCommission,
       current.salesCommission,
+    );
+
+    this.addChangedNumber(
+      payload,
+      'crmCertoCommission',
+      original.crmCertoCommission,
+      current.crmCertoCommission,
     );
 
     this.addChangedValue(payload, 'electricityDiscountAppliesToFixedTerm', original.electricityDiscountAppliesToFixedTerm ?? false, Boolean(current.electricityDiscountAppliesToFixedTerm));

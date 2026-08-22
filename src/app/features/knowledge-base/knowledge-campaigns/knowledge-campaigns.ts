@@ -5,6 +5,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import { FormsModule } from '@angular/forms';
 
+import { Auth } from '../../../core/services/auth';
+
 @Component({
   selector: 'app-knowledge-campaigns',
   imports: [CommonModule, RouterLink, FormsModule],
@@ -15,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 export class KnowledgeCampaigns implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly campaignService = inject(CampaignService);
+  private readonly auth = inject(Auth);
 
   companyId = '';
   companyName = 'Empresa';
@@ -29,6 +32,11 @@ export class KnowledgeCampaigns implements OnInit {
 
   updatingCampaignId: string | null = null;
   deletingCampaignId: string | null = null;
+
+  readonly canManageCampaigns =
+    this.auth.roleIncludes(
+      'Super Admin',
+    );
 
   newCampaign = {
     name: '',
@@ -66,6 +74,10 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   toggleCampaign(campaign: Campaign): void {
+    if (!this.canManageCampaigns) {
+      return;
+    }
+
     const newActiveValue = !campaign.active;
 
     this.updatingCampaignId = campaign.id;
@@ -103,6 +115,10 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   openCreateCampaignModal(): void {
+    if (!this.canManageCampaigns) {
+      return;
+    }
+
     this.showCreateCampaignModal = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -120,6 +136,10 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   createCampaign(): void {
+    if (!this.canManageCampaigns) {
+      return;
+    }
+
     if (!this.newCampaign.name.trim()) {
       this.errorMessage = 'O nome da campanha é obrigatório.';
       return;
@@ -186,6 +206,10 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   deleteCampaign(campaign: Campaign): void {
+    if (!this.canManageCampaigns) {
+      return;
+    }
+
     const confirmed = confirm(
       `Tens a certeza que pretendes eliminar a campanha "${campaign.name}"?`,
     );

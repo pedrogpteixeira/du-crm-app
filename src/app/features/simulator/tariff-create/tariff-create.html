@@ -128,7 +128,7 @@
       </label>
 
       <label>
-        Comissão de venda (€) *
+        Comissão comercial (€) *
 
         <input
           type="number"
@@ -136,6 +136,31 @@
           step="0.01"
           formControlName="salesCommission"
         />
+
+        <small
+          class="field-error"
+          *ngIf="isInvalid('salesCommission')"
+        >
+          Introduz uma comissão comercial válida.
+        </small>
+      </label>
+
+      <label>
+        Comissão CRM Certo (€)
+
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          formControlName="crmCertoCommission"
+        />
+
+        <small
+          class="field-error"
+          *ngIf="isInvalid('crmCertoCommission')"
+        >
+          Introduz uma comissão CRM Certo válida.
+        </small>
       </label>
     </div>
   </article>

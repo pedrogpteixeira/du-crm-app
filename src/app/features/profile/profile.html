@@ -168,6 +168,33 @@
       </div>
     </aside>
 
+
+    <!-- SECURITY -->
+
+    <article class="card security-card" *ngIf="isEditing">
+      <div class="section-title">
+        Segurança
+      </div>
+
+      <div class="security-row">
+        <div>
+          <span class="security-label">Password</span>
+          <strong class="password-mask">••••••••••••</strong>
+          <p>
+            Altere periodicamente a sua password para manter a conta protegida.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="secondary security-button"
+          (click)="openPasswordModal()"
+        >
+          Alterar password
+        </button>
+      </div>
+    </article>
+
     <!-- ACCESS CONTROL -->
 
     <article class="card access-card">
@@ -244,6 +271,223 @@
     </article>
   </div>
 
+
+  <!-- CHANGE PASSWORD -->
+
+  <div
+    class="password-modal-backdrop"
+    *ngIf="showPasswordModal"
+    (click)="closePasswordModal()"
+  >
+    <section
+      class="password-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="change-password-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="password-modal-header">
+        <div>
+          <span class="modal-eyebrow">Segurança da conta</span>
+          <h2 id="change-password-title">Alterar password</h2>
+          <p>
+            Depois da alteração terá de iniciar sessão novamente.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close-button"
+          [disabled]="isChangingPassword"
+          aria-label="Fechar"
+          (click)="closePasswordModal()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form
+        class="password-form"
+        [formGroup]="passwordForm"
+        (ngSubmit)="changePassword()"
+      >
+        <label>
+          Password atual
+
+          <div class="password-input-wrapper">
+            <input
+              [type]="showCurrentPassword ? 'text' : 'password'"
+              formControlName="currentPassword"
+              autocomplete="current-password"
+            />
+
+            <button
+              type="button"
+              class="password-visibility-button"
+              (click)="togglePasswordVisibility('current')"
+              [attr.aria-label]="
+                showCurrentPassword
+                  ? 'Ocultar password atual'
+                  : 'Mostrar password atual'
+              "
+            >
+              <span class="material-symbols-rounded">
+                {{ showCurrentPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          <small
+            class="field-error"
+            *ngIf="
+              passwordForm.controls.currentPassword.touched &&
+              passwordForm.controls.currentPassword.hasError('required')
+            "
+          >
+            Introduza a password atual.
+          </small>
+
+          <small
+            class="field-error"
+            *ngIf="currentPasswordError"
+          >
+            {{ currentPasswordError }}
+          </small>
+        </label>
+
+        <label>
+          Nova password
+
+          <div class="password-input-wrapper">
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              formControlName="newPassword"
+              autocomplete="new-password"
+            />
+
+            <button
+              type="button"
+              class="password-visibility-button"
+              (click)="togglePasswordVisibility('new')"
+              [attr.aria-label]="
+                showNewPassword
+                  ? 'Ocultar nova password'
+                  : 'Mostrar nova password'
+              "
+            >
+              <span class="material-symbols-rounded">
+                {{ showNewPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          <small
+            class="field-error"
+            *ngIf="newPasswordError"
+          >
+            {{ newPasswordError }}
+          </small>
+        </label>
+
+        <div class="password-requirements">
+          <span>A password deve conter:</span>
+
+          <ul>
+            <li [class.valid]="hasMinimumPasswordLength">
+              <span class="material-symbols-rounded">
+                {{ hasMinimumPasswordLength ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              Pelo menos 7 caracteres
+            </li>
+
+            <li [class.valid]="hasUppercasePasswordLetter">
+              <span class="material-symbols-rounded">
+                {{ hasUppercasePasswordLetter ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              Uma letra maiúscula
+            </li>
+
+            <li [class.valid]="hasPasswordNumber">
+              <span class="material-symbols-rounded">
+                {{ hasPasswordNumber ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              Um número
+            </li>
+
+            <li [class.valid]="hasPasswordSpecialCharacter">
+              <span class="material-symbols-rounded">
+                {{ hasPasswordSpecialCharacter ? 'check_circle' : 'radio_button_unchecked' }}
+              </span>
+              Um carácter especial
+            </li>
+          </ul>
+        </div>
+
+        <label>
+          Confirmar nova password
+
+          <div class="password-input-wrapper">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+            />
+
+            <button
+              type="button"
+              class="password-visibility-button"
+              (click)="togglePasswordVisibility('confirm')"
+              [attr.aria-label]="
+                showConfirmPassword
+                  ? 'Ocultar confirmação da password'
+                  : 'Mostrar confirmação da password'
+              "
+            >
+              <span class="material-symbols-rounded">
+                {{ showConfirmPassword ? 'visibility_off' : 'visibility' }}
+              </span>
+            </button>
+          </div>
+
+          <small
+            class="field-error"
+            *ngIf="
+              passwordForm.controls.confirmPassword.touched &&
+              passwordForm.controls.confirmPassword.hasError('required')
+            "
+          >
+            Confirme a nova password.
+          </small>
+
+          <small
+            class="field-error"
+            *ngIf="passwordsDoNotMatch"
+          >
+            As passwords não coincidem.
+          </small>
+        </label>
+
+        <footer class="password-modal-footer">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="isChangingPassword"
+            (click)="closePasswordModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            [disabled]="passwordForm.invalid || isChangingPassword"
+          >
+            {{ isChangingPassword ? 'A alterar...' : 'Alterar password' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+
   <!-- IMAGE CROPPER -->
 
   <div
@@ -281,13 +525,4 @@
       </div>
     </div>
   </div>
-
-  <article
-    class="card commissions-card"
-    *ngIf="user && canViewCommissions"
-  >
-    <app-user-company-commissions
-      [userId]="user.id"
-    />
-  </article>
 </section>

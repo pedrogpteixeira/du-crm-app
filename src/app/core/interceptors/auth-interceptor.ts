@@ -85,6 +85,7 @@ function isAuthRequest(url: string): boolean {
     url.includes('/api/auth/signin') ||
     url.includes('/api/auth/refresh') ||
     url.includes('/api/auth/logout') ||
-    url.includes('/api/auth/logout-all')
+    url.includes('/api/auth/logout-all') ||
+    url.includes('/api/auth/password')
   );
 }

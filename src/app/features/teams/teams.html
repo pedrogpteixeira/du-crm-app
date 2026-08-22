@@ -136,7 +136,8 @@
 
     <a
       *ngFor="
-        let team of filteredTeams
+        let team of visibleTeams;
+        trackBy: trackTeamById
       "
       class="team-row"
       [routerLink]="[
@@ -205,15 +206,42 @@
         teams.length
       "
     >
-      A mostrar
-      <strong>
-        {{ filteredTeams.length }}
-      </strong>
-      de
-      <strong>
-        {{ teams.length }}
-      </strong>
-      equipas
+      <div>
+        A mostrar
+        <strong>
+          {{ visibleStart }}–{{ visibleEnd }}
+        </strong>
+        de
+        <strong>
+          {{ filteredTeams.length }}
+        </strong>
+        equipas
+      </div>
+
+      <div
+        class="pagination-controls"
+        *ngIf="filteredTeams.length > pageSize"
+      >
+        <button
+          type="button"
+          [disabled]="currentPage === 1"
+          (click)="previousPage()"
+        >
+          Anterior
+        </button>
+
+        <span>
+          {{ currentPage }} / {{ totalPages }}
+        </span>
+
+        <button
+          type="button"
+          [disabled]="currentPage === totalPages"
+          (click)="nextPage()"
+        >
+          Seguinte
+        </button>
+      </div>
     </footer>
   </div>
 </section>

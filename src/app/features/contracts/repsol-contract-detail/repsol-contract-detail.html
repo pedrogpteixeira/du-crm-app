@@ -516,9 +516,26 @@
 
                 <div
                   class="observations-history"
-                  [class.empty]="!contract.observacoes"
+                  [class.empty]="!getObservationLines(contract.observacoes).length"
                 >
-                  {{ contract.observacoes || 'Sem observações.' }}
+                  <ng-container
+                    *ngIf="getObservationLines(contract.observacoes) as observationLines"
+                  >
+                    <ng-container
+                      *ngIf="observationLines.length; else noObservations"
+                    >
+                      <div
+                        class="observation-entry"
+                        *ngFor="let observation of observationLines"
+                      >
+                        {{ observation }}
+                      </div>
+                    </ng-container>
+                  </ng-container>
+
+                  <ng-template #noObservations>
+                    <span>Sem observações.</span>
+                  </ng-template>
                 </div>
               </div>
 
@@ -537,6 +554,94 @@
             </div>
           </div>
         </article>
+
+
+        <article
+          class="card"
+          *ngIf="canAccessInternalObservations"
+        >
+          <button
+            type="button"
+            class="section-toggle"
+            (click)="toggleSection('internalObservations')"
+          >
+            <span>Observações internas</span>
+            <span
+              class="chevron"
+              [class.collapsed]="collapsedSections.internalObservations"
+            >
+              ⌄
+            </span>
+          </button>
+
+          <div
+            class="section-content"
+            *ngIf="!collapsedSections.internalObservations"
+          >
+            <div class="observations-layout">
+              <div>
+                <span class="field-label">
+                  Histórico de observações internas
+                </span>
+
+                <div
+                  class="observations-history internal-observations-history"
+                  [class.empty]="
+                    !getObservationLines(
+                      contract.observacoesInternas
+                    ).length
+                  "
+                >
+                  <ng-container
+                    *ngIf="
+                      getObservationLines(
+                        contract.observacoesInternas
+                      ) as internalObservationLines
+                    "
+                  >
+                    <ng-container
+                      *ngIf="
+                        internalObservationLines.length;
+                        else noInternalObservations
+                      "
+                    >
+                      <div
+                        class="observation-entry"
+                        *ngFor="
+                          let observation of
+                            internalObservationLines
+                        "
+                      >
+                        {{ observation }}
+                      </div>
+                    </ng-container>
+                  </ng-container>
+
+                  <ng-template #noInternalObservations>
+                    <span>Sem observações internas.</span>
+                  </ng-template>
+                </div>
+              </div>
+
+              <label *ngIf="isEditing">
+                Nova observação interna
+
+                <textarea
+                  rows="5"
+                  [(ngModel)]="
+                    internalObservationDraft
+                  "
+                  placeholder="Escreva apenas a nova observação interna. O histórico existente será preservado."
+                ></textarea>
+
+                <small class="field-help">
+                  A data, a hora e o seu nome são adicionados automaticamente ao guardar.
+                </small>
+              </label>
+            </div>
+          </div>
+        </article>
+
       </div>
 
       <aside class="side-column">

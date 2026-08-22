@@ -33,6 +33,9 @@ export interface RepsolContract {
   user: RepsolContractListUser | null;
 
   nomeRegistoCE?: string;
+
+  observacoes?: string;
+  observacoesInternas?: string;
 }
 
 export interface RepsolContractUser {
@@ -59,6 +62,7 @@ export interface RepsolContractTeamVisibility {
 export interface RepsolContractTeam {
   id: string;
   name: string;
+  registrationNumber: number;
   minimumPositionIndex: number;
   minimumPosition?: string;
   teamId?: string;
@@ -126,7 +130,9 @@ export interface RepsolContractDetail {
   nivelTensao: string;
 
   documentos: RepsolContractDocument[];
+
   observacoes: string;
+  observacoesInternas?: string;
 
   user: RepsolContractUser | null;
   teams: RepsolContractTeam[];
@@ -187,6 +193,7 @@ export interface CreateRepsolContractRequest {
   nivelTensao?: string;
 
   observacoes?: string;
+  observacoesInternas?: string;
 
   userId: string;
   teams?: RepsolContractTeamVisibility[];
@@ -209,19 +216,35 @@ export type UpdateRepsolContractRequest = Partial<
   telefone?: number | null;
   potencia?: string | number | null;
   escalao?: number | null;
+
+  /*
+   * Mantém explicitamente string para permitir:
+   *
+   * {
+   *   observacoesInternas: ''
+   * }
+   *
+   * e assim limpar o campo através do PATCH.
+   */
+  observacoesInternas?: string;
 };
 
 @Injectable({
   providedIn: 'root',
 })
 export class RepsolContractService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = environment.apiUrl;
+  private readonly http =
+    inject(HttpClient);
+
+  private readonly apiUrl =
+    environment.apiUrl;
 
   getRepsolContracts(
     userId: string,
   ): Observable<RepsolContract[]> {
-    return this.http.get<RepsolContract[]>(
+    return this.http.get<
+      RepsolContract[]
+    >(
       `${this.apiUrl}/api/contracts/repsol/followers/${userId}`,
     );
   }
@@ -229,7 +252,9 @@ export class RepsolContractService {
   getRepsolContractById(
     contractId: string,
   ): Observable<RepsolContractDetail> {
-    return this.http.get<RepsolContractDetail>(
+    return this.http.get<
+      RepsolContractDetail
+    >(
       `${this.apiUrl}/api/contracts/repsol/${contractId}`,
     );
   }
@@ -237,7 +262,9 @@ export class RepsolContractService {
   createRepsolContract(
     payload: CreateRepsolContractRequest,
   ): Observable<RepsolContractDetail> {
-    return this.http.post<RepsolContractDetail>(
+    return this.http.post<
+      RepsolContractDetail
+    >(
       `${this.apiUrl}/api/contracts/repsol`,
       payload,
     );
@@ -245,9 +272,12 @@ export class RepsolContractService {
 
   updateRepsolContract(
     contractId: string,
-    payload: UpdateRepsolContractRequest,
+    payload:
+      UpdateRepsolContractRequest,
   ): Observable<RepsolContractDetail> {
-    return this.http.patch<RepsolContractDetail>(
+    return this.http.patch<
+      RepsolContractDetail
+    >(
       `${this.apiUrl}/api/contracts/repsol/${contractId}`,
       payload,
     );
@@ -257,7 +287,8 @@ export class RepsolContractService {
     contractId: string,
     files: File[],
   ): Observable<RepsolContractDetail> {
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
     files.forEach((file) => {
       formData.append(
@@ -267,7 +298,9 @@ export class RepsolContractService {
       );
     });
 
-    return this.http.post<RepsolContractDetail>(
+    return this.http.post<
+      RepsolContractDetail
+    >(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments`,
       formData,
     );
@@ -277,7 +310,9 @@ export class RepsolContractService {
     contractId: string,
     fileName: string,
   ): Observable<RepsolContractDetail> {
-    return this.http.delete<RepsolContractDetail>(
+    return this.http.delete<
+      RepsolContractDetail
+    >(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
         fileName,
       )}`,
@@ -286,7 +321,8 @@ export class RepsolContractService {
 
   downloadDocument(
     contractId: string,
-    document: RepsolContractDocument,
+    document:
+      RepsolContractDocument,
   ): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(

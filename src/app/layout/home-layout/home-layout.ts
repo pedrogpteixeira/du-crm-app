@@ -102,10 +102,19 @@ export class HomeLayout {
       return 'Perfil';
     }
 
+    if (
+      url.includes('/preferences')
+    ) {
+      return 'Preferências';
+    }
+
     if (url.includes('/omie-averages')) {
       return 'Médias OMIE';
     }
 
+    this.router.navigateByUrl('/home/dashboard', {
+      replaceUrl: true,
+    });
     return 'Dashboard';
   }
 }

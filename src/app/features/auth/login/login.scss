@@ -122,3 +122,22 @@ a {
 
   margin-top: -4px;
 }
+
+.success-message,
+.info-message {
+  margin: 0 0 18px;
+  border-radius: 12px;
+  padding: 11px 13px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.success-message {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.info-message {
+  background: #e0f2fe;
+  color: #0369a1;
+}

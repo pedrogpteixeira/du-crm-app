@@ -23,6 +23,7 @@
     </div>
 
     <button
+      *ngIf="canManageCampaigns"
       type="button"
       (click)="openCreateCampaignModal()"
     >
@@ -42,13 +43,13 @@
     {{ successMessage }}
   </p>
 
-  <div class="campaigns-card">
+  <div class="campaigns-card" [class.read-only]="!canManageCampaigns">
     <div class="table-header">
       <span>Nome</span>
       <span>Início</span>
       <span>Fim</span>
       <span>Estado</span>
-      <span>Ações</span>
+      <span *ngIf="canManageCampaigns">Ações</span>
     </div>
 
     <div
@@ -69,7 +70,7 @@
         {{ campaign.active ? 'Ativa' : 'Inativa' }}
       </span>
 
-      <div class="row-actions">
+      <div class="row-actions" *ngIf="canManageCampaigns">
         <button
           type="button"
           class="toggle-btn"
@@ -113,7 +114,10 @@
 
 <div
   class="modal-backdrop"
-  *ngIf="showCreateCampaignModal"
+  *ngIf="
+    showCreateCampaignModal &&
+    canManageCampaigns
+  "
 >
   <div class="modal">
     <h2>Nova campanha</h2>

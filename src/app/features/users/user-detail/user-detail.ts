@@ -7,12 +7,11 @@ import { SocketService } from '../../../core/services/socket';
 import { ProfileUser, UserService } from '../../../core/services/user';
 import { environment } from '../../../../environments/environment';
 
-import { UserCompanyCommissions } from '../user-company-commissions/user-company-commissions';
 import { Auth } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-user-detail',
-  imports: [CommonModule, RouterLink, UserCompanyCommissions],
+  imports: [CommonModule, RouterLink],
   templateUrl: './user-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './user-detail.scss',
@@ -116,9 +115,5 @@ export class UserDetail implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(accessDate);
-  }
-
-  get canViewCommissions(): boolean {
-    return this.auth.roleIncludes('Super Admin');
   }
 }

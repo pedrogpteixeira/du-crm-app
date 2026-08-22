@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
+import { Auth } from '../../../core/services/auth';
+
 import {
   CycleType,
   IndexedElectricityScenarios,
@@ -43,6 +45,22 @@ type ElectricityScenarioKey =
 type GasScenarioKey =
   keyof IndexedGasScenarios;
 
+type OfferSortOption =
+  | 'saving'
+  | 'salesCommission'
+  | 'crmCertoCommission'
+  | 'price';
+
+type ElectricityCommissionProduct =
+  | 'none'
+  | 'PEL'
+  | 'PELPlus';
+
+type GasCommissionProduct =
+  | 'none'
+  | 'PGI'
+  | 'MGI';
+
 @Component({
   selector: 'app-invoice-compare',
   imports: [
@@ -56,6 +74,9 @@ type GasScenarioKey =
 export class InvoiceCompare {
   private readonly simulatorService =
     inject(SimulatorService);
+
+  private readonly auth =
+    inject(Auth);
 
   private readonly router =
     inject(Router);
@@ -99,6 +120,14 @@ export class InvoiceCompare {
 
   customPower: number | null = null;
   customGasTier: number | null = null;
+
+  sortBy: OfferSortOption = 'saving';
+
+  electricityCommissionProduct:
+    ElectricityCommissionProduct = 'none';
+
+  gasCommissionProduct:
+    GasCommissionProduct = 'none';
 
   selectedOffer:
     | InvoiceComparisonOffer
@@ -160,8 +189,18 @@ export class InvoiceCompare {
       sva: false,
       loyalty: false,
       gasBonus: false,
+      PEL: false,
+      PELPlus: false,
+      PGI: false,
+      MGI: false,
     } as Required<SimulationDiscountConditions>,
   };
+
+  get canViewCrmCommission(): boolean {
+    return this.auth.roleIncludes(
+      'Super Admin',
+    );
+  }
 
   compareInvoice(): void {
     if (this.isLoading) {
@@ -206,23 +245,34 @@ export class InvoiceCompare {
 
   onProductTypeChange(): void {
     this.clearResults();
+    this.normalizeCommissionProducts();
 
     if (this.form.productType === 'gas') {
       this.clearElectricityFields();
-      this.form.discountConditions.loyalty =
-        false;
+      this.form.discountConditions.loyalty = false;
       return;
     }
 
-    if (
-      this.form.productType ===
-      'electricity'
-    ) {
+    if (this.form.productType === 'electricity') {
       this.clearGasFields();
-
-      this.form.discountConditions.gasBonus =
-        false;
+      this.form.discountConditions.gasBonus = false;
     }
+  }
+
+  onElectricityCommissionProductChange(
+    value: ElectricityCommissionProduct,
+  ): void {
+    this.electricityCommissionProduct = value;
+    this.form.discountConditions.PEL = value === 'PEL';
+    this.form.discountConditions.PELPlus = value === 'PELPlus';
+  }
+
+  onGasCommissionProductChange(
+    value: GasCommissionProduct,
+  ): void {
+    this.gasCommissionProduct = value;
+    this.form.discountConditions.PGI = value === 'PGI';
+    this.form.discountConditions.MGI = value === 'MGI';
   }
 
   onTariffTypeChange(): void {
@@ -787,47 +837,40 @@ export class InvoiceCompare {
 
   private buildDiscountConditions():
     SimulationDiscountConditions {
+    const hasElectricity = this.shouldShowElectricityFields();
+    const hasGas = this.shouldShowGasFields();
+
     return {
-      electronicInvoice:
-        Boolean(
-          this.form.discountConditions
-            .electronicInvoice,
-        ),
-
-      directDebit:
-        Boolean(
-          this.form.discountConditions
-            .directDebit,
-        ),
-
-      welcomeBonus:
-        Boolean(
-          this.form.discountConditions
-            .welcomeBonus,
-        ),
-
-      sva:
-        Boolean(
-          this.form.discountConditions
-            .sva,
-        ),
-
-      loyalty:
-        this.shouldShowElectricityFields()
-          ? Boolean(
-              this.form.discountConditions
-                .loyalty,
-            )
-          : false,
-
-      gasBonus:
-        this.shouldShowGasBonus()
-          ? Boolean(
-              this.form.discountConditions
-                .gasBonus,
-            )
-          : false,
+      electronicInvoice: Boolean(this.form.discountConditions.electronicInvoice),
+      directDebit: Boolean(this.form.discountConditions.directDebit),
+      welcomeBonus: Boolean(this.form.discountConditions.welcomeBonus),
+      sva: Boolean(this.form.discountConditions.sva),
+      loyalty: hasElectricity
+        ? Boolean(this.form.discountConditions.loyalty)
+        : false,
+      gasBonus: hasGas
+        ? Boolean(this.form.discountConditions.gasBonus)
+        : false,
+      PEL: hasElectricity && this.electricityCommissionProduct === 'PEL',
+      PELPlus: hasElectricity && this.electricityCommissionProduct === 'PELPlus',
+      PGI: hasGas && this.gasCommissionProduct === 'PGI',
+      MGI: hasGas && this.gasCommissionProduct === 'MGI',
     };
+  }
+
+  private normalizeCommissionProducts(): void {
+    if (this.form.productType === 'electricity') {
+      this.gasCommissionProduct = 'none';
+      this.form.discountConditions.PGI = false;
+      this.form.discountConditions.MGI = false;
+      return;
+    }
+
+    if (this.form.productType === 'gas') {
+      this.electricityCommissionProduct = 'none';
+      this.form.discountConditions.PEL = false;
+      this.form.discountConditions.PELPlus = false;
+    }
   }
 
   private cleanConsumption(
@@ -1005,6 +1048,22 @@ export class InvoiceCompare {
       )
     ) {
       return 'Não existem atualmente todos os valores MIBGAS necessários para simular os tarifários indexados de gás.';
+    }
+
+    if (backendMessage.includes('PEL and PELPlus cannot both be enabled')) {
+      return 'Não é possível selecionar simultaneamente PEL e PEL+.';
+    }
+
+    if (backendMessage.includes('PGI and MGI cannot both be enabled')) {
+      return 'Não é possível selecionar simultaneamente PGI e MGI.';
+    }
+
+    if (backendMessage.includes('PEL and PELPlus are only available')) {
+      return 'PEL e PEL+ só estão disponíveis em propostas de eletricidade.';
+    }
+
+    if (backendMessage.includes('PGI and MGI are only available')) {
+      return 'PGI e MGI só estão disponíveis em propostas de gás.';
     }
 
     return (
@@ -1243,5 +1302,44 @@ export class InvoiceCompare {
     }
 
     return '';
+  }
+
+  get sortedOffers(): InvoiceComparisonOffer[] {
+    const effectiveSortBy =
+      this.sortBy === 'crmCertoCommission' &&
+      !this.canViewCrmCommission
+        ? 'saving'
+        : this.sortBy;
+
+    return [...this.offers].sort(
+      (a, b) => {
+        switch (effectiveSortBy) {
+          case 'salesCommission':
+            return (
+              (b.salesCommission ?? 0) -
+              (a.salesCommission ?? 0)
+            );
+
+          case 'crmCertoCommission':
+            return (
+              (b.tariff.crmCertoCommission ?? 0) -
+              (a.tariff.crmCertoCommission ?? 0)
+            );
+
+          case 'price':
+            return (
+              a.simulation.estimatedMonthlyCost -
+              b.simulation.estimatedMonthlyCost
+            );
+
+          case 'saving':
+          default:
+            return (
+              b.comparison.monthlySaving -
+              a.comparison.monthlySaving
+            );
+        }
+      },
+    );
   }
 }

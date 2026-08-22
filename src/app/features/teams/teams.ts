@@ -54,6 +54,9 @@ export class Teams implements OnInit {
 
   availableRoles: string[] = [];
 
+  readonly pageSize = 20;
+  currentPage = 1;
+
   filters: TeamFilters = {
     name: '',
     role: '',
@@ -74,6 +77,47 @@ export class Teams implements OnInit {
 
   showFilters = false;
   showCreateTeamModal = false;
+
+  get totalPages(): number {
+    return Math.max(
+      1,
+      Math.ceil(
+        this.filteredTeams.length /
+        this.pageSize,
+      ),
+    );
+  }
+
+  get visibleTeams(): Team[] {
+    const start =
+      (this.currentPage - 1) *
+      this.pageSize;
+
+    return this.filteredTeams.slice(
+      start,
+      start + this.pageSize,
+    );
+  }
+
+  get visibleStart(): number {
+    if (!this.filteredTeams.length) {
+      return 0;
+    }
+
+    return (
+      (this.currentPage - 1) *
+        this.pageSize +
+      1
+    );
+  }
+
+  get visibleEnd(): number {
+    return Math.min(
+      this.currentPage *
+        this.pageSize,
+      this.filteredTeams.length,
+    );
+  }
 
   ngOnInit(): void {
     this.resolvePermissions();
@@ -112,6 +156,8 @@ export class Teams implements OnInit {
   }
 
   applyFilters(): void {
+    this.currentPage = 1;
+
     const searchedName =
       this.normalizeText(this.filters.name);
 
@@ -299,6 +345,32 @@ export class Teams implements OnInit {
             'Não foi possível criar a equipa.';
         },
       });
+  }
+
+  previousPage(): void {
+    if (this.currentPage <= 1) {
+      return;
+    }
+
+    this.currentPage -= 1;
+  }
+
+  nextPage(): void {
+    if (
+      this.currentPage >=
+      this.totalPages
+    ) {
+      return;
+    }
+
+    this.currentPage += 1;
+  }
+
+  trackTeamById(
+    _index: number,
+    team: Team,
+  ): string {
+    return team.id;
   }
 
   trackPositionByIndex(

@@ -33,11 +33,11 @@
     <div 
     class="nav-section">
       <span 
-      *ngIf="canAccessRoles('Super Admin', 'Repsol')"
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
       class="section-title">CRM Repsol</span>
 
       <a 
-      *ngIf="canAccessRoles('Super Admin', 'Repsol')"
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
       routerLink="/home/contracts/repsol" routerLinkActive="active">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Contratos</span>

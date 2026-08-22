@@ -9,6 +9,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
+
 import { Auth } from '../../../core/services/auth';
 import {
   Campaign,
@@ -23,6 +25,10 @@ import {
 } from '../../../core/services/repsol-contract';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
+import {
+  ProfileUser,
+  UserService,
+} from '../../../core/services/user';
 
 type CampaignSelectionMode = 'existing' | 'other';
 
@@ -107,6 +113,7 @@ export class RepsolContractDetail implements OnInit {
   private readonly preferencesService =
     inject(PreferencesService);
   private readonly socketService = inject(SocketService);
+  private readonly userService = inject(UserService);
 
   private currentUserId = '';
   private currentUserName = '';
@@ -120,6 +127,7 @@ export class RepsolContractDetail implements OnInit {
   campaigns: Campaign[] = [];
 
   observationDraft = '';
+  internalObservationDraft = '';
   selectedFiles: File[] = [];
   deletingAttachmentFileNames = new Set<string>();
 
@@ -135,6 +143,7 @@ export class RepsolContractDetail implements OnInit {
   isSaving = false;
   isEditing = false;
   isSuperAdmin = false;
+  canAccessInternalObservations = false;
 
   errorMessage = '';
   successMessage = '';
@@ -272,7 +281,7 @@ export class RepsolContractDetail implements OnInit {
               'Não tem permissão para aceder a este contrato.',
             );
 
-            this.router.navigateByUrl('/home', {
+            this.router.navigateByUrl('/error', {
               replaceUrl: true,
             });
 
@@ -298,6 +307,7 @@ export class RepsolContractDetail implements OnInit {
 
     this.initializeEditForm(this.contract);
     this.observationDraft = '';
+    this.internalObservationDraft = '';
     this.selectedFiles = [];
     this.isEditing = true;
     this.errorMessage = '';
@@ -310,6 +320,7 @@ export class RepsolContractDetail implements OnInit {
     }
 
     this.observationDraft = '';
+    this.internalObservationDraft = '';
     this.selectedFiles = [];
     this.isEditing = false;
     this.errorMessage = '';
@@ -410,6 +421,7 @@ export class RepsolContractDetail implements OnInit {
           this.contract = normalizedContract;
           this.initializeEditForm(normalizedContract);
           this.observationDraft = '';
+          this.internalObservationDraft = '';
 
           if (uploadFailed) {
             this.isEditing = true;
@@ -582,15 +594,57 @@ export class RepsolContractDetail implements OnInit {
     const currentUser =
       this.auth.getCurrentUser() as AuthenticatedUserLike | null;
 
-    const role = currentUser?.role?.toLowerCase() ?? '';
+    const role =
+      currentUser?.role?.toLowerCase() ?? '';
 
     this.currentUserId =
       currentUser?.id ?? currentUser?._id ?? '';
+
     this.currentUserName =
       currentUser?.name ??
       currentUser?.username ??
       'Utilizador';
-    this.isSuperAdmin = role.includes('super admin');
+
+    this.isSuperAdmin =
+      role.includes('super admin');
+
+    if (!this.currentUserId) {
+      return;
+    }
+
+    this.userService
+      .getUserById(this.currentUserId)
+      .subscribe({
+        next: (user) => {
+          const teamIds =
+            (
+              user as ProfileUser & {
+                teams?: Array<{
+                  id?: string;
+                }>;
+              }
+            ).teams
+              ?.map((team) => team.id ?? '')
+              .filter(Boolean) ?? [];
+
+          const authorizedTeamIds = [
+            environment.EQUIPA_CRM_ID,
+            environment.EQUIPA_DU_ID,
+          ].filter(
+            (teamId): teamId is string =>
+              Boolean(teamId),
+          );
+
+          this.canAccessInternalObservations =
+            teamIds.some((teamId) =>
+              authorizedTeamIds.includes(teamId),
+            );
+
+          if (!this.canAccessInternalObservations) {
+            this.internalObservationDraft = '';
+          }
+        },
+      });
   }
 
   private getSocketEventUserId(event: unknown): string {
@@ -609,27 +663,73 @@ export class RepsolContractDetail implements OnInit {
   }
 
   private synchronizeExternalUpdate(currentTime: string): void {
+    /*
+     * Os dois campos de observações funcionam exatamente
+     * da mesma forma durante uma atualização por socket:
+     *
+     * - o histórico vem novamente do backend;
+     * - o rascunho local não é alterado;
+     * - ao guardar, o rascunho é acrescentado ao histórico
+     *   mais recente recebido do servidor.
+     */
+    const observationDraft =
+      this.observationDraft;
+
+    const internalObservationDraft =
+      this.internalObservationDraft;
+
     this.repsolContractService
       .getRepsolContractById(this.contractId)
       .subscribe({
         next: (latestContract) => {
-          const result = this.mergeExternalContract(latestContract);
+          const normalizedContract =
+            this.normalizeContractResponse(
+              latestContract,
+            );
 
-          this.contract = latestContract;
+          const result =
+            this.mergeExternalContract(
+              normalizedContract,
+            );
+
+          /*
+           * Atualiza o histórico normal e o histórico
+           * interno porque ambos pertencem ao contract,
+           * e não ao editForm.
+           */
+          this.contract =
+            normalizedContract;
+
+          /*
+           * Preserva explicitamente os dois rascunhos.
+           * Desta forma um socket nunca apaga aquilo que
+           * o utilizador está a escrever.
+           */
+          this.observationDraft =
+            observationDraft;
+
+          this.internalObservationDraft =
+            internalObservationDraft;
 
           if (result.conflicts > 0) {
             this.socketMessage =
               `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
               `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente. ` +
               `${result.conflicts} campo(s) que também estava a editar foram preservados com os seus valores. ` +
+              'Os históricos de observações foram sincronizados sem perder os seus rascunhos. ' +
               'Ao guardar, os seus valores nesses campos irão prevalecer.';
             return;
           }
 
+          const observationsMessage =
+            this.canAccessInternalObservations
+              ? 'incluindo os históricos de observações e observações internas, bem como os anexos'
+              : 'incluindo o histórico de observações e os anexos';
+
           this.socketMessage =
             `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
             `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente, ` +
-            'incluindo o histórico de observações e os anexos, sem perder o seu rascunho nem os ficheiros selecionados.';
+            `${observationsMessage}, sem perder os seus rascunhos nem os ficheiros selecionados.`;
         },
         error: () => {
           this.socketMessage =
@@ -1257,6 +1357,17 @@ export class RepsolContractDetail implements OnInit {
       payload.observacoes = observationValue;
     }
 
+    const internalObservationValue =
+      this.buildInternalObservationValue();
+
+    if (
+      this.canAccessInternalObservations &&
+      internalObservationValue !== null
+    ) {
+      payload.observacoesInternas =
+        internalObservationValue;
+    }
+
     const currentCampaign = this.getCurrentCampaignValue();
     const originalCampaign = this.getOriginalCampaignValue();
 
@@ -1290,25 +1401,42 @@ export class RepsolContractDetail implements OnInit {
   }
 
   private buildObservationValue(): string | null {
-    const draft = this.observationDraft.trim();
+    return this.buildObservationHistoryValue(
+      this.contract?.observacoes,
+      this.observationDraft,
+    );
+  }
+
+  private buildInternalObservationValue():
+    string | null {
+    return this.buildObservationHistoryValue(
+      this.contract?.observacoesInternas,
+      this.internalObservationDraft,
+    );
+  }
+
+  private buildObservationHistoryValue(
+    currentValue: string | null | undefined,
+    draftValue: string,
+  ): string | null {
+    const draft =
+      this.normalizeObservationText(
+        draftValue,
+      );
 
     if (!draft) {
       return null;
     }
 
     const currentHistory =
-      this.contract?.observacoes?.trim() ?? '';
+      this.getObservationLines(
+        currentValue,
+      ).join('\n');
 
-    const timestamp = new Intl.DateTimeFormat('pt-PT', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-      .format(new Date())
-      .replace(',', '');
+    const timestamp =
+      this.formatObservationTimestamp(
+        new Date(),
+      );
 
     const entry =
       `${this.currentUserName} - ${timestamp} - ${draft}`;
@@ -1316,6 +1444,58 @@ export class RepsolContractDetail implements OnInit {
     return currentHistory
       ? `${currentHistory}\n${entry}`
       : entry;
+  }
+
+  getObservationLines(
+    value: string | null | undefined,
+  ): string[] {
+    if (!value) {
+      return [];
+    }
+
+    return value
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
+  private normalizeObservationText(
+    value: string,
+  ): string {
+    return value
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  private formatObservationTimestamp(
+    date: Date,
+  ): string {
+    const day =
+      String(date.getDate())
+        .padStart(2, '0');
+
+    const month =
+      String(date.getMonth() + 1)
+        .padStart(2, '0');
+
+    const year =
+      date.getFullYear();
+
+    const hours =
+      String(date.getHours())
+        .padStart(2, '0');
+
+    const minutes =
+      String(date.getMinutes())
+        .padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   private getCurrentCampaignValue(): string {
@@ -1433,6 +1613,7 @@ export class RepsolContractDetail implements OnInit {
       energy: value,
       attachments: value,
       observations: value,
+      internalObservations: value,
     };
   }
 

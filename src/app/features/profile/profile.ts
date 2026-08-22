@@ -1,8 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Observable } from 'rxjs';
+import { finalize, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Auth } from '../../core/services/auth';
@@ -11,16 +19,22 @@ import { SocketService } from '../../core/services/socket';
 import { AuthUser, UserTeam } from '../../core/models/auth-user';
 
 import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
-import { UserCompanyCommissions } from '../users/user-company-commissions/user-company-commissions';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule, ImageCropperComponent, RouterLink, UserCompanyCommissions],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ImageCropperComponent,
+    RouterLink,
+  ],
   templateUrl: './profile.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.scss',
 })
 export class Profile implements OnInit {
+  private readonly fb = inject(FormBuilder);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
@@ -32,12 +46,43 @@ export class Profile implements OnInit {
   isUploadingPhoto = false;
   isLoadingProfile = false;
   isSaving = false;
+  isChangingPassword = false;
+  showPasswordModal = false;
+
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
+  currentPasswordError = '';
+  newPasswordError = '';
 
   errorMessage = '';
   successMessage = '';
 
   user: AuthUser = this.getEmptyUser();
   editableUser: AuthUser = { ...this.user };
+
+  private readonly passwordPattern =
+    /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{7,}$/;
+
+  readonly passwordForm = this.fb.group(
+    {
+      currentPassword: this.fb.nonNullable.control('', [
+        Validators.required,
+      ]),
+      newPassword: this.fb.nonNullable.control('', [
+        Validators.required,
+        Validators.minLength(7),
+        Validators.pattern(this.passwordPattern),
+      ]),
+      confirmPassword: this.fb.nonNullable.control('', [
+        Validators.required,
+      ]),
+    },
+    {
+      validators: this.passwordsMatchValidator(),
+    },
+  );
 
   selectedImageEvent: Event | null = null;
   croppedImageBlob: Blob | null = null;
@@ -187,6 +232,182 @@ export class Profile implements OnInit {
     });
   }
 
+  openPasswordModal(): void {
+    this.resetPasswordForm();
+    this.showPasswordModal = true;
+  }
+
+  closePasswordModal(): void {
+    if (this.isChangingPassword) {
+      return;
+    }
+
+    this.showPasswordModal = false;
+    this.resetPasswordForm();
+  }
+
+  togglePasswordVisibility(
+    field: 'current' | 'new' | 'confirm',
+  ): void {
+    if (field === 'current') {
+      this.showCurrentPassword = !this.showCurrentPassword;
+      return;
+    }
+
+    if (field === 'new') {
+      this.showNewPassword = !this.showNewPassword;
+      return;
+    }
+
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  changePassword(): void {
+    if (this.isChangingPassword) {
+      return;
+    }
+
+    this.currentPasswordError = '';
+    this.newPasswordError = '';
+
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+
+    const {
+      currentPassword,
+      newPassword,
+    } = this.passwordForm.getRawValue();
+
+    this.isChangingPassword = true;
+
+    this.auth
+      .changePassword({
+        currentPassword,
+        newPassword,
+      })
+      .pipe(
+        finalize(() => {
+          this.isChangingPassword = false;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.passwordForm.reset();
+          this.showPasswordModal = false;
+
+          // O backend revoga todas as sessões neste momento.
+          // Limpamos apenas o estado local; não fazemos novo request de logout.
+          this.auth.clearSession();
+
+          this.router.navigate(['/login'], {
+            replaceUrl: true,
+            queryParams: {
+              passwordChanged: 'true',
+            },
+          });
+        },
+        error: (error) => {
+          const backendMessage =
+            error?.error?.message ?? '';
+
+          if (
+            backendMessage ===
+            'Current password is incorrect.'
+          ) {
+            this.currentPasswordError =
+              'A password atual está incorreta.';
+            return;
+          }
+
+          if (
+            backendMessage ===
+            'New password must be different from the current password.'
+          ) {
+            this.newPasswordError =
+              'A nova password tem de ser diferente da atual.';
+            return;
+          }
+
+          if (error?.status === 401) {
+            this.auth.clearSession();
+            this.router.navigate(['/login'], {
+              replaceUrl: true,
+              queryParams: {
+                sessionExpired: 'true',
+              },
+            });
+            return;
+          }
+
+          this.showTemporaryMessage(
+            'error',
+            backendMessage ||
+              'Não foi possível alterar a password. Tente novamente.',
+          );
+        },
+      });
+  }
+
+  get newPasswordValue(): string {
+    return this.passwordForm.controls.newPassword.value;
+  }
+
+  get hasMinimumPasswordLength(): boolean {
+    return this.newPasswordValue.length >= 7;
+  }
+
+  get hasUppercasePasswordLetter(): boolean {
+    return /[A-Z]/.test(this.newPasswordValue);
+  }
+
+  get hasPasswordNumber(): boolean {
+    return /\d/.test(this.newPasswordValue);
+  }
+
+  get hasPasswordSpecialCharacter(): boolean {
+    return /[^A-Za-z0-9]/.test(this.newPasswordValue);
+  }
+
+  get passwordsDoNotMatch(): boolean {
+    return Boolean(
+      this.passwordForm.hasError('passwordMismatch') &&
+      this.passwordForm.controls.confirmPassword.touched,
+    );
+  }
+
+  private passwordsMatchValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const newPassword =
+        control.get('newPassword')?.value ?? '';
+      const confirmPassword =
+        control.get('confirmPassword')?.value ?? '';
+
+      if (!newPassword || !confirmPassword) {
+        return null;
+      }
+
+      return newPassword === confirmPassword
+        ? null
+        : { passwordMismatch: true };
+    };
+  }
+
+  private resetPasswordForm(): void {
+    this.passwordForm.reset({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+
+    this.currentPasswordError = '';
+    this.newPasswordError = '';
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+  }
+
   logout(): void {
     this.auth.logout();
 
@@ -302,9 +523,5 @@ export class Profile implements OnInit {
       month: 'long',
       year: 'numeric',
     }).format(accessDate);
-  }
-
-  get canViewCommissions(): boolean {
-    return this.auth.roleIncludes('Super Admin');
   }
 }

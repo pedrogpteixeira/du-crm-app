@@ -397,6 +397,109 @@
     </div>
   </article>
 
+  <article
+    class="card associated-products-card"
+    *ngIf="shouldShowElectricityFields() || shouldShowGasFields()"
+  >
+    <div class="section-title">Serviços / Produtos associados</div>
+
+    <div class="associated-products-grid">
+      <section
+        class="associated-product-group"
+        *ngIf="shouldShowElectricityFields()"
+      >
+        <div class="associated-product-heading">
+          <strong>
+            {{ form.productType === 'dual' ? 'Produto associado à eletricidade' : 'Produto adicional (SVA Iberdrola)' }}
+          </strong>
+          <span>Seleciona no máximo uma opção.</span>
+        </div>
+
+        <div class="radio-options">
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="electricityCommissionProduct"
+              value="none"
+              [(ngModel)]="electricityCommissionProduct"
+              (ngModelChange)="onElectricityCommissionProductChange($event)"
+            />
+            <span>Nenhum</span>
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="electricityCommissionProduct"
+              value="PEL"
+              [(ngModel)]="electricityCommissionProduct"
+              (ngModelChange)="onElectricityCommissionProductChange($event)"
+            />
+            <span>PEL</span>
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="electricityCommissionProduct"
+              value="PELPlus"
+              [(ngModel)]="electricityCommissionProduct"
+              (ngModelChange)="onElectricityCommissionProductChange($event)"
+            />
+            <span>PEL+</span>
+          </label>
+        </div>
+      </section>
+
+      <section
+        class="associated-product-group"
+        *ngIf="shouldShowGasFields()"
+      >
+        <div class="associated-product-heading">
+          <strong>
+            {{ form.productType === 'dual' ? 'Produto associado ao gás' : 'Produto adicional' }}
+          </strong>
+          <span>Seleciona no máximo uma opção.</span>
+        </div>
+
+        <div class="radio-options">
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="gasCommissionProduct"
+              value="none"
+              [(ngModel)]="gasCommissionProduct"
+              (ngModelChange)="onGasCommissionProductChange($event)"
+            />
+            <span>Nenhum</span>
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="gasCommissionProduct"
+              value="PGI"
+              [(ngModel)]="gasCommissionProduct"
+              (ngModelChange)="onGasCommissionProductChange($event)"
+            />
+            <span>PGI</span>
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              name="gasCommissionProduct"
+              value="MGI"
+              [(ngModel)]="gasCommissionProduct"
+              (ngModelChange)="onGasCommissionProductChange($event)"
+            />
+            <span>MGI</span>
+          </label>
+        </div>
+      </section>
+    </div>
+  </article>
+
   <div class="actions">
     <button
       type="button"
@@ -422,10 +525,33 @@
     class="results-section"
     *ngIf="offers.length"
   >
-    <h2>
-      Encontrámos {{ offers.length }}
-      oferta{{ offers.length > 1 ? 's' : '' }}
-    </h2>
+    <div class="results-heading-row">
+      <h2>
+        Encontrámos {{ offers.length }}
+        oferta{{ offers.length > 1 ? 's' : '' }}
+      </h2>
+
+      <label class="sort-control">
+        <span>Ordenar por</span>
+
+        <select [(ngModel)]="sortBy">
+          <option value="saving">
+            Maior poupança
+          </option>
+
+          <option value="salesCommission">
+            Maior comissão comercial
+          </option>
+
+          <option
+            value="crmCertoCommission"
+            *ngIf="canViewCrmCommission"
+          >
+            Maior comissão CRM
+          </option>
+        </select>
+      </label>
+    </div>
 
     <div class="partial-estimate-notice">
       <span class="material-symbols-rounded">
@@ -439,7 +565,7 @@
 
     <article
       class="offer-card"
-      *ngFor="let offer of offers"
+      *ngFor="let offer of sortedOffers"
       [class.better]="
         offer.comparison.isBetterOffer
       "
@@ -606,6 +732,33 @@
 
           <span>Gás</span>
         </div>
+
+        <div class="commission-detail">
+          <strong>
+            {{
+              formatCurrency(
+                offer.salesCommission ?? 0
+              )
+            }}
+          </strong>
+
+          <span>Comissão comercial</span>
+        </div>
+
+        <div
+          class="commission-detail crm-commission"
+          *ngIf="canViewCrmCommission"
+        >
+          <strong>
+            {{
+              formatCurrency(
+                offer.tariff.crmCertoCommission ?? 0
+              )
+            }}
+          </strong>
+
+          <span>Comissão CRM</span>
+        </div>
       </div>
 
       <div class="price-block">
@@ -619,22 +772,6 @@
         </strong>
 
         <span>Estimativa mensal parcial</span>
-
-        <span
-          class="commission-pill"
-          *ngIf="
-            offer.commissionValue !==
-              undefined &&
-            offer.commissionValue !== null
-          "
-        >
-          Comissão
-          {{
-            formatCurrency(
-              offer.commissionValue
-            )
-          }}
-        </span>
 
         <small
           [class.positive]="
@@ -945,20 +1082,26 @@
             </strong>
           </div>
 
-          <div
-            *ngIf="
-              selectedOffer.commissionValue !==
-                undefined &&
-              selectedOffer.commissionValue !==
-                null
-            "
-          >
+          <div>
             <span>Comissão comercial</span>
 
             <strong>
               {{
                 formatCurrency(
-                  selectedOffer.commissionValue
+                  selectedOffer.salesCommission ?? 0
+                )
+              }}
+            </strong>
+          </div>
+
+          <div *ngIf="canViewCrmCommission">
+            <span>Comissão CRM</span>
+
+            <strong>
+              {{
+                formatCurrency(
+                  selectedOffer.tariff
+                    .crmCertoCommission ?? 0
                 )
               }}
             </strong>
