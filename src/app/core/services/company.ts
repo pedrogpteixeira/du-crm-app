@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -18,6 +18,15 @@ export class CompanyService {
   private readonly apiUrl = environment.apiUrl;
 
   getCompanies(): Observable<Company[]> {
-    return this.http.get<Company[]>(`${this.apiUrl}/api/companies`);
+    const environmentCompanies =
+      environment.companies ?? [];
+
+    if (environmentCompanies.length > 0) {
+      return of(environmentCompanies);
+    }
+
+    return this.http.get<Company[]>(
+      `${this.apiUrl}/api/companies`,
+    );
   }
 }

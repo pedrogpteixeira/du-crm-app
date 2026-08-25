@@ -15,6 +15,7 @@ import {
 } from '@angular/forms';
 import {
   ActivatedRoute,
+  Router,
   RouterLink,
 } from '@angular/router';
 import {
@@ -81,6 +82,9 @@ interface PowerCommissionFormValue {
 export class TeamDetail implements OnInit {
   private readonly route =
     inject(ActivatedRoute);
+
+  private readonly router =
+    inject(Router);
 
   private readonly teamService =
     inject(TeamService);
@@ -257,18 +261,22 @@ export class TeamDetail implements OnInit {
   ngOnInit(): void {
     this.route.paramMap.subscribe(
       (params) => {
-        this.teamId = params.get('id');
+        const teamId =
+          params.get('id');
 
-        if (this.teamId) {
-          this.loadTeam(this.teamId);
+        if (!teamId) {
+          void this.router.navigateByUrl(
+            '/error',
+          );
 
-          if (
-            this.canManageCommissions
-          ) {
-            this.loadCompanies();
-            this.loadTeamCommissions();
-          }
+          return;
         }
+
+        this.teamId = teamId;
+
+        this.validateTeamAccess(
+          teamId,
+        );
       },
     );
   }
@@ -307,6 +315,83 @@ export class TeamDetail implements OnInit {
     );
   }
 
+  private validateTeamAccess(
+    teamId: string,
+  ): void {
+    if (
+      this.auth.roleIncludes(
+        'Super Admin',
+      )
+    ) {
+      this.initializeTeam(teamId);
+
+      return;
+    }
+
+    const currentUser =
+      this.auth.getCurrentUser();
+
+    if (!currentUser?.id) {
+      void this.router.navigateByUrl(
+        '/error',
+      );
+
+      return;
+    }
+
+    this.userService
+      .getUserById(currentUser.id)
+      .subscribe({
+        next: (user: ProfileUser) => {
+          if (
+            !this.userBelongsToTeam(
+              user,
+              teamId,
+            )
+          ) {
+            void this.router.navigateByUrl(
+              '/error',
+            );
+
+            return;
+          }
+
+          this.initializeTeam(
+            teamId,
+          );
+        },
+
+        error: () => {
+          void this.router.navigateByUrl(
+            '/error',
+          );
+        },
+      });
+  }
+
+  private userBelongsToTeam(
+    user: ProfileUser,
+    teamId: string,
+  ): boolean {
+    return Boolean(
+      user.teams?.some(
+        (team) =>
+          team.id === teamId,
+      ),
+    );
+  }
+
+  private initializeTeam(
+    teamId: string,
+  ): void {
+    this.loadTeam(teamId);
+
+    if (this.canManageCommissions) {
+      this.loadCompanies();
+      this.loadTeamCommissions();
+    }
+  }
+
   loadTeam(teamId: string): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -322,14 +407,19 @@ export class TeamDetail implements OnInit {
       .subscribe({
         next: (response) => {
           this.team = response.team;
+
           this.users = [
             ...(response.users || []),
           ].sort(
-            (firstUser, secondUser) =>
+            (
+              firstUser,
+              secondUser,
+            ) =>
               firstUser.positionIndex -
               secondUser.positionIndex,
           );
         },
+
         error: () => {
           this.errorMessage =
             'Não foi possível carregar a equipa.';
@@ -383,6 +473,7 @@ export class TeamDetail implements OnInit {
 
           this.sortTeamCommissions();
         },
+
         error: () => {
           this.commissionsError =
             'Não foi possível carregar as comercializadoras.';
@@ -417,6 +508,7 @@ export class TeamDetail implements OnInit {
 
           this.sortTeamCommissions();
         },
+
         error: () => {
           this.commissionsError =
             'Não foi possível carregar as comissões da equipa.';
@@ -700,6 +792,7 @@ export class TeamDetail implements OnInit {
 
             this.clearSuccessMessageLater();
           },
+
           error: (error) => {
             this.handleCommissionSaveError(
               error,
@@ -781,6 +874,7 @@ export class TeamDetail implements OnInit {
 
           this.clearSuccessMessageLater();
         },
+
         error: (error) => {
           this.handleCommissionSaveError(
             error,
@@ -838,6 +932,7 @@ export class TeamDetail implements OnInit {
 
           this.clearSuccessMessageLater();
         },
+
         error: (error) => {
           this.commissionsError =
             error?.error?.message ||
@@ -881,6 +976,7 @@ export class TeamDetail implements OnInit {
 
           this.clearSuccessMessageLater();
         },
+
         error: (error) => {
           this.commissionsError =
             error?.error?.message ||
@@ -1145,20 +1241,25 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: (users) => {
-          const existingUserIds = new Set(
-            this.users.map(
-              (user) => user.id,
-            ),
-          );
+          const existingUserIds =
+            new Set(
+              this.users.map(
+                (user) => user.id,
+              ),
+            );
 
-          this.availableUsers = users.filter(
-            (user) =>
-              user.active &&
-              !existingUserIds.has(user.id),
-          );
+          this.availableUsers =
+            users.filter(
+              (user) =>
+                user.active &&
+                !existingUserIds.has(
+                  user.id,
+                ),
+            );
 
           this.applyUserSearch();
         },
+
         error: () => {
           this.addUserErrorMessage =
             'Não foi possível carregar os utilizadores disponíveis.';
@@ -1269,7 +1370,9 @@ export class TeamDetail implements OnInit {
     userId: string,
   ): number | null {
     return (
-      this.selectedUserPositions[userId] ??
+      this.selectedUserPositions[
+        userId
+      ] ??
       null
     );
   }
@@ -1278,7 +1381,9 @@ export class TeamDetail implements OnInit {
     userId: string,
   ): boolean {
     const positionIndex =
-      this.getSelectedUserPosition(userId);
+      this.getSelectedUserPosition(
+        userId,
+      );
 
     return Boolean(
       this.team &&
@@ -1311,12 +1416,13 @@ export class TeamDetail implements OnInit {
         (user) => user.id,
       );
 
-    this.selectedUserIds = Array.from(
-      new Set([
-        ...this.selectedUserIds,
-        ...visibleUserIds,
-      ]),
-    );
+    this.selectedUserIds =
+      Array.from(
+        new Set([
+          ...this.selectedUserIds,
+          ...visibleUserIds,
+        ]),
+      );
 
     const nextPositions = {
       ...this.selectedUserPositions,
@@ -1328,7 +1434,8 @@ export class TeamDetail implements OnInit {
           nextPositions[userId] ===
           undefined
         ) {
-          nextPositions[userId] = null;
+          nextPositions[userId] =
+            null;
         }
       },
     );
@@ -1363,16 +1470,19 @@ export class TeamDetail implements OnInit {
     if (
       this.areAllVisibleUsersSelected()
     ) {
-      const visibleUserIds = new Set(
-        this.filteredAvailableUsers.map(
-          (user) => user.id,
-        ),
-      );
+      const visibleUserIds =
+        new Set(
+          this.filteredAvailableUsers.map(
+            (user) => user.id,
+          ),
+        );
 
       this.selectedUserIds =
         this.selectedUserIds.filter(
           (userId) =>
-            !visibleUserIds.has(userId),
+            !visibleUserIds.has(
+              userId,
+            ),
         );
 
       const nextPositions = {
@@ -1431,40 +1541,50 @@ export class TeamDetail implements OnInit {
     this.isAddingUser = true;
     this.addUserErrorMessage = '';
 
-    const requests = uniqueUserIds.map((userId) => {
-      const payload: AddUserToTeamRequest = {
-        teamId,
-        userId,
-        positionIndex:
-          this.selectedUserPositions[
-            userId
-          ] as number,
-      };
-
-      return this.teamService
-        .addUserToTeam(payload)
-        .pipe(
-          map(
-            (): AddUserResult => ({
+    const requests =
+      uniqueUserIds.map(
+        (userId) => {
+          const payload:
+            AddUserToTeamRequest = {
+              teamId,
               userId,
-              success: true,
-            }),
-          ),
-          catchError((error) => {
-            const result: AddUserResult = {
-              userId,
-              success: false,
-              status: error?.status,
-              message:
-                typeof error?.error?.message === 'string'
-                  ? error.error.message
-                  : undefined,
+              positionIndex:
+                this.selectedUserPositions[
+                  userId
+                ] as number,
             };
 
-            return of(result);
-          }),
-        );
-    });
+          return this.teamService
+            .addUserToTeam(payload)
+            .pipe(
+              map(
+                (): AddUserResult => ({
+                  userId,
+                  success: true,
+                }),
+              ),
+
+              catchError((error) => {
+                const result:
+                  AddUserResult = {
+                    userId,
+                    success: false,
+                    status:
+                      error?.status,
+                    message:
+                      typeof error?.error
+                        ?.message ===
+                      'string'
+                        ? error.error
+                            .message
+                        : undefined,
+                  };
+
+                return of(result);
+              }),
+            );
+        },
+      );
 
     forkJoin(requests)
       .pipe(
@@ -1497,7 +1617,6 @@ export class TeamDetail implements OnInit {
             !failedResults.length
           ) {
             this.closeModalAfterSuccess();
-
             return;
           }
 
@@ -1513,17 +1632,20 @@ export class TeamDetail implements OnInit {
                 result.status !== 409,
             );
 
-          const failedUserIds = new Set(
-            failedResults.map(
-              (result) =>
-                result.userId,
-            ),
-          );
+          const failedUserIds =
+            new Set(
+              failedResults.map(
+                (result) =>
+                  result.userId,
+              ),
+            );
 
           this.selectedUserIds =
             this.selectedUserIds.filter(
               (userId) =>
-                failedUserIds.has(userId),
+                failedUserIds.has(
+                  userId,
+                ),
             );
 
           this.selectedUserPositions =
@@ -1531,7 +1653,9 @@ export class TeamDetail implements OnInit {
               Object.entries(
                 this.selectedUserPositions,
               ).filter(([userId]) =>
-                failedUserIds.has(userId),
+                failedUserIds.has(
+                  userId,
+                ),
               ),
             );
 
@@ -1567,7 +1691,8 @@ export class TeamDetail implements OnInit {
           }
 
           this.addUserErrorMessage =
-            failedResults[0]?.message ||
+            failedResults[0]
+              ?.message ||
             'Não foi possível adicionar os utilizadores à equipa.';
         },
       });
@@ -1584,24 +1709,30 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Tens a certeza que pretendes remover ${user.name} desta equipa?`,
-    );
+    const confirmed =
+      window.confirm(
+        `Tens a certeza que pretendes remover ${user.name} desta equipa?`,
+      );
 
     if (!confirmed) {
       return;
     }
 
-    const previousUsers = [...this.users];
+    const previousUsers = [
+      ...this.users,
+    ];
 
-    this.removingUserId = user.id;
+    this.removingUserId =
+      user.id;
+
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.users = this.users.filter(
-      (teamUser) =>
-        teamUser.id !== user.id,
-    );
+    this.users =
+      this.users.filter(
+        (teamUser) =>
+          teamUser.id !== user.id,
+      );
 
     this.teamService
       .removeUserFromTeam(
@@ -1624,8 +1755,10 @@ export class TeamDetail implements OnInit {
             this.cdr.detectChanges();
           }, 5000);
         },
+
         error: (error) => {
-          this.users = previousUsers;
+          this.users =
+            previousUsers;
 
           this.errorMessage =
             error?.error?.message ||
@@ -1637,7 +1770,10 @@ export class TeamDetail implements OnInit {
   isRemovingUser(
     userId: string,
   ): boolean {
-    return this.removingUserId === userId;
+    return (
+      this.removingUserId ===
+      userId
+    );
   }
 
   getTeamUserPositionLabel(
@@ -1679,7 +1815,9 @@ export class TeamDetail implements OnInit {
   }
 
   getProfilePictureUrl(
-    user: TeamUser | ProfileUser,
+    user:
+      TeamUser |
+      ProfileUser,
   ): string | null {
     if (!user.profilePicture) {
       return null;
@@ -1688,9 +1826,13 @@ export class TeamDetail implements OnInit {
     return `${environment.apiUrl}/api/users/${user.id}/profile-picture`;
   }
 
-  getInitial(name: string): string {
+  getInitial(
+    name: string,
+  ): string {
     return (
-      name?.charAt(0).toUpperCase() ||
+      name
+        ?.charAt(0)
+        .toUpperCase() ||
       '?'
     );
   }
@@ -1741,7 +1883,10 @@ export class TeamDetail implements OnInit {
   }
 
   private normalizeText(
-    value: string | null | undefined,
+    value:
+      string |
+      null |
+      undefined,
   ): string {
     return (value || '')
       .trim()

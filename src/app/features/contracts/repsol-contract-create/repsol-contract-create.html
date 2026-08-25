@@ -146,7 +146,7 @@
 
           <select
             [(ngModel)]="assignedUserId"
-            [disabled]="!isSuperAdmin()"
+            [disabled]="!canAssignOtherUsers()"
             (ngModelChange)="
               onAssignedUserChange()
             "
@@ -254,7 +254,10 @@
       <p class="assignment-helper">
         A posição hierárquica é obtida
         automaticamente da relação do utilizador
-        com cada equipa. As equipas internas
+        com cada equipa. Super Admin, Admin,
+        Backoffice e Coordenador podem atribuir o
+        contrato a utilizadores das equipas onde
+        possuem essas funções. As equipas internas
         obrigatórias são adicionadas sem permitir
         a escolha manual do índice.
       </p>

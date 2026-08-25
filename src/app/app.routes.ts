@@ -45,10 +45,6 @@ export const routes: Routes = [
       },
       {
         path: 'teams/:id',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/teams/team-detail/team-detail').then(
             (m) => m.TeamDetail,
@@ -56,10 +52,6 @@ export const routes: Routes = [
       },
       {
         path: 'users/:id',
-        canActivate: [roleIncludesGuard],
-        data: {
-          allowedRoles: ['Super Admin'],
-        },
         loadComponent: () =>
           import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),
       },

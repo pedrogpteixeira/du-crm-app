@@ -237,7 +237,7 @@ export class RepsolContractCreate implements OnInit {
     ];
 
   contractForm = {
-    companyId: environment.repsolId,
+    companyId: environment.REPSOLID,
 
     tipoSegmento:
       'Empresarial' as TipoSegmento,
@@ -336,6 +336,16 @@ export class RepsolContractCreate implements OnInit {
     );
   }
 
+  canAssignOtherUsers(): boolean {
+    if (this.isSuperAdmin()) {
+      return true;
+    }
+
+    return (
+      this.getManagedTeamIds().length > 0
+    );
+  }
+
   get selectedTeams(): AssignableContractTeam[] {
     return this.selectedTeamIds
       .map((teamId) =>
@@ -362,7 +372,7 @@ export class RepsolContractCreate implements OnInit {
 
   onAssignedUserChange(): void {
     if (
-      !this.isSuperAdmin() ||
+      !this.canAssignOtherUsers() ||
       !this.assignedUserId
     ) {
       return;
@@ -433,9 +443,10 @@ export class RepsolContractCreate implements OnInit {
           this.resolveInternalObservationsAccess(currentUser);
 
           if (
-            currentUser.role.includes(
-              'Super Admin',
-            )
+            this.isSuperAdmin() ||
+            this.getManagedTeamIds(
+              currentUser,
+            ).length > 0
           ) {
             return this.userService
               .getUsers()
@@ -462,8 +473,9 @@ export class RepsolContractCreate implements OnInit {
           users,
         }) => {
           this.assignableUsers =
-            users.filter(
-              (user) => user.active,
+            this.resolveAssignableUsers(
+              currentUser,
+              users,
             );
 
           this.initializeAssignment(
@@ -475,6 +487,133 @@ export class RepsolContractCreate implements OnInit {
             'Não foi possível carregar os dados de atribuição do contrato.';
         },
       });
+  }
+
+  private resolveAssignableUsers(
+    currentUser: ProfileUser,
+    users: ProfileUser[],
+  ): ProfileUser[] {
+    const activeUsers =
+      users.filter(
+        (user) => user.active,
+      );
+
+    if (this.isSuperAdmin()) {
+      return activeUsers;
+    }
+
+    const managedTeamIds =
+      this.getManagedTeamIds(
+        currentUser,
+      );
+
+    if (!managedTeamIds.length) {
+      return activeUsers.filter(
+        (user) =>
+          user.id === currentUser.id,
+      );
+    }
+
+    const managedTeamIdSet =
+      new Set(managedTeamIds);
+
+    return activeUsers.filter(
+      (user) => {
+        if (
+          user.id === currentUser.id
+        ) {
+          return true;
+        }
+
+        return this.getUserTeamIds(
+          user,
+        ).some((teamId) =>
+          managedTeamIdSet.has(teamId),
+        );
+      },
+    );
+  }
+
+  private getManagedTeamIds(
+    user: ProfileUser | null =
+      this.currentUser,
+  ): string[] {
+    if (!user) {
+      return [];
+    }
+
+    const teams =
+      (
+        user as
+          ProfileUserWithTeamPositions
+      ).teams ?? [];
+
+    return [
+      ...new Set(
+        teams
+          .filter((team) =>
+            this.isAssignmentManagerPosition(
+              team.position,
+            ),
+          )
+          .map((team) => team.id)
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  private getUserTeamIds(
+    user: ProfileUser,
+  ): string[] {
+    const typedUser =
+      user as
+        ProfileUserWithTeamPositions;
+
+    const teamIds =
+      typedUser.teams
+        ?.map((team) => team.id)
+        .filter(Boolean) ?? [];
+
+    const defaultTeamId =
+      typedUser.defaultTeam?.id;
+
+    return [
+      ...new Set([
+        ...teamIds,
+        ...(defaultTeamId
+          ? [defaultTeamId]
+          : []),
+      ]),
+    ];
+  }
+
+  private isAssignmentManagerPosition(
+    position:
+      string |
+      null |
+      undefined,
+  ): boolean {
+    const normalizedPosition =
+      (position ?? '')
+        .normalize('NFD')
+        .replace(
+          /[\u0300-\u036f]/g,
+          '',
+        )
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+
+    return (
+      normalizedPosition.includes(
+        'admin',
+      ) ||
+      normalizedPosition.includes(
+        'backoffice',
+      ) ||
+      normalizedPosition.includes(
+        'coordenador',
+      )
+    );
   }
 
   private resolveInternalObservationsAccess(
@@ -586,28 +725,40 @@ export class RepsolContractCreate implements OnInit {
   private syncRegistrationFields(
     user: ProfileUser,
   ): void {
-    const defaultTeam =
-      (
-        user as ProfileUserWithTeamPositions
-      ).defaultTeam;
+    const userWithTeams =
+      user as ProfileUserWithTeamPositions;
 
-    if (!defaultTeam) {
+    const defaultTeam =
+      userWithTeams.defaultTeam;
+
+    const firstAvailableTeam =
+      userWithTeams.teams?.find(
+        (team) =>
+          Boolean(team?.id) &&
+          team.active !== false,
+      ) ?? null;
+
+    const teamToUse =
+      defaultTeam ??
+      firstAvailableTeam;
+
+    if (!teamToUse) {
       this.clearRegistrationFields();
       return;
     }
 
     this.contractForm.codigoRegistoCE =
-      defaultTeam.registrationNumber !==
+      teamToUse.registrationNumber !==
         null &&
-      defaultTeam.registrationNumber !==
+      teamToUse.registrationNumber !==
         undefined
         ? String(
-            defaultTeam.registrationNumber,
+            teamToUse.registrationNumber,
           )
         : '';
 
     this.contractForm.nomeRegistoCE =
-      defaultTeam.name?.trim() ?? '';
+      teamToUse.name?.trim() ?? '';
   }
 
   private clearRegistrationFields(): void {
@@ -746,7 +897,7 @@ export class RepsolContractCreate implements OnInit {
   private loadCampaigns(): void {
     this.campaignService
       .getCampaignsByCompanyId(
-        environment.repsolId,
+        environment.REPSOLID,
       )
       .pipe(
         map((campaigns) =>
