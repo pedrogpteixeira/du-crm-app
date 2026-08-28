@@ -24,6 +24,13 @@ import {
 import { environment } from '../../../environments/environment';
 import { Auth } from './auth';
 
+export interface GalpPowerGasContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
 export interface RepsolContractSocketEvent {
   contractId: string;
   estado: string;
@@ -198,6 +205,18 @@ export class SocketService {
     return this.createEventObservable<
       RepsolContractSocketEvent
     >('repsol-contract:updated');
+  }
+
+  listenGalpPowerGasContractCreated(): Observable<GalpPowerGasContractSocketEvent> {
+    return this.createEventObservable<GalpPowerGasContractSocketEvent>(
+      'galp-power-gas-contract:created',
+    );
+  }
+
+  listenGalpPowerGasContractUpdated(): Observable<GalpPowerGasContractSocketEvent> {
+    return this.createEventObservable<GalpPowerGasContractSocketEvent>(
+      'galp-power-gas-contract:updated',
+    );
   }
 
   private observeAuthentication(): void {

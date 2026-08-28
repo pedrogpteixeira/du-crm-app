@@ -5,6 +5,7 @@ export const environment = {
   socketUrl: 'https://du-crm-api.onrender.com',
 
   REPSOLID: 'cmp_njRqliQBpR',
+  GALP_POWER_GAS_COMPANY_ID: 'cmp_Q5MgNAInW6',
   EQUIPA_CRM_ID: 'tea_cvktr8yba0',
   EQUIPA_DU_ID: 'tea_SeFFNTVrG_',
 
@@ -21,7 +22,7 @@ export const environment = {
     },
     {
       id: 'cmp_Q5MgNAInW6',
-      name: 'Galp',
+      name: 'Galp Power & Gás',
       active: true,
     },
     {

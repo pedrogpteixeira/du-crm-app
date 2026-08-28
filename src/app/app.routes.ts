@@ -89,6 +89,33 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/galp-power-gas',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-power-gas-contracts/galp-power-gas-contracts').then(
+            (m) => m.GalpPowerGasContracts,
+          ),
+      },
+      {
+        path: 'contracts/galp-power-gas/create',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-power-gas-contract-create/galp-power-gas-contract-create').then(
+            (m) => m.GalpPowerGasContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/galp-power-gas/:id',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-power-gas-contract-detail/galp-power-gas-contract-detail').then(
+            (m) => m.GalpPowerGasContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

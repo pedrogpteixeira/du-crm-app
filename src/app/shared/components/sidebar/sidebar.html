@@ -44,6 +44,18 @@
       </a>
     </div>
 
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')">
+      <span class="section-title">CRM GALP</span>
+
+      <a
+        routerLink="/home/contracts/galp-power-gas"
+        routerLinkActive="active"
+      >
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Contratos P&amp;G</span>
+      </a>
+    </div>
+
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 

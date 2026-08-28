@@ -83,7 +83,15 @@ export class HomeLayout {
     }
 
     if (url.includes('/contracts/repsol')) {
-      return 'Contratos';
+      return 'Contratos Repsol';
+    }
+
+    if (
+      url.includes(
+        '/contracts/galp-power-gas',
+      )
+    ) {
+      return 'Contratos Galp Power & Gás';
     }
 
     if (url.includes('/tariffs')) {
@@ -102,9 +110,7 @@ export class HomeLayout {
       return 'Perfil';
     }
 
-    if (
-      url.includes('/preferences')
-    ) {
+    if (url.includes('/preferences')) {
       return 'Preferências';
     }
 
@@ -112,9 +118,10 @@ export class HomeLayout {
       return 'Médias OMIE';
     }
 
-    this.router.navigateByUrl('/home/dashboard', {
-      replaceUrl: true,
-    });
-    return 'Dashboard';
+    if (url.includes('/dashboard')) {
+      return 'Dashboard';
+    }
+
+    return 'CRM';
   }
 }
