@@ -116,6 +116,33 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/galp-solar',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-solar-contracts/galp-solar-contracts').then(
+            (m) => m.GalpSolarContracts,
+          ),
+      },
+      {
+        path: 'contracts/galp-solar/create',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-solar-contract-create/galp-solar-contract-create').then(
+            (m) => m.GalpSolarContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/galp-solar/:id',
+        canActivate: [roleIncludesGuard],
+        data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
+        loadComponent: () =>
+          import('./features/contracts/galp-solar-contract-detail/galp-solar-contract-detail').then(
+            (m) => m.GalpSolarContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),
@@ -216,7 +243,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'home',
+    redirectTo: 'home/dashboard',
     pathMatch: 'full',
   },
   {

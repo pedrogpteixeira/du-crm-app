@@ -94,6 +94,14 @@ export class HomeLayout {
       return 'Contratos Galp Power & Gás';
     }
 
+    if (
+      url.includes(
+        '/contracts/galp-solar',
+      )
+    ) {
+      return 'Contratos Galp Solar';
+    }
+
     if (url.includes('/tariffs')) {
       return 'Tarifários';
     }
@@ -110,7 +118,9 @@ export class HomeLayout {
       return 'Perfil';
     }
 
-    if (url.includes('/preferences')) {
+    if (
+      url.includes('/preferences')
+    ) {
       return 'Preferências';
     }
 

@@ -54,7 +54,7 @@ export class Login {
 
     this.auth.login(username, password).subscribe({
       next: () => {
-        this.router.navigate(['/home']);
+        this.router.navigate(['/home/dashboard']);
       },
 
       error: (error) => {
