@@ -98,6 +98,10 @@ export class HomeLayout {
       return 'Contratos Wallbox';
     }
 
+    if (url.includes('/contracts/yes-energy')) {
+      return 'Contratos Yes Energy';
+    }
+
     if (url.includes('/tariffs')) {
       return 'Tarifários';
     }

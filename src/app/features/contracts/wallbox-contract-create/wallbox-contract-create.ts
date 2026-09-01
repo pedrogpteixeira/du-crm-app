@@ -235,7 +235,12 @@ export class WallboxContractCreate implements OnInit {
 
     telefone: null as number | null,
     email: '',
-    moradaInstalacao: '',
+
+    moradaInstalacaoRua: '',
+    moradaInstalacaoCidade: '',
+    moradaInstalacaoDistrito: '',
+    moradaInstalacaoCodigoPostal: '',
+    moradaInstalacaoPais: '',
 
     campanha: '',
 
@@ -1191,8 +1196,7 @@ export class WallboxContractCreate implements OnInit {
     this.addIfFilled(
       payload,
       'moradaInstalacao',
-      this.contractForm
-        .moradaInstalacao.trim(),
+      this.getMoradaInstalacao(),
     );
 
     this.addIfFilled(
@@ -1340,4 +1344,39 @@ export class WallboxContractCreate implements OnInit {
       file.lastModified,
     ].join('-');
   }
+
+  private buildAddress(
+    rua: string,
+    cidade: string,
+    distrito: string,
+    codigoPostal: string,
+    pais: string,
+  ): string {
+    return [
+      rua,
+      cidade,
+      distrito,
+      codigoPostal,
+      pais,
+    ]
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  private getMoradaInstalacao(): string {
+    return this.buildAddress(
+      this.contractForm
+        .moradaInstalacaoRua,
+      this.contractForm
+        .moradaInstalacaoCidade,
+      this.contractForm
+        .moradaInstalacaoDistrito,
+      this.contractForm
+        .moradaInstalacaoCodigoPostal,
+      this.contractForm
+        .moradaInstalacaoPais,
+    );
+  }
+
 }

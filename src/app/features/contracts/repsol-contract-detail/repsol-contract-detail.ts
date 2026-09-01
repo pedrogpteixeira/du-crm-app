@@ -1610,6 +1610,7 @@ export class RepsolContractDetail implements OnInit {
       contract: value,
       status: value,
       billing: value,
+      campaign: value,
       energy: value,
       attachments: value,
       observations: value,

@@ -52,6 +52,13 @@ export interface WallboxContractSocketEvent {
   nif: number;
 }
 
+export interface YesEnergyContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -254,6 +261,18 @@ export class SocketService {
   listenWallboxContractUpdated() {
     return this.createEventObservable<WallboxContractSocketEvent>(
       'wallbox-contract:updated',
+    );
+  }
+
+  listenYesEnergyContractCreated() {
+    return this.createEventObservable<YesEnergyContractSocketEvent>(
+      'yes-energy-contract:created',
+    );
+  }
+
+  listenYesEnergyContractUpdated() {
+    return this.createEventObservable<YesEnergyContractSocketEvent>(
+      'yes-energy-contract:updated',
     );
   }
 

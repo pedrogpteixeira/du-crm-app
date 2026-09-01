@@ -77,6 +77,20 @@
       </a>
     </div>
 
+    <div 
+    class="nav-section">
+      <span 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
+      class="section-title">CRM Yes Energy</span>
+
+      <a 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
+      routerLink="/home/contracts/yes-energy" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Yes Energy</span>
+      </a>
+    </div>
+
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 

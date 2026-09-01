@@ -2,16 +2,16 @@
   <header class="page-header">
     <div>
       <span class="breadcrumb">
-        Contratos › Galp Solar
+        Contratos › Yes Energy
       </span>
 
       <h1>
-        Contratos Galp Solar
+        Contratos Yes Energy
       </h1>
 
       <p>
         Consulta e acompanha os contratos
-        Galp Solar registados no CRM.
+        Yes Energy registados no CRM.
       </p>
     </div>
 
@@ -45,12 +45,16 @@
       <button
         type="button"
         class="create-btn"
-        routerLink="/home/contracts/galp-solar/create"
+        routerLink="/home/contracts/yes-energy/create"
       >
         + Novo contrato
       </button>
     </div>
   </header>
+
+  <!-- =========================
+       TABLE
+  ========================== -->
 
   <div
     class="card"
@@ -62,10 +66,9 @@
       <span>NIF</span>
       <span>Segmento</span>
       <span>Produto</span>
-      <span>Tipo de Painel</span>
-      <span>Nº Painéis</span>
       <span>Criado por</span>
       <span>Estado</span>
+      <span>Nome Registo C.E.</span>
     </div>
 
     <p
@@ -86,7 +89,7 @@
       class="contract-row"
       *ngFor="let contract of contracts"
       [routerLink]="[
-        '/home/contracts/galp-solar',
+        '/home/contracts/yes-energy',
         contract.id
       ]"
     >
@@ -124,22 +127,6 @@
 
       <span>
         {{
-          getValue(
-            contract.tipoPainel
-          )
-        }}
-      </span>
-
-      <span>
-        {{
-          getValue(
-            contract.numeroPaineisSolares
-          )
-        }}
-      </span>
-
-      <span>
-        {{
           getContractUserName(
             contract
           )
@@ -156,6 +143,14 @@
       >
         {{ contract.estado }}
       </span>
+
+      <span>
+        {{
+          getValue(
+            contract.nomeRegistoCE
+          )
+        }}
+      </span>
     </a>
 
     <p
@@ -166,9 +161,14 @@
         !contracts.length
       "
     >
-      Ainda não existem contratos Galp Solar.
+      Ainda não existem contratos
+      Yes Energy.
     </p>
   </div>
+
+  <!-- =========================
+       KANBAN
+  ========================== -->
 
   <div
     class="kanban-wrapper"
@@ -181,7 +181,9 @@
       >
         <header
           class="kanban-column-header"
-          [ngClass]="getStatusClass(status)"
+          [ngClass]="
+            getStatusClass(status)
+          "
         >
           <span>
             {{ status }}
@@ -206,7 +208,7 @@
                 )
             "
             [routerLink]="[
-              '/home/contracts/galp-solar',
+              '/home/contracts/yes-energy',
               contract.id
             ]"
           >
@@ -224,11 +226,7 @@
 
             <span>
               NIF:
-              {{
-                getValue(
-                  contract.nif
-                )
-              }}
+              {{ getValue(contract.nif) }}
             </span>
 
             <span>
@@ -250,28 +248,19 @@
             </span>
 
             <span>
-              Tipo de Painel:
-              {{
-                getValue(
-                  contract.tipoPainel
-                )
-              }}
-            </span>
-
-            <span>
-              Nº Painéis:
-              {{
-                getValue(
-                  contract.numeroPaineisSolares
-                )
-              }}
-            </span>
-
-            <span>
               Criado por:
               {{
                 getContractUserName(
                   contract
+                )
+              }}
+            </span>
+
+            <span>
+              Registo C.E.:
+              {{
+                getValue(
+                  contract.nomeRegistoCE
                 )
               }}
             </span>

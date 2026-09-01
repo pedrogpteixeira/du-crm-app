@@ -303,44 +303,74 @@
           </div>
         </article>
 
+                <!-- =========================
+             CAMPANHA
+        ========================== -->
+
         <article class="card">
+          <button
+            type="button"
+            class="section-toggle"
+            (click)="toggleSection('campaign')"
+          >
+            <span>Campanha</span>
+
+            <span
+              class="chevron"
+              [class.collapsed]="collapsedSections.campaign"
+            >
+              ⌄
+            </span>
+          </button>
+
+          <div
+            class="section-content"
+            *ngIf="!collapsedSections.campaign"
+          >
+            <div class="info-grid">
+              <label *ngIf="isEditing">
+                              Tipo de campanha *
+                              <select
+                                [(ngModel)]="campaignSelectionMode"
+                                (ngModelChange)="onCampaignModeChange()"
+                              >
+                                <option value="existing">Campanha existente</option>
+                                <option value="other">Outra campanha</option>
+                              </select>
+                            </label>
+
+                            <label *ngIf="isEditing && campaignSelectionMode === 'existing'">
+                              Campanha *
+                              <select [(ngModel)]="editForm.campaignId">
+                                <option value="">Selecionar campanha</option>
+                                <option *ngFor="let campaign of campaigns" [value]="campaign.id">
+                                  {{ campaign.name }}
+                                </option>
+                              </select>
+                            </label>
+
+                            <label *ngIf="isEditing && campaignSelectionMode === 'other'">
+                              Nome da campanha *
+                              <input type="text" [(ngModel)]="editForm.customCampaign" />
+                            </label>
+
+                            <label *ngIf="!isEditing">
+                              Campanha
+                              <strong>{{ getValue(contract.campaign?.name) }}</strong>
+                            </label>
+            </div>
+          </div>
+        </article>
+
+<article class="card">
           <button type="button" class="section-toggle" (click)="toggleSection('energy')">
-            <span>Energia e Campanha</span>
+            <span>Energia</span>
             <span class="chevron" [class.collapsed]="collapsedSections.energy">⌄</span>
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.energy">
             <div class="info-grid">
-              <label *ngIf="isEditing">
-                Tipo de campanha *
-                <select
-                  [(ngModel)]="campaignSelectionMode"
-                  (ngModelChange)="onCampaignModeChange()"
-                >
-                  <option value="existing">Campanha existente</option>
-                  <option value="other">Outra campanha</option>
-                </select>
-              </label>
-
-              <label *ngIf="isEditing && campaignSelectionMode === 'existing'">
-                Campanha *
-                <select [(ngModel)]="editForm.campaignId">
-                  <option value="">Selecionar campanha</option>
-                  <option *ngFor="let campaign of campaigns" [value]="campaign.id">
-                    {{ campaign.name }}
-                  </option>
-                </select>
-              </label>
-
-              <label *ngIf="isEditing && campaignSelectionMode === 'other'">
-                Nome da campanha *
-                <input type="text" [(ngModel)]="editForm.customCampaign" />
-              </label>
-
-              <label *ngIf="!isEditing">
-                Campanha
-                <strong>{{ getValue(contract.campaign?.name) }}</strong>
-              </label>
+              
 
               <label>
                 Antiga Comercializadora

@@ -194,6 +194,57 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/yes-energy',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/yes-energy-contracts/yes-energy-contracts'
+          ).then(
+            (m) => m.YesEnergyContracts,
+          ),
+      },
+      {
+        path: 'contracts/yes-energy/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/yes-energy-contract-create/yes-energy-contract-create'
+          ).then(
+            (m) => m.YesEnergyContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/yes-energy/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/yes-energy-contract-detail/yes-energy-contract-detail'
+          ).then(
+            (m) => m.YesEnergyContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

@@ -232,7 +232,7 @@
 
     <article class="card">
       <div class="section-title">
-        Dados do contrato
+        Dados do Contrato
       </div>
 
       <div class="form-grid three-columns">
@@ -287,166 +287,6 @@
             value="Pedido de Chamada"
             readonly
           />
-        </label>
-      </div>
-    </article>
-
-    <article class="card">
-      <div class="section-title">
-        Dados Cliente / Empresa
-      </div>
-
-      <div class="form-grid two-columns">
-        <label>
-          Nome Cliente / Empresa *
-
-          <input
-            type="text"
-            [value]="client.name"
-            readonly
-          />
-        </label>
-
-        <label>
-          NIF *
-
-          <input
-            type="number"
-            [value]="client.nif"
-            readonly
-          />
-        </label>
-
-        <label>
-          Telefone *
-
-          <input
-            type="number"
-            [(ngModel)]="contractForm.telefone"
-          />
-        </label>
-
-        <label *ngIf="isProLayout()">
-          Email
-
-          <input
-            type="email"
-            [(ngModel)]="contractForm.email"
-          />
-        </label>
-      </div>
-    </article>
-
-    <article
-      class="card"
-      *ngIf="isProLayout()"
-    >
-      <div class="section-title">
-        Instalação Wallbox
-      </div>
-
-      <div class="form-grid two-columns">
-        <label>
-          Morada de Instalação
-
-          <input
-            type="text"
-            [(ngModel)]="contractForm.moradaInstalacao"
-            placeholder="Morada completa da instalação"
-          />
-        </label>
-
-        <label>
-          Nível de Tensão
-
-          <select
-            [(ngModel)]="contractForm.nivelTensao"
-          >
-            <option value="">
-              Sem valor
-            </option>
-
-            <option
-              *ngFor="let option of nivelTensaoOptions"
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Tipo Local de Instalação
-
-          <select
-            [(ngModel)]="contractForm.tipoLocalInstalacao"
-          >
-            <option value="">
-              Sem valor
-            </option>
-
-            <option
-              *ngFor="let option of tipoLocalInstalacaoOptions"
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Método de Pagamento
-
-          <select
-            [(ngModel)]="contractForm.metodoPagamento"
-          >
-            <option value="">
-              Sem valor
-            </option>
-
-            <option
-              *ngFor="let option of metodoPagamentoOptions"
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <div class="boolean-options">
-        <label class="switch-field">
-          <span class="switch-copy">
-            <strong>Com deslocação</strong>
-            <small>
-              Indica se o serviço inclui deslocação.
-            </small>
-          </span>
-
-          <span class="switch-wrapper">
-            <input
-              type="checkbox"
-              [(ngModel)]="contractForm.comDeslocacao"
-            />
-            <span class="switch-control"></span>
-          </span>
-        </label>
-
-        <label class="switch-field">
-          <span class="switch-copy">
-            <strong>Balanceamento de potência</strong>
-            <small>
-              Ativa quando for necessário balanceamento de potência.
-            </small>
-          </span>
-
-          <span class="switch-wrapper">
-            <input
-              type="checkbox"
-              [(ngModel)]="contractForm.balanceamentoPotencia"
-            />
-            <span class="switch-control"></span>
-          </span>
         </label>
       </div>
     </article>
@@ -510,11 +350,216 @@
 
     <article class="card">
       <div class="section-title">
+        Dados do Cliente / Empresa
+      </div>
+
+      <div class="form-grid two-columns">
+        <label>
+          Nome Cliente / Empresa *
+
+          <input
+            type="text"
+            [value]="client.name"
+            readonly
+          />
+        </label>
+
+        <label>
+          NIF *
+
+          <input
+            type="number"
+            [value]="client.nif"
+            readonly
+          />
+        </label>
+
+        <label>
+          Telefone *
+
+          <input
+            type="number"
+            [(ngModel)]="contractForm.telefone"
+          />
+        </label>
+
+        <label *ngIf="isProLayout()">
+          Email
+
+          <input
+            type="email"
+            [(ngModel)]="contractForm.email"
+          />
+        </label>
+      </div>
+    </article>
+
+    <article
+      class="card"
+      *ngIf="isProLayout()"
+    >
+      <div class="section-title">
+        Instalação Wallbox
+      </div>
+
+      <div class="form-grid two-columns">
+                <div class="address-block full-width">
+          <label>
+            Morada de Instalação
+
+            <input
+              type="text"
+              placeholder="Rua"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoRua
+              "
+            />
+          </label>
+
+          <div class="address-row">
+            <input
+              type="text"
+              placeholder="Cidade"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoCidade
+              "
+            />
+
+            <input
+              type="text"
+              placeholder="Distrito"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoDistrito
+              "
+            />
+
+            <input
+              type="text"
+              placeholder="Código postal"
+              [(ngModel)]="
+                contractForm
+                  .moradaInstalacaoCodigoPostal
+              "
+            />
+          </div>
+
+          <input
+            type="text"
+            placeholder="País"
+            [(ngModel)]="
+              contractForm
+                .moradaInstalacaoPais
+            "
+          />
+        </div>
+
+        <label>
+          Nível de Tensão
+
+          <select
+            [(ngModel)]="contractForm.nivelTensao"
+          >
+            <option value="">
+              Sem valor
+            </option>
+
+            <option
+              *ngFor="let option of nivelTensaoOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Tipo Local de Instalação
+
+          <select
+            [(ngModel)]="contractForm.tipoLocalInstalacao"
+          >
+            <option value="">
+              Sem valor
+            </option>
+
+            <option
+              *ngFor="let option of tipoLocalInstalacaoOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Método de Pagamento
+
+          <select
+            [(ngModel)]="contractForm.metodoPagamento"
+          >
+            <option value="">
+              Sem valor
+            </option>
+
+            <option
+              *ngFor="let option of metodoPagamentoOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-grid two-columns boolean-fields">
+        <label>
+          Com deslocação
+
+          <select
+            [(ngModel)]="contractForm.comDeslocacao"
+          >
+            <option [ngValue]="false">
+              Não
+            </option>
+
+            <option [ngValue]="true">
+              Sim
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Balanceamento de potência
+
+          <select
+            [(ngModel)]="contractForm.balanceamentoPotencia"
+          >
+            <option [ngValue]="false">
+              Não
+            </option>
+
+            <option [ngValue]="true">
+              Sim
+            </option>
+          </select>
+        </label>
+      </div>
+    </article>
+
+    
+
+    <article class="card">
+      <div class="section-title">
         Carregar Documentos
       </div>
 
       <p class="muted">
-        Seleciona os documentos que serão enviados depois da criação do contrato.
+        Seleciona os documentos que serão
+        enviados depois da criação do
+        contrato.
       </p>
 
       <div class="documents-grid">
@@ -622,8 +667,8 @@
       <button
         type="button"
         class="secondary"
+        routerLink="/home/contracts/wallbox"
         [disabled]="isCreatingContract"
-        (click)="cancel()"
       >
         Cancelar
       </button>

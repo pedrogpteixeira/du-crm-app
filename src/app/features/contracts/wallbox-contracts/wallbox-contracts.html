@@ -155,11 +155,19 @@
       >
         <header
           class="kanban-column-header"
-          [ngClass]="
-            getStatusClass(status)
-          "
+          [ngClass]="getStatusClass(status)"
         >
-          {{ status }}
+          <span>
+            {{ status }}
+          </span>
+
+          <small>
+            {{
+              getContractsByStatus(
+                status
+              ).length
+            }}
+          </small>
         </header>
 
         <div class="kanban-list">

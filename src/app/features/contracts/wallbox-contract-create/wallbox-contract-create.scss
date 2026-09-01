@@ -569,3 +569,30 @@ button:disabled {
     min-height: 64px;
   }
 }
+
+/* =========================
+   ADDRESS
+========================= */
+
+.address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border:
+    1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+  gap: 10px;
+}
+

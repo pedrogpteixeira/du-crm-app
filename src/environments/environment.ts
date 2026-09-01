@@ -8,6 +8,7 @@ export const environment = {
   GALP_POWER_GAS_COMPANY_ID: 'cmp_Q5MgNAInW6',
   GALP_SOLAR_COMPANY_ID: 'cmp_qZUMPp-x7f',
   WALLBOX_COMPANY_ID: 'cmp_StOnumtpT5',
+  YES_ENERGY_COMPANY_ID: 'cmp_1GdwakqCnA',
   EQUIPA_CRM_ID: 'tea_cvktr8yba0',
   EQUIPA_DU_ID: 'tea_SeFFNTVrG_',
 
