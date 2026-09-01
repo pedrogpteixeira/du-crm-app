@@ -86,20 +86,16 @@ export class HomeLayout {
       return 'Contratos Repsol';
     }
 
-    if (
-      url.includes(
-        '/contracts/galp-power-gas',
-      )
-    ) {
+    if (url.includes('/contracts/galp-power-gas')) {
       return 'Contratos Galp Power & Gás';
     }
 
-    if (
-      url.includes(
-        '/contracts/galp-solar',
-      )
-    ) {
+    if (url.includes('/contracts/galp-solar')) {
       return 'Contratos Galp Solar';
+    }
+
+    if (url.includes('/contracts/wallbox')) {
+      return 'Contratos Wallbox';
     }
 
     if (url.includes('/tariffs')) {

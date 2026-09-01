@@ -45,6 +45,13 @@ export interface RepsolContractSocketEvent {
   nif: number;
 }
 
+export interface WallboxContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -235,6 +242,18 @@ export class SocketService {
   listenGalpPowerGasContractUpdated(): Observable<GalpPowerGasContractSocketEvent> {
     return this.createEventObservable<GalpPowerGasContractSocketEvent>(
       'galp-power-gas-contract:updated',
+    );
+  }
+
+  listenWallboxContractCreated() {
+    return this.createEventObservable<WallboxContractSocketEvent>(
+      'wallbox-contract:created',
+    );
+  }
+
+  listenWallboxContractUpdated() {
+    return this.createEventObservable<WallboxContractSocketEvent>(
+      'wallbox-contract:updated',
     );
   }
 

@@ -40,7 +40,7 @@
       *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
       routerLink="/home/contracts/repsol" routerLinkActive="active">
         <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Contratos</span>
+        <span class="label">Repsol</span>
       </a>
     </div>
 
@@ -52,7 +52,7 @@
         routerLinkActive="active"
       >
         <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Contratos P&amp;G</span>
+        <span class="label">Galp Power & Gás</span>
       </a>
 
       <a
@@ -60,7 +60,20 @@
         routerLinkActive="active"
       >
         <span class="icon material-symbols-rounded">solar_power</span>
-        <span class="label">Solar</span>
+        <span class="label">Galp Solar</span>
+      </a>
+
+      <a
+        routerLink="/home/contracts/wallbox"
+        routerLinkActive="active"
+      >
+        <span class="icon material-symbols-rounded">
+          ev_station
+        </span>
+
+        <span class="label">
+          Wallbox
+        </span>
       </a>
     </div>
 

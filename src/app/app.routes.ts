@@ -143,6 +143,57 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/wallbox',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/wallbox-contracts/wallbox-contracts'
+          ).then(
+            (m) => m.WallboxContracts,
+          ),
+      },
+      {
+        path: 'contracts/wallbox/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/wallbox-contract-create/wallbox-contract-create'
+          ).then(
+            (m) => m.WallboxContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/wallbox/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Galp',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/wallbox-contract-detail/wallbox-contract-detail'
+          ).then(
+            (m) => m.WallboxContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),
