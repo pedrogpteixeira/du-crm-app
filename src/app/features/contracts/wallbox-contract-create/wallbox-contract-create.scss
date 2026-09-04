@@ -4,16 +4,20 @@
   gap: 22px;
 }
 
+/* =========================
+   CABEÇALHO
+========================= */
+
 .page-header {
   h1 {
+    margin: 4px 0 6px;
     color: #243646;
     font-size: 32px;
-    margin: 4px 0 6px;
   }
 
   p {
-    color: #64748b;
     margin: 0;
+    color: #64748b;
     font-size: 15px;
   }
 }
@@ -24,19 +28,27 @@
   font-weight: 700;
 }
 
+/* =========================
+   CARDS / SECÇÕES
+========================= */
+
 .card {
-  background: #ffffff;
-  border-radius: 22px;
   padding: 24px;
+  border-radius: 22px;
+  background: #ffffff;
   box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
 }
 
 .section-title {
+  margin-bottom: 20px;
   color: #243646;
   font-size: 15px;
   font-weight: 800;
-  margin-bottom: 20px;
 }
+
+/* =========================
+   GRIDS
+========================= */
 
 .form-grid {
   display: grid;
@@ -51,6 +63,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* =========================
+   CAMPOS
+========================= */
+
 label {
   display: flex;
   flex-direction: column;
@@ -64,14 +80,14 @@ input,
 select,
 textarea {
   width: 100%;
+  box-sizing: border-box;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
+  outline: none;
+  background: #ffffff;
   color: #243646;
   font-family: inherit;
   font-size: 14px;
-  outline: none;
-  background: #ffffff;
-  box-sizing: border-box;
 }
 
 input,
@@ -111,6 +127,10 @@ input[readonly] {
   }
 }
 
+/* =========================
+   BOTÕES
+========================= */
+
 button {
   border: 0;
   border-radius: 12px;
@@ -130,6 +150,10 @@ button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
+
+/* =========================
+   CLIENTE / FEEDBACK
+========================= */
 
 .client-result {
   display: flex;
@@ -158,36 +182,43 @@ button:disabled {
   }
 }
 
-.warning-message {
-  color: #92400e;
-  background: #fef3c7;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 800;
+.warning-message,
+.error-message,
+.success-message {
   margin: 0;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.warning-message {
+  padding: 12px 14px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+}
+
+.error-message,
+.success-message {
+  width: fit-content;
+  padding: 10px 14px;
+  font-size: 14px;
 }
 
 .error-message {
-  width: fit-content;
-  color: #dc2626;
   background: #fee2e2;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 800;
-  margin: 0;
+  color: #dc2626;
 }
 
 .success-message {
-  width: fit-content;
-  color: #16a34a;
   background: #dcfce7;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 800;
-  margin: 0;
+  color: #16a34a;
+}
+
+.muted {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .actions {
@@ -195,48 +226,161 @@ button:disabled {
   justify-content: flex-end;
 }
 
-.muted {
+/* =========================
+   ATRIBUIÇÃO / EQUIPAS
+========================= */
+
+.team-selection-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
   color: #64748b;
   font-size: 13px;
   font-weight: 700;
-  margin: 0 0 16px;
 }
+
+.selected-team-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.team-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid rgba(0, 141, 177, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 141, 177, 0.1);
+  color: #006f8c;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.remove-team {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #006f8c;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+
+  &:hover {
+    background: rgba(0, 141, 177, 0.16);
+    color: #00566d;
+  }
+}
+
+.team-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+
+  select {
+    min-width: 0;
+  }
+
+  button {
+    min-height: 42px;
+    white-space: nowrap;
+  }
+}
+
+.no-teams-message {
+  margin: 0;
+}
+
+.assignment-helper {
+  margin: 16px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================
+   MORADAS / FATURAÇÃO
+========================= */
+
+.address-selection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+
+  label {
+    width: 320px;
+    max-width: 100%;
+  }
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 480px);
+  gap: 18px;
+}
+
+.address-grid.two-addresses {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.address-block {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* =========================
+   DOCUMENTOS
+========================= */
 
 .documents-grid {
   display: flex;
-  gap: 14px;
   flex-wrap: wrap;
-}
-
-.final-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.final-actions button.secondary,
-.documents-grid button.secondary {
-  background: #e2e8f0;
-  color: #243646;
-}
-
-.final-actions button.secondary:hover,
-.documents-grid button.secondary:hover {
-  background: #cbd5e1;
+  gap: 14px;
 }
 
 .file-upload-button {
+  width: fit-content;
   display: inline-flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: fit-content;
+  padding: 11px 18px;
   border: 0;
   border-radius: 12px;
   background: #2f4050;
   color: #ffffff;
-  padding: 11px 18px;
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
@@ -297,199 +441,13 @@ button:disabled {
 
 .remove-file {
   flex-shrink: 0;
+  padding: 8px 12px;
   background: #fee2e2;
   color: #dc2626;
-  padding: 8px 12px;
 
   &:hover {
     background: #fecaca;
   }
-}
-
-/* =========================
-   ATRIBUIÇÃO E EQUIPAS
-========================= */
-
-.team-selection-field {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.field-label {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.selected-team-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.team-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  max-width: 100%;
-  padding: 6px 8px 6px 10px;
-  border: 1px solid rgba(0, 141, 177, 0.18);
-  border-radius: 999px;
-  background: rgba(0, 141, 177, 0.1);
-  color: #006f8c;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.remove-team {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #006f8c;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-
-  &:hover {
-    background: rgba(0, 141, 177, 0.16);
-    color: #00566d;
-  }
-}
-
-.team-add-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
-
-  select {
-    min-width: 0;
-  }
-
-  button {
-    min-height: 42px;
-    white-space: nowrap;
-  }
-}
-
-.no-teams-message {
-  margin: 0;
-}
-
-.assignment-helper {
-  margin: 16px 0 0;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* =========================
-   OPÇÕES WALLBOX
-========================= */
-
-.boolean-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 20px;
-}
-
-.switch-field {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 72px;
-  padding: 14px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #f8fafc;
-  cursor: pointer;
-}
-
-.switch-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  strong {
-    color: #243646;
-    font-size: 13px;
-    font-weight: 800;
-  }
-
-  small {
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.4;
-  }
-}
-
-.switch-wrapper {
-  position: relative;
-  flex-shrink: 0;
-  width: 46px;
-  height: 26px;
-
-  input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
-  }
-}
-
-.switch-control {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: #cbd5e1;
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
-    transition: transform 0.2s ease;
-  }
-}
-
-.switch-wrapper input:checked + .switch-control {
-  background: #008db1;
-}
-
-.switch-wrapper input:checked + .switch-control::after {
-  transform: translateX(20px);
-}
-
-.switch-wrapper input:focus-visible + .switch-control {
-  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.14);
 }
 
 /* =========================
@@ -513,10 +471,38 @@ button:disabled {
   background: #f8fbff;
 }
 
+/* =========================
+   AÇÕES FINAIS
+========================= */
+
+.final-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.final-actions button.secondary,
+.documents-grid button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+.final-actions button.secondary:hover,
+.documents-grid button.secondary:hover {
+  background: #cbd5e1;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
 @media (max-width: 1024px) {
-  .three-columns,
-  .boolean-options {
+  .three-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .address-grid.two-addresses {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -536,7 +522,8 @@ button:disabled {
 
   .two-columns,
   .three-columns,
-  .boolean-options {
+  .address-grid,
+  .address-row {
     grid-template-columns: 1fr;
   }
 
@@ -564,35 +551,4 @@ button:disabled {
   .selected-file {
     align-items: flex-start;
   }
-
-  .switch-field {
-    min-height: 64px;
-  }
 }
-
-/* =========================
-   ADDRESS
-========================= */
-
-.address-block {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  padding: 16px;
-  border:
-    1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #f8fafc;
-}
-
-.address-row {
-  display: grid;
-  grid-template-columns:
-    repeat(
-      3,
-      minmax(0, 1fr)
-    );
-  gap: 10px;
-}
-

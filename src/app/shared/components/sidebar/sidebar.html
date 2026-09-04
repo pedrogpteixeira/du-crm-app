@@ -91,6 +91,41 @@
       </a>
     </div>
 
+    <div 
+    class="nav-section">
+      <span 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
+      class="section-title">CRM Iberdrola</span>
+
+      <a 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
+      routerLink="/home/contracts/iberdrola" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Iberdrola</span>
+      </a>
+
+      <a 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
+      routerLink="/home/contracts/iberdrola-solar" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">solar_power</span>
+        <span class="label">Iberdrola Solar</span>
+      </a>
+    </div>
+
+    <div 
+    class="nav-section">
+      <span 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
+      class="section-title">CRM Meo Energias</span>
+
+      <a 
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
+      routerLink="/home/contracts/meo-energias" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Meo Energias</span>
+      </a>
+    </div>
+
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 

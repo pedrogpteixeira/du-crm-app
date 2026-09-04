@@ -184,6 +184,17 @@
   grid-column: 1 / -1;
 }
 
+
+/*
+ * Morada Faturação - Seleção é apenas
+ * informativa no detalhe atual. Mantém
+ * a mesma hierarquia visual dos restantes
+ * campos sem introduzir nova lógica.
+ */
+.full-width > strong {
+  min-height: 20px;
+}
+
 label {
   display: flex;
   flex-direction: column;
@@ -456,8 +467,6 @@ strong {
     transform: translateY(0);
   }
 }
-
-
 
 .attachment-upload {
   display: flex;

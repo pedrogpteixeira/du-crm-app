@@ -219,6 +219,8 @@ export class YesEnergyContractCreate
   selectedTeamIds: string[] = [];
   teamToAddId = '';
 
+  selectedRegistrationTeamId = '';
+
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
 
@@ -547,8 +549,10 @@ export class YesEnergyContractCreate
           this.clientNotFound =
             false;
 
+          /*
           this.successMessage =
             'Cliente encontrado.';
+          */
         },
 
         error: (error) => {
@@ -1254,6 +1258,8 @@ export class YesEnergyContractCreate
     this.availableTeams = [];
     this.selectedTeamIds = [];
     this.teamToAddId = '';
+    this.selectedRegistrationTeamId = '';
+    this.clearRegistrationFields();
 
     this.userService
       .getUserById(userId)
@@ -1372,47 +1378,69 @@ export class YesEnergyContractCreate
       : [];
   }
 
-  private syncRegistrationFields(
-    user: ProfileUser,
+  onRegistrationTeamChange(
+    teamId: string,
   ): void {
-    const defaultTeam =
-      (
-        user as
-          ProfileUserWithTeamPositions
-      ).defaultTeam;
+    this.selectedRegistrationTeamId =
+      teamId;
 
-    if (!defaultTeam) {
+    const team =
+      this.availableTeams.find(
+        (availableTeam) =>
+          availableTeam.id === teamId,
+      );
+
+    if (!team) {
       this.clearRegistrationFields();
       return;
     }
 
-    this.contractForm
-      .codigoRegistoCE =
-      defaultTeam
-        .registrationNumber !==
-        null &&
-      defaultTeam
-        .registrationNumber !==
-        undefined
-        ? String(
-            defaultTeam
-              .registrationNumber,
-          )
+    this.contractForm.codigoRegistoCE =
+      team.registrationNumber !== null &&
+      team.registrationNumber !== undefined
+        ? String(team.registrationNumber)
         : '';
 
-    this.contractForm
-      .nomeRegistoCE =
-      defaultTeam.name
-        ?.trim() ?? '';
+    this.contractForm.nomeRegistoCE =
+      team.name?.trim() ?? '';
   }
 
-  private clearRegistrationFields():
-    void {
-    this.contractForm
-      .codigoRegistoCE = '';
+  private syncRegistrationFields(
+    user: ProfileUser,
+  ): void {
+    const userWithTeams =
+      user as ProfileUserWithTeamPositions;
 
-    this.contractForm
-      .nomeRegistoCE = '';
+    const defaultTeamId =
+      userWithTeams.defaultTeam?.id;
+
+    const initialTeamId =
+      defaultTeamId &&
+      this.availableTeams.some(
+        (team) =>
+          team.id === defaultTeamId,
+      )
+        ? defaultTeamId
+        : this.availableTeams[0]?.id ?? '';
+
+    if (!initialTeamId) {
+      this.clearRegistrationFields();
+      return;
+    }
+
+    this.onRegistrationTeamChange(
+      initialTeamId,
+    );
+  }
+
+  private clearRegistrationFields(): void {
+    this.selectedRegistrationTeamId = '';
+
+    this.contractForm.codigoRegistoCE =
+      '';
+
+    this.contractForm.nomeRegistoCE =
+      '';
   }
 
   private getRequiredTeamIds():

@@ -31,7 +31,7 @@ export type YesEnergyContractStatus =
   | 'Pendente Assinatura Digital'
   | 'Pendente (ATR)'
   | 'Não Conformidade'
-  | 'Contrato Enviado'
+  | 'Desistência/Recuperar'
   | 'Em Ativação'
   | 'Ativo'
   | 'Parcialmente Baixa'
@@ -44,7 +44,7 @@ export const YES_ENERGY_CONTRACT_STATUSES:
     'Pendente Assinatura Digital',
     'Pendente (ATR)',
     'Não Conformidade',
-    'Contrato Enviado',
+    'Desistência/Recuperar',
     'Em Ativação',
     'Ativo',
     'Parcialmente Baixa',

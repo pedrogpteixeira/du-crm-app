@@ -5,8 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type WallboxTipoSegmento =
-  | 'residencial'
-  | 'empresarial';
+  | 'Residencial'
+  | 'Empresarial';
 
 export type WallboxTipoProduto =
   | 'Luz'
@@ -59,6 +59,12 @@ export interface WallboxContract {
 
   tipoSegmento?: WallboxTipoSegmento;
   tipoProduto?: WallboxTipoProduto;
+
+  numeroLead?: string;
+  offer?: string;
+
+  nomeRegistoCE?: string;
+  codigoRegistoCE?: string;
 
   user: WallboxContractListUser | null;
 
@@ -122,12 +128,28 @@ export interface CreateWallboxContractRequest {
 
   estado?: WallboxContractStatus;
 
+  controleQualidade?: string;
+  nomeRegistoCE?: string;
+  codigoRegistoCE?: string;
+
+  agendamento?: string;
+  dataAssinatura?: string;
+  dataContrato?: string;
+  dataRegisto?: string;
+  dataInstalacao?: string;
+  dataAtivacao?: string;
+  dataBaixa?: string;
+
+  numeroLead?: string;
+  offer?: string;
+
   nomeClienteEmpresa: string;
   nif: number;
   telefone: number;
 
   email?: string;
   moradaInstalacao?: string;
+  moradaFaturacao?: string;
 
   campanha: string;
 
@@ -151,9 +173,24 @@ export interface WallboxContractCreateResponse {
   companyId: string;
   clientId: string;
 
-  tipoSegmento: string;
-  tipoProduto: string;
-  estado: string;
+  tipoSegmento: WallboxTipoSegmento;
+  tipoProduto: WallboxTipoProduto;
+  estado: WallboxContractStatus;
+
+  controleQualidade?: string;
+  nomeRegistoCE?: string;
+  codigoRegistoCE?: string;
+
+  agendamento?: string;
+  dataAssinatura?: string;
+  dataContrato?: string;
+  dataRegisto?: string;
+  dataInstalacao?: string;
+  dataAtivacao?: string;
+  dataBaixa?: string;
+
+  numeroLead?: string;
+  offer?: string;
 
   nomeClienteEmpresa: string;
   nif: number;
@@ -161,12 +198,13 @@ export interface WallboxContractCreateResponse {
 
   email?: string;
   moradaInstalacao?: string;
+  moradaFaturacao?: string;
 
   campanha: string;
 
-  nivelTensao?: string;
-  tipoLocalInstalacao?: string;
-  metodoPagamento?: string;
+  nivelTensao?: WallboxNivelTensao;
+  tipoLocalInstalacao?: WallboxTipoLocalInstalacao;
+  metodoPagamento?: WallboxMetodoPagamento;
 
   comDeslocacao?: boolean;
   balanceamentoPotencia?: boolean;
@@ -194,12 +232,28 @@ export interface WallboxContractDetail {
 
   estado: WallboxContractStatus;
 
+  controleQualidade?: string;
+  nomeRegistoCE?: string;
+  codigoRegistoCE?: string;
+
+  agendamento?: string;
+  dataAssinatura?: string;
+  dataContrato?: string;
+  dataRegisto?: string;
+  dataInstalacao?: string;
+  dataAtivacao?: string;
+  dataBaixa?: string;
+
+  numeroLead?: string;
+  offer?: string;
+
   nomeClienteEmpresa: string;
   nif: number;
   telefone: number;
   email?: string;
 
   moradaInstalacao?: string;
+  moradaFaturacao?: string;
 
   campaign: WallboxContractCampaign | null;
 
@@ -233,6 +287,7 @@ export type UpdateWallboxContractRequest = Partial<
   telefone?: number | null;
   email?: string;
   moradaInstalacao?: string;
+  moradaFaturacao?: string;
 
   /*
    * Mantém explicitamente string para permitir limpar

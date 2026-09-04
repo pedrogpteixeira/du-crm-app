@@ -1,0 +1,527 @@
+.create-contract-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* =========================
+   CABEÇALHO
+========================= */
+
+.page-header {
+  h1 {
+    margin: 4px 0 6px;
+    color: #243646;
+    font-size: 32px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 15px;
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* =========================
+   CARDS
+========================= */
+
+.card {
+  padding: 24px;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    0 14px 40px
+    rgba(15, 23, 42, 0.08);
+}
+
+.section-title {
+  margin-bottom: 20px;
+  color: #243646;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* =========================
+   FORMULÁRIOS
+========================= */
+
+.form-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.two-columns {
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.three-columns {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  background: #ffffff;
+  color: #243646;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+input,
+select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+textarea {
+  min-height: 130px;
+  padding: 12px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #008db1;
+  box-shadow:
+    0 0 0 4px
+    rgba(0, 141, 177, 0.1);
+}
+
+input:disabled,
+select:disabled,
+input[readonly] {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.inline-field {
+  display: flex;
+  gap: 10px;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* =========================
+   BOTÕES
+========================= */
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: #243646;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #e2e8f0;
+  color: #243646;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+/* =========================
+   CLIENTE / FEEDBACK
+========================= */
+
+.client-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #dcfce7;
+
+  span {
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.warning-message {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.error-message,
+.success-message,
+.muted {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.error-message,
+.success-message {
+  width: fit-content;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.success-message {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.muted {
+  margin: 0 0 16px;
+  color: #64748b;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* =========================
+   ATRIBUIÇÃO
+========================= */
+
+.team-add-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.selected-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.selected-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+.remove-team,
+.remove-file {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  background: transparent;
+  color: #dc2626;
+}
+
+.remove-team:hover:not(:disabled),
+.remove-file:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =========================
+   MORADAS / FATURAÇÃO
+========================= */
+
+.address-selection {
+  max-width: 420px;
+  margin-bottom: 18px;
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+
+  &.two-addresses {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+.address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.billing-data-grid {
+  margin-top: 22px;
+}
+
+/* =========================
+   DADOS PRODUTO
+========================= */
+
+.product-data-grid {
+  margin-top: 22px;
+}
+
+.product-provider-field {
+  grid-column: 1 / -1;
+}
+
+/* =========================
+   DOCUMENTOS
+========================= */
+
+.documents-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.file-upload-button {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: #2f4050;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+
+  input {
+    display: none;
+  }
+
+  &.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+.selected-files {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 800;
+    word-break: break-word;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+}
+
+/* =========================
+   OBSERVAÇÕES INTERNAS
+========================= */
+
+.internal-observations-card {
+  border: 1px solid #dbeafe;
+  box-shadow:
+    0 14px 40px
+    rgba(30, 64, 175, 0.07);
+}
+
+.internal-observations-hint {
+  margin: -8px 0 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.internal-observations-card textarea {
+  background: #f8fbff;
+}
+
+/* =========================
+   AÇÕES FINAIS
+========================= */
+
+.final-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 1024px) {
+  .three-columns {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .create-contract-page {
+    gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .two-columns,
+  .three-columns,
+  .address-grid.two-addresses,
+  .address-row {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-field,
+  .documents-grid,
+  .final-actions {
+    flex-direction: column;
+  }
+
+  .inline-field button,
+  .documents-grid button,
+  .file-upload-button,
+  .final-actions button {
+    width: 100%;
+  }
+
+  .team-add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .team-add-row button {
+    width: 100%;
+  }
+
+  .selected-team,
+  .selected-file {
+    align-items: flex-start;
+  }
+}

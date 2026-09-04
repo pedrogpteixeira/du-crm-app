@@ -51,8 +51,8 @@ import {
 const WALLBOX_COMPANY_ID = 'cmp_StOnumtpT5' as const;
 
 type WallboxTipoSegmento =
-  | 'residencial'
-  | 'empresarial';
+  | 'Residencial'
+  | 'Empresarial';
 
 type WallboxTipoProduto =
   | 'Luz'
@@ -80,6 +80,10 @@ type WallboxTipoLocalInstalacao =
 type WallboxMetodoPagamento =
   | 'Pronto Pagamento'
   | 'Pagamento em Prestações';
+
+type WallboxMoradaFaturacaoSelecao =
+  | 'Igual à de Instalação'
+  | 'Outra';
 
 interface WallboxContractTeamVisibility {
   teamId: string;
@@ -152,6 +156,8 @@ export class WallboxContractCreate implements OnInit {
   selectedTeamIds: string[] = [];
   teamToAddId = '';
 
+  selectedRegistrationTeamId = '';
+
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
 
@@ -178,11 +184,11 @@ export class WallboxContractCreate implements OnInit {
 
   readonly tipoSegmentoOptions: SegmentOption[] = [
     {
-      value: 'residencial',
+      value: 'Residencial',
       label: 'Residencial',
     },
     {
-      value: 'empresarial',
+      value: 'Empresarial',
       label: 'Empresarial',
     },
   ];
@@ -221,11 +227,18 @@ export class WallboxContractCreate implements OnInit {
       'Pagamento em Prestações',
     ];
 
+
+  readonly moradaFaturacaoOptions:
+    WallboxMoradaFaturacaoSelecao[] = [
+      'Igual à de Instalação',
+      'Outra',
+    ];
+
   contractForm = {
     companyId: WALLBOX_COMPANY_ID,
 
     tipoSegmento:
-      'residencial' as WallboxTipoSegmento,
+      'Residencial' as WallboxTipoSegmento,
 
     tipoProduto:
       'Luz' as WallboxTipoProduto,
@@ -233,14 +246,38 @@ export class WallboxContractCreate implements OnInit {
     estado:
       'Pedido de Chamada' as WallboxContractStatus,
 
+    controleQualidade: '',
+    codigoRegistoCE: '',
+    nomeRegistoCE: '',
+
+    agendamento: '',
+    dataAssinatura: '',
+    dataContrato: '',
+    dataRegisto: '',
+    dataInstalacao: '',
+    dataAtivacao: '',
+    dataBaixa: '',
+
+    numeroLead: '',
+    offer: '',
+
     telefone: null as number | null,
     email: '',
+
+    moradaFaturacaoSelecao:
+      'Igual à de Instalação' as WallboxMoradaFaturacaoSelecao,
 
     moradaInstalacaoRua: '',
     moradaInstalacaoCidade: '',
     moradaInstalacaoDistrito: '',
     moradaInstalacaoCodigoPostal: '',
     moradaInstalacaoPais: '',
+
+    moradaFaturacaoRua: '',
+    moradaFaturacaoCidade: '',
+    moradaFaturacaoDistrito: '',
+    moradaFaturacaoCodigoPostal: '',
+    moradaFaturacaoPais: '',
 
     campanha: '',
 
@@ -272,6 +309,15 @@ export class WallboxContractCreate implements OnInit {
 
   isProLayout(): boolean {
     return this.contractLayout === 'pro';
+  }
+
+
+  shouldShowBillingAddress(): boolean {
+    return (
+      this.contractForm
+        .moradaFaturacaoSelecao ===
+      'Outra'
+    );
   }
 
   isSuperAdmin(): boolean {
@@ -384,8 +430,10 @@ export class WallboxContractCreate implements OnInit {
           this.clientChecked = true;
           this.clientNotFound = false;
 
+          /*
           this.successMessage =
             'Cliente encontrado.';
+            */
         },
         error: (error) => {
           this.clientChecked = true;
@@ -948,6 +996,8 @@ export class WallboxContractCreate implements OnInit {
     this.availableTeams = [];
     this.selectedTeamIds = [];
     this.teamToAddId = '';
+    this.selectedRegistrationTeamId = '';
+    this.clearRegistrationFields();
 
     this.userService
       .getUserById(userId)
@@ -984,7 +1034,74 @@ export class WallboxContractCreate implements OnInit {
     this.selectedTeamIds =
       this.resolveInitialTeamIds(user);
 
+    this.syncRegistrationFields(user);
+
     this.teamToAddId = '';
+  }
+
+  onRegistrationTeamChange(
+    teamId: string,
+  ): void {
+    this.selectedRegistrationTeamId =
+      teamId;
+
+    const team =
+      this.availableTeams.find(
+        (availableTeam) =>
+          availableTeam.id === teamId,
+      );
+
+    if (!team) {
+      this.clearRegistrationFields();
+      return;
+    }
+
+    this.contractForm.codigoRegistoCE =
+      team.registrationNumber !== null &&
+      team.registrationNumber !== undefined
+        ? String(team.registrationNumber)
+        : '';
+
+    this.contractForm.nomeRegistoCE =
+      team.name?.trim() ?? '';
+  }
+
+  private syncRegistrationFields(
+    user: ProfileUser,
+  ): void {
+    const userWithTeams =
+      user as ProfileUserWithTeamPositions;
+
+    const defaultTeamId =
+      userWithTeams.defaultTeam?.id;
+
+    const initialTeamId =
+      defaultTeamId &&
+      this.availableTeams.some(
+        (team) =>
+          team.id === defaultTeamId,
+      )
+        ? defaultTeamId
+        : this.availableTeams[0]?.id ?? '';
+
+    if (!initialTeamId) {
+      this.clearRegistrationFields();
+      return;
+    }
+
+    this.onRegistrationTeamChange(
+      initialTeamId,
+    );
+  }
+
+  private clearRegistrationFields(): void {
+    this.selectedRegistrationTeamId = '';
+
+    this.contractForm.codigoRegistoCE =
+      '';
+
+    this.contractForm.nomeRegistoCE =
+      '';
   }
 
   private resolveAssignableTeams(
@@ -1189,6 +1306,78 @@ export class WallboxContractCreate implements OnInit {
 
     this.addIfFilled(
       payload,
+      'controleQualidade',
+      this.contractForm.controleQualidade,
+    );
+
+    this.addIfFilled(
+      payload,
+      'agendamento',
+      this.contractForm.agendamento,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataAssinatura',
+      this.contractForm.dataAssinatura,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataContrato',
+      this.contractForm.dataContrato,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataRegisto',
+      this.contractForm.dataRegisto,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataInstalacao',
+      this.contractForm.dataInstalacao,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataAtivacao',
+      this.contractForm.dataAtivacao,
+    );
+
+    this.addIfFilled(
+      payload,
+      'dataBaixa',
+      this.contractForm.dataBaixa,
+    );
+
+    this.addIfFilled(
+      payload,
+      'numeroLead',
+      this.contractForm.numeroLead,
+    );
+
+    this.addIfFilled(
+      payload,
+      'offer',
+      this.contractForm.offer,
+    );
+
+    this.addIfFilled(
+      payload,
+      'codigoRegistoCE',
+      this.contractForm.codigoRegistoCE,
+    );
+
+    this.addIfFilled(
+      payload,
+      'nomeRegistoCE',
+      this.contractForm.nomeRegistoCE,
+    );
+
+    this.addIfFilled(
+      payload,
       'email',
       this.contractForm.email.trim(),
     );
@@ -1197,6 +1386,13 @@ export class WallboxContractCreate implements OnInit {
       payload,
       'moradaInstalacao',
       this.getMoradaInstalacao(),
+    );
+
+
+    this.addIfFilled(
+      payload,
+      'moradaFaturacao',
+      this.getMoradaFaturacao(),
     );
 
     this.addIfFilled(
@@ -1376,6 +1572,29 @@ export class WallboxContractCreate implements OnInit {
         .moradaInstalacaoCodigoPostal,
       this.contractForm
         .moradaInstalacaoPais,
+    );
+  }
+
+  private getMoradaFaturacao(): string {
+    if (
+      this.contractForm
+        .moradaFaturacaoSelecao ===
+      'Igual à de Instalação'
+    ) {
+      return this.getMoradaInstalacao();
+    }
+
+    return this.buildAddress(
+      this.contractForm
+        .moradaFaturacaoRua,
+      this.contractForm
+        .moradaFaturacaoCidade,
+      this.contractForm
+        .moradaFaturacaoDistrito,
+      this.contractForm
+        .moradaFaturacaoCodigoPostal,
+      this.contractForm
+        .moradaFaturacaoPais,
     );
   }
 

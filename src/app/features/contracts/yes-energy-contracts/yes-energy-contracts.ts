@@ -176,7 +176,7 @@ export class YesEnergyContracts implements OnInit {
         'Não Conformidade':
           'status-non-compliance',
 
-        'Contrato Enviado':
+        'Desistência/Recuperar':
           'status-contract-sent',
 
         'Em Ativação':

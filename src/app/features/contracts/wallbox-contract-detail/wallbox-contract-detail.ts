@@ -64,9 +64,27 @@ interface EditableContractForm {
 
   tipoSegmento: WallboxTipoSegmento;
   tipoProduto: WallboxTipoProduto;
+
+  controleQualidade: string;
+  codigoRegistoCE: string;
+  nomeRegistoCE: string;
+
   estado: WallboxContractStatus;
 
+  agendamento: string;
+  dataAssinatura: string;
+  dataContrato: string;
+  dataRegisto: string;
+  dataInstalacao: string;
+  dataAtivacao: string;
+  dataBaixa: string;
+
+  numeroLead: string;
+  offer: string;
+
   moradaInstalacao: string;
+  moradaFaturacao: string;
+
   nivelTensao: WallboxNivelTensao | '';
   tipoLocalInstalacao:
     | WallboxTipoLocalInstalacao
@@ -202,11 +220,11 @@ export class WallboxContractDetail
   readonly tipoSegmentoOptions:
     SegmentOption[] = [
       {
-        value: 'residencial',
+        value: 'Residencial',
         label: 'Residencial',
       },
       {
-        value: 'empresarial',
+        value: 'Empresarial',
         label: 'Empresarial',
       },
     ];
@@ -1501,12 +1519,73 @@ export class WallboxContractDetail
         tipoProduto:
           contract.tipoProduto,
 
+        controleQualidade:
+          contract
+            .controleQualidade ??
+          '',
+
+        codigoRegistoCE:
+          contract
+            .codigoRegistoCE ??
+          '',
+
+        nomeRegistoCE:
+          contract
+            .nomeRegistoCE ??
+          '',
+
         estado:
           contract.estado,
+
+        agendamento:
+          this.toDateTimeLocal(
+            contract.agendamento,
+          ),
+
+        dataAssinatura:
+          this.toDateInput(
+            contract.dataAssinatura,
+          ),
+
+        dataContrato:
+          this.toDateInput(
+            contract.dataContrato,
+          ),
+
+        dataRegisto:
+          this.toDateInput(
+            contract.dataRegisto,
+          ),
+
+        dataInstalacao:
+          this.toDateInput(
+            contract.dataInstalacao,
+          ),
+
+        dataAtivacao:
+          this.toDateInput(
+            contract.dataAtivacao,
+          ),
+
+        dataBaixa:
+          this.toDateInput(
+            contract.dataBaixa,
+          ),
+
+        numeroLead:
+          contract.numeroLead ?? '',
+
+        offer:
+          contract.offer ?? '',
 
         moradaInstalacao:
           contract
             .moradaInstalacao ??
+          '',
+
+        moradaFaturacao:
+          contract
+            .moradaFaturacao ??
           '',
 
         nivelTensao:
@@ -1701,9 +1780,107 @@ export class WallboxContractDetail
 
     this.assignChangedValue(
       payload,
+      'controleQualidade',
+      this.editForm
+        .controleQualidade,
+      this.originalEditForm
+        .controleQualidade,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'codigoRegistoCE',
+      this.editForm
+        .codigoRegistoCE,
+      this.originalEditForm
+        .codigoRegistoCE,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'nomeRegistoCE',
+      this.editForm
+        .nomeRegistoCE,
+      this.originalEditForm
+        .nomeRegistoCE,
+    );
+
+    this.assignChangedValue(
+      payload,
       'estado',
       this.editForm.estado,
       this.originalEditForm.estado,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'agendamento',
+      this.editForm.agendamento,
+      this.originalEditForm
+        .agendamento,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataAssinatura',
+      this.editForm.dataAssinatura,
+      this.originalEditForm
+        .dataAssinatura,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataContrato',
+      this.editForm.dataContrato,
+      this.originalEditForm
+        .dataContrato,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataRegisto',
+      this.editForm.dataRegisto,
+      this.originalEditForm
+        .dataRegisto,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataInstalacao',
+      this.editForm.dataInstalacao,
+      this.originalEditForm
+        .dataInstalacao,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataAtivacao',
+      this.editForm.dataAtivacao,
+      this.originalEditForm
+        .dataAtivacao,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'dataBaixa',
+      this.editForm.dataBaixa,
+      this.originalEditForm
+        .dataBaixa,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'numeroLead',
+      this.editForm.numeroLead,
+      this.originalEditForm
+        .numeroLead,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'offer',
+      this.editForm.offer,
+      this.originalEditForm.offer,
     );
 
     this.assignChangedValue(
@@ -1713,6 +1890,15 @@ export class WallboxContractDetail
         .moradaInstalacao,
       this.originalEditForm
         .moradaInstalacao,
+    );
+
+    this.assignChangedValue(
+      payload,
+      'moradaFaturacao',
+      this.editForm
+        .moradaFaturacao,
+      this.originalEditForm
+        .moradaFaturacao,
     );
 
     this.assignChangedValue(
@@ -1990,6 +2176,57 @@ export class WallboxContractDetail
       : value;
   }
 
+  private toDateInput(
+    value:
+      | string
+      | null
+      | undefined,
+  ): string {
+    if (!value) {
+      return '';
+    }
+
+    return value.length >= 10
+      ? value.slice(0, 10)
+      : value;
+  }
+
+  private toDateTimeLocal(
+    value:
+      | string
+      | null
+      | undefined,
+  ): string {
+    if (!value) {
+      return '';
+    }
+
+    const parsedDate =
+      new Date(value);
+
+    if (
+      Number.isNaN(
+        parsedDate.getTime(),
+      )
+    ) {
+      return value.length >= 16
+        ? value.slice(0, 16)
+        : value;
+    }
+
+    const offset =
+      parsedDate
+        .getTimezoneOffset() *
+      60_000;
+
+    return new Date(
+      parsedDate.getTime() -
+        offset,
+    )
+      .toISOString()
+      .slice(0, 16);
+  }
+
   private buildEmptyEditForm():
     EditableContractForm {
     return {
@@ -1999,15 +2236,32 @@ export class WallboxContractDetail
       email: '',
 
       tipoSegmento:
-        'residencial',
+        'Residencial',
 
       tipoProduto:
         'Luz',
 
+      controleQualidade: '',
+      codigoRegistoCE: '',
+      nomeRegistoCE: '',
+
       estado:
         'Pedido de Chamada',
 
+      agendamento: '',
+      dataAssinatura: '',
+      dataContrato: '',
+      dataRegisto: '',
+      dataInstalacao: '',
+      dataAtivacao: '',
+      dataBaixa: '',
+
+      numeroLead: '',
+      offer: '',
+
       moradaInstalacao: '',
+      moradaFaturacao: '',
+
       nivelTensao: '',
       tipoLocalInstalacao: '',
       metodoPagamento: '',
@@ -2025,10 +2279,11 @@ export class WallboxContractDetail
     value: boolean,
   ) {
     return {
-      client: value,
       contract: value,
-      installation: value,
-      campaign: value,
+      status: value,
+      client: value,
+      billing: value,
+      product: value,
       attachments: value,
       observations: value,
       internalObservations:

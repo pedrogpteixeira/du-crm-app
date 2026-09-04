@@ -143,6 +143,8 @@ export class GalpPowerGasContractCreate implements OnInit {
   selectedTeamIds: string[] = [];
   teamToAddId = '';
 
+  selectedRegistrationTeamId = '';
+
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
 
@@ -651,6 +653,8 @@ export class GalpPowerGasContractCreate implements OnInit {
     this.availableTeams = [];
     this.selectedTeamIds = [];
     this.teamToAddId = '';
+    this.selectedRegistrationTeamId = '';
+    this.clearRegistrationFields();
 
     this.userService
       .getUserById(userId)
@@ -726,46 +730,64 @@ export class GalpPowerGasContractCreate implements OnInit {
       }));
   }
 
+  onRegistrationTeamChange(
+    teamId: string,
+  ): void {
+    this.selectedRegistrationTeamId =
+      teamId;
+
+    const team =
+      this.availableTeams.find(
+        (availableTeam) =>
+          availableTeam.id === teamId,
+      );
+
+    if (!team) {
+      this.clearRegistrationFields();
+      return;
+    }
+
+    this.contractForm.codigoRegistoCE =
+      team.registrationNumber !== null &&
+      team.registrationNumber !== undefined
+        ? String(team.registrationNumber)
+        : '';
+
+    this.contractForm.nomeRegistoCE =
+      team.name?.trim() ?? '';
+  }
+
   private syncRegistrationFields(
     user: ProfileUser,
   ): void {
     const userWithTeams =
       user as ProfileUserWithTeamPositions;
 
-    const defaultTeam =
-      userWithTeams.defaultTeam;
+    const defaultTeamId =
+      userWithTeams.defaultTeam?.id;
 
-    const firstAvailableTeam =
-      userWithTeams.teams?.find(
+    const initialTeamId =
+      defaultTeamId &&
+      this.availableTeams.some(
         (team) =>
-          Boolean(team?.id) &&
-          team.active !== false,
-      ) ?? null;
+          team.id === defaultTeamId,
+      )
+        ? defaultTeamId
+        : this.availableTeams[0]?.id ?? '';
 
-    const teamToUse =
-      defaultTeam ??
-      firstAvailableTeam;
-
-    if (!teamToUse) {
+    if (!initialTeamId) {
       this.clearRegistrationFields();
       return;
     }
 
-    this.contractForm.codigoRegistoCE =
-      teamToUse.registrationNumber !==
-        null &&
-      teamToUse.registrationNumber !==
-        undefined
-        ? String(
-            teamToUse.registrationNumber,
-          )
-        : '';
-
-    this.contractForm.nomeRegistoCE =
-      teamToUse.name?.trim() ?? '';
+    this.onRegistrationTeamChange(
+      initialTeamId,
+    );
   }
 
   private clearRegistrationFields(): void {
+    this.selectedRegistrationTeamId = '';
+
     this.contractForm.codigoRegistoCE =
       '';
 
@@ -952,8 +974,10 @@ export class GalpPowerGasContractCreate implements OnInit {
           this.clientChecked = true;
           this.clientNotFound = false;
 
+          /*
           this.successMessage =
             'Cliente encontrado.';
+            */
         },
 
         error: (error) => {

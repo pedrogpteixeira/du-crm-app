@@ -136,15 +136,16 @@
   display: grid;
   grid-template-columns:
     minmax(130px, 0.75fr)
-    minmax(210px, 1.45fr)
+    minmax(210px, 1.4fr)
     minmax(100px, 0.65fr)
     minmax(125px, 0.8fr)
-    minmax(135px, 0.85fr)
-    minmax(175px, 1.1fr)
-    minmax(210px, 1.2fr);
+    minmax(120px, 0.75fr)
+    minmax(150px, 1.05fr)
+    minmax(220px, 1.05fr)
+    minmax(180px, 1.1fr);
   gap: 16px;
   align-items: center;
-  min-width: 1420px;
+  min-width: 1600px;
 }
 
 .table-header span,
@@ -188,6 +189,24 @@
     color: #243646;
     font-size: 15px;
     font-weight: 800;
+  }
+}
+
+.ce-registration {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
   }
 }
 

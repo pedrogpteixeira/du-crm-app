@@ -200,7 +200,7 @@ export const routes: Routes = [
           allowedRoles: [
             'Super Admin',
             'DU',
-            'Galp',
+            'Yes Energy',
           ],
         },
         loadComponent: () =>
@@ -217,7 +217,7 @@ export const routes: Routes = [
           allowedRoles: [
             'Super Admin',
             'DU',
-            'Galp',
+            'Yes Energy',
           ],
         },
         loadComponent: () =>
@@ -234,7 +234,7 @@ export const routes: Routes = [
           allowedRoles: [
             'Super Admin',
             'DU',
-            'Galp',
+            'Yes Energy',
           ],
         },
         loadComponent: () =>
@@ -243,6 +243,169 @@ export const routes: Routes = [
           ).then(
             (m) => m.YesEnergyContractDetail,
           ),
+      },
+      {
+        path: 'contracts/iberdrola',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-contracts/iberdrola-contracts'
+          ).then(
+            (m) => m.IberdrolaContracts,
+          ),
+      },
+      {
+        path: 'contracts/iberdrola/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-contract-create/iberdrola-contract-create'
+          ).then(
+            (m) => m.IberdrolaContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/iberdrola/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-contract-detail/iberdrola-contract-detail'
+          ).then(
+            (m) => m.IberdrolaContractDetail,
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile').then((m) => m.Profile),
+      },
+      {
+        path: 'contracts/iberdrola-solar',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-solar-contracts/iberdrola-solar-contracts'
+          ).then(
+            (m) => m.IberdrolaSolarContracts,
+          ),
+      },
+      {
+        path: 'contracts/iberdrola-solar/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-solar-contract-create/iberdrola-solar-contract-create'
+          ).then(
+            (m) => m.IberdrolaSolarContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/iberdrola-solar/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Iberdrola',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/iberdrola-solar-contract-detail/iberdrola-solar-contract-detail'
+          ).then(
+            (m) => m.IberdrolaSolarContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/meo-energias',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Meo Energia',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/meo-energias-contracts/meo-energias-contracts'
+          ).then(
+            (m) => m.MeoEnergiasContracts,
+          ),
+      },
+      {
+        path: 'contracts/meo-energias/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Meo Energia',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/meo-energias-contract-create/meo-energias-contract-create'
+          ).then(
+            (m) => m.MeoEnergiasContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/meo-energias/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Meo Energia',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/meo-energias-contract-detail/meo-energias-contract-detail'
+          ).then(
+            (m) => m.MeoEnergiasContractDetail,
+          ),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile').then((m) => m.Profile),
       },
       {
         path: 'profile',

@@ -102,6 +102,18 @@ export class HomeLayout {
       return 'Contratos Yes Energy';
     }
 
+    if (url.includes('/contracts/iberdrola-solar')) {
+      return 'Contratos Iberdrola Solar';
+    }
+
+    if (url.includes('/contracts/iberdrola')) {
+      return 'Contratos Iberdrola';
+    }
+
+    if (url.includes('/contracts/meo-energias')) {
+      return 'Contratos Meo Energias';
+    }
+
     if (url.includes('/tariffs')) {
       return 'Tarifários';
     }

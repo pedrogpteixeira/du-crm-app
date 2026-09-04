@@ -1,0 +1,286 @@
+<section class="contracts-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">
+        Contratos › Meo Energias
+      </span>
+
+      <h1>
+        Contratos Meo Energias
+      </h1>
+
+      <p>
+        Consulta e acompanha os contratos
+        Meo Energias registados no CRM.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button
+          type="button"
+          [class.active]="
+            viewMode === 'table'
+          "
+          (click)="
+            setViewMode('table')
+          "
+        >
+          Tabela
+        </button>
+
+        <button
+          type="button"
+          [class.active]="
+            viewMode === 'kanban'
+          "
+          (click)="
+            setViewMode('kanban')
+          "
+        >
+          Estados
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="create-btn"
+        routerLink="/home/contracts/meo-energias/create"
+      >
+        + Novo contrato
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================
+       TABLE
+  ========================== -->
+
+  <div
+    class="card"
+    *ngIf="viewMode === 'table'"
+  >
+    <div class="table-header">
+      <span>ID Contrato</span>
+      
+      <span>Cliente / Empresa</span>
+      <span>NIF</span>
+      <span>Segmento</span>
+      <span>Produto</span>
+      <span>Criado por</span>
+      <span>Estado</span>
+      <span>Nome Registo C.E.</span>
+    </div>
+
+    <p
+      class="loading"
+      *ngIf="isLoading"
+    >
+      A carregar contratos...
+    </p>
+
+    <p
+      class="error-message"
+      *ngIf="errorMessage"
+    >
+      {{ errorMessage }}
+    </p>
+
+    <a
+      class="contract-row"
+      *ngFor="let contract of contracts"
+      [routerLink]="[
+        '/home/contracts/meo-energias',
+        contract.id
+      ]"
+    >
+      <span>
+        {{ contract.id }}
+      </span>
+
+      <strong>
+        {{
+          getValue(
+            contract.nomeClienteEmpresa
+          )
+        }}
+      </strong>
+
+      <span>
+        {{ getValue(contract.nif) }}
+      </span>
+
+      <span>
+        {{
+          getValue(
+            contract.tipoSegmento
+          )
+        }}
+      </span>
+
+      <span>
+        {{
+          getValue(
+            contract.tipoProduto
+          )
+        }}
+      </span>
+
+      <span>
+        {{
+          getContractUserName(
+            contract
+          )
+        }}
+      </span>
+
+      <span
+        class="status-badge"
+        [ngClass]="
+          getStatusClass(
+            contract.estado
+          )
+        "
+      >
+        {{ contract.estado }}
+      </span>
+
+      <span>
+        {{
+          getValue(
+            contract.nomeRegistoCE
+          )
+        }}
+      </span>
+    </a>
+
+    <p
+      class="empty-state"
+      *ngIf="
+        !isLoading &&
+        !errorMessage &&
+        !contracts.length
+      "
+    >
+      Ainda não existem contratos
+      Meo Energias.
+    </p>
+  </div>
+
+  <!-- =========================
+       KANBAN
+  ========================== -->
+
+  <div
+    class="kanban-wrapper"
+    *ngIf="viewMode === 'kanban'"
+  >
+    <div class="kanban-board">
+      <section
+        class="kanban-column"
+        *ngFor="let status of statuses"
+      >
+        <header
+          class="kanban-column-header"
+          [ngClass]="
+            getStatusClass(status)
+          "
+        >
+          <span>
+            {{ status }}
+          </span>
+
+          <small>
+            {{
+              getContractsByStatus(
+                status
+              ).length
+            }}
+          </small>
+        </header>
+
+        <div class="kanban-list">
+          <a
+            class="kanban-card"
+            *ngFor="
+              let contract of
+                getContractsByStatus(
+                  status
+                )
+            "
+            [routerLink]="[
+              '/home/contracts/meo-energias',
+              contract.id
+            ]"
+          >
+            <span class="contract-id">
+              {{ contract.id }}
+            </span>
+
+            
+
+            <strong>
+              {{
+                getValue(
+                  contract.nomeClienteEmpresa
+                )
+              }}
+            </strong>
+
+            <span>
+              NIF:
+              {{ getValue(contract.nif) }}
+            </span>
+
+            <span>
+              Segmento:
+              {{
+                getValue(
+                  contract.tipoSegmento
+                )
+              }}
+            </span>
+
+            <span>
+              Produto:
+              {{
+                getValue(
+                  contract.tipoProduto
+                )
+              }}
+            </span>
+
+            <span>
+              Criado por:
+              {{
+                getContractUserName(
+                  contract
+                )
+              }}
+            </span>
+
+            <span>
+              Registo C.E.:
+              {{
+                getValue(
+                  contract.nomeRegistoCE
+                )
+              }}
+            </span>
+          </a>
+
+          <p
+            class="empty-column"
+            *ngIf="
+              !getContractsByStatus(
+                status
+              ).length
+            "
+          >
+            Sem contratos.
+          </p>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

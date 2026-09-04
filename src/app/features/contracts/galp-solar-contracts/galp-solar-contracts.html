@@ -62,9 +62,8 @@
       <span>NIF</span>
       <span>Segmento</span>
       <span>Produto</span>
-      <span>Tipo de Painel</span>
-      <span>Nº Painéis</span>
       <span>Criado por</span>
+      <span>Nome de Registo C.E.</span>
       <span>Estado</span>
     </div>
 
@@ -124,26 +123,14 @@
 
       <span>
         {{
-          getValue(
-            contract.tipoPainel
-          )
-        }}
-      </span>
-
-      <span>
-        {{
-          getValue(
-            contract.numeroPaineisSolares
-          )
-        }}
-      </span>
-
-      <span>
-        {{
           getContractUserName(
             contract
           )
         }}
+      </span>
+
+      <span>
+        {{ getValue(contract.nomeRegistoCE) }}
       </span>
 
       <span
@@ -250,30 +237,16 @@
             </span>
 
             <span>
-              Tipo de Painel:
-              {{
-                getValue(
-                  contract.tipoPainel
-                )
-              }}
-            </span>
-
-            <span>
-              Nº Painéis:
-              {{
-                getValue(
-                  contract.numeroPaineisSolares
-                )
-              }}
-            </span>
-
-            <span>
               Criado por:
               {{
                 getContractUserName(
                   contract
                 )
               }}
+            </span>
+
+            <span>
+              {{ getValue(contract.nomeRegistoCE) }}
             </span>
           </a>
 

@@ -250,22 +250,11 @@
           </p>
         </div>
       </div>
-
-      <p class="assignment-helper">
-        A posição hierárquica é obtida
-        automaticamente da relação do utilizador
-        com cada equipa. Super Admin, Admin,
-        Backoffice e Coordenador podem atribuir o
-        contrato a utilizadores das equipas onde
-        possuem essas funções. As equipas internas
-        obrigatórias são adicionadas sem permitir
-        a escolha manual do índice.
-      </p>
     </article>
 
     <article class="card">
       <div class="section-title">
-        Dados do contrato
+        Tipo de Segmento
       </div>
 
       <div class="form-grid three-columns">
@@ -335,7 +324,7 @@
             shouldShowLuzFields()
           "
         >
-          Tipo Contratação Luz
+          Tipo Contração LUZ
 
           <select
             [(ngModel)]="
@@ -361,7 +350,7 @@
             shouldShowGasFields()
           "
         >
-          Tipo Contratação Gás
+          Tipo Contração Gás
 
           <select
             [(ngModel)]="
@@ -396,31 +385,70 @@
         <label *ngIf="isProLayout()">
           Código Registo C.E.
 
-          <input
-            type="text"
+          <select
             [(ngModel)]="
-              contractForm
-                .codigoRegistoCE
+              selectedRegistrationTeamId
             "
-            [readonly]="
-              !isSuperAdmin()
+            (ngModelChange)="
+              onRegistrationTeamChange(
+                $event
+              )
             "
-          />
+            [disabled]="
+              !availableTeams.length
+            "
+          >
+            <option value="">
+              Sem equipa disponível
+            </option>
+
+            <option
+              *ngFor="
+                let team of availableTeams
+              "
+              [value]="team.id"
+            >
+              {{
+                team.registrationNumber !==
+                  null &&
+                team.registrationNumber !==
+                  undefined
+                  ? team.registrationNumber
+                  : 'Sem código'
+              }}
+            </option>
+          </select>
         </label>
 
         <label *ngIf="isProLayout()">
           Nome Registo C.E.
 
-          <input
-            type="text"
+          <select
             [(ngModel)]="
-              contractForm
-                .nomeRegistoCE
+              selectedRegistrationTeamId
             "
-            [readonly]="
-              !isSuperAdmin()
+            (ngModelChange)="
+              onRegistrationTeamChange(
+                $event
+              )
             "
-          />
+            [disabled]="
+              !availableTeams.length
+            "
+          >
+            <option value="">
+              Sem equipa disponível
+            </option>
+
+            <option
+              *ngFor="
+                let team of availableTeams
+              "
+              [value]="team.id"
+            >
+              {{ team.name }}
+            </option>
+          </select>
         </label>
       </div>
     </article>
@@ -623,162 +651,155 @@
       </div>
     </article>
 
-    <article
-      class="card"
-      *ngIf="isProLayout()"
-    >
+    <article class="card">
       <div class="section-title">
         Dados Morada / Faturação
       </div>
 
-      <div class="address-selection">
-        <label>
-          Morada Faturação - Seleção
-
-          <select
-            [(ngModel)]="
-              contractForm
-                .moradaFaturacaoSelecao
-            "
-          >
-            <option
-              *ngFor="
-                let option of
-                  moradaFaturacaoOptions
-              "
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <div
-        class="address-grid"
-        [class.two-addresses]="
-          shouldShowBillingAddress()
-        "
-      >
-        <div class="address-block">
+      <ng-container *ngIf="isProLayout()">
+        <div class="address-selection">
           <label>
-            Morada Instalação
+            Morada Faturação - Seleção
 
-            <input
-              type="text"
-              placeholder="Rua"
+            <select
               [(ngModel)]="
                 contractForm
-                  .moradaInstalacaoRua
+                  .moradaFaturacaoSelecao
               "
-            />
+            >
+              <option
+                *ngFor="
+                  let option of
+                    moradaFaturacaoOptions
+                "
+                [value]="option"
+              >
+                {{ option }}
+              </option>
+            </select>
           </label>
-
-          <div class="address-row">
-            <input
-              type="text"
-              placeholder="Cidade"
-              [(ngModel)]="
-                contractForm
-                  .moradaInstalacaoCidade
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Distrito"
-              [(ngModel)]="
-                contractForm
-                  .moradaInstalacaoDistrito
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Código postal"
-              [(ngModel)]="
-                contractForm
-                  .moradaInstalacaoCodigoPostal
-              "
-            />
-          </div>
-
-          <input
-            type="text"
-            placeholder="País"
-            [(ngModel)]="
-              contractForm
-                .moradaInstalacaoPais
-            "
-          />
         </div>
 
         <div
-          class="address-block"
-          *ngIf="
+          class="address-grid"
+          [class.two-addresses]="
             shouldShowBillingAddress()
           "
         >
-          <label>
-            Morada Faturação
+          <div class="address-block">
+            <label>
+              Morada Instalação
+
+              <input
+                type="text"
+                placeholder="Rua"
+                [(ngModel)]="
+                  contractForm
+                    .moradaInstalacaoRua
+                "
+              />
+            </label>
+
+            <div class="address-row">
+              <input
+                type="text"
+                placeholder="Cidade"
+                [(ngModel)]="
+                  contractForm
+                    .moradaInstalacaoCidade
+                "
+              />
+
+              <input
+                type="text"
+                placeholder="Distrito"
+                [(ngModel)]="
+                  contractForm
+                    .moradaInstalacaoDistrito
+                "
+              />
+
+              <input
+                type="text"
+                placeholder="Código postal"
+                [(ngModel)]="
+                  contractForm
+                    .moradaInstalacaoCodigoPostal
+                "
+              />
+            </div>
 
             <input
               type="text"
-              placeholder="Rua"
+              placeholder="País"
               [(ngModel)]="
                 contractForm
-                  .moradaFaturacaoRua
-              "
-            />
-          </label>
-
-          <div class="address-row">
-            <input
-              type="text"
-              placeholder="Cidade"
-              [(ngModel)]="
-                contractForm
-                  .moradaFaturacaoCidade
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Distrito"
-              [(ngModel)]="
-                contractForm
-                  .moradaFaturacaoDistrito
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Código postal"
-              [(ngModel)]="
-                contractForm
-                  .moradaFaturacaoCodigoPostal
+                  .moradaInstalacaoPais
               "
             />
           </div>
 
-          <input
-            type="text"
-            placeholder="País"
-            [(ngModel)]="
-              contractForm
-                .moradaFaturacaoPais
+          <div
+            class="address-block"
+            *ngIf="
+              shouldShowBillingAddress()
             "
-          />
+          >
+            <label>
+              Morada Faturação
+
+              <input
+                type="text"
+                placeholder="Rua"
+                [(ngModel)]="
+                  contractForm
+                    .moradaFaturacaoRua
+                "
+              />
+            </label>
+
+            <div class="address-row">
+              <input
+                type="text"
+                placeholder="Cidade"
+                [(ngModel)]="
+                  contractForm
+                    .moradaFaturacaoCidade
+                "
+              />
+
+              <input
+                type="text"
+                placeholder="Distrito"
+                [(ngModel)]="
+                  contractForm
+                    .moradaFaturacaoDistrito
+                "
+              />
+
+              <input
+                type="text"
+                placeholder="Código postal"
+                [(ngModel)]="
+                  contractForm
+                    .moradaFaturacaoCodigoPostal
+                "
+              />
+            </div>
+
+            <input
+              type="text"
+              placeholder="País"
+              [(ngModel)]="
+                contractForm
+                  .moradaFaturacaoPais
+              "
+            />
+          </div>
         </div>
-      </div>
-    </article>
+      </ng-container>
 
-    <article class="card">
-      <div class="section-title">
-        Faturação e Serviços
-      </div>
-
-      <div class="form-grid two-columns">
+      <div class="form-grid two-columns billing-data-grid">
         <label>
           Fatura Eletrónica
 
@@ -850,7 +871,7 @@
 
     <article class="card">
       <div class="section-title">
-        Campanha
+        Dados Produto
       </div>
 
       <div class="form-grid two-columns">
@@ -917,17 +938,11 @@
           />
         </label>
       </div>
-    </article>
 
-    <article
-      class="card"
-      *ngIf="isProLayout()"
-    >
-      <div class="section-title">
-        Dados do Produto
-      </div>
-
-      <div class="form-grid two-columns product-data-grid">
+      <div
+        class="form-grid two-columns product-data-grid"
+        *ngIf="isProLayout()"
+      >
         <label class="product-provider-field">
           Antiga Comercializadora
 
@@ -963,6 +978,60 @@
         </label>
 
         <label>
+          Potência
+
+          <select
+            [(ngModel)]="
+              contractForm.potencia
+            "
+          >
+            <option
+              *ngFor="
+                let power of
+                  availablePowers
+              "
+              [ngValue]="
+                formatPowerValue(
+                  power
+                )
+              "
+            >
+              {{
+                power.toFixed(2)
+              }}
+              kVA
+            </option>
+
+            <option
+              [ngValue]="
+                otherPowerValue
+              "
+            >
+              Outra...
+            </option>
+          </select>
+        </label>
+
+        <label
+          *ngIf="
+            contractForm.potencia ===
+            otherPowerValue
+          "
+        >
+          Outra potência
+
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Ex.: 9.20"
+            [(ngModel)]="
+              customPower
+            "
+          />
+        </label>
+
+        <label>
           Escalão
 
           <select
@@ -990,36 +1059,6 @@
           </select>
         </label>
 
-        <label>
-          Potência
-
-          <select
-            [(ngModel)]="
-              contractForm.potencia
-            "
-          >
-            <option
-              *ngFor="
-                let power of
-                  availablePowers
-              "
-              [ngValue]="
-                formatPowerValue(power)
-              "
-            >
-              {{ power.toFixed(2) }} kVA
-            </option>
-
-            <option
-              [ngValue]="
-                otherPowerValue
-              "
-            >
-              Outra...
-            </option>
-          </select>
-        </label>
-
         <label
           *ngIf="
             contractForm.escalao ===
@@ -1038,23 +1077,25 @@
           />
         </label>
 
-        <label
-          *ngIf="
-            contractForm.potencia ===
-            otherPowerValue
-          "
-        >
-          Outra potência
+        <label>
+          Ciclo Horário
 
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Ex.: 9.20"
+          <select
             [(ngModel)]="
-              customPower
+              contractForm
+                .cicloHorario
             "
-          />
+          >
+            <option
+              *ngFor="
+                let option of
+                  cicloHorarioOptions
+              "
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
         </label>
 
         <label>
@@ -1070,27 +1111,6 @@
               *ngFor="
                 let option of
                   nivelTensaoOptions
-              "
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Ciclo Horário
-
-          <select
-            [(ngModel)]="
-              contractForm
-                .cicloHorario
-            "
-          >
-            <option
-              *ngFor="
-                let option of
-                  cicloHorarioOptions
               "
               [value]="option"
             >
@@ -1218,7 +1238,7 @@
       *ngIf="canAccessInternalObservations"
     >
       <div class="section-title">
-        Observações internas
+        Observações / Tipo de Pendência
       </div>
 
       <p class="muted">

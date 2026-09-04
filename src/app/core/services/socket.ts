@@ -59,6 +59,27 @@ export interface YesEnergyContractSocketEvent {
   nif: number;
 }
 
+export interface IberdrolaContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
+export interface IberdrolaSolarContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
+export interface MeoEnergiasContractSocketEvent {
+  contractId: string;
+  estado: string;
+  nomeClienteEmpresa: string;
+  nif: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -273,6 +294,42 @@ export class SocketService {
   listenYesEnergyContractUpdated() {
     return this.createEventObservable<YesEnergyContractSocketEvent>(
       'yes-energy-contract:updated',
+    );
+  }
+
+  listenIberdrolaContractCreated() {
+    return this.createEventObservable<IberdrolaContractSocketEvent>(
+      'iberdrola-contract:created',
+    );
+  }
+
+  listenIberdrolaContractUpdated() {
+    return this.createEventObservable<IberdrolaContractSocketEvent>(
+      'iberdrola-contract:updated',
+    );
+  }
+
+  listenIberdrolaSolarContractCreated() {
+    return this.createEventObservable<IberdrolaSolarContractSocketEvent>(
+      'iberdrola-solar-contract:created',
+    );
+  }
+
+  listenIberdrolaSolarContractUpdated() {
+    return this.createEventObservable<IberdrolaSolarContractSocketEvent>(
+      'iberdrola-solar-contract:updated',
+    );
+  }
+
+  listenMeoEnergiasContractCreated() {
+    return this.createEventObservable<MeoEnergiasContractSocketEvent>(
+      'meo-energias-contract:created',
+    );
+  }
+
+  listenMeoEnergiasContractUpdated() {
+    return this.createEventObservable<MeoEnergiasContractSocketEvent>(
+      'meo-energias-contract:updated',
     );
   }
 
