@@ -11,6 +11,13 @@ import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
+import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
+import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+
+import {
+  mergeContractActivitySocketPayload,
+  preserveContractActivity,
+} from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import {
   Campaign,
@@ -92,6 +99,14 @@ interface AuthenticatedUserLike {
 interface GalpPowerGasContractApiShape extends GalpPowerGasContractDetailModel {
   campanha?: string | null;
 }
+import {
+  ANTIGA_COMERCIALIZADORA_SUGGESTIONS,
+  DEFAULT_CPE_PREFIX,
+  DEFAULT_CUI_PREFIX,
+} from '../../../core/constants/contract-energy-options';
+import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-galp-power-gas-contract-detail',
@@ -99,6 +114,8 @@ interface GalpPowerGasContractApiShape extends GalpPowerGasContractDetailModel {
     CommonModule,
     FormsModule,
     RouterLink,
+    ContractActivityPanel,
+    FileDropzone,
   ],
   templateUrl: './galp-power-gas-contract-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -204,6 +221,14 @@ export class GalpPowerGasContractDetail implements OnInit {
     'Trifásico',
   ];
 
+  readonly powerSuggestions =
+    ELECTRICITY_POWERS.map((power) => power.toFixed(2));
+
+  readonly gasLevelSuggestions = GAS_LEVELS;
+
+  readonly antigaComercializadoraSuggestions =
+    ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
   ngOnInit(): void {
     this.resolvePermissions();
 
@@ -230,27 +255,48 @@ export class GalpPowerGasContractDetail implements OnInit {
           return;
         }
 
-        const eventUserId = this.getSocketEventUserId(event);
+        const activityUpdate =
+          mergeContractActivitySocketPayload(
+            this.contract,
+            event,
+          );
 
-        if (
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId
-        ) {
-          return;
-        }
-
-        if (
-          !eventUserId &&
-          this.suppressNextOwnSocketUpdate
-        ) {
-          return;
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
         }
 
         const currentTime =
           new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
+
+        if (
+          event.ticketEvent &&
+          Array.isArray(event.tickets)
+        ) {
+          return;
+        }
+
+        const eventUserId =
+          this.getSocketEventUserId(event);
+
+        const isOwnSocketUpdate = Boolean(
+          eventUserId &&
+          this.currentUserId &&
+          eventUserId === this.currentUserId,
+        );
+
+        if (
+          isOwnSocketUpdate ||
+          (!eventUserId && this.suppressNextOwnSocketUpdate)
+        ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
+          this.clearOwnSocketSuppression();
+          return;
+        }
 
         if (this.isEditing) {
           this.synchronizeExternalUpdate(currentTime);
@@ -331,6 +377,32 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.successMessage = '';
   }
 
+
+  shouldShowLuzFields(): boolean {
+    const product = this.isEditing
+      ? this.editForm.tipoProduto
+      : this.contract?.tipoProduto;
+
+    return product === 'Luz' || product === 'Luz + Gás';
+  }
+
+  shouldShowGasFields(): boolean {
+    const product = this.isEditing
+      ? this.editForm.tipoProduto
+      : this.contract?.tipoProduto;
+
+    return product === 'Gás' || product === 'Luz + Gás';
+  }
+
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+
+    input.value = digits;
+    this.editForm.telefone = digits ? Number(digits) : null;
+  }
+
   saveChanges(): void {
     if (
       !this.isSuperAdmin ||
@@ -340,10 +412,27 @@ export class GalpPowerGasContractDetail implements OnInit {
       return;
     }
 
-    if (!this.editForm.telefone) {
-      this.showError('O telefone é obrigatório.');
+    if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
+      this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
     }
+
+    const energyValidationError =
+      getContractEnergyValidationError({
+        requiresElectricity: this.shouldShowLuzFields(),
+        requiresGas: this.shouldShowGasFields(),
+        cpe: this.editForm.cpe,
+        cui: this.editForm.cui,
+        potencia: this.editForm.potencia,
+        escalao: this.editForm.escalao,
+        cicloHorario: this.editForm.cicloHorario,
+      });
+
+    if (energyValidationError) {
+      this.showError(energyValidationError);
+      return;
+    }
+
 
     const campaignValue = this.getCurrentCampaignValue();
 
@@ -651,6 +740,38 @@ export class GalpPowerGasContractDetail implements OnInit {
       });
   }
 
+  private refreshContractActivity(): void {
+    if (!this.contract || !this.contractId) {
+      return;
+    }
+
+    this.galpPowerGasContractService
+      .getGalpPowerGasContractById(this.contractId)
+      .subscribe({
+        next: (latestContract) => {
+          if (
+            !this.contract ||
+            latestContract.id !== this.contractId
+          ) {
+            return;
+          }
+
+          const activityUpdate =
+            mergeContractActivitySocketPayload(
+              this.contract,
+              {
+                fluxo: latestContract.fluxo,
+                tickets: latestContract.tickets,
+              },
+            );
+
+          if (activityUpdate.updated) {
+            this.contract = activityUpdate.contract;
+          }
+        },
+      });
+  }
+
   private getSocketEventUserId(event: unknown): string {
     const socketEvent = event as {
       updatedBy?: string;
@@ -953,6 +1074,8 @@ export class GalpPowerGasContractDetail implements OnInit {
   private normalizeContractResponse(
     contract: GalpPowerGasContractDetailModel,
   ): GalpPowerGasContractDetailModel {
+    contract = preserveContractActivity(contract, this.contract);
+
     const apiContract = contract as GalpPowerGasContractApiShape;
     const rawCampaign = apiContract.campanha?.trim() ?? '';
 
@@ -1051,8 +1174,8 @@ export class GalpPowerGasContractDetail implements OnInit {
 
         antigaComercializadora:
           contract.antigaComercializadora ?? '',
-        cpe: contract.cpe ?? '',
-        cui: contract.cui ?? '',
+        cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
+        cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
         potencia: contract.potencia ?? null,
         escalao: contract.escalao ?? null,
         cicloHorario: contract.cicloHorario ?? '',

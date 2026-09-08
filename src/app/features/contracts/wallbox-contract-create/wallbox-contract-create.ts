@@ -109,11 +109,14 @@ interface SegmentOption {
   label: string;
 }
 
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+
 @Component({
   selector: 'app-wallbox-contract-create',
   imports: [
     CommonModule,
     FormsModule,
+    FileDropzone,
   ],
   templateUrl: './wallbox-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,

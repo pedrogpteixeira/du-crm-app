@@ -12,6 +12,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import {
+  mergeContractActivitySocketPayload,
+  preserveContractActivity,
+} from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import {
   GALP_SOLAR_PANEL_SUGGESTIONS,
@@ -76,10 +80,19 @@ interface AuthenticatedUserLike {
   name?: string;
   username?: string;
 }
+import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-galp-solar-contract-detail',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    ContractActivityPanel,
+    FileDropzone,
+  ],
   templateUrl: './galp-solar-contract-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './galp-solar-contract-detail.scss',
@@ -167,22 +180,48 @@ export class GalpSolarContractDetail implements OnInit {
           return;
         }
 
-        const eventUserId = this.getSocketEventUserId(event);
+        const activityUpdate =
+          mergeContractActivitySocketPayload(
+            this.contract,
+            event,
+          );
+
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
+
+        const currentTime =
+          new Date().toLocaleTimeString('pt-PT');
+
+        this.lastSocketUpdate = currentTime;
 
         if (
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId
+          event.ticketEvent &&
+          Array.isArray(event.tickets)
         ) {
           return;
         }
 
-        if (!eventUserId && this.suppressNextOwnSocketUpdate) {
+        const eventUserId =
+          this.getSocketEventUserId(event);
+
+        const isOwnSocketUpdate = Boolean(
+          eventUserId &&
+          this.currentUserId &&
+          eventUserId === this.currentUserId,
+        );
+
+        if (
+          isOwnSocketUpdate ||
+          (!eventUserId && this.suppressNextOwnSocketUpdate)
+        ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
+          this.clearOwnSocketSuppression();
           return;
         }
-
-        const currentTime = new Date().toLocaleTimeString('pt-PT');
-        this.lastSocketUpdate = currentTime;
 
         if (this.isEditing) {
           this.synchronizeExternalUpdate(currentTime);
@@ -268,13 +307,22 @@ export class GalpSolarContractDetail implements OnInit {
     this.successMessage = '';
   }
 
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+
+    input.value = digits;
+    this.editForm.telefone = digits ? Number(digits) : null;
+  }
+
   saveChanges(): void {
     if (!this.isSuperAdmin || !this.contract || !this.contractId) {
       return;
     }
 
-    if (!this.editForm.telefone) {
-      this.showError('O telefone é obrigatório.');
+    if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
+      this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
     }
 
@@ -345,8 +393,14 @@ export class GalpSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: ({ contract: updatedContract, uploadFailed, uploadError }) => {
-          this.contract = updatedContract;
-          this.initializeEditForm(updatedContract);
+          const contractWithActivity =
+            preserveContractActivity(
+              updatedContract,
+              this.contract,
+            );
+
+          this.contract = contractWithActivity;
+          this.initializeEditForm(contractWithActivity);
           this.observationDraft = '';
           this.internalObservationDraft = '';
 
@@ -464,7 +518,10 @@ export class GalpSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = updatedContract;
+          this.contract = preserveContractActivity(
+            updatedContract,
+            this.contract,
+          );
           this.showSuccess(
             `O ficheiro "${document.originalName}" foi removido com sucesso.`,
           );
@@ -657,6 +714,37 @@ export class GalpSolarContractDetail implements OnInit {
 
       return followerId === this.currentUserId;
     });
+  }
+
+  private refreshContractActivity(): void {
+    if (!this.contract || !this.contractId) {
+      return;
+    }
+
+    this.galpSolarContractService.getById(this.contractId)
+      .subscribe({
+        next: (latestContract) => {
+          if (
+            !this.contract ||
+            latestContract.id !== this.contractId
+          ) {
+            return;
+          }
+
+          const activityUpdate =
+            mergeContractActivitySocketPayload(
+              this.contract,
+              {
+                fluxo: latestContract.fluxo,
+                tickets: latestContract.tickets,
+              },
+            );
+
+          if (activityUpdate.updated) {
+            this.contract = activityUpdate.contract;
+          }
+        },
+      });
   }
 
   private getSocketEventUserId(event: unknown): string {

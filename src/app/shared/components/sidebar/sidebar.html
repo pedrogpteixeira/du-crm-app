@@ -15,6 +15,11 @@
         <span class="label">Dashboard</span>
       </a>
 
+      <a routerLink="/home/tickets" routerLinkActive="active">
+        <span class="icon material-symbols-rounded">confirmation_number</span>
+        <span class="label">Tickets</span>
+      </a>
+
       <a 
       *ngIf="canAccessRoles('Super Admin')"
       routerLink="/home/users" routerLinkActive="active">

@@ -733,3 +733,70 @@ strong {
     gap: 18px;
   }
 }
+
+/* =========================
+   CORES DO FLUXO POR ESTADO
+========================= */
+
+.contract-detail-page {
+  --contract-status-pedido-de-contratacao: #0097b2;
+  --contract-status-pedido-de-simulacao: #0284c7;
+  --contract-status-pendente-validacao-comercial: #7c3aed;
+  --contract-status-pedido-sms-rgpd: #6366f1;
+  --contract-status-pedido-vtv: #0f766e;
+  --contract-status-pendente-sms-cond-contratuais: #8b5cf6;
+  --contract-status-nao-conformidade: #f59e0b;
+  --contract-status-backoffice: #334155;
+  --contract-status-controle: #475569;
+  --contract-status-pedido-de-fornecimento: #0369a1;
+  --contract-status-em-fornecimento: #0891b2;
+  --contract-status-ativo: #16a34a;
+  --contract-status-parcialmente-baixa: #b45309;
+  --contract-status-cancelada: #dc2626;
+  --contract-status-baixa: #64748b;
+}
+
+/* =========================
+   ESTADO DA VENDA
+========================= */
+
+.status-sale-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.status-sale-state {
+  width: min(100%, 320px);
+}
+
+.status-sale-row {
+  display: grid;
+  gap: 22px 42px;
+}
+
+.status-sale-row--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.status-sale-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .status-sale-row--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .status-sale-state {
+    width: 100%;
+  }
+
+  .status-sale-row--three,
+  .status-sale-row--two {
+    grid-template-columns: 1fr;
+  }
+}
+

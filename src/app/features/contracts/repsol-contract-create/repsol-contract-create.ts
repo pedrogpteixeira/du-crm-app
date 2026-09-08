@@ -18,6 +18,12 @@ import {
 } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import {
+  DEFAULT_CPE_PREFIX,
+  DEFAULT_CUI_PREFIX,
+} from '../../../core/constants/contract-energy-options';
+
+import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 
 import {
   Client,
@@ -97,12 +103,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+
 @Component({
   selector: 'app-repsol-contract-create',
   imports: [
     CommonModule,
     FormsModule,
     RouterLink,
+    FileDropzone,
   ],
   templateUrl: './repsol-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -299,17 +308,17 @@ export class RepsolContractCreate implements OnInit {
 
     campanha: '',
     antigaComercializadora: '',
-    cpe: '',
-    cui: '',
+    cpe: DEFAULT_CPE_PREFIX,
+    cui: DEFAULT_CUI_PREFIX,
 
     potencia:
-      '6.90' as ContractPowerSelection,
+      '' as ContractPowerSelection,
 
     escalao:
-      1 as number | typeof OTHER_GAS_LEVEL,
+      null as number | typeof OTHER_GAS_LEVEL | null,
 
-    cicloHorario: 'Simples',
-    nivelTensao: 'Monofásico',
+    cicloHorario: '',
+    nivelTensao: '',
 
     observacoes: '',
     observacoesInternas: '',
@@ -1137,6 +1146,33 @@ export class RepsolContractCreate implements OnInit {
       return;
     }
 
+
+    if (this.isProLayout()) {
+      const energyValidationError =
+        getContractEnergyValidationError({
+          requiresElectricity:
+            this.shouldShowLuzFields(),
+          requiresGas:
+            this.shouldShowGasFields(),
+          cpe: this.contractForm.cpe,
+          cui: this.contractForm.cui,
+          potencia:
+            this.getContractPowerValue(),
+          escalao:
+            this.contractForm.escalao ===
+            OTHER_GAS_LEVEL
+              ? this.customGasLevel
+              : this.contractForm.escalao,
+          cicloHorario:
+            this.contractForm.cicloHorario,
+        });
+
+      if (energyValidationError) {
+        this.errorMessage = energyValidationError;
+        return;
+      }
+    }
+
     const campaignIsMissing =
       this.campaignSelectionMode === 'existing'
         ? !this.contractForm.campanha
@@ -1255,6 +1291,30 @@ export class RepsolContractCreate implements OnInit {
           }
         },
       });
+  }
+
+  onTipoProdutoChange(): void {
+    if (this.shouldShowLuzFields()) {
+      if (!this.contractForm.cpe.trim()) {
+        this.contractForm.cpe = DEFAULT_CPE_PREFIX;
+      }
+    } else {
+      this.contractForm.cpe = '';
+      this.contractForm.potencia = '';
+      this.contractForm.cicloHorario = '';
+      this.contractForm.nivelTensao = '';
+      this.customPower = null;
+    }
+
+    if (this.shouldShowGasFields()) {
+      if (!this.contractForm.cui.trim()) {
+        this.contractForm.cui = DEFAULT_CUI_PREFIX;
+      }
+    } else {
+      this.contractForm.cui = '';
+      this.contractForm.escalao = null;
+      this.customGasLevel = null;
+    }
   }
 
   shouldShowLuzFields(): boolean {

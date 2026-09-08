@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
+
 import { environment } from '../../../environments/environment';
 
 export type WallboxTipoSegmento =
@@ -275,6 +277,9 @@ export interface WallboxContractDetail {
 
   createdAt: string;
   updatedAt: string;
+
+  fluxo?: ContractFlowEntry[];
+  tickets?: ContractTicketSummary[];
 }
 
 export type UpdateWallboxContractRequest = Partial<

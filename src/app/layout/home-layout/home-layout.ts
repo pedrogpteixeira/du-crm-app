@@ -74,6 +74,10 @@ export class HomeLayout {
   }
 
   private getPageTitle(url: string): string {
+    if (url.includes('/tickets')) {
+      return 'Tickets';
+    }
+
     if (url.includes('/users')) {
       return 'Utilizadores';
     }

@@ -292,8 +292,9 @@
               !collapsedSections.status
             "
           >
-            <div class="info-grid">
-              <label>
+            <div class="status-sale-layout">
+              <div class="status-sale-state">
+                <label>
                 Estado
 
                 <select
@@ -329,8 +330,10 @@
                   </span>
                 </ng-template>
               </label>
+              </div>
 
-              <label>
+              <div class="status-sale-row status-sale-row--three">
+                <label>
                 Agendamento
 
                 <input
@@ -357,32 +360,7 @@
                 </ng-template>
               </label>
 
-              <label>
-                Data Assinatura
-
-                <input
-                  *ngIf="
-                    isEditing;
-                    else dataAssinaturaView
-                  "
-                  type="date"
-                  [(ngModel)]="
-                    editForm.dataAssinatura
-                  "
-                />
-
-                <ng-template #dataAssinaturaView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.dataAssinatura
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
-
-              <label>
+                <label>
                 Data Contrato
 
                 <input
@@ -407,7 +385,7 @@
                 </ng-template>
               </label>
 
-              <label>
+                <label>
                 Data de Registo
 
                 <input
@@ -431,156 +409,161 @@
                   </strong>
                 </ng-template>
               </label>
+              </div>
 
-              <label>
-                Data Prevista Instalação
+              <div class="status-sale-row status-sale-row--three">
+                <label>
+                                Data Prevista Instalação
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else previstaInstalacaoView
-                  "
-                  type="date"
-                  [(ngModel)]="
-                    editForm.dataPrevistaInstalacao
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else previstaInstalacaoView
+                                  "
+                                  type="date"
+                                  [(ngModel)]="
+                                    editForm.dataPrevistaInstalacao
+                                  "
+                                />
 
-                <ng-template #previstaInstalacaoView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.dataPrevistaInstalacao
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #previstaInstalacaoView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.dataPrevistaInstalacao
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
 
-              <label>
-                Data Instalação
+                <label>
+                                Data Instalação
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else instalacaoView
-                  "
-                  type="date"
-                  [(ngModel)]="
-                    editForm.dataInstalacao
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else instalacaoView
+                                  "
+                                  type="date"
+                                  [(ngModel)]="
+                                    editForm.dataInstalacao
+                                  "
+                                />
 
-                <ng-template #instalacaoView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.dataInstalacao
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #instalacaoView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.dataInstalacao
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
 
-              <label>
-                Data de Ativação
+                <label>
+                                Data de Ativação
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else ativacaoView
-                  "
-                  type="date"
-                  [(ngModel)]="
-                    editForm.dataAtivacao
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else ativacaoView
+                                  "
+                                  type="date"
+                                  [(ngModel)]="
+                                    editForm.dataAtivacao
+                                  "
+                                />
 
-                <ng-template #ativacaoView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.dataAtivacao
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #ativacaoView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.dataAtivacao
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
+              </div>
 
-              <label>
-                Data Baixa
+<div class="status-sale-row status-sale-row--three">
+                <label>
+                                Data Baixa
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else baixaView
-                  "
-                  type="date"
-                  [(ngModel)]="
-                    editForm.dataBaixa
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else baixaView
+                                  "
+                                  type="date"
+                                  [(ngModel)]="
+                                    editForm.dataBaixa
+                                  "
+                                />
 
-                <ng-template #baixaView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.dataBaixa
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #baixaView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.dataBaixa
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
 
-              <label>
-                NRº Lead
+                <label>
+                                NRº Lead
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else leadView
-                  "
-                  type="text"
-                  [(ngModel)]="
-                    editForm.numeroLead
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else leadView
+                                  "
+                                  type="text"
+                                  [(ngModel)]="
+                                    editForm.numeroLead
+                                  "
+                                />
 
-                <ng-template #leadView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.numeroLead
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #leadView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.numeroLead
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
 
-              <label>
-                OFFER
+                <label>
+                                OFFER
 
-                <input
-                  *ngIf="
-                    isEditing;
-                    else offerView
-                  "
-                  type="text"
-                  [(ngModel)]="
-                    editForm.offer
-                  "
-                />
+                                <input
+                                  *ngIf="
+                                    isEditing;
+                                    else offerView
+                                  "
+                                  type="text"
+                                  [(ngModel)]="
+                                    editForm.offer
+                                  "
+                                />
 
-                <ng-template #offerView>
-                  <strong>
-                    {{
-                      getValue(
-                        contract.offer
-                      )
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                                <ng-template #offerView>
+                                  <strong>
+                                    {{
+                                      getValue(
+                                        contract.offer
+                                      )
+                                    }}
+                                  </strong>
+                                </ng-template>
+                              </label>
+              </div>
             </div>
           </div>
         </article>
@@ -673,11 +656,16 @@
                 Telefone *
 
                 <input
+                  inputmode="numeric"
+                  maxlength="9"
+                  pattern="[0-9]{9}"
+                  placeholder="9 dígitos"
+                  (input)="onPhoneInput($event)"
                   *ngIf="
                     isEditing;
                     else telefoneView
                   "
-                  type="number"
+                  type="tel"
                   required
                   [(ngModel)]="
                     editForm.telefone
@@ -1153,7 +1141,6 @@
             </div>
           </div>
         </article>
-
 <article class="card">
           <button
             type="button"
@@ -1166,60 +1153,10 @@
 
           <div class="section-content" *ngIf="!collapsedSections.attachments">
             <div class="attachment-upload" *ngIf="isEditing && isSuperAdmin">
-              <label class="upload-dropzone">
-                <input
-                  class="file-input"
-                  type="file"
-                  multiple
-                  (change)="onFilesSelected($event)"
-                />
-
-                <span class="upload-icon">＋</span>
-
-                <span class="upload-copy">
-                  <strong>Adicionar ficheiros</strong>
-                  <small>
-                    Selecione um ou vários documentos para associar ao contrato.
-                  </small>
-                </span>
-              </label>
-
-              <div class="selected-files" *ngIf="selectedFiles.length">
-                <div class="selected-files-header">
-                  <strong>
-                    Ficheiros selecionados ({{ selectedFiles.length }})
-                  </strong>
-
-                  <button
-                    type="button"
-                    class="clear-files-button"
-                    (click)="clearSelectedFiles()"
-                  >
-                    Limpar seleção
-                  </button>
-                </div>
-
-                <div
-                  class="selected-file-item"
-                  *ngFor="let file of selectedFiles; let index = index"
-                >
-                  <div class="file-icon">{{ getFileIcon(file.type) }}</div>
-
-                  <div class="attachment-info">
-                    <strong>{{ file.name }}</strong>
-                    <span>{{ formatFileSize(file.size) }}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    class="remove-file-button"
-                    [attr.aria-label]="'Remover ' + file.name"
-                    (click)="removeSelectedFile(index)"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
+              <app-file-dropzone
+                [(files)]="selectedFiles"
+                [disabled]="isSaving"
+              />
             </div>
 
             <div
@@ -1396,6 +1333,14 @@
             </div>
           </div>
         </article>
+      
+        <app-contract-activity-panel
+          [fluxo]="contract.fluxo ?? []"
+          [tickets]="contract.tickets ?? []"
+          [contractId]="contract.id"
+          [companyId]="contract.companyId"
+          [statusOptions]="estadoOptions"
+        ></app-contract-activity-panel>
       </div>
 
       <aside class="side-column">

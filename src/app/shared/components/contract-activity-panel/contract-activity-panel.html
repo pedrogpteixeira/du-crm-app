@@ -1,0 +1,173 @@
+<section class="activity-panel">
+  <div class="activity-header">
+    <div
+      class="activity-tabs"
+      role="tablist"
+      aria-label="Atividade do contrato"
+    >
+      <button
+        type="button"
+        class="activity-tab"
+        role="tab"
+        [class.active]="activeTab === 'flow'"
+        [attr.aria-selected]="activeTab === 'flow'"
+        (click)="setActiveTab('flow')"
+      >
+        Fluxo
+        <span class="tab-count">{{ flowEntries.length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="activity-tab"
+        role="tab"
+        [class.active]="activeTab === 'tickets'"
+        [attr.aria-selected]="activeTab === 'tickets'"
+        (click)="setActiveTab('tickets')"
+      >
+        Tickets
+        <span class="tab-count">{{ ticketEntries.length }}</span>
+      </button>
+    </div>
+
+    <button
+      *ngIf="activeTab === 'tickets'"
+      type="button"
+      class="create-ticket-button"
+      [disabled]="!contractId || !companyId"
+      (click)="openCreateTicketModal()"
+    >
+      + Novo Ticket
+    </button>
+  </div>
+
+  <div class="activity-content">
+    <ng-container *ngIf="activeTab === 'flow'; else ticketsView">
+      <div
+        class="flow-list"
+        *ngIf="flowEntries.length; else emptyFlow"
+      >
+        <div
+          class="flow-item"
+          *ngFor="let entry of flowEntries"
+        >
+          <div class="flow-main">
+            <a
+              *ngIf="entry.userId; else flowUserNameFallback"
+              class="flow-user-link"
+              [routerLink]="['/home/users', entry.userId]"
+            >
+              {{ getUserName(entry.userName) }}
+            </a>
+
+            <ng-template #flowUserNameFallback>
+              <strong>{{ getUserName(entry.userName) }}</strong>
+            </ng-template>
+
+            <ng-container
+              *ngIf="
+                getFlowStatePresentation(entry.acao) as stateChange;
+                else regularAction
+              "
+            >
+              <span class="flow-action flow-action-state">
+                {{ stateChange.prefix }}
+                <span
+                  class="flow-status-badge"
+                  [style.background-color]="stateChange.color"
+                >
+                  {{ stateChange.state }}
+                </span>
+              </span>
+            </ng-container>
+
+            <ng-template #regularAction>
+              <span class="flow-action">
+                {{ entry.acao }}
+              </span>
+            </ng-template>
+          </div>
+
+          <time [attr.datetime]="entry.dataHora">
+            {{ formatFlowDate(entry.dataHora) }}
+          </time>
+        </div>
+      </div>
+
+      <ng-template #emptyFlow>
+        <p class="activity-empty">
+          Ainda não existem registos no fluxo deste contrato.
+        </p>
+      </ng-template>
+    </ng-container>
+
+    <ng-template #ticketsView>
+      <p
+        class="activity-feedback"
+        [class.success]="ticketCreateFeedbackType === 'success'"
+        [class.warning]="ticketCreateFeedbackType === 'warning'"
+        *ngIf="ticketCreateFeedback"
+      >
+        {{ ticketCreateFeedback }}
+      </p>
+
+      <div
+        class="tickets-list"
+        *ngIf="ticketEntries.length; else emptyTickets"
+      >
+        <div class="tickets-header" aria-hidden="true">
+          <span>Tipo</span>
+          <span>Estado</span>
+          <span>Prioridade</span>
+          <span>Responsável</span>
+        </div>
+
+        <a
+          class="ticket-row"
+          *ngFor="let ticket of ticketEntries"
+          [routerLink]="['/home/tickets', ticket.ticketId]"
+        >
+          <span class="ticket-type" data-label="Tipo">
+            {{ ticket.tipo }}
+          </span>
+
+          <span data-label="Estado">
+            <span
+              class="ticket-status"
+              [ngClass]="getTicketStatusClass(ticket.estado)"
+            >
+              {{ ticket.estado }}
+            </span>
+          </span>
+
+          <span data-label="Prioridade">
+            <span
+              class="ticket-priority"
+              [ngClass]="getTicketPriorityClass(ticket.prioridade)"
+            >
+              {{ ticket.prioridade }}
+            </span>
+          </span>
+
+          <span class="ticket-user" data-label="Responsável">
+            {{ getUserName(ticket.userName) }}
+          </span>
+        </a>
+      </div>
+
+      <ng-template #emptyTickets>
+        <p class="activity-empty">
+          Não existem tickets associados a este contrato.
+        </p>
+      </ng-template>
+    </ng-template>
+  </div>
+</section>
+
+<app-ticket-create-modal
+  *ngIf="isCreateTicketModalOpen"
+  [contractId]="contractId"
+  [companyId]="companyId"
+  (closed)="closeCreateTicketModal()"
+  (created)="onTicketCreated($event)"
+></app-ticket-create-modal>

@@ -25,6 +25,12 @@ import {
 
 import { environment } from '../../../../environments/environment';
 
+import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+
+import {
+  mergeContractActivitySocketPayload,
+  preserveContractActivity,
+} from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import {
   Campaign,
@@ -138,6 +144,14 @@ interface IberdrolaContractApiShape
   extends IberdrolaContractDetailModel {
   campanha?: string | null;
 }
+import {
+  ANTIGA_COMERCIALIZADORA_SUGGESTIONS,
+  DEFAULT_CPE_PREFIX,
+  DEFAULT_CUI_PREFIX,
+} from '../../../core/constants/contract-energy-options';
+import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-iberdrola-contract-detail',
@@ -145,6 +159,8 @@ interface IberdrolaContractApiShape
     CommonModule,
     FormsModule,
     RouterLink,
+    ContractActivityPanel,
+    FileDropzone,
   ],
   templateUrl:
     './iberdrola-contract-detail.html',
@@ -292,6 +308,9 @@ export class IberdrolaContractDetail
   readonly gasLevelSuggestions =
     IBERDROLA_GAS_LEVEL_SUGGESTIONS;
 
+  readonly antigaComercializadoraSuggestions =
+    ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
   ngOnInit(): void {
     this.resolvePermissions();
 
@@ -337,35 +356,48 @@ export class IberdrolaContractDetail
           return;
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(
+        const activityUpdate =
+          mergeContractActivitySocketPayload(
+            this.contract,
             event,
           );
 
-        if (
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId ===
-            this.currentUserId
-        ) {
-          return;
-        }
-
-        if (
-          !eventUserId &&
-          this.suppressNextOwnSocketUpdate
-        ) {
-          return;
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
         }
 
         const currentTime =
-          new Date()
-            .toLocaleTimeString(
-              'pt-PT',
-            );
+          new Date().toLocaleTimeString('pt-PT');
 
-        this.lastSocketUpdate =
-          currentTime;
+        this.lastSocketUpdate = currentTime;
+
+        if (
+          event.ticketEvent &&
+          Array.isArray(event.tickets)
+        ) {
+          return;
+        }
+
+        const eventUserId =
+          this.getSocketEventUserId(event);
+
+        const isOwnSocketUpdate = Boolean(
+          eventUserId &&
+          this.currentUserId &&
+          eventUserId === this.currentUserId,
+        );
+
+        if (
+          isOwnSocketUpdate ||
+          (!eventUserId && this.suppressNextOwnSocketUpdate)
+        ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
+          this.clearOwnSocketSuppression();
+          return;
+        }
 
         if (this.isEditing) {
           this.synchronizeExternalUpdate(
@@ -524,6 +556,15 @@ export class IberdrolaContractDetail
     );
   }
 
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+
+    input.value = digits;
+    this.editForm.telefone = digits ? Number(digits) : null;
+  }
+
   saveChanges(): void {
     if (
       !this.isSuperAdmin ||
@@ -553,13 +594,27 @@ export class IberdrolaContractDetail
       return;
     }
 
-    if (!this.editForm.telefone) {
-      this.showError(
-        'O telefone é obrigatório.',
-      );
-
+    if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
+      this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
     }
+
+    const energyValidationError =
+      getContractEnergyValidationError({
+        requiresElectricity: this.shouldShowLuzFields(),
+        requiresGas: this.shouldShowGasFields(),
+        cpe: this.editForm.cpe,
+        cui: this.editForm.cui,
+        potencia: this.editForm.potencia,
+        escalao: this.editForm.escalao,
+        cicloHorario: this.editForm.cicloHorario,
+      });
+
+    if (energyValidationError) {
+      this.showError(energyValidationError);
+      return;
+    }
+
 
     if (
       this.editForm.email.trim() &&
@@ -1326,6 +1381,38 @@ export class IberdrolaContractDetail
       });
   }
 
+  private refreshContractActivity(): void {
+    if (!this.contract || !this.contractId) {
+      return;
+    }
+
+    this.iberdrolaContractService
+      .getIberdrolaContractById(this.contractId)
+      .subscribe({
+        next: (latestContract) => {
+          if (
+            !this.contract ||
+            latestContract.id !== this.contractId
+          ) {
+            return;
+          }
+
+          const activityUpdate =
+            mergeContractActivitySocketPayload(
+              this.contract,
+              {
+                fluxo: latestContract.fluxo,
+                tickets: latestContract.tickets,
+              },
+            );
+
+          if (activityUpdate.updated) {
+            this.contract = activityUpdate.contract;
+          }
+        },
+      });
+  }
+
   private getSocketEventUserId(
     event: unknown,
   ): string {
@@ -1774,6 +1861,8 @@ export class IberdrolaContractDetail
     contract:
       IberdrolaContractDetailModel,
   ): IberdrolaContractDetailModel {
+    contract = preserveContractActivity(contract, this.contract);
+
     const apiContract =
       contract as
         IberdrolaContractApiShape;
@@ -2018,11 +2107,9 @@ export class IberdrolaContractDetail
             .antigaComercializadora ??
           '',
 
-        cpe:
-          contract.cpe ?? '',
+        cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
 
-        cui:
-          contract.cui ?? '',
+        cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
 
         potencia:
           contract.potencia ??

@@ -69,12 +69,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+
 @Component({
   selector: 'app-iberdrola-solar-contract-create',
   imports: [
     CommonModule,
     FormsModule,
     RouterLink,
+    FileDropzone,
   ],
   templateUrl: './iberdrola-solar-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,

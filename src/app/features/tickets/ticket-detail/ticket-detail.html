@@ -1,0 +1,317 @@
+<section class="ticket-detail-page">
+  <p class="loading" *ngIf="isLoading">A carregar Ticket...</p>
+  <p class="error-message" *ngIf="loadError">{{ loadError }}</p>
+  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
+  <p class="socket-message" *ngIf="socketMessage">{{ socketMessage }}</p>
+
+  <span class="last-sync" *ngIf="lastSocketUpdate">
+    Atualizado automaticamente às {{ lastSocketUpdate }}
+  </span>
+
+  <ng-container *ngIf="ticket">
+    <div class="breadcrumb">
+      <a routerLink="/home/tickets">Tickets</a>
+      <span>›</span>
+      <strong>{{ ticket.id }}</strong>
+    </div>
+
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Ticket</span>
+        <h1>{{ ticket.id }}</h1>
+        <p>{{ ticket.tipo }}</p>
+      </div>
+
+      <div class="header-actions" *ngIf="canEditTicket">
+        <button
+          *ngIf="!isEditing"
+          type="button"
+          class="primary-button"
+          (click)="startEditing()"
+        >
+          Editar
+        </button>
+
+        <ng-container *ngIf="isEditing">
+          <button
+            type="button"
+            class="secondary-button"
+            [disabled]="isSaving"
+            (click)="cancelEditing()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="primary-button"
+            [disabled]="isSaving || isUploadingAttachments"
+            (click)="saveChanges()"
+          >
+            {{
+              isUploadingAttachments
+                ? 'A carregar documentos...'
+                : isSaving
+                  ? 'A guardar...'
+                  : 'Guardar alterações'
+            }}
+          </button>
+        </ng-container>
+      </div>
+    </header>
+
+    <form [formGroup]="ticketForm" class="detail-grid" novalidate>
+      <div class="main-column">
+        <article class="card">
+          <div class="section-title">Ticket</div>
+
+          <div class="info-grid">
+            <label>
+              Tipo
+
+              <select *ngIf="isEditing; else tipoView" formControlName="tipo">
+                <option *ngFor="let option of ticketTypeOptions" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+
+              <ng-template #tipoView>
+                <strong>{{ ticket.tipo }}</strong>
+              </ng-template>
+            </label>
+
+            <label>
+              Estado
+
+              <select *ngIf="isEditing; else estadoView" formControlName="estado">
+                <option *ngFor="let option of ticketStatusOptions" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+
+              <ng-template #estadoView>
+                <span
+                  class="ticket-status"
+                  [ngClass]="getTicketStatusClass(ticket.estado)"
+                >
+                  {{ ticket.estado }}
+                </span>
+              </ng-template>
+            </label>
+
+            <label>
+              Prioridade
+
+              <select
+                *ngIf="isEditing; else prioridadeView"
+                formControlName="prioridade"
+              >
+                <option
+                  *ngFor="let option of ticketPriorityOptions"
+                  [value]="option"
+                >
+                  {{ option }}
+                </option>
+              </select>
+
+              <ng-template #prioridadeView>
+                <span
+                  class="ticket-priority"
+                  [ngClass]="getTicketPriorityClass(ticket.prioridade)"
+                >
+                  {{ ticket.prioridade }}
+                </span>
+              </ng-template>
+            </label>
+
+            <label>
+              Agendamento
+
+              <div *ngIf="isEditing; else agendamentoView" class="datetime-field">
+                <input type="datetime-local" formControlName="agendamento" />
+                <button
+                  type="button"
+                  class="clear-datetime-button"
+                  [disabled]="!ticketForm.controls.agendamento.value"
+                  (click)="ticketForm.controls.agendamento.setValue('')"
+                >
+                  Limpar
+                </button>
+              </div>
+
+              <ng-template #agendamentoView>
+                <strong>{{ formatDateTime(ticket.agendamento) }}</strong>
+              </ng-template>
+            </label>
+
+            <label class="full-width description-field">
+              Descrição
+
+              <textarea
+                *ngIf="isEditing; else descricaoView"
+                rows="6"
+                formControlName="descricao"
+                placeholder="Descrição do Ticket"
+              ></textarea>
+
+              <ng-template #descricaoView>
+                <div class="description-view" [class.empty]="!ticket.descricao">
+                  {{ ticket.descricao || 'Sem descrição.' }}
+                </div>
+              </ng-template>
+            </label>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Contrato associado</div>
+
+          <div class="info-grid contract-info-grid">
+            <label>
+              Comercializadora
+              <strong>{{ companyName }}</strong>
+            </label>
+
+            <label>
+              Contrato
+
+              <a
+                *ngIf="contractRoute as route; else contractIdView"
+                class="linked-item"
+                [routerLink]="route"
+              >
+                {{ ticket.contractId }}
+                <span aria-hidden="true">→</span>
+              </a>
+
+              <ng-template #contractIdView>
+                <strong>{{ ticket.contractId || '-' }}</strong>
+              </ng-template>
+            </label>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Documentos</div>
+
+          <div class="attachment-upload" *ngIf="isEditing && canEditTicket">
+            <app-file-dropzone
+              [(files)]="selectedFiles"
+              [disabled]="isSaving || isUploadingAttachments"
+            />
+          </div>
+
+          <div
+            class="attachments-list"
+            *ngIf="ticket.anexos.length; else noDocuments"
+          >
+            <div
+              class="attachment-item"
+              *ngFor="let document of ticket.anexos"
+              [class.deleting]="isDeletingAttachment(document)"
+            >
+              <button
+                type="button"
+                class="attachment-download"
+                [disabled]="isDeletingAttachment(document)"
+                (click)="downloadDocument(document)"
+              >
+                <div class="file-icon">{{ getFileIcon(document.mimetype) }}</div>
+
+                <div class="attachment-info">
+                  <strong>{{ document.originalName }}</strong>
+                  <span>
+                    {{ formatFileSize(document.size) }}
+                    <ng-container *ngIf="document.storageProvider">
+                      · {{ document.storageProvider }}
+                    </ng-container>
+                  </span>
+                </div>
+              </button>
+
+              <button
+                *ngIf="isEditing && canEditTicket"
+                type="button"
+                class="delete-attachment-button"
+                [disabled]="isDeletingAttachment(document)"
+                [attr.aria-label]="'Remover ' + document.originalName"
+                (click)="deleteAttachment(document)"
+              >
+                {{ isDeletingAttachment(document) ? '…' : '🗑️' }}
+              </button>
+            </div>
+          </div>
+
+          <ng-template #noDocuments>
+            <p class="empty-state">Sem documentos associados.</p>
+          </ng-template>
+        </article>
+      </div>
+
+      <aside class="side-column">
+        <article class="card">
+          <div class="section-title">Gestão</div>
+
+          <div class="side-list">
+            <label>
+              Estado
+              <span
+                class="ticket-status"
+                [ngClass]="getTicketStatusClass(ticket.estado)"
+              >
+                {{ ticket.estado }}
+              </span>
+            </label>
+
+            <label>
+              Prioridade
+              <span
+                class="ticket-priority"
+                [ngClass]="getTicketPriorityClass(ticket.prioridade)"
+              >
+                {{ ticket.prioridade }}
+              </span>
+            </label>
+
+            <label>
+              Criado em
+              <strong>{{ formatDateTime(ticket.createdAt) }}</strong>
+            </label>
+
+            <label>
+              Atualizado em
+              <strong>{{ formatDateTime(ticket.updatedAt) }}</strong>
+            </label>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Associação</div>
+
+          <div class="side-list">
+            <label>
+              Comercializadora
+              <strong>{{ companyName }}</strong>
+            </label>
+
+            <label>
+              Contract ID
+              <a
+                *ngIf="contractRoute as route; else sideContractId"
+                class="linked-item"
+                [routerLink]="route"
+              >
+                {{ ticket.contractId }}
+              </a>
+
+              <ng-template #sideContractId>
+                <strong>{{ ticket.contractId || '-' }}</strong>
+              </ng-template>
+            </label>
+          </div>
+        </article>
+      </aside>
+    </form>
+  </ng-container>
+</section>

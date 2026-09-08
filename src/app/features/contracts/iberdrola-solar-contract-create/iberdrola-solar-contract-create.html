@@ -449,125 +449,70 @@
         Estado da Venda
       </div>
 
-      <div class="form-grid three-columns">
-        <label>
+      <div class="status-sale-layout">
+        <div class="status-sale-state">
+          <label>
           Estado
 
-          <select
-            [(ngModel)]="
-              contractForm.estado
-            "
-          >
+          <select [(ngModel)]="contractForm.estado">
             <option
-              *ngFor="
-                let option of
-                  estadoOptions
-              "
+              *ngFor="let option of estadoOptions"
               [value]="option"
             >
               {{ option }}
             </option>
           </select>
         </label>
+        </div>
 
-        <label>
-          Agendamento
+        <div class="status-sale-row status-sale-row--three">
+          <label>
+            Agendamento
+            <input type="datetime-local" [(ngModel)]="contractForm.agendamento" />
+          </label>
 
-          <input
-            type="datetime-local"
-            [(ngModel)]="
-              contractForm.agendamento
-            "
-          />
-        </label>
+          <label>
+            Data Contrato
+            <input type="date" [(ngModel)]="contractForm.dataContrato" />
+          </label>
 
-        <label>
-          Data Assinatura
+          <label>
+            Data de Registo
+            <input type="date" [(ngModel)]="contractForm.dataRegisto" />
+          </label>
+        </div>
 
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataAssinatura
-            "
-          />
-        </label>
 
-        <label>
-          Data Contrato
+        <div class="status-sale-row status-sale-row--three">
+          <label>
+            Data Instalação
+            <input type="date" [(ngModel)]="contractForm.dataInstalacao" />
+          </label>
 
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataContrato
-            "
-          />
-        </label>
+          <label>
+            Data de Ativação
+            <input type="date" [(ngModel)]="contractForm.dataAtivacao" />
+          </label>
 
-        <label>
-          Data de Registo
+          <label>
+            Data Baixa
+            <input type="date" [(ngModel)]="contractForm.dataBaixa" />
+          </label>
+        </div>
 
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataRegisto
-            "
-          />
-        </label>
 
-        <label>
-          Data Instalação
+        <div class="status-sale-row status-sale-row--two">
+          <label>
+            NRº Lead
+            <input type="text" [(ngModel)]="contractForm.numeroLead" />
+          </label>
 
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataInstalacao
-            "
-          />
-        </label>
+          <label>
+            OFFER
+            <input type="text" [(ngModel)]="contractForm.offer" />
+          </label>
+        </div>
 
-        <label>
-          Data de Ativação
-
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataAtivacao
-            "
-          />
-        </label>
-
-        <label>
-          Data Baixa
-
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataBaixa
-            "
-          />
-        </label>
-
-        <label>
-          NRº Lead
-
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.numeroLead
-            "
-          />
-        </label>
-
-        <label>
-          OFFER
-
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.offer
-            "
-          />
-        </label>
       </div>
     </article>
 
@@ -925,92 +870,10 @@
         contrato.
       </p>
 
-      <div class="documents-grid">
-        <label
-          class="
-            file-upload-button
-          "
-          [class.disabled]="
-            isCreatingContract
-          "
-        >
-          <input
-            type="file"
-            multiple
-            [disabled]="
-              isCreatingContract
-            "
-            (change)="
-              onFilesSelected(
-                $event
-              )
-            "
-          />
-
-          📎 Selecionar documentos
-        </label>
-
-        <button
-          type="button"
-          class="secondary"
-          *ngIf="
-            selectedFiles.length
-          "
-          [disabled]="
-            isCreatingContract
-          "
-          (click)="
-            clearSelectedFiles()
-          "
-        >
-          Limpar seleção
-        </button>
-      </div>
-
-      <div
-        class="selected-files"
-        *ngIf="
-          selectedFiles.length
-        "
-      >
-        <div
-          class="selected-file"
-          *ngFor="
-            let file of
-              selectedFiles;
-            let index = index
-          "
-        >
-          <div>
-            <strong>
-              {{ file.name }}
-            </strong>
-
-            <small>
-              {{
-                formatFileSize(
-                  file.size
-                )
-              }}
-            </small>
-          </div>
-
-          <button
-            type="button"
-            class="remove-file"
-            [disabled]="
-              isCreatingContract
-            "
-            (click)="
-              removeSelectedFile(
-                index
-              )
-            "
-          >
-            Remover
-          </button>
-        </div>
-      </div>
+      <app-file-dropzone
+        [(files)]="selectedFiles"
+        [disabled]="isCreatingContract || isUploadingDocuments"
+      />
 
       <p
         class="muted"

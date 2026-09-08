@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
+
 import { environment } from '../../../environments/environment';
 
 export const YES_ENERGY_COMPANY_ID =
@@ -220,6 +222,9 @@ export interface YesEnergyContractDetail {
 
   createdAt: string;
   updatedAt: string;
+
+  fluxo?: ContractFlowEntry[];
+  tickets?: ContractTicketSummary[];
 }
 
 export interface CreateYesEnergyContractRequest {

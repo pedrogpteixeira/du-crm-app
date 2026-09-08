@@ -1,0 +1,276 @@
+<section class="tickets-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Tickets</span>
+      <h1>Os meus Tickets</h1>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="filters-toggle-button"
+        [class.is-active]="showFilters || hasActiveFilters()"
+        (click)="toggleFilters()"
+      >
+        Filtros
+
+        <span
+          class="filter-count"
+          *ngIf="hasActiveFilters()"
+        >
+          {{ activeFiltersCount }}
+        </span>
+      </button>
+
+      <div class="ticket-total" *ngIf="!isLoading && !errorMessage">
+        <span class="ticket-total-icon material-symbols-rounded" aria-hidden="true">
+          confirmation_number
+        </span>
+
+        <div class="ticket-total-content">
+          <span class="ticket-total-label">Total de Tickets</span>
+          <div class="ticket-total-value-row">
+            <strong>{{ tickets.length }}</strong>
+            <span *ngIf="hasActiveFilters()">
+              {{ filteredTickets.length }} visíveis
+            </span>
+            <span *ngIf="!hasActiveFilters()">
+              {{ ticketGroups.length }}
+              {{ ticketGroups.length === 1 ? 'comercializadora' : 'comercializadoras' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section
+    class="filters-card"
+    *ngIf="showFilters && !isLoading && !errorMessage"
+  >
+    <div class="filter-field search-field">
+      <label for="ticket-search-filter">Pesquisa</label>
+      <input
+        id="ticket-search-filter"
+        type="search"
+        placeholder="Ticket, contrato, responsável..."
+        [(ngModel)]="filters.search"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-company-filter">Comercializadora</label>
+      <select
+        id="ticket-company-filter"
+        [(ngModel)]="filters.companyId"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todas</option>
+        <option *ngFor="let company of companyOptions" [value]="company.id">
+          {{ company.name }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-type-filter">Tipo</label>
+      <select
+        id="ticket-type-filter"
+        [(ngModel)]="filters.tipo"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os tipos</option>
+        <option *ngFor="let type of typeOptions" [value]="type">
+          {{ type }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-status-filter">Estado</label>
+      <select
+        id="ticket-status-filter"
+        [(ngModel)]="filters.estado"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os estados</option>
+        <option *ngFor="let status of statusOptions" [value]="status">
+          {{ status }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-priority-filter">Prioridade</label>
+      <select
+        id="ticket-priority-filter"
+        [(ngModel)]="filters.prioridade"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todas as prioridades</option>
+        <option *ngFor="let priority of priorityOptions" [value]="priority">
+          {{ priority }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-responsible-filter">Responsável</label>
+      <select
+        id="ticket-responsible-filter"
+        [(ngModel)]="filters.userId"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os responsáveis</option>
+        <option *ngFor="let user of responsibleOptions" [value]="user.id">
+          {{ user.name }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="ticket-schedule-filter">Agendamento</label>
+      <select
+        id="ticket-schedule-filter"
+        [(ngModel)]="filters.schedule"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos</option>
+        <option value="scheduled">Com agendamento</option>
+        <option value="unscheduled">Sem agendamento</option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      class="clear-filters-button"
+      [disabled]="!hasActiveFilters()"
+      (click)="clearFilters()"
+    >
+      Limpar filtros
+    </button>
+  </section>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <p>A carregar Tickets...</p>
+  </div>
+
+  <div class="error-state" *ngIf="!isLoading && errorMessage">
+    <span class="material-symbols-rounded" aria-hidden="true">error</span>
+    <div>
+      <strong>Não foi possível carregar os Tickets</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
+    <button type="button" (click)="retry()">Tentar novamente</button>
+  </div>
+
+  <div
+    class="empty-state"
+    *ngIf="!isLoading && !errorMessage && !tickets.length"
+  >
+    <span class="material-symbols-rounded" aria-hidden="true">confirmation_number</span>
+    <strong>Não tens Tickets associados</strong>
+    <p>Quando fores incluído num Ticket, ele aparecerá aqui.</p>
+  </div>
+
+  <div
+    class="empty-state"
+    *ngIf="
+      !isLoading &&
+      !errorMessage &&
+      tickets.length &&
+      !filteredTickets.length
+    "
+  >
+    <span class="material-symbols-rounded" aria-hidden="true">filter_alt_off</span>
+    <strong>Nenhum Ticket corresponde aos filtros</strong>
+    <p>Altera os critérios selecionados ou limpa os filtros para voltar a ver todos os Tickets.</p>
+    <button
+      type="button"
+      class="empty-clear-button"
+      (click)="clearFilters()"
+    >
+      Limpar filtros
+    </button>
+  </div>
+
+  <div
+    class="company-sections"
+    *ngIf="!isLoading && !errorMessage && ticketGroups.length"
+  >
+    <article
+      class="company-ticket-section"
+      *ngFor="let group of ticketGroups"
+    >
+      <header class="company-header">
+        <div>
+          <span class="company-kicker">Comercializadora</span>
+          <h2>{{ group.companyName }}</h2>
+        </div>
+
+        <span class="company-count">
+          {{ group.tickets.length }}
+          {{ group.tickets.length === 1 ? 'Ticket' : 'Tickets' }}
+        </span>
+      </header>
+
+      <div class="tickets-table">
+        <div class="tickets-header" aria-hidden="true">
+          <span>Ticket</span>
+          <span>Tipo</span>
+          <span>Estado</span>
+          <span>Prioridade</span>
+          <span>Contrato</span>
+          <span>Responsável</span>
+          <span>Agendamento</span>
+        </div>
+
+        <a
+          class="ticket-row"
+          *ngFor="let ticket of group.tickets"
+          [routerLink]="['/home/tickets', ticket.id]"
+        >
+          <strong class="ticket-id" data-label="Ticket">{{ ticket.id }}</strong>
+
+          <span class="ticket-type" data-label="Tipo">{{ ticket.tipo }}</span>
+
+          <span data-label="Estado">
+            <span
+              class="status-badge"
+              [ngClass]="getStatusClass(ticket.estado)"
+            >
+              {{ ticket.estado }}
+            </span>
+          </span>
+
+          <span data-label="Prioridade">
+            <span
+              class="priority-badge"
+              [ngClass]="getPriorityClass(ticket.prioridade)"
+            >
+              {{ ticket.prioridade }}
+            </span>
+          </span>
+
+          <span class="contract-id" data-label="Contrato">
+            {{ ticket.contractId || '—' }}
+          </span>
+
+          <span class="responsible-name" data-label="Responsável">
+            {{ getUserName(ticket) }}
+          </span>
+
+          <span class="schedule-value" data-label="Agendamento">
+            {{
+              ticket.agendamento
+                ? (ticket.agendamento | date: 'dd/MM/yyyy HH:mm')
+                : 'Sem agendamento'
+            }}
+          </span>
+        </a>
+      </div>
+    </article>
+  </div>
+</section>

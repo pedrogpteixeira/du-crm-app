@@ -56,6 +56,18 @@ export const routes: Routes = [
           import('./features/users/user-detail/user-detail').then((m) => m.UserDetail),
       },
       {
+        path: 'tickets',
+        loadComponent: () =>
+          import('./features/tickets/tickets/tickets').then((m) => m.Tickets),
+      },
+      {
+        path: 'tickets/:id',
+        loadComponent: () =>
+          import('./features/tickets/ticket-detail/ticket-detail').then(
+            (m) => m.TicketDetail,
+          ),
+      },
+      {
         path: 'contracts/repsol',
         canActivate: [roleIncludesGuard],
         data: {

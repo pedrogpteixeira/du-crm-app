@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
+
 import { environment } from '../../../environments/environment';
 
 export const IBERDROLA_SOLAR_COMPANY_ID =
@@ -146,6 +148,9 @@ export interface IberdrolaSolarContract {
 
   createdAt?: string;
   updatedAt?: string;
+
+  fluxo?: ContractFlowEntry[];
+  tickets?: ContractTicketSummary[];
 }
 
 export type IberdrolaSolarContractDetail =

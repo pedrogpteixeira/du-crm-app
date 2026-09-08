@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
+
 import { environment } from '../../../environments/environment';
 
 export type GalpPowerGasContractStatus =
@@ -167,6 +169,9 @@ export interface GalpPowerGasContractDetail {
 
   createdAt: string;
   updatedAt: string;
+
+  fluxo?: ContractFlowEntry[];
+  tickets?: ContractTicketSummary[];
 }
 
 export interface CreateGalpPowerGasContractRequest {

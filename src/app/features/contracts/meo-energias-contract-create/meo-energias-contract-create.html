@@ -455,21 +455,17 @@
         Estado da Venda
       </div>
 
-      <div class="form-grid three-columns">
-        <label>
+      <div class="status-sale-layout">
+        <div class="status-sale-state">
+          <label>
           Estado
 
           <select
             *ngIf="isProLayout()"
-            [(ngModel)]="
-              contractForm.estado
-            "
+            [(ngModel)]="contractForm.estado"
           >
             <option
-              *ngFor="
-                let option of
-                  estadoOptions
-              "
+              *ngFor="let option of estadoOptions"
               [value]="option"
             >
               {{ option }}
@@ -483,108 +479,82 @@
             readonly
           />
         </label>
+        </div>
 
-        <label>
-          Agendamento
-
-          <input
-            type="datetime-local"
-            [(ngModel)]="
-              contractForm.agendamento
-            "
-          />
-        </label>
-
-        <label>
-          Data Assinatura
-
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataAssinatura
-            "
-          />
-        </label>
-
-        <label *ngIf="isProLayout()">
-          Data Contrato
-
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataContrato
-            "
-          />
-        </label>
-
-        <label *ngIf="isProLayout()">
-          Data de Registo
-
-          <input
-            type="date"
-            [(ngModel)]="
-              contractForm.dataRegisto
-            "
-          />
-        </label>
-
-        <ng-container
-          *ngIf="
-            isProLayout() &&
-            shouldShowLuzFields()
-          "
-        >
+        <div class="status-sale-row status-sale-row--three">
           <label>
+            Agendamento
+
+            <input
+              type="datetime-local"
+              [(ngModel)]="contractForm.agendamento"
+            />
+          </label>
+
+          <label *ngIf="isProLayout()">
+            Data Contrato
+
+            <input
+              type="date"
+              [(ngModel)]="contractForm.dataContrato"
+            />
+          </label>
+
+          <label *ngIf="isProLayout()">
+            Data de Registo
+
+            <input
+              type="date"
+              [(ngModel)]="contractForm.dataRegisto"
+            />
+          </label>
+        </div>
+
+        <div
+          class="status-sale-row status-sale-row--two"
+          *ngIf="isProLayout()"
+        >
+          <label *ngIf="shouldShowLuzFields()">
             Data de Ativação CPE
 
             <input
               type="date"
-              [(ngModel)]="
-                contractForm.dataAtivacaoCPE
-              "
+              [(ngModel)]="contractForm.dataAtivacaoCPE"
             />
           </label>
 
-          <label>
-            Data Baixa CPE
-
-            <input
-              type="date"
-              [(ngModel)]="
-                contractForm.dataBaixaCPE
-              "
-            />
-          </label>
-        </ng-container>
-
-        <ng-container
-          *ngIf="
-            isProLayout() &&
-            shouldShowGasFields()
-          "
-        >
-          <label>
+          <label *ngIf="shouldShowGasFields()">
             Data de Ativação CUI
 
             <input
               type="date"
-              [(ngModel)]="
-                contractForm.dataAtivacaoCUI
-              "
+              [(ngModel)]="contractForm.dataAtivacaoCUI"
+            />
+          </label>
+        </div>
+
+        <div
+          class="status-sale-row status-sale-row--two"
+          *ngIf="isProLayout()"
+        >
+          <label *ngIf="shouldShowLuzFields()">
+            Data Baixa CPE
+
+            <input
+              type="date"
+              [(ngModel)]="contractForm.dataBaixaCPE"
             />
           </label>
 
-          <label>
+          <label *ngIf="shouldShowGasFields()">
             Data Baixa CUI
 
             <input
               type="date"
-              [(ngModel)]="
-                contractForm.dataBaixaCUI
-              "
+              [(ngModel)]="contractForm.dataBaixaCUI"
             />
           </label>
-        </ng-container>
+        </div>
       </div>
     </article>
 
@@ -971,13 +941,15 @@
           "
         >
           <label>
-            CPE
+            CPE{{ shouldShowLuzFields() ? ' *' : '' }}
 
             <input
               type="text"
+            placeholder="PT0002..."
               [(ngModel)]="
                 contractForm.cpe
               "
+            [required]="shouldShowLuzFields()"
             />
           </label>
         </ng-container>
@@ -988,13 +960,15 @@
           "
         >
           <label>
-            CUI
+            CUI{{ shouldShowGasFields() ? ' *' : '' }}
 
             <input
               type="text"
+            placeholder="PT..."
               [(ngModel)]="
                 contractForm.cui
               "
+            [required]="shouldShowGasFields()"
             />
           </label>
         </ng-container>
@@ -1005,7 +979,7 @@
           "
         >
           <label>
-            Potência
+            Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
             <input
               type="text"
@@ -1014,6 +988,7 @@
                 contractForm.potencia
               "
               placeholder="Ex.: 6.90"
+            [required]="shouldShowLuzFields()"
             />
 
             <datalist
@@ -1036,7 +1011,7 @@
           "
         >
           <label>
-            Escalão
+            Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
             <input
               type="text"
@@ -1045,6 +1020,7 @@
                 contractForm.escalao
               "
               placeholder="Ex.: 1"
+            [required]="shouldShowGasFields()"
             />
 
             <datalist
@@ -1067,12 +1043,13 @@
           "
         >
           <label>
-            Ciclo Horário
+            Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
             <select
               [(ngModel)]="
                 contractForm.cicloHorario
               "
+            [required]="shouldShowLuzFields()"
             >
               <option value="">
                 Sem valor
@@ -1128,84 +1105,10 @@
         contrato.
       </p>
 
-      <div class="documents-grid">
-        <label
-          class="file-upload-button"
-          [class.disabled]="
-            isCreatingContract
-          "
-        >
-          <input
-            type="file"
-            multiple
-            [disabled]="
-              isCreatingContract
-            "
-            (change)="
-              onFilesSelected($event)
-            "
-          />
-
-          📎 Selecionar documentos
-        </label>
-
-        <button
-          type="button"
-          class="secondary"
-          *ngIf="selectedFiles.length"
-          [disabled]="
-            isCreatingContract
-          "
-          (click)="
-            clearSelectedFiles()
-          "
-        >
-          Limpar seleção
-        </button>
-      </div>
-
-      <div
-        class="selected-files"
-        *ngIf="selectedFiles.length"
-      >
-        <div
-          class="selected-file"
-          *ngFor="
-            let file of
-              selectedFiles;
-            let index = index
-          "
-        >
-          <div>
-            <strong>
-              {{ file.name }}
-            </strong>
-
-            <small>
-              {{
-                formatFileSize(
-                  file.size
-                )
-              }}
-            </small>
-          </div>
-
-          <button
-            type="button"
-            class="remove-file"
-            [disabled]="
-              isCreatingContract
-            "
-            (click)="
-              removeSelectedFile(
-                index
-              )
-            "
-          >
-            Remover
-          </button>
-        </div>
-      </div>
+      <app-file-dropzone
+        [(files)]="selectedFiles"
+        [disabled]="isCreatingContract || isUploadingDocuments"
+      />
 
       <p
         class="muted"

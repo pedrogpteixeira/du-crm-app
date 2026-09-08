@@ -1,0 +1,651 @@
+import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import {
+  catchError,
+  finalize,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
+
+import { environment } from '../../../../environments/environment';
+import { Auth } from '../../../core/services/auth';
+import {
+  CreateTicketRequest,
+  CreatedTicket,
+  TICKET_PRIORITY_OPTIONS,
+  TICKET_TYPE_OPTIONS,
+  TicketPrioridade,
+  TicketService,
+  TicketTeam,
+  TicketTipo,
+} from '../../../core/services/ticket';
+import {
+  ProfileUser,
+  UserService,
+} from '../../../core/services/user';
+
+interface AssignableTicketTeam {
+  id: string;
+  name: string;
+  positionIndex: number;
+  position: string;
+  active?: boolean;
+}
+
+interface ProfileUserWithTeamPositions extends ProfileUser {
+  teams: AssignableTicketTeam[];
+  defaultTeam: AssignableTicketTeam | null;
+}
+
+export interface TicketCreateModalResult {
+  ticket: CreatedTicket;
+  attachmentsUploaded: boolean;
+  attachmentUploadFailed: boolean;
+}
+
+import { FileDropzone } from '../file-dropzone/file-dropzone';
+
+@Component({
+  selector: 'app-ticket-create-modal',
+  imports: [
+    CommonModule,
+    FormsModule,
+    FileDropzone,
+  ],
+  templateUrl: './ticket-create-modal.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './ticket-create-modal.scss',
+})
+export class TicketCreateModal implements OnInit {
+  private readonly auth = inject(Auth);
+  private readonly userService = inject(UserService);
+  private readonly ticketService = inject(TicketService);
+
+  @Input({ required: true }) contractId = '';
+  @Input({ required: true }) companyId = '';
+
+  @Output() closed = new EventEmitter<void>();
+  @Output() created = new EventEmitter<TicketCreateModalResult>();
+
+  currentUser: ProfileUser | null = null;
+  assignableUsers: ProfileUser[] = [];
+  availableTeams: AssignableTicketTeam[] = [];
+
+  assignedUserId = '';
+  selectedTeamIds: string[] = [];
+  teamToAddId = '';
+
+  tipo: TicketTipo = 'Tratamento de Pendência';
+  prioridade: TicketPrioridade = 'Normal';
+  agendamento = '';
+  descricao = '';
+
+  selectedFiles: File[] = [];
+
+  isLoadingAssignment = false;
+  isCreatingTicket = false;
+  isUploadingAttachments = false;
+  errorMessage = '';
+
+  readonly ticketTypeOptions = TICKET_TYPE_OPTIONS;
+  readonly priorityOptions = TICKET_PRIORITY_OPTIONS;
+
+  ngOnInit(): void {
+    this.loadAssignmentData();
+  }
+
+  get selectedTeams(): AssignableTicketTeam[] {
+    return this.selectedTeamIds
+      .map((teamId) =>
+        this.availableTeams.find(
+          (team) => team.id === teamId,
+        ),
+      )
+      .filter(
+        (
+          team,
+        ): team is AssignableTicketTeam => Boolean(team),
+      );
+  }
+
+  get teamsAvailableToAdd(): AssignableTicketTeam[] {
+    return this.availableTeams.filter(
+      (team) => !this.selectedTeamIds.includes(team.id),
+    );
+  }
+
+  canAssignOtherUsers(): boolean {
+    if (this.isSuperAdmin()) {
+      return true;
+    }
+
+    return this.getManagedTeamIds().length > 0;
+  }
+
+  onAssignedUserChange(): void {
+    if (!this.assignedUserId) {
+      return;
+    }
+
+    this.loadAssignedUserTeams(this.assignedUserId);
+  }
+
+  addSelectedTeam(): void {
+    if (!this.teamToAddId) {
+      return;
+    }
+
+    this.selectedTeamIds = [
+      ...new Set([
+        ...this.selectedTeamIds,
+        this.teamToAddId,
+      ]),
+    ];
+
+    this.teamToAddId = '';
+  }
+
+  removeSelectedTeam(teamId: string): void {
+    this.selectedTeamIds = this.selectedTeamIds.filter(
+      (selectedTeamId) => selectedTeamId !== teamId,
+    );
+  }
+
+  isRequiredTeam(teamId: string): boolean {
+    return this.getRequiredTeamIds().includes(teamId);
+  }
+
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+
+    if (!files.length) {
+      return;
+    }
+
+    const existingKeys = new Set(
+      this.selectedFiles.map((file) =>
+        this.getFileKey(file),
+      ),
+    );
+
+    this.selectedFiles = [
+      ...this.selectedFiles,
+      ...files.filter(
+        (file) => !existingKeys.has(this.getFileKey(file)),
+      ),
+    ];
+
+    input.value = '';
+  }
+
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter(
+      (_, currentIndex) => currentIndex !== index,
+    );
+  }
+
+  clearSelectedFiles(): void {
+    this.selectedFiles = [];
+  }
+
+  formatFileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return '0 B';
+    }
+
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const unitIndex = Math.min(
+      Math.floor(Math.log(bytes) / Math.log(1024)),
+      units.length - 1,
+    );
+    const value = bytes / 1024 ** unitIndex;
+
+    return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+  }
+
+  submit(): void {
+    if (this.isCreatingTicket || this.isUploadingAttachments) {
+      return;
+    }
+
+    const validationError = this.validateForm();
+
+    if (validationError) {
+      this.errorMessage = validationError;
+      return;
+    }
+
+    const payload = this.buildPayload();
+
+    this.errorMessage = '';
+    this.isCreatingTicket = true;
+
+    this.ticketService
+      .createTicket(payload)
+      .pipe(
+        switchMap((ticket) => {
+          if (!this.selectedFiles.length) {
+            return of({
+              ticket,
+              attachmentsUploaded: false,
+              attachmentUploadFailed: false,
+            } satisfies TicketCreateModalResult);
+          }
+
+          this.isUploadingAttachments = true;
+
+          return this.ticketService
+            .uploadAttachments(
+              ticket.ticketId,
+              this.selectedFiles,
+            )
+            .pipe(
+              map(() => ({
+                ticket,
+                attachmentsUploaded: true,
+                attachmentUploadFailed: false,
+              } satisfies TicketCreateModalResult)),
+              catchError(() =>
+                of({
+                  ticket,
+                  attachmentsUploaded: false,
+                  attachmentUploadFailed: true,
+                } satisfies TicketCreateModalResult),
+              ),
+              finalize(() => {
+                this.isUploadingAttachments = false;
+              }),
+            );
+        }),
+        finalize(() => {
+          this.isCreatingTicket = false;
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.created.emit(result);
+        },
+        error: (error: unknown) => {
+          this.errorMessage = this.getApiErrorMessage(error);
+        },
+      });
+  }
+
+  close(): void {
+    if (this.isCreatingTicket || this.isUploadingAttachments) {
+      return;
+    }
+
+    this.closed.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
+  }
+
+  private loadAssignmentData(): void {
+    const authenticatedUser = this.auth.getCurrentUser();
+
+    if (!authenticatedUser?.id) {
+      this.errorMessage =
+        'Não foi possível identificar o utilizador autenticado.';
+      return;
+    }
+
+    this.isLoadingAssignment = true;
+    this.errorMessage = '';
+
+    this.userService
+      .getUserById(authenticatedUser.id)
+      .pipe(
+        switchMap((currentUser) => {
+          this.currentUser = currentUser;
+
+          if (
+            this.isSuperAdmin() ||
+            this.getManagedTeamIds(currentUser).length > 0
+          ) {
+            return this.userService.getUsers().pipe(
+              map((users) => ({
+                currentUser,
+                users,
+              })),
+            );
+          }
+
+          return of({
+            currentUser,
+            users: [currentUser],
+          });
+        }),
+        finalize(() => {
+          this.isLoadingAssignment = false;
+        }),
+      )
+      .subscribe({
+        next: ({ currentUser, users }) => {
+          this.assignableUsers = this.resolveAssignableUsers(
+            currentUser,
+            users,
+          );
+          this.initializeAssignment(currentUser);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar os utilizadores e equipas disponíveis.';
+        },
+      });
+  }
+
+  private loadAssignedUserTeams(userId: string): void {
+    this.isLoadingAssignment = true;
+    this.errorMessage = '';
+    this.availableTeams = [];
+    this.selectedTeamIds = [];
+    this.teamToAddId = '';
+
+    this.userService
+      .getUserById(userId)
+      .pipe(
+        finalize(() => {
+          this.isLoadingAssignment = false;
+        }),
+      )
+      .subscribe({
+        next: (selectedUser) => {
+          this.initializeAssignment(selectedUser, false);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível carregar as equipas e posições do responsável selecionado.';
+        },
+      });
+  }
+
+  private initializeAssignment(
+    user: ProfileUser,
+    updateAssignedUser = true,
+  ): void {
+    if (updateAssignedUser) {
+      this.assignedUserId = user.id;
+    }
+
+    this.availableTeams = this.resolveAssignableTeams(user);
+    this.selectedTeamIds = this.resolveInitialTeamIds(user);
+    this.teamToAddId = '';
+  }
+
+  private resolveAssignableUsers(
+    currentUser: ProfileUser,
+    users: ProfileUser[],
+  ): ProfileUser[] {
+    const activeUsers = users.filter((user) => user.active);
+
+    if (this.isSuperAdmin()) {
+      return activeUsers;
+    }
+
+    const managedTeamIds = this.getManagedTeamIds(currentUser);
+
+    if (!managedTeamIds.length) {
+      return activeUsers.filter(
+        (user) => user.id === currentUser.id,
+      );
+    }
+
+    const managedTeamIdSet = new Set(managedTeamIds);
+
+    return activeUsers.filter((user) => {
+      if (user.id === currentUser.id) {
+        return true;
+      }
+
+      return this.getUserTeamIds(user).some((teamId) =>
+        managedTeamIdSet.has(teamId),
+      );
+    });
+  }
+
+  private resolveAssignableTeams(
+    user: ProfileUser,
+  ): AssignableTicketTeam[] {
+    const rawTeams =
+      (user as ProfileUserWithTeamPositions).teams ?? [];
+
+    return rawTeams
+      .filter(
+        (team) =>
+          Boolean(team?.id) &&
+          Number.isInteger(team.positionIndex) &&
+          team.positionIndex >= 0 &&
+          team.active !== false,
+      )
+      .map((team) => ({
+        id: team.id,
+        name: team.name,
+        positionIndex: team.positionIndex,
+        position:
+          team.position?.trim() ||
+          `Posição ${team.positionIndex}`,
+        active: team.active,
+      }));
+  }
+
+  private resolveInitialTeamIds(user: ProfileUser): string[] {
+    const typedUser = user as ProfileUserWithTeamPositions;
+    const defaultTeamId = typedUser.defaultTeam?.id;
+
+    const initialTeamId =
+      defaultTeamId &&
+      this.availableTeams.some((team) => team.id === defaultTeamId)
+        ? defaultTeamId
+        : this.availableTeams[0]?.id;
+
+    return initialTeamId ? [initialTeamId] : [];
+  }
+
+  private getManagedTeamIds(
+    user: ProfileUser | null = this.currentUser,
+  ): string[] {
+    if (!user) {
+      return [];
+    }
+
+    const teams =
+      (user as ProfileUserWithTeamPositions).teams ?? [];
+
+    return [
+      ...new Set(
+        teams
+          .filter((team) =>
+            this.isAssignmentManagerPosition(team.position),
+          )
+          .map((team) => team.id)
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  private getUserTeamIds(user: ProfileUser): string[] {
+    const typedUser = user as ProfileUserWithTeamPositions;
+    const teamIds =
+      typedUser.teams?.map((team) => team.id).filter(Boolean) ?? [];
+    const defaultTeamId = typedUser.defaultTeam?.id;
+
+    return [
+      ...new Set([
+        ...teamIds,
+        ...(defaultTeamId ? [defaultTeamId] : []),
+      ]),
+    ];
+  }
+
+  private isAssignmentManagerPosition(
+    position: string | null | undefined,
+  ): boolean {
+    const normalizedPosition = (position ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+
+    return (
+      normalizedPosition.includes('admin') ||
+      normalizedPosition.includes('backoffice') ||
+      normalizedPosition.includes('coordenador')
+    );
+  }
+
+  private isSuperAdmin(): boolean {
+    return Boolean(
+      this.currentUser?.role
+        ?.toLowerCase()
+        .includes('super admin'),
+    );
+  }
+
+  private getRequiredTeamIds(): string[] {
+    return [
+      environment.EQUIPA_CRM_ID,
+      environment.EQUIPA_DU_ID,
+    ].filter(
+      (teamId): teamId is string => Boolean(teamId),
+    );
+  }
+
+  private resolveTicketTeams(): TicketTeam[] {
+    const userTeams = this.selectedTeamIds
+      .map((teamId) =>
+        this.availableTeams.find((team) => team.id === teamId),
+      )
+      .filter(
+        (
+          team,
+        ): team is AssignableTicketTeam => {
+          if (!team) {
+            return false;
+          }
+
+          return (
+            Number.isInteger(team.positionIndex) &&
+            team.positionIndex >= 0
+          );
+        },
+      )
+      .map((team) => ({
+        teamId: team.id,
+        minimumPositionIndex: team.positionIndex,
+      }));
+
+    const existingTeamIds = new Set(
+      userTeams.map((team) => team.teamId),
+    );
+
+    const requiredTeams = this.getRequiredTeamIds()
+      .filter((teamId) => !existingTeamIds.has(teamId))
+      .map((teamId) => ({
+        teamId,
+        minimumPositionIndex: 0,
+      }));
+
+    return [
+      ...userTeams,
+      ...requiredTeams,
+    ];
+  }
+
+  private validateForm(): string | null {
+    if (!this.contractId || !this.companyId) {
+      return 'Não foi possível identificar o contrato ou a comercializadora.';
+    }
+
+    if (!this.tipo) {
+      return 'Selecione o tipo do Ticket.';
+    }
+
+    if (!this.assignedUserId) {
+      return 'Selecione o responsável pelo Ticket.';
+    }
+
+    const invalidTeam = this.selectedTeamIds.some((teamId) => {
+      const team = this.availableTeams.find(
+        (availableTeam) => availableTeam.id === teamId,
+      );
+
+      return (
+        !team ||
+        !Number.isInteger(team.positionIndex) ||
+        team.positionIndex < 0
+      );
+    });
+
+    if (invalidTeam) {
+      return 'Uma das equipas selecionadas não possui uma posição hierárquica válida.';
+    }
+
+    if (!this.resolveTicketTeams().length) {
+      return 'Selecione pelo menos uma equipa.';
+    }
+
+    return null;
+  }
+
+  private buildPayload(): CreateTicketRequest {
+    const description = this.descricao.trim();
+
+    return {
+      contractId: this.contractId,
+      companyId: this.companyId,
+      tipo: this.tipo,
+      ...(this.prioridade !== 'Normal'
+        ? { prioridade: this.prioridade }
+        : {}),
+      ...(this.agendamento
+        ? { agendamento: new Date(this.agendamento).toISOString() }
+        : {}),
+      ...(description
+        ? { descricao: description }
+        : {}),
+      userId: this.assignedUserId,
+      teams: this.resolveTicketTeams(),
+    };
+  }
+
+  private getApiErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const apiMessage =
+        typeof error.error === 'object' &&
+        error.error !== null &&
+        'message' in error.error &&
+        typeof error.error.message === 'string'
+          ? error.error.message
+          : '';
+
+      return apiMessage || 'Não foi possível criar o Ticket.';
+    }
+
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return 'Não foi possível criar o Ticket.';
+  }
+
+  private getFileKey(file: File): string {
+    return `${file.name}:${file.size}:${file.lastModified}`;
+  }
+}

@@ -23,6 +23,10 @@ import {
 
 import { environment } from '../../../../environments/environment';
 
+import {
+  mergeContractActivitySocketPayload,
+  preserveContractActivity,
+} from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import {
   Campaign,
@@ -119,6 +123,9 @@ interface WallboxContractApiShape
   extends WallboxContractDetailModel {
   campanha?: string | null;
 }
+import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-wallbox-contract-detail',
@@ -126,6 +133,8 @@ interface WallboxContractApiShape
     CommonModule,
     FormsModule,
     RouterLink,
+    ContractActivityPanel,
+    FileDropzone,
   ],
   templateUrl:
     './wallbox-contract-detail.html',
@@ -302,35 +311,48 @@ export class WallboxContractDetail
           return;
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(
+        const activityUpdate =
+          mergeContractActivitySocketPayload(
+            this.contract,
             event,
           );
 
-        if (
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId ===
-            this.currentUserId
-        ) {
-          return;
-        }
-
-        if (
-          !eventUserId &&
-          this.suppressNextOwnSocketUpdate
-        ) {
-          return;
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
         }
 
         const currentTime =
-          new Date()
-            .toLocaleTimeString(
-              'pt-PT',
-            );
+          new Date().toLocaleTimeString('pt-PT');
 
-        this.lastSocketUpdate =
-          currentTime;
+        this.lastSocketUpdate = currentTime;
+
+        if (
+          event.ticketEvent &&
+          Array.isArray(event.tickets)
+        ) {
+          return;
+        }
+
+        const eventUserId =
+          this.getSocketEventUserId(event);
+
+        const isOwnSocketUpdate = Boolean(
+          eventUserId &&
+          this.currentUserId &&
+          eventUserId === this.currentUserId,
+        );
+
+        if (
+          isOwnSocketUpdate ||
+          (!eventUserId && this.suppressNextOwnSocketUpdate)
+        ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
+          this.clearOwnSocketSuppression();
+          return;
+        }
 
         if (this.isEditing) {
           this.synchronizeExternalUpdate(
@@ -456,6 +478,15 @@ export class WallboxContractDetail
     this.successMessage = '';
   }
 
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 9);
+
+    input.value = digits;
+    this.editForm.telefone = digits ? Number(digits) : null;
+  }
+
   saveChanges(): void {
     if (
       !this.isSuperAdmin ||
@@ -473,11 +504,8 @@ export class WallboxContractDetail
       return;
     }
 
-    if (!this.editForm.telefone) {
-      this.showError(
-        'O telefone é obrigatório.',
-      );
-
+    if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
+      this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
     }
 
@@ -945,6 +973,38 @@ export class WallboxContractDetail
       });
   }
 
+  private refreshContractActivity(): void {
+    if (!this.contract || !this.contractId) {
+      return;
+    }
+
+    this.wallboxContractService
+      .getWallboxContractById(this.contractId)
+      .subscribe({
+        next: (latestContract) => {
+          if (
+            !this.contract ||
+            latestContract.id !== this.contractId
+          ) {
+            return;
+          }
+
+          const activityUpdate =
+            mergeContractActivitySocketPayload(
+              this.contract,
+              {
+                fluxo: latestContract.fluxo,
+                tickets: latestContract.tickets,
+              },
+            );
+
+          if (activityUpdate.updated) {
+            this.contract = activityUpdate.contract;
+          }
+        },
+      });
+  }
+
   private getSocketEventUserId(
     event: unknown,
   ): string {
@@ -1399,6 +1459,8 @@ export class WallboxContractDetail
     contract:
       WallboxContractDetailModel,
   ): WallboxContractDetailModel {
+    contract = preserveContractActivity(contract, this.contract);
+
     const apiContract =
       contract as
         WallboxContractApiShape;

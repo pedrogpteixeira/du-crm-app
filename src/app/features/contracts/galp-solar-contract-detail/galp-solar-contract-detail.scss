@@ -699,3 +699,63 @@ strong {
 .status-cancelled {
   background: #dc2626;
 }
+
+/* =========================
+   CORES DO FLUXO POR ESTADO
+========================= */
+
+.contract-detail-page {
+  --contract-status-pedido-de-proposta: #0097b2;
+  --contract-status-proposta-enviada: #2563eb;
+  --contract-status-envio-quality-check: #9b83c9;
+  --contract-status-pendente-docs: #f59e0b;
+  --contract-status-documentos-enviados: #16a34a;
+  --contract-status-em-instalacao: #0284c7;
+  --contract-status-ativo: #16a34a;
+  --contract-status-cancelado: #dc2626;
+}
+
+/* =========================
+   ESTADO DA VENDA
+========================= */
+
+.status-sale-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.status-sale-state {
+  width: min(100%, 320px);
+}
+
+.status-sale-row {
+  display: grid;
+  gap: 22px 42px;
+}
+
+.status-sale-row--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.status-sale-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .status-sale-row--three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .status-sale-state {
+    width: 100%;
+  }
+
+  .status-sale-row--three,
+  .status-sale-row--two {
+    grid-template-columns: 1fr;
+  }
+}
+

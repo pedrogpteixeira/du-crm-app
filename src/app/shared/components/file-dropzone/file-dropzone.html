@@ -1,0 +1,57 @@
+<div
+  class="dropzone"
+  [class.dragging]="isDraggingFiles"
+  [class.disabled]="disabled"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDropFiles($event)"
+>
+  <p>{{ title }}</p>
+  <span>ou</span>
+
+  <label class="file-select-btn" [class.disabled]="disabled">
+    {{ selectLabel }}
+
+    <input
+      type="file"
+      multiple
+      hidden
+      [disabled]="disabled"
+      (change)="onFileInputChange($event)"
+    />
+  </label>
+</div>
+
+<div class="selected-files" *ngIf="files.length">
+  <div class="selected-files-header">
+    <strong>Ficheiros selecionados ({{ files.length }})</strong>
+
+    <button
+      type="button"
+      class="clear-files-button"
+      [disabled]="disabled"
+      (click)="clearFiles()"
+    >
+      Limpar seleção
+    </button>
+  </div>
+
+  <div
+    class="selected-file"
+    *ngFor="let file of files; let index = index"
+  >
+    <div>
+      <strong>{{ file.name }}</strong>
+      <span>{{ formatFileSize(file.size) }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="remove-file"
+      [disabled]="disabled"
+      (click)="removeFile(index)"
+    >
+      Remover
+    </button>
+  </div>
+</div>

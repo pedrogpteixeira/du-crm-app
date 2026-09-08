@@ -22,63 +22,55 @@ import {
 } from 'socket.io-client';
 
 import { environment } from '../../../environments/environment';
+import type {
+  ContractActivitySocketPayload,
+} from '../models/contract-activity';
 import { Auth } from './auth';
+import type { TicketApiModel } from './ticket';
 
-export interface GalpSolarContractSocketEvent {
+interface ContractSocketBaseEvent extends ContractActivitySocketPayload {
   contractId: string;
   estado: string;
   nomeClienteEmpresa: string;
   nif: number;
+  updatedBy?: string;
+  userId?: string;
+  updatedByUserId?: string;
 }
 
-export interface GalpPowerGasContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
+
+export interface TicketSocketEvent extends TicketApiModel {
+  ticketId?: string;
+  id?: string;
+  updatedBy?: string;
+  userId?: string;
+  updatedByUserId?: string;
+  ticket?: TicketApiModel;
 }
 
-export interface RepsolContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface GalpSolarContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
-export interface WallboxContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface GalpPowerGasContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
-export interface YesEnergyContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface RepsolContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
-export interface IberdrolaContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface WallboxContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
-export interface IberdrolaSolarContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface YesEnergyContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
-export interface MeoEnergiasContractSocketEvent {
-  contractId: string;
-  estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
-}
+export interface IberdrolaContractSocketEvent
+  extends ContractSocketBaseEvent {}
+
+export interface IberdrolaSolarContractSocketEvent
+  extends ContractSocketBaseEvent {}
+
+export interface MeoEnergiasContractSocketEvent
+  extends ContractSocketBaseEvent {}
 
 @Injectable({
   providedIn: 'root',
@@ -330,6 +322,19 @@ export class SocketService {
   listenMeoEnergiasContractUpdated() {
     return this.createEventObservable<MeoEnergiasContractSocketEvent>(
       'meo-energias-contract:updated',
+    );
+  }
+
+
+  listenTicketCreated(): Observable<TicketSocketEvent> {
+    return this.createEventObservable<TicketSocketEvent>(
+      'ticket:created',
+    );
+  }
+
+  listenTicketUpdated(): Observable<TicketSocketEvent> {
+    return this.createEventObservable<TicketSocketEvent>(
+      'ticket:updated',
     );
   }
 
