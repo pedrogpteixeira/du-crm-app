@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -86,6 +90,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './galp-solar-contract-create.scss',
 })
 export class GalpSolarContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -265,6 +271,12 @@ export class GalpSolarContractCreate implements OnInit {
 
   ngOnInit(): void {
     this.loadAssignmentData();
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
+    );
   }
 
   isSuperAdmin(): boolean {
@@ -1302,11 +1314,14 @@ export class GalpSolarContractCreate implements OnInit {
       this.contractForm.tipoProduto,
     );
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm.controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm.controleQualidade,
+      );
+    }
 
     this.addIfFilled(
       payload,

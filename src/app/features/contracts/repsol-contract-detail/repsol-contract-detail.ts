@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -13,9 +17,11 @@ import { environment } from '../../../../environments/environment';
 
 import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+import { appendObservationHistory } from '../../../core/utils/observation-history';
 
 import {
   mergeContractActivitySocketPayload,
+  mergeContractStateSocketPayload,
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
@@ -24,6 +30,7 @@ import {
   CampaignService,
 } from '../../../core/services/campaign';
 import {
+  REPSOL_CONTRACT_STATUSES,
   RepsolContractDetail as RepsolContractDetailModel,
   RepsolContractDocument,
   RepsolContractService,
@@ -105,6 +112,7 @@ import {
   DEFAULT_CUI_PREFIX,
 } from '../../../core/constants/contract-energy-options';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
@@ -115,6 +123,7 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
     FormsModule,
     RouterLink,
     ContractActivityPanel,
+    ObservationsThread,
     FileDropzone,
   ],
   templateUrl: './repsol-contract-detail.html',
@@ -122,6 +131,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './repsol-contract-detail.scss',
 })
 export class RepsolContractDetail implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
   private readonly campaignService = inject(CampaignService);
@@ -133,7 +144,7 @@ export class RepsolContractDetail implements OnInit {
   private readonly userService = inject(UserService);
 
   private currentUserId = '';
-  private currentUserName = '';
+  currentUserName = '';
   private suppressNextOwnSocketUpdate = false;
   private ownSocketSuppressionTimer:
     ReturnType<typeof setTimeout> | null = null;
@@ -145,6 +156,8 @@ export class RepsolContractDetail implements OnInit {
 
   observationDraft = '';
   internalObservationDraft = '';
+  isSubmittingObservation = false;
+  isSubmittingInternalObservation = false;
   selectedFiles: File[] = [];
   deletingAttachmentFileNames = new Set<string>();
 
@@ -192,16 +205,7 @@ export class RepsolContractDetail implements OnInit {
     'Entrada Direta',
   ];
 
-  readonly estadoOptions: RepsolContractStatus[] = [
-    'Pedido de Chamada',
-    'Em validação',
-    'Chamada Efetuada',
-    'Pendente Assinatura Digital',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Atribuído',
-  ];
+  readonly estadoOptions: readonly RepsolContractStatus[] = REPSOL_CONTRACT_STATUSES;
 
   readonly cicloHorarioOptions = [
     'Simples',
@@ -261,6 +265,53 @@ export class RepsolContractDetail implements OnInit {
           this.contract = activityUpdate.contract;
         }
 
+        if (
+          this.contract &&
+          (event.observacoes !== undefined ||
+            event.observacoesInternas !== undefined)
+        ) {
+          this.contract = {
+            ...this.contract,
+            ...(event.observacoes !== undefined
+              ? { observacoes: event.observacoes ?? '' }
+              : {}),
+            ...(event.observacoesInternas !== undefined
+              ? { observacoesInternas: event.observacoesInternas ?? '' }
+              : {}),
+          };
+        }
+
+        const stateUpdate =
+          mergeContractStateSocketPayload(
+            this.contract,
+            event,
+            this.estadoOptions,
+          );
+
+        if (
+          stateUpdate.updated &&
+          stateUpdate.contract
+        ) {
+          this.contract = stateUpdate.contract;
+
+          if (
+            this.isEditing &&
+            stateUpdate.estado &&
+            this.editForm.estado ===
+              this.originalEditForm.estado
+          ) {
+            this.editForm = {
+              ...this.editForm,
+              estado: stateUpdate.estado,
+            };
+
+            this.originalEditForm = {
+              ...this.originalEditForm,
+              estado: stateUpdate.estado,
+            };
+          }
+        }
+
         const currentTime =
           new Date().toLocaleTimeString('pt-PT');
 
@@ -270,6 +321,10 @@ export class RepsolContractDetail implements OnInit {
           event.ticketEvent &&
           Array.isArray(event.tickets)
         ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
           return;
         }
 
@@ -346,14 +401,111 @@ export class RepsolContractDetail implements OnInit {
       });
   }
 
+  submitObservation(message: string): void {
+    this.submitObservationValue(message, false);
+  }
+
+  submitInternalObservation(message: string): void {
+    this.submitObservationValue(message, true);
+  }
+
+  private submitObservationValue(
+    message: string,
+    internal: boolean,
+  ): void {
+    if (
+      !this.contract ||
+      !this.contractId ||
+      !this.isSuperAdmin ||
+      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? this.isSubmittingInternalObservation
+        : this.isSubmittingObservation)
+    ) {
+      return;
+    }
+
+    const currentValue = internal
+      ? this.contract.observacoesInternas
+      : this.contract.observacoes;
+
+    const nextHistory = appendObservationHistory(
+      currentValue,
+      message,
+      this.currentUserName,
+    );
+
+    if (!nextHistory) {
+      return;
+    }
+
+    if (internal) {
+      this.isSubmittingInternalObservation = true;
+    } else {
+      this.isSubmittingObservation = true;
+    }
+
+    this.errorMessage = '';
+
+    const payload = internal
+      ? { observacoesInternas: nextHistory }
+      : { observacoes: nextHistory };
+
+    this.repsolContractService.updateRepsolContract(
+      this.contractId,
+      payload,
+    )
+      .pipe(
+        finalize(() => {
+          if (internal) {
+            this.isSubmittingInternalObservation = false;
+          } else {
+            this.isSubmittingObservation = false;
+          }
+        }),
+      )
+      .subscribe({
+        next: (updatedContract) => {
+          if (!this.contract) {
+            return;
+          }
+
+          if (internal) {
+            this.contract = {
+              ...this.contract,
+              observacoesInternas:
+                updatedContract.observacoesInternas ?? nextHistory,
+            };
+            this.internalObservationDraft = '';
+          } else {
+            this.contract = {
+              ...this.contract,
+              observacoes:
+                updatedContract.observacoes ?? nextHistory,
+            };
+            this.observationDraft = '';
+          }
+
+          this.successMessage = internal
+            ? 'Observação interna enviada com sucesso.'
+            : 'Observação enviada com sucesso.';
+        },
+        error: () => {
+          this.showError(
+            internal
+              ? 'Não foi possível enviar a observação interna.'
+              : 'Não foi possível enviar a observação.',
+          );
+        },
+      });
+  }
+
   startEditing(): void {
     if (!this.isSuperAdmin || !this.contract) {
       return;
     }
 
     this.initializeEditForm(this.contract);
-    this.observationDraft = '';
-    this.internalObservationDraft = '';
     this.selectedFiles = [];
     this.isEditing = true;
     this.errorMessage = '';
@@ -365,8 +517,6 @@ export class RepsolContractDetail implements OnInit {
       this.initializeEditForm(this.contract);
     }
 
-    this.observationDraft = '';
-    this.internalObservationDraft = '';
     this.selectedFiles = [];
     this.isEditing = false;
     this.errorMessage = '';
@@ -1323,12 +1473,15 @@ export class RepsolContractDetail implements OnInit {
       this.editForm.tipoContratacaoGas,
       this.originalEditForm.tipoContratacaoGas,
     );
-    this.assignChangedValue(
-      payload,
-      'controleQualidade',
-      this.editForm.controleQualidade,
-      this.originalEditForm.controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.assignChangedValue(
+        payload,
+        'controleQualidade',
+        this.editForm.controleQualidade,
+        this.originalEditForm.controleQualidade,
+      );
+    }
     this.assignChangedValue(
       payload,
       'codigoRegistoCE',
@@ -1473,25 +1626,7 @@ export class RepsolContractDetail implements OnInit {
       this.editForm.nivelTensao,
       this.originalEditForm.nivelTensao,
     );
-
-    const observationValue = this.buildObservationValue();
-
-    if (observationValue !== null) {
-      payload.observacoes = observationValue;
-    }
-
-    const internalObservationValue =
-      this.buildInternalObservationValue();
-
-    if (
-      this.canAccessInternalObservations &&
-      internalObservationValue !== null
-    ) {
-      payload.observacoesInternas =
-        internalObservationValue;
-    }
-
-    const currentCampaign = this.getCurrentCampaignValue();
+const currentCampaign = this.getCurrentCampaignValue();
     const originalCampaign = this.getOriginalCampaignValue();
 
     if (currentCampaign !== originalCampaign) {
@@ -1521,104 +1656,6 @@ export class RepsolContractDetail implements OnInit {
       payload[key] =
         normalizedCurrent as UpdateRepsolContractRequest[Key];
     }
-  }
-
-  private buildObservationValue(): string | null {
-    return this.buildObservationHistoryValue(
-      this.contract?.observacoes,
-      this.observationDraft,
-    );
-  }
-
-  private buildInternalObservationValue():
-    string | null {
-    return this.buildObservationHistoryValue(
-      this.contract?.observacoesInternas,
-      this.internalObservationDraft,
-    );
-  }
-
-  private buildObservationHistoryValue(
-    currentValue: string | null | undefined,
-    draftValue: string,
-  ): string | null {
-    const draft =
-      this.normalizeObservationText(
-        draftValue,
-      );
-
-    if (!draft) {
-      return null;
-    }
-
-    const currentHistory =
-      this.getObservationLines(
-        currentValue,
-      ).join('\n');
-
-    const timestamp =
-      this.formatObservationTimestamp(
-        new Date(),
-      );
-
-    const entry =
-      `${this.currentUserName} - ${timestamp} - ${draft}`;
-
-    return currentHistory
-      ? `${currentHistory}\n${entry}`
-      : entry;
-  }
-
-  getObservationLines(
-    value: string | null | undefined,
-  ): string[] {
-    if (!value) {
-      return [];
-    }
-
-    return value
-      .replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-  }
-
-  private normalizeObservationText(
-    value: string,
-  ): string {
-    return value
-      .replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .join(' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-  }
-
-  private formatObservationTimestamp(
-    date: Date,
-  ): string {
-    const day =
-      String(date.getDate())
-        .padStart(2, '0');
-
-    const month =
-      String(date.getMonth() + 1)
-        .padStart(2, '0');
-
-    const year =
-      date.getFullYear();
-
-    const hours =
-      String(date.getHours())
-        .padStart(2, '0');
-
-    const minutes =
-      String(date.getMinutes())
-        .padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   private getCurrentCampaignValue(): string {
@@ -1758,6 +1795,7 @@ export class RepsolContractDetail implements OnInit {
       'Pendente Docs': 'status-docs',
       'Documentos Enviados': 'status-docs-sent',
       Atribuído: 'status-assigned',
+      Cancelado: 'status-cancelled',
     }[status];
   }
 
@@ -1801,6 +1839,12 @@ export class RepsolContractDetail implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.auth.getCurrentUser()?.role,
+    );
   }
 
   getValue(

@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -36,6 +40,7 @@ import {
 } from '../../../core/services/campaign';
 
 import {
+  GALP_POWER_GAS_STATUSES,
   CreateGalpPowerGasContractRequest,
   GalpPowerGasContractDetail,
   GalpPowerGasContractService,
@@ -118,6 +123,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './galp-power-gas-contract-create.scss',
 })
 export class GalpPowerGasContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -216,20 +223,7 @@ export class GalpPowerGasContractCreate implements OnInit {
     'Entrada Direta',
   ];
 
-  estadoOptions: GalpPowerGasContractStatus[] = [
-    'Pedido de chamada',
-    'Em validação',
-    'Não Conformidade',
-    'Documentos Enviados',
-    'Sem Registo',
-    'Registo Plataforma Galp',
-    'Pendente Doc',
-    'Em ativação',
-    'Ativo',
-    'Parcialmente Baixa',
-    'Cancelado',
-    'Baixa',
-  ];
+  estadoOptions: readonly GalpPowerGasContractStatus[] = GALP_POWER_GAS_STATUSES;
 
   cicloHorarioOptions = [
     'Simples',
@@ -342,6 +336,12 @@ export class GalpPowerGasContractCreate implements OnInit {
     return this.contractLayout === 'pro';
   }
 
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
+    );
+  }
 
   isSuperAdmin(): boolean {
     return Boolean(
@@ -1595,12 +1595,15 @@ export class GalpPowerGasContractCreate implements OnInit {
       );
     }
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm
-        .controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm
+          .controleQualidade,
+      );
+    }
 
     this.addIfFilled(
       payload,

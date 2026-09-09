@@ -311,7 +311,22 @@
         <label>Contratação *<select [(ngModel)]="contractForm.contratacao"><option *ngFor="let option of contratacaoOptions" [value]="option">{{ option }}</option></select></label>
         <label>Tipo Segmento *<select [(ngModel)]="contractForm.tipoSegmento"><option *ngFor="let option of tipoSegmentoOptions" [value]="option">{{ option }}</option></select></label>
         <label>Tipo Produto *<select [(ngModel)]="contractForm.tipoProduto"><option *ngFor="let option of tipoProdutoOptions" [value]="option">{{ option }}</option></select></label>
-        <label>Controle de Qualidade<input type="text" [(ngModel)]="contractForm.controleQualidade" /></label>
+        <label>
+          Controle de Qualidade
+
+          <select
+            [(ngModel)]="contractForm.controleQualidade"
+            [disabled]="!canManageQualityControl()"
+          >
+            <option value="">Sem seleção</option>
+            <option
+              *ngFor="let option of qualityControlBackofficeOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
+        </label>
         <label>Código Registo C.E.<select [(ngModel)]="selectedRegistrationTeamId" (ngModelChange)="onRegistrationTeamChange($event)" [disabled]="!availableTeams.length"><option value="">Sem equipa disponível</option><option *ngFor="let team of availableTeams" [value]="team.id">{{ team.registrationNumber !== null && team.registrationNumber !== undefined ? team.registrationNumber : 'Sem código' }}</option></select></label>
         <label>Nome Registo C.E.<select [(ngModel)]="selectedRegistrationTeamId" (ngModelChange)="onRegistrationTeamChange($event)" [disabled]="!availableTeams.length"><option value="">Sem equipa disponível</option><option *ngFor="let team of availableTeams" [value]="team.id">{{ team.name }}</option></select></label>
       </div>

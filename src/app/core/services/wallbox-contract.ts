@@ -19,6 +19,8 @@ export type WallboxContractStatus =
   | 'Pedido de Chamada'
   | 'Registo Plataforma Galp'
   | 'Não conformidade'
+  | 'Pendente Docs'
+  | 'Documentos Enviados'
   | 'Em Ativação'
   | 'Ativo'
   | 'Anulado';
@@ -27,6 +29,8 @@ export const WALLBOX_CONTRACT_STATUSES: readonly WallboxContractStatus[] = [
   'Pedido de Chamada',
   'Registo Plataforma Galp',
   'Não conformidade',
+  'Pendente Docs',
+  'Documentos Enviados',
   'Em Ativação',
   'Ativo',
   'Anulado',

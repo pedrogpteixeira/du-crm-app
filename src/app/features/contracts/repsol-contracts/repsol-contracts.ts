@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
 import {
+  REPSOL_CONTRACT_STATUSES,
   RepsolContract,
   RepsolContractService,
   RepsolContractStatus,
@@ -61,16 +62,7 @@ export class RepsolContracts
     this.preferencesService
       .getContractsDefaultView();
 
-  statuses: RepsolContractStatus[] = [
-    'Pedido de Chamada',
-    'Em validação',
-    'Chamada Efetuada',
-    'Pendente Assinatura Digital',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Atribuído',
-  ];
+  statuses: RepsolContractStatus[] = [...REPSOL_CONTRACT_STATUSES];
 
   ngOnInit(): void {
     this.loadContracts();
@@ -164,6 +156,9 @@ export class RepsolContracts
 
       Atribuído:
         'status-assigned',
+
+      Cancelado:
+        'status-cancelled',
     }[status];
   }
 

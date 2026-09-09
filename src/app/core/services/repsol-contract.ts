@@ -14,7 +14,20 @@ export type RepsolContractStatus =
   | 'Não Conformidade'
   | 'Pendente Docs'
   | 'Documentos Enviados'
-  | 'Atribuído';
+  | 'Atribuído'
+  | 'Cancelado';
+
+export const REPSOL_CONTRACT_STATUSES: readonly RepsolContractStatus[] = [
+  'Pedido de Chamada',
+  'Em validação',
+  'Chamada Efetuada',
+  'Pendente Assinatura Digital',
+  'Não Conformidade',
+  'Pendente Docs',
+  'Documentos Enviados',
+  'Atribuído',
+  'Cancelado',
+];
 
 export interface RepsolContractListUser {
   id: string;

@@ -176,6 +176,12 @@ export class YesEnergyContracts implements OnInit {
         'Não Conformidade':
           'status-non-compliance',
 
+        'Pendente Docs':
+          'status-docs',
+
+        'Documentos Enviados':
+          'status-docs-sent',
+
         'Desistência/Recuperar':
           'status-contract-sent',
 

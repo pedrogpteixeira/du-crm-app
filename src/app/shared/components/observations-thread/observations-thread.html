@@ -1,0 +1,68 @@
+<section class="observations-thread" [class.internal-thread]="internal">
+  <header class="thread-header">
+    <div>
+      <h3>{{ title }}</h3>
+      <p *ngIf="internal">Apenas para utilização interna.</p>
+    </div>
+
+    <span class="thread-count" *ngIf="entries.length">
+      {{ entries.length }}
+    </span>
+  </header>
+
+  <div #threadBody class="thread-body" [class.empty]="!entries.length">
+    <ng-container *ngIf="entries.length; else emptyThread">
+      <article
+        class="thread-entry"
+        *ngFor="let entry of entries"
+        [class.own-entry]="isOwnEntry(entry)"
+        [class.legacy-entry]="!entry.isStructured"
+      >
+        <div class="entry-avatar" aria-hidden="true">
+          {{ getInitials(entry.author) }}
+        </div>
+
+        <div class="entry-content">
+          <div class="entry-meta">
+            <strong>{{ entry.author }}</strong>
+            <time *ngIf="entry.timestamp">{{ entry.timestamp }}</time>
+          </div>
+
+          <p>{{ entry.message }}</p>
+        </div>
+      </article>
+    </ng-container>
+
+    <ng-template #emptyThread>
+      <div class="thread-empty-state">
+        <span aria-hidden="true">💬</span>
+        <strong>Sem mensagens.</strong>
+        <small>A conversa aparecerá aqui quando existir uma observação.</small>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="thread-composer" *ngIf="canSubmit">
+    <textarea
+      rows="2"
+      [ngModel]="draft"
+      [ngModelOptions]="{ standalone: true }"
+      [disabled]="isSubmitting"
+      [placeholder]="placeholder"
+      (ngModelChange)="onDraftInput($event)"
+    ></textarea>
+
+    <div class="composer-actions">
+      <small>O histórico existente é preservado automaticamente.</small>
+
+      <button
+        type="button"
+        class="send-button"
+        [disabled]="!canSend"
+        (click)="submit()"
+      >
+        {{ isSubmitting ? 'A enviar...' : 'Enviar' }}
+      </button>
+    </div>
+  </div>
+</section>

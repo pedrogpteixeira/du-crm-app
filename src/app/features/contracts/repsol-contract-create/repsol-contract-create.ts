@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -36,6 +40,7 @@ import {
 } from '../../../core/services/campaign';
 
 import {
+  REPSOL_CONTRACT_STATUSES,
   CreateRepsolContractRequest,
   RepsolContractDetail,
   RepsolContractService,
@@ -118,6 +123,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './repsol-contract-create.scss',
 })
 export class RepsolContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -216,16 +223,7 @@ export class RepsolContractCreate implements OnInit {
     'Entrada Direta',
   ];
 
-  estadoOptions: RepsolContractStatus[] = [
-    'Pedido de Chamada',
-    'Em validação',
-    'Chamada Efetuada',
-    'Pendente Assinatura Digital',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Atribuído',
-  ];
+  estadoOptions: readonly RepsolContractStatus[] = REPSOL_CONTRACT_STATUSES;
 
   cicloHorarioOptions = [
     'Simples',
@@ -338,6 +336,12 @@ export class RepsolContractCreate implements OnInit {
     return this.contractLayout === 'pro';
   }
 
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
+    );
+  }
 
   isSuperAdmin(): boolean {
     return Boolean(
@@ -1591,12 +1595,15 @@ export class RepsolContractCreate implements OnInit {
       );
     }
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm
-        .controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm
+          .controleQualidade,
+      );
+    }
 
     this.addIfFilled(
       payload,

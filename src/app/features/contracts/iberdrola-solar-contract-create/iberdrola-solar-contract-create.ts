@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -84,6 +88,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './iberdrola-solar-contract-create.scss',
 })
 export class IberdrolaSolarContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -271,6 +277,12 @@ export class IberdrolaSolarContractCreate implements OnInit {
   ngOnInit(): void {
     this.loadCampaigns();
     this.loadAssignmentData();
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
+    );
   }
 
   isSuperAdmin(): boolean {
@@ -1330,12 +1342,15 @@ export class IberdrolaSolarContractCreate implements OnInit {
             .debitoDireto,
       };
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm
-        .controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm
+          .controleQualidade,
+      );
+    }
 
     this.addIfFilled(
       payload,

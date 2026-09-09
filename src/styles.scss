@@ -79,3 +79,276 @@ select:disabled {
   color: #94a3b8;
   cursor: not-allowed;
 }
+/* =========================================================
+   CONTRACT DETAILS · STICKY ACTION BAR
+   Shared polish for every contract-detail.
+========================================================= */
+.contract-detail-page > .page-header {
+  position: sticky !important;
+  top: 88px !important;
+  z-index: 34 !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 12px 14px 12px 18px !important;
+  border: 1px solid rgba(203, 213, 225, 0.82) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow:
+    0 12px 28px rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  backdrop-filter: blur(14px);
+}
+
+.contract-detail-page > .page-header h1 {
+  margin-bottom: 3px !important;
+}
+
+.contract-detail-page > .page-header .header-actions {
+  gap: 8px !important;
+  padding: 4px !important;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.contract-detail-page > .page-header .edit-action-button,
+.contract-detail-page > .page-header .cancel-action-button,
+.contract-detail-page > .page-header .save-action-button {
+  min-height: 38px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    background-color 0.16s ease !important;
+}
+
+.contract-detail-page > .page-header .edit-action-button {
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #243646 !important;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+}
+
+.contract-detail-page > .page-header .edit-action-button::before {
+  content: '✎';
+  color: #008db1;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.contract-detail-page > .page-header .edit-action-button:hover:not(:disabled) {
+  border-color: #7dd3e7 !important;
+  background: #f4fbfd !important;
+  box-shadow: 0 5px 14px rgba(0, 141, 177, 0.12);
+  transform: translateY(-1px);
+}
+
+.contract-detail-page > .page-header .cancel-action-button {
+  border: 1px solid #dbe3ea !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+}
+
+.contract-detail-page > .page-header .cancel-action-button::before {
+  content: '×';
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.contract-detail-page > .page-header .cancel-action-button:hover:not(:disabled) {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #243646 !important;
+}
+
+.contract-detail-page > .page-header .save-action-button {
+  border: 1px solid #008db1 !important;
+  background: #008db1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 14px rgba(0, 141, 177, 0.2);
+}
+
+.contract-detail-page > .page-header .save-action-button::before {
+  content: '✓';
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.contract-detail-page > .page-header .save-action-button:hover:not(:disabled) {
+  border-color: #007792 !important;
+  background: #007792 !important;
+  box-shadow: 0 7px 18px rgba(0, 119, 146, 0.24);
+  transform: translateY(-1px);
+}
+
+.contract-detail-page > .page-header .editing-label {
+  min-height: 32px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.contract-detail-page > .page-header .editing-label::before {
+  width: 7px !important;
+  height: 7px !important;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #c2410c !important;
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+  content: '';
+}
+
+@media (max-width: 700px) {
+  .contract-detail-page > .page-header {
+    top: 82px !important;
+    padding: 10px 11px 10px 14px !important;
+    border-radius: 15px !important;
+  }
+
+  .contract-detail-page > .page-header .header-actions {
+    gap: 5px !important;
+    padding: 3px !important;
+  }
+
+  .contract-detail-page > .page-header .editing-label {
+    display: none !important;
+  }
+
+  .contract-detail-page > .page-header .edit-action-button,
+  .contract-detail-page > .page-header .cancel-action-button,
+  .contract-detail-page > .page-header .save-action-button {
+    min-height: 36px !important;
+    padding: 7px 11px !important;
+  }
+}
+
+/* =========================================================
+   CONTRACT STATUS PALETTE
+   All contract badges and kanban headers keep white text and
+   use sufficiently strong backgrounds for consistent contrast.
+========================================================= */
+.contracts-page .status-badge,
+.contract-detail-page .status-badge,
+.contracts-page .kanban-column-header {
+  color: #ffffff !important;
+  border-color: transparent !important;
+  text-shadow: 0 1px 1px rgba(15, 23, 42, 0.14);
+}
+
+.contracts-page .status-call-request,
+.contract-detail-page .status-call-request,
+.contracts-page .status-contract-request,
+.contract-detail-page .status-contract-request,
+.contracts-page .status-proposal-request,
+.contract-detail-page .status-proposal-request {
+  background: #0e7490 !important;
+}
+
+.contracts-page .status-validation,
+.contract-detail-page .status-validation,
+.contracts-page .status-signature,
+.contract-detail-page .status-signature,
+.contracts-page .status-assigned,
+.contract-detail-page .status-assigned,
+.contracts-page .status-commercial-validation,
+.contract-detail-page .status-commercial-validation,
+.contracts-page .status-meo-registration,
+.contract-detail-page .status-meo-registration,
+.contracts-page .status-quality-check,
+.contract-detail-page .status-quality-check,
+.contracts-page .status-platform-registration,
+.contract-detail-page .status-platform-registration {
+  background: #6d28d9 !important;
+}
+
+.contracts-page .status-call-done,
+.contract-detail-page .status-call-done,
+.contracts-page .status-atr,
+.contract-detail-page .status-atr,
+.contracts-page .status-simulation,
+.contract-detail-page .status-simulation,
+.contracts-page .status-proposal-sent,
+.contract-detail-page .status-proposal-sent,
+.contracts-page .status-installation,
+.contract-detail-page .status-installation,
+.contracts-page .status-activation,
+.contract-detail-page .status-activation,
+.contracts-page .status-supply-request,
+.contract-detail-page .status-supply-request {
+  background: #1d4ed8 !important;
+}
+
+.contracts-page .status-rgpd,
+.contract-detail-page .status-rgpd,
+.contracts-page .status-vtv,
+.contract-detail-page .status-vtv,
+.contracts-page .status-contractual-sms,
+.contract-detail-page .status-contractual-sms,
+.contracts-page .status-supply,
+.contract-detail-page .status-supply {
+  background: #0f766e !important;
+}
+
+.contracts-page .status-non-compliance,
+.contract-detail-page .status-non-compliance,
+.contracts-page .status-docs,
+.contract-detail-page .status-docs,
+.contracts-page .status-docs-pending,
+.contract-detail-page .status-docs-pending {
+  background: #b45309 !important;
+}
+
+.contracts-page .status-docs-sent,
+.contract-detail-page .status-docs-sent,
+.contracts-page .status-active,
+.contract-detail-page .status-active {
+  background: #15803d !important;
+}
+
+.contracts-page .status-contract-sent,
+.contract-detail-page .status-contract-sent,
+.contracts-page .status-partial-low,
+.contract-detail-page .status-partial-low,
+.contracts-page .status-partially-terminated,
+.contract-detail-page .status-partially-terminated {
+  background: #9a3412 !important;
+}
+
+.contracts-page .status-backoffice,
+.contract-detail-page .status-backoffice,
+.contracts-page .status-control,
+.contract-detail-page .status-control,
+.contracts-page .status-low,
+.contract-detail-page .status-low,
+.contracts-page .status-no-registration,
+.contract-detail-page .status-no-registration,
+.contracts-page .status-terminated,
+.contract-detail-page .status-terminated {
+  background: #475569 !important;
+}
+
+.contracts-page .status-cancelled,
+.contract-detail-page .status-cancelled {
+  background: #b91c1c !important;
+}

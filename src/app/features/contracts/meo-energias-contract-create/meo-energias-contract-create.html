@@ -371,12 +371,18 @@
         <label *ngIf="isProLayout()">
           Controle de Qualidade
 
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.controleQualidade
-            "
-          />
+          <select
+            [(ngModel)]="contractForm.controleQualidade"
+            [disabled]="!canManageQualityControl()"
+          >
+            <option value="">Sem seleção</option>
+            <option
+              *ngFor="let option of qualityControlBackofficeOptions"
+              [value]="option"
+            >
+              {{ option }}
+            </option>
+          </select>
         </label>
 
         <label *ngIf="isProLayout()">

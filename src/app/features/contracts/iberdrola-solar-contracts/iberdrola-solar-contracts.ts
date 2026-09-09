@@ -172,6 +172,8 @@ export class IberdrolaSolarContracts
           'status-proposal-sent',
         'Pendente Docs':
           'status-docs',
+        'Documentos Enviados':
+          'status-docs-sent',
         'Em instalação':
           'status-installation',
         Cancelado:

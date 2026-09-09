@@ -36,6 +36,8 @@ export type IberdrolaContractStatus =
   | 'Pedido VTV'
   | 'Pendente SMS "Cond Contratuais"'
   | 'Não Conformidade'
+  | 'Pendente Docs'
+  | 'Documentos Enviados'
   | 'BackOffice'
   | 'Controle'
   | 'Pedido de Fornecimento'
@@ -54,6 +56,8 @@ export const IBERDROLA_CONTRACT_STATUSES:
     'Pedido VTV',
     'Pendente SMS "Cond Contratuais"',
     'Não Conformidade',
+    'Pendente Docs',
+    'Documentos Enviados',
     'BackOffice',
     'Controle',
     'Pedido de Fornecimento',

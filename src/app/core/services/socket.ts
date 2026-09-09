@@ -36,6 +36,8 @@ interface ContractSocketBaseEvent extends ContractActivitySocketPayload {
   updatedBy?: string;
   userId?: string;
   updatedByUserId?: string;
+  observacoes?: string;
+  observacoesInternas?: string;
 }
 
 

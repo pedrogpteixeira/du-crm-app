@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { getContractStatusColor } from '../../../core/config/contract-status-colors';
 import type {
   ContractFlowEntry,
   ContractTicketSummary,
@@ -140,7 +141,7 @@ export class ContractActivityPanel {
     return {
       prefix: `${match[1]} estado para`,
       state: knownState,
-      color: `var(--contract-status-${this.toStatusSlug(knownState)}, #64748b)`,
+      color: getContractStatusColor(knownState),
     };
   }
 
@@ -195,14 +196,6 @@ export class ContractActivityPanel {
       : 'Ticket criado com sucesso. A lista será sincronizada automaticamente.';
   }
 
-  private toStatusSlug(status: string): string {
-    return status
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
 
   private getTimestamp(value: string | undefined): number {
     if (!value) {

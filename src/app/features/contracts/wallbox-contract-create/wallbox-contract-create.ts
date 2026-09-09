@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -63,6 +67,8 @@ type WallboxContractStatus =
   | 'Pedido de Chamada'
   | 'Registo Plataforma Galp'
   | 'Não conformidade'
+  | 'Pendente Docs'
+  | 'Documentos Enviados'
   | 'Em Ativação'
   | 'Ativo'
   | 'Anulado';
@@ -123,6 +129,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './wallbox-contract-create.scss',
 })
 export class WallboxContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -206,6 +214,8 @@ export class WallboxContractCreate implements OnInit {
     'Pedido de Chamada',
     'Registo Plataforma Galp',
     'Não conformidade',
+    'Pendente Docs',
+    'Documentos Enviados',
     'Em Ativação',
     'Ativo',
     'Anulado',
@@ -320,6 +330,12 @@ export class WallboxContractCreate implements OnInit {
       this.contractForm
         .moradaFaturacaoSelecao ===
       'Outra'
+    );
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
     );
   }
 
@@ -1307,11 +1323,14 @@ export class WallboxContractCreate implements OnInit {
             .balanceamentoPotencia,
       };
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm.controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm.controleQualidade,
+      );
+    }
 
     this.addIfFilled(
       payload,

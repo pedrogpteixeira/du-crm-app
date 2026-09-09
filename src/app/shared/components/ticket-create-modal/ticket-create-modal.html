@@ -181,6 +181,18 @@
         ></textarea>
       </label>
 
+
+      <label class="description-field">
+        Observações iniciais
+
+        <textarea
+          rows="3"
+          [(ngModel)]="observacoes"
+          [disabled]="isCreatingTicket"
+          placeholder="Informação inicial para a conversa do Ticket..."
+        ></textarea>
+      </label>
+
       <div class="attachments-field">
         <span class="field-label">Anexos</span>
 

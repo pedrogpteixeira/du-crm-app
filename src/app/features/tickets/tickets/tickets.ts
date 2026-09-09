@@ -16,6 +16,10 @@ import { AuthUser } from '../../../core/models/auth-user';
 import { getContractCompanyName } from '../../../core/config/contract-detail-route';
 import { Auth } from '../../../core/services/auth';
 import {
+  SocketService,
+  TicketSocketEvent,
+} from '../../../core/services/socket';
+import {
   TICKET_PRIORITY_OPTIONS,
   TICKET_STATUS_OPTIONS,
   TICKET_TYPE_OPTIONS,
@@ -64,7 +68,15 @@ interface TicketCompanyOption {
 export class Tickets implements OnInit {
   private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly socketService = inject(SocketService);
   private readonly ticketService = inject(TicketService);
+
+  private currentUserId = '';
+  private hasLoadedTickets = false;
+  private readonly pendingSocketEvents: Array<{
+    type: 'created' | 'updated';
+    event: TicketSocketEvent;
+  }> = [];
 
   tickets: TicketListItem[] = [];
   filteredTickets: TicketListItem[] = [];
@@ -90,7 +102,11 @@ export class Tickets implements OnInit {
         take(1),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((user) => this.loadTickets(user.id));
+      .subscribe((user) => {
+        this.currentUserId = user.id;
+        this.listenForTicketChanges();
+        this.loadTickets(user.id);
+      });
   }
 
   retry(): void {
@@ -238,6 +254,7 @@ export class Tickets implements OnInit {
           this.tickets = this.sortTickets(tickets);
           this.buildFilterOptions();
           this.applyFilters();
+          this.finishInitialLoad();
         },
         error: (error: unknown) => {
           this.tickets = [];
@@ -246,8 +263,176 @@ export class Tickets implements OnInit {
           this.companyOptions = [];
           this.responsibleOptions = [];
           this.errorMessage = this.getErrorMessage(error);
+          this.finishInitialLoad();
         },
       });
+  }
+
+  private listenForTicketChanges(): void {
+    this.socketService
+      .listenTicketCreated()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this.handleTicketSocketEvent('created', event));
+
+    this.socketService
+      .listenTicketUpdated()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this.handleTicketSocketEvent('updated', event));
+  }
+
+  private handleTicketSocketEvent(
+    type: 'created' | 'updated',
+    event: TicketSocketEvent,
+  ): void {
+    if (!this.currentUserId) {
+      return;
+    }
+
+    if (!this.hasLoadedTickets) {
+      this.pendingSocketEvents.push({ type, event });
+      return;
+    }
+
+    const ticketId = this.getSocketTicketId(event);
+
+    if (!ticketId) {
+      return;
+    }
+
+    const payload = event.ticket
+      ? { ...event, ...event.ticket }
+      : event;
+    const followerMembership =
+      this.ticketService.getSocketFollowerMembership(
+        payload,
+        this.currentUserId,
+      );
+
+    if (followerMembership === false) {
+      this.removeTicket(ticketId);
+      return;
+    }
+
+    const currentTicket =
+      this.tickets.find((ticket) => ticket.id === ticketId) ?? null;
+    const socketTicket = this.ticketService.normalizeSocketTicketListItem(
+      payload,
+      ticketId,
+      currentTicket,
+    );
+
+    const canApplySocketTicketImmediately = Boolean(
+      socketTicket && (currentTicket || followerMembership === true),
+    );
+
+    if (socketTicket && canApplySocketTicketImmediately) {
+      this.upsertTicket(socketTicket);
+    }
+
+    if (followerMembership === true && socketTicket) {
+      return;
+    }
+
+    this.synchronizeTicketFollowerState(
+      ticketId,
+      canApplySocketTicketImmediately,
+    );
+  }
+
+  private synchronizeTicketFollowerState(
+    ticketId: string,
+    alreadyUpdatedFromSocket: boolean,
+  ): void {
+    this.ticketService
+      .getTicketById(ticketId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ticket) => {
+          const isFollower = ticket.followers.some(
+            (follower) => follower.id === this.currentUserId,
+          );
+
+          if (!isFollower) {
+            this.removeTicket(ticketId);
+            return;
+          }
+
+          this.upsertTicket(this.ticketService.toTicketListItem(ticket));
+        },
+        error: (error: unknown) => {
+          if (
+            error instanceof HttpErrorResponse &&
+            (error.status === 403 || error.status === 404)
+          ) {
+            this.removeTicket(ticketId);
+            return;
+          }
+
+          if (!alreadyUpdatedFromSocket) {
+            return;
+          }
+        },
+      });
+  }
+
+  private upsertTicket(ticket: TicketListItem): void {
+    const existingIndex = this.tickets.findIndex(
+      (current) => current.id === ticket.id,
+    );
+
+    const nextTickets =
+      existingIndex >= 0
+        ? this.tickets.map((current, index) =>
+            index === existingIndex ? ticket : current,
+          )
+        : [ticket, ...this.tickets];
+
+    this.tickets = this.sortTickets(nextTickets);
+    this.refreshDerivedTicketState();
+  }
+
+  private removeTicket(ticketId: string): void {
+    const nextTickets = this.tickets.filter(
+      (ticket) => ticket.id !== ticketId,
+    );
+
+    if (nextTickets.length === this.tickets.length) {
+      return;
+    }
+
+    this.tickets = nextTickets;
+    this.refreshDerivedTicketState();
+  }
+
+  private refreshDerivedTicketState(): void {
+    this.buildFilterOptions();
+    this.applyFilters();
+  }
+
+  private finishInitialLoad(): void {
+    this.hasLoadedTickets = true;
+
+    if (!this.pendingSocketEvents.length) {
+      return;
+    }
+
+    const pendingEvents = this.pendingSocketEvents.splice(0);
+
+    pendingEvents.forEach(({ type, event }) => {
+      this.handleTicketSocketEvent(type, event);
+    });
+  }
+
+  private getSocketTicketId(event: TicketSocketEvent): string {
+    return (
+      event.ticketId ??
+      event.id ??
+      event._id ??
+      event.ticket?.ticketId ??
+      event.ticket?.id ??
+      event.ticket?._id ??
+      ''
+    );
   }
 
   private buildFilterOptions(): void {

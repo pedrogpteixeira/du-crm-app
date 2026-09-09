@@ -36,6 +36,7 @@ export type IberdrolaSolarContractStatus =
   | 'Pedido de Proposta'
   | 'Proposta Enviada'
   | 'Pendente Docs'
+  | 'Documentos Enviados'
   | 'Em instalação'
   | 'Cancelado'
   | 'Ativo';
@@ -45,6 +46,7 @@ export const IBERDROLA_SOLAR_CONTRACT_STATUSES:
     'Pedido de Proposta',
     'Proposta Enviada',
     'Pendente Docs',
+    'Documentos Enviados',
     'Em instalação',
     'Cancelado',
     'Ativo',

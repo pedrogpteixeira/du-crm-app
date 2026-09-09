@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import {
@@ -183,6 +187,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
 export class IberdrolaContractCreate
   implements OnInit
 {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly clientService =
     inject(ClientService);
 
@@ -402,6 +408,12 @@ export class IberdrolaContractCreate
     return (
       this.contractLayout ===
       'pro'
+    );
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.currentUser?.role,
     );
   }
 
@@ -1710,12 +1722,15 @@ export class IberdrolaContractCreate
         .crc.trim(),
     );
 
-    this.addIfFilled(
-      payload,
-      'controleQualidade',
-      this.contractForm
-        .controleQualidade.trim(),
-    );
+
+    if (this.canManageQualityControl()) {
+      this.addIfFilled(
+        payload,
+        'controleQualidade',
+        this.contractForm
+          .controleQualidade.trim(),
+      );
+    }
 
     this.addIfFilled(
       payload,

@@ -91,6 +91,7 @@ export class TicketCreateModal implements OnInit {
   prioridade: TicketPrioridade = 'Normal';
   agendamento = '';
   descricao = '';
+  observacoes = '';
 
   selectedFiles: File[] = [];
 
@@ -606,6 +607,7 @@ export class TicketCreateModal implements OnInit {
 
   private buildPayload(): CreateTicketRequest {
     const description = this.descricao.trim();
+    const observations = this.observacoes.trim();
 
     return {
       contractId: this.contractId,
@@ -619,6 +621,9 @@ export class TicketCreateModal implements OnInit {
         : {}),
       ...(description
         ? { descricao: description }
+        : {}),
+      ...(observations
+        ? { observacoes: observations }
         : {}),
       userId: this.assignedUserId,
       teams: this.resolveTicketTeams(),

@@ -31,7 +31,8 @@ export type MeoEnergiasContractStatus =
   | 'Pedido de Chamada'
   | 'Em validação'
   | 'Não Conformidade'
-  | 'Docs Enviados'
+  | 'Pendente Docs'
+  | 'Documentos Enviados'
   | 'Registo MEO'
   | 'Anulado'
   | 'Ativo'
@@ -42,7 +43,8 @@ export const MEO_ENERGIAS_CONTRACT_STATUSES:
     'Pedido de Chamada',
     'Em validação',
     'Não Conformidade',
-    'Docs Enviados',
+    'Pendente Docs',
+    'Documentos Enviados',
     'Registo MEO',
     'Anulado',
     'Ativo',

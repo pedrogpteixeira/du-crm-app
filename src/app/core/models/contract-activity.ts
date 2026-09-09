@@ -98,3 +98,57 @@ export function mergeContractActivitySocketPayload<
     updated: true,
   };
 }
+export interface ContractStateCarrier<TStatus extends string = string> {
+  estado: TStatus;
+}
+
+export interface ContractStateSocketPayload {
+  estado?: string | null;
+}
+
+export function mergeContractStateSocketPayload<
+  TStatus extends string,
+  T extends ContractStateCarrier<TStatus>,
+>(
+  current: T | null,
+  event: ContractStateSocketPayload,
+  allowedStatuses: readonly TStatus[],
+): {
+  contract: T | null;
+  updated: boolean;
+  estado?: TStatus;
+} {
+  if (!current || !event.estado) {
+    return {
+      contract: current,
+      updated: false,
+    };
+  }
+
+  const nextStatus = event.estado as TStatus;
+
+  if (!allowedStatuses.includes(nextStatus)) {
+    return {
+      contract: current,
+      updated: false,
+    };
+  }
+
+  if (current.estado === nextStatus) {
+    return {
+      contract: current,
+      updated: false,
+      estado: nextStatus,
+    };
+  }
+
+  return {
+    contract: {
+      ...current,
+      estado: nextStatus,
+    },
+    updated: true,
+    estado: nextStatus,
+  };
+}
+

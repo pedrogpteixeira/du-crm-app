@@ -157,7 +157,7 @@ export class GalpSolarContracts
       'Pendente Docs':
         'status-docs',
 
-      'Documentos enviados':
+      'Documentos Enviados':
         'status-docs-sent',
 
       'Em instalação':

@@ -25,16 +25,17 @@
         <button
           *ngIf="!isEditing"
           type="button"
-          class="primary-button"
+          class="primary-button edit-action-button"
           (click)="startEditing()"
         >
-          Editar contrato
+          Editar
         </button>
 
         <ng-container *ngIf="isEditing">
+          <span class="editing-label">A editar contrato</span>
           <button
             type="button"
-            class="secondary-button"
+            class="secondary-button cancel-action-button"
             [disabled]="isSaving"
             (click)="cancelEditing()"
           >
@@ -43,11 +44,11 @@
 
           <button
             type="button"
-            class="primary-button"
+            class="primary-button save-action-button"
             [disabled]="isSaving"
             (click)="saveChanges()"
           >
-            {{ isSaving ? 'A guardar...' : 'Guardar alterações' }}
+            {{ isSaving ? 'A guardar...' : 'Guardar' }}
           </button>
         </ng-container>
       </div>
@@ -289,24 +290,26 @@
               <label>
                 Controle de Qualidade
 
-                <input
+                <select
                   *ngIf="
-                    isEditing;
+                    isEditing &&
+                    canManageQualityControl();
                     else qualidadeView
                   "
-                  type="text"
-                  [(ngModel)]="
-                    editForm.controleQualidade
-                  "
-                />
+                  [(ngModel)]="editForm.controleQualidade"
+                >
+                  <option value="">Sem seleção</option>
+                  <option
+                    *ngFor="let option of qualityControlBackofficeOptions"
+                    [value]="option"
+                  >
+                    {{ option }}
+                  </option>
+                </select>
 
                 <ng-template #qualidadeView>
                   <strong>
-                    {{
-                      getValue(
-                        contract.controleQualidade
-                      )
-                    }}
+                    {{ getValue(contract.controleQualidade) }}
                   </strong>
                 </ng-template>
               </label>
@@ -1398,144 +1401,7 @@
           </div>
         </article>
 
-        <article class="card">
-          <button type="button" class="section-toggle" (click)="toggleSection('observations')">
-            <span>Observações / Tipo de Pendência</span>
-            <span class="chevron" [class.collapsed]="collapsedSections.observations">⌄</span>
-          </button>
-
-          <div class="section-content" *ngIf="!collapsedSections.observations">
-            <div class="observations-layout">
-              <div>
-                <span class="field-label">Tipo de Pendência / Observações</span>
-
-                <div
-                  class="observations-history"
-                  [class.empty]="!getObservationLines(contract.observacoes).length"
-                >
-                  <ng-container
-                    *ngIf="getObservationLines(contract.observacoes) as observationLines"
-                  >
-                    <ng-container
-                      *ngIf="observationLines.length; else noObservations"
-                    >
-                      <div
-                        class="observation-entry"
-                        *ngFor="let observation of observationLines"
-                      >
-                        {{ observation }}
-                      </div>
-                    </ng-container>
-                  </ng-container>
-
-                  <ng-template #noObservations>
-                    <span>Sem observações.</span>
-                  </ng-template>
-                </div>
-              </div>
-
-              <label *ngIf="isEditing && isSuperAdmin">
-                Nova observação
-                <textarea
-                  rows="5"
-                  [(ngModel)]="observationDraft"
-                  placeholder="Escreva apenas a nova observação. O histórico existente será preservado."
-                ></textarea>
-
-                <small class="field-help">
-                  A data, a hora e o seu nome são adicionados automaticamente ao guardar.
-                </small>
-              </label>
-            </div>
-          </div>
-        </article>
-
-
-        <article
-          class="card"
-          *ngIf="canAccessInternalObservations"
-        >
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('internalObservations')"
-          >
-            <span>Observações / Tipo de Pendência</span>
-            <span
-              class="chevron"
-              [class.collapsed]="collapsedSections.internalObservations"
-            >
-              ⌄
-            </span>
-          </button>
-
-          <div
-            class="section-content"
-            *ngIf="!collapsedSections.internalObservations"
-          >
-            <div class="observations-layout">
-              <div>
-                <span class="field-label">
-                  Observações internas
-                </span>
-
-                <div
-                  class="observations-history internal-observations-history"
-                  [class.empty]="
-                    !getObservationLines(
-                      contract.observacoesInternas
-                    ).length
-                  "
-                >
-                  <ng-container
-                    *ngIf="
-                      getObservationLines(
-                        contract.observacoesInternas
-                      ) as internalObservationLines
-                    "
-                  >
-                    <ng-container
-                      *ngIf="
-                        internalObservationLines.length;
-                        else noInternalObservations
-                      "
-                    >
-                      <div
-                        class="observation-entry"
-                        *ngFor="
-                          let observation of
-                            internalObservationLines
-                        "
-                      >
-                        {{ observation }}
-                      </div>
-                    </ng-container>
-                  </ng-container>
-
-                  <ng-template #noInternalObservations>
-                    <span>Sem observações internas.</span>
-                  </ng-template>
-                </div>
-              </div>
-
-              <label *ngIf="isEditing">
-                Nova observação interna
-
-                <textarea
-                  rows="5"
-                  [(ngModel)]="
-                    internalObservationDraft
-                  "
-                  placeholder="Escreva apenas a nova observação interna. O histórico existente será preservado."
-                ></textarea>
-
-                <small class="field-help">
-                  A data, a hora e o seu nome são adicionados automaticamente ao guardar.
-                </small>
-              </label>
-            </div>
-          </div>
-        </article>
+        
 
       
         <app-contract-activity-panel
@@ -1545,6 +1411,35 @@
           [companyId]="contract.companyId"
           [statusOptions]="estadoOptions"
         ></app-contract-activity-panel>
+
+        <article class="card observations-card">
+          <app-observations-thread
+            title="Observações"
+            [value]="contract.observacoes"
+            [(draft)]="observationDraft"
+            [currentUserName]="currentUserName"
+            [canSubmit]="isSuperAdmin && !isSaving"
+            [isSubmitting]="isSubmittingObservation || isSaving"
+            (submitObservation)="submitObservation($event)"
+          />
+        </article>
+
+        <article
+          class="card observations-card internal-observations-card"
+          *ngIf="canAccessInternalObservations"
+        >
+          <app-observations-thread
+            title="Observações Internas"
+            [value]="contract.observacoesInternas"
+            [(draft)]="internalObservationDraft"
+            [currentUserName]="currentUserName"
+            [internal]="true"
+            [canSubmit]="isSuperAdmin && canAccessInternalObservations && !isSaving"
+            [isSubmitting]="isSubmittingInternalObservation || isSaving"
+            placeholder="Escrever uma observação interna..."
+            (submitObservation)="submitInternalObservation($event)"
+          />
+        </article>
       </div>
 
       <aside class="side-column">

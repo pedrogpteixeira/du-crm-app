@@ -180,7 +180,7 @@ export class GalpPowerGasContracts
       'Registo Plataforma Galp':
         'status-platform-registration',
 
-      'Pendente Doc':
+      'Pendente Docs':
         'status-docs',
 
       'Em ativação':

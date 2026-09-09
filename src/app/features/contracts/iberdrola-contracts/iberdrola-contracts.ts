@@ -178,6 +178,8 @@ export class IberdrolaContracts implements OnInit {
           'status-contractual-sms',
         'Não Conformidade':
           'status-non-compliance',
+        'Pendente Docs': 'status-docs',
+        'Documentos Enviados': 'status-docs-sent',
         BackOffice:
           'status-backoffice',
         Controle:

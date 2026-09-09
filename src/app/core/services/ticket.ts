@@ -58,6 +58,7 @@ export interface CreateTicketRequest {
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
   descricao?: string;
+  observacoes?: string;
   userId: string;
   teams: TicketTeam[];
 }
@@ -68,6 +69,7 @@ export interface UpdateTicketRequest {
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
   descricao?: string;
+  observacoes?: string;
   userId?: string;
   teams?: TicketTeam[];
 }
@@ -79,6 +81,7 @@ export interface CreatedTicket {
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
   descricao?: string | null;
+  observacoes?: string | null;
   contractId?: string;
   companyId?: string;
   userId: string;
@@ -94,6 +97,7 @@ export interface TicketListItem {
   prioridade: TicketPrioridade;
   agendamento: string | null;
   descricao: string;
+  observacoes: string;
   userId: string;
   userName: string | null;
   createdAt: string;
@@ -109,6 +113,7 @@ export interface TicketDetail {
   prioridade: TicketPrioridade;
   agendamento: string | null;
   descricao: string;
+  observacoes: string;
   anexos: TicketDocument[];
   userId: string;
   user: TicketUserSummary | null;
@@ -163,6 +168,7 @@ export interface TicketApiModel {
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
   descricao?: string | null;
+  observacoes?: string | null;
   contractId?: string;
   companyId?: string;
   userId?: string;
@@ -350,6 +356,116 @@ export class TicketService {
     return this.normalizeTicketDetail(payload, ticketId);
   }
 
+  normalizeSocketTicketListItem(
+    payload: TicketApiModel,
+    fallbackTicketId: string,
+    currentTicket: TicketListItem | null = null,
+  ): TicketListItem | null {
+    const id =
+      payload.id ??
+      payload._id ??
+      payload.ticketId ??
+      currentTicket?.id ??
+      fallbackTicketId;
+
+    const contractId = payload.contractId ?? currentTicket?.contractId ?? '';
+    const companyId = payload.companyId ?? currentTicket?.companyId ?? '';
+    const tipo = payload.tipo ?? currentTicket?.tipo;
+    const estado = payload.estado ?? currentTicket?.estado;
+    const prioridade = payload.prioridade ?? currentTicket?.prioridade;
+    const userId =
+      payload.userId ??
+      payload.user?.id ??
+      payload.user?._id ??
+      payload.user?.userId ??
+      currentTicket?.userId ??
+      '';
+
+    if (
+      !id ||
+      !contractId ||
+      !companyId ||
+      !tipo ||
+      !estado ||
+      !prioridade ||
+      !userId
+    ) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    return {
+      id,
+      contractId,
+      companyId,
+      tipo,
+      estado,
+      prioridade,
+      agendamento:
+        payload.agendamento !== undefined
+          ? payload.agendamento
+          : currentTicket?.agendamento ?? null,
+      descricao:
+        payload.descricao !== undefined
+          ? payload.descricao ?? ''
+          : currentTicket?.descricao ?? '',
+      observacoes:
+        payload.observacoes !== undefined
+          ? payload.observacoes ?? ''
+          : currentTicket?.observacoes ?? '',
+      userId,
+      userName:
+        payload.userName !== undefined
+          ? payload.userName
+          : payload.user?.name ??
+            payload.user?.userName ??
+            currentTicket?.userName ??
+            null,
+      createdAt: payload.createdAt ?? currentTicket?.createdAt ?? now,
+      updatedAt: payload.updatedAt ?? now,
+    };
+  }
+
+  getSocketFollowerMembership(
+    payload: TicketApiModel,
+    userId: string,
+  ): boolean | null {
+    if (!Array.isArray(payload.followers)) {
+      return null;
+    }
+
+    return payload.followers.some((follower) => {
+      if (typeof follower === 'string') {
+        return follower === userId;
+      }
+
+      return (
+        follower.id === userId ||
+        follower._id === userId ||
+        follower.userId === userId
+      );
+    });
+  }
+
+  toTicketListItem(ticket: TicketDetail): TicketListItem {
+    return {
+      id: ticket.id,
+      contractId: ticket.contractId,
+      companyId: ticket.companyId,
+      tipo: ticket.tipo,
+      estado: ticket.estado,
+      prioridade: ticket.prioridade,
+      agendamento: ticket.agendamento,
+      descricao: ticket.descricao,
+      observacoes: ticket.observacoes,
+      userId: ticket.userId,
+      userName: ticket.user?.name ?? ticket.user?.username ?? null,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+    };
+  }
+
   private isCompleteTicketResponse(
     response: TicketApiModel | TicketApiEnvelope,
   ): boolean {
@@ -424,6 +540,7 @@ export class TicketService {
       prioridade: ticket.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? null,
       descricao: ticket.descricao ?? '',
+      observacoes: ticket.observacoes ?? '',
       userId,
       userName:
         ticket.userName ??
@@ -455,6 +572,7 @@ export class TicketService {
       prioridade: ticket.prioridade ?? payload.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? payload.agendamento ?? null,
       descricao: ticket.descricao ?? payload.descricao ?? null,
+      observacoes: ticket.observacoes ?? payload.observacoes ?? null,
       contractId: ticket.contractId ?? payload.contractId,
       companyId: ticket.companyId ?? payload.companyId,
       userId: ticket.userId ?? payload.userId,
@@ -503,6 +621,7 @@ export class TicketService {
       prioridade: ticket.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? null,
       descricao: ticket.descricao ?? '',
+      observacoes: ticket.observacoes ?? '',
       anexos: this.normalizeDocuments(
         ticket.anexos ?? ticket.documentos ?? [],
       ),

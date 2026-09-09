@@ -98,7 +98,9 @@ interface SaveTicketResult {
   uploadError: unknown;
 }
 
+import { appendObservationHistory } from '../../../core/utils/observation-history';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 @Component({
   selector: 'app-ticket-detail',
@@ -107,6 +109,7 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
     ReactiveFormsModule,
     RouterLink,
     FileDropzone,
+    ObservationsThread,
   ],
   templateUrl: './ticket-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -154,6 +157,8 @@ export class TicketDetail implements OnInit {
   successMessage = '';
   socketMessage = '';
   lastSocketUpdate = '';
+  observationDraft = '';
+  isSubmittingObservation = false;
 
   readonly ticketTypeOptions = TICKET_TYPE_OPTIONS;
   readonly ticketStatusOptions = TICKET_STATUS_OPTIONS;
@@ -201,6 +206,18 @@ export class TicketDetail implements OnInit {
       .listenTicketUpdated()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.handleTicketUpdated(event));
+  }
+
+  get currentUserName(): string {
+    const profileName = this.currentUserProfile?.name?.trim();
+
+    if (profileName) {
+      return profileName;
+    }
+
+    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
+
+    return (currentUser?.name ?? currentUser?.username ?? 'Utilizador').trim();
   }
 
   get contractRoute(): string[] | null {
@@ -276,6 +293,59 @@ export class TicketDetail implements OnInit {
                 ? 'Não tem permissão para aceder a este Ticket.'
                 : error.error?.message ||
                   'Não foi possível carregar o Ticket.';
+        },
+      });
+  }
+
+  submitObservation(): void {
+    if (
+      !this.ticket ||
+      !this.canEditTicket ||
+      this.isSubmittingObservation
+    ) {
+      return;
+    }
+
+    const nextHistory = appendObservationHistory(
+      this.ticket.observacoes,
+      this.observationDraft,
+      this.currentUserName,
+    );
+
+    if (!nextHistory) {
+      return;
+    }
+
+    this.isSubmittingObservation = true;
+    this.errorMessage = '';
+    this.prepareOwnSocketSuppression();
+
+    this.ticketService
+      .updateTicket(this.ticket.id, { observacoes: nextHistory })
+      .pipe(
+        finalize(() => {
+          this.isSubmittingObservation = false;
+        }),
+      )
+      .subscribe({
+        next: (updatedTicket) => {
+          if (!this.ticket) {
+            return;
+          }
+
+          this.ticket = {
+            ...this.ticket,
+            observacoes: updatedTicket.observacoes || nextHistory,
+            updatedAt: updatedTicket.updatedAt || this.ticket.updatedAt,
+          };
+          this.observationDraft = '';
+          this.successMessage = 'Observação enviada com sucesso.';
+        },
+        error: (error: HttpErrorResponse) => {
+          this.clearOwnSocketSuppression();
+          this.showError(
+            error.error?.message || 'Não foi possível enviar a observação.',
+          );
         },
       });
   }
@@ -1233,6 +1303,16 @@ export class TicketDetail implements OnInit {
 
     this.lastSocketUpdate = currentTime;
 
+    const payload = event.ticket ?? event;
+
+    if (this.ticket && payload.observacoes !== undefined) {
+      this.ticket = {
+        ...this.ticket,
+        observacoes: payload.observacoes ?? '',
+        updatedAt: payload.updatedAt ?? this.ticket.updatedAt,
+      };
+    }
+
     if (this.suppressNextOwnSocketUpdate) {
       this.clearOwnSocketSuppression();
       return;
@@ -1242,8 +1322,6 @@ export class TicketDetail implements OnInit {
       this.synchronizeExternalUpdate(currentTime);
       return;
     }
-
-    const payload = event.ticket ?? event;
 
     if (this.isCompleteSocketTicketPayload(payload)) {
       this.ticket = this.ticketService.normalizeSocketTicket(

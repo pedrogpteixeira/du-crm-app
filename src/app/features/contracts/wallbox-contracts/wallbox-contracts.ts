@@ -154,6 +154,12 @@ export class WallboxContracts implements OnInit {
       'Não conformidade':
         'status-non-compliance',
 
+      'Pendente Docs':
+        'status-docs',
+
+      'Documentos Enviados':
+        'status-docs-sent',
+
       'Em Ativação':
         'status-assigned',
 

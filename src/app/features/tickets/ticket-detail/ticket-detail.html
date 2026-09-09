@@ -164,6 +164,18 @@
           </div>
         </article>
 
+        <article class="card observations-card">
+          <app-observations-thread
+            title="Observações"
+            [value]="ticket.observacoes"
+            [(draft)]="observationDraft"
+            [currentUserName]="currentUserName"
+            [canSubmit]="canEditTicket && !isSaving"
+            [isSubmitting]="isSubmittingObservation || isSaving"
+            (submitObservation)="submitObservation()"
+          />
+        </article>
+
         <article class="card">
           <div class="section-title">Contrato associado</div>
 
@@ -296,7 +308,7 @@
             </label>
 
             <label>
-              Contract ID
+              ID de Contrato
               <a
                 *ngIf="contractRoute as route; else sideContractId"
                 class="linked-item"

@@ -170,7 +170,9 @@ export class MeoEnergiasContracts implements OnInit {
           'status-validation',
         'Não Conformidade':
           'status-non-compliance',
-        'Docs Enviados':
+        'Pendente Docs':
+          'status-docs',
+        'Documentos Enviados':
           'status-docs-sent',
         'Registo MEO':
           'status-meo-registration',

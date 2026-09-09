@@ -11,7 +11,7 @@ export type GalpSolarContractStatus =
   | 'Proposta enviada'
   | 'Envio Quality Check'
   | 'Pendente Docs'
-  | 'Documentos enviados'
+  | 'Documentos Enviados'
   | 'Em instalação'
   | 'Ativo'
   | 'Cancelado';
@@ -21,7 +21,7 @@ export const GALP_SOLAR_STATUSES: GalpSolarContractStatus[] = [
   'Proposta enviada',
   'Envio Quality Check',
   'Pendente Docs',
-  'Documentos enviados',
+  'Documentos Enviados',
   'Em instalação',
   'Ativo',
   'Cancelado',

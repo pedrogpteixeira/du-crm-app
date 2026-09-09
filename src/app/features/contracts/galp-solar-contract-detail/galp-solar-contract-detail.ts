@@ -1,3 +1,7 @@
+import {
+  canManageQualityControl as canManageQualityControlRole,
+  QUALITY_CONTROL_BACKOFFICE_OPTIONS,
+} from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -14,6 +18,7 @@ import { catchError, finalize, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   mergeContractActivitySocketPayload,
+  mergeContractStateSocketPayload,
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
@@ -80,7 +85,9 @@ interface AuthenticatedUserLike {
   name?: string;
   username?: string;
 }
+import { appendObservationHistory } from '../../../core/utils/observation-history';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
+import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
@@ -91,6 +98,7 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
     FormsModule,
     RouterLink,
     ContractActivityPanel,
+    ObservationsThread,
     FileDropzone,
   ],
   templateUrl: './galp-solar-contract-detail.html',
@@ -98,6 +106,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './galp-solar-contract-detail.scss',
 })
 export class GalpSolarContractDetail implements OnInit {
+  readonly qualityControlBackofficeOptions =
+    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(Auth);
@@ -108,7 +118,7 @@ export class GalpSolarContractDetail implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   private currentUserId = '';
-  private currentUserName = '';
+  currentUserName = '';
   private suppressNextOwnSocketUpdate = false;
   private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -116,6 +126,8 @@ export class GalpSolarContractDetail implements OnInit {
 
   observationDraft = '';
   internalObservationDraft = '';
+  isSubmittingObservation = false;
+  isSubmittingInternalObservation = false;
   selectedFiles: File[] = [];
   deletingAttachmentFileNames = new Set<string>();
 
@@ -190,6 +202,53 @@ export class GalpSolarContractDetail implements OnInit {
           this.contract = activityUpdate.contract;
         }
 
+        if (
+          this.contract &&
+          (event.observacoes !== undefined ||
+            event.observacoesInternas !== undefined)
+        ) {
+          this.contract = {
+            ...this.contract,
+            ...(event.observacoes !== undefined
+              ? { observacoes: event.observacoes ?? '' }
+              : {}),
+            ...(event.observacoesInternas !== undefined
+              ? { observacoesInternas: event.observacoesInternas ?? '' }
+              : {}),
+          };
+        }
+
+        const stateUpdate =
+          mergeContractStateSocketPayload(
+            this.contract,
+            event,
+            this.estadoOptions,
+          );
+
+        if (
+          stateUpdate.updated &&
+          stateUpdate.contract
+        ) {
+          this.contract = stateUpdate.contract;
+
+          if (
+            this.isEditing &&
+            stateUpdate.estado &&
+            this.editForm.estado ===
+              this.originalEditForm.estado
+          ) {
+            this.editForm = {
+              ...this.editForm,
+              estado: stateUpdate.estado,
+            };
+
+            this.originalEditForm = {
+              ...this.originalEditForm,
+              estado: stateUpdate.estado,
+            };
+          }
+        }
+
         const currentTime =
           new Date().toLocaleTimeString('pt-PT');
 
@@ -199,6 +258,10 @@ export class GalpSolarContractDetail implements OnInit {
           event.ticketEvent &&
           Array.isArray(event.tickets)
         ) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
           return;
         }
 
@@ -280,14 +343,111 @@ export class GalpSolarContractDetail implements OnInit {
       });
   }
 
+  submitObservation(message: string): void {
+    this.submitObservationValue(message, false);
+  }
+
+  submitInternalObservation(message: string): void {
+    this.submitObservationValue(message, true);
+  }
+
+  private submitObservationValue(
+    message: string,
+    internal: boolean,
+  ): void {
+    if (
+      !this.contract ||
+      !this.contractId ||
+      !this.isSuperAdmin ||
+      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? this.isSubmittingInternalObservation
+        : this.isSubmittingObservation)
+    ) {
+      return;
+    }
+
+    const currentValue = internal
+      ? this.contract.observacoesInternas
+      : this.contract.observacoes;
+
+    const nextHistory = appendObservationHistory(
+      currentValue,
+      message,
+      this.currentUserName,
+    );
+
+    if (!nextHistory) {
+      return;
+    }
+
+    if (internal) {
+      this.isSubmittingInternalObservation = true;
+    } else {
+      this.isSubmittingObservation = true;
+    }
+
+    this.errorMessage = '';
+
+    const payload = internal
+      ? { observacoesInternas: nextHistory }
+      : { observacoes: nextHistory };
+
+    this.galpSolarContractService.update(
+      this.contractId,
+      payload,
+    )
+      .pipe(
+        finalize(() => {
+          if (internal) {
+            this.isSubmittingInternalObservation = false;
+          } else {
+            this.isSubmittingObservation = false;
+          }
+        }),
+      )
+      .subscribe({
+        next: (updatedContract) => {
+          if (!this.contract) {
+            return;
+          }
+
+          if (internal) {
+            this.contract = {
+              ...this.contract,
+              observacoesInternas:
+                updatedContract.observacoesInternas ?? nextHistory,
+            };
+            this.internalObservationDraft = '';
+          } else {
+            this.contract = {
+              ...this.contract,
+              observacoes:
+                updatedContract.observacoes ?? nextHistory,
+            };
+            this.observationDraft = '';
+          }
+
+          this.successMessage = internal
+            ? 'Observação interna enviada com sucesso.'
+            : 'Observação enviada com sucesso.';
+        },
+        error: () => {
+          this.showError(
+            internal
+              ? 'Não foi possível enviar a observação interna.'
+              : 'Não foi possível enviar a observação.',
+          );
+        },
+      });
+  }
+
   startEditing(): void {
     if (!this.isSuperAdmin || !this.contract) {
       return;
     }
 
     this.initializeEditForm(this.contract);
-    this.observationDraft = '';
-    this.internalObservationDraft = '';
     this.selectedFiles = [];
     this.isEditing = true;
     this.errorMessage = '';
@@ -568,18 +728,6 @@ export class GalpSolarContractDetail implements OnInit {
       });
   }
 
-  getObservationLines(value: string | null | undefined): string[] {
-    if (!value) {
-      return [];
-    }
-
-    return value
-      .replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
-  }
-
   toggleSection(section: keyof typeof this.collapsedSections): void {
     this.collapsedSections[section] = !this.collapsedSections[section];
   }
@@ -590,7 +738,7 @@ export class GalpSolarContractDetail implements OnInit {
       'Proposta enviada': 'status-proposal-sent',
       'Envio Quality Check': 'status-quality-check',
       'Pendente Docs': 'status-docs-pending',
-      'Documentos enviados': 'status-docs-sent',
+      'Documentos Enviados': 'status-docs-sent',
       'Em instalação': 'status-installation',
       Ativo: 'status-active',
       Cancelado: 'status-cancelled',
@@ -611,6 +759,12 @@ export class GalpSolarContractDetail implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
+  }
+
+  canManageQualityControl(): boolean {
+    return canManageQualityControlRole(
+      this.auth.getCurrentUser()?.role,
+    );
   }
 
   getValue(
@@ -994,12 +1148,15 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.offer,
       this.originalEditForm.offer,
     );
-    this.assignChangedValue(
-      payload,
-      'controleQualidade',
-      this.editForm.controleQualidade,
-      this.originalEditForm.controleQualidade,
-    );
+
+    if (this.canManageQualityControl()) {
+      this.assignChangedValue(
+        payload,
+        'controleQualidade',
+        this.editForm.controleQualidade,
+        this.originalEditForm.controleQualidade,
+      );
+    }
     this.assignChangedValue(
       payload,
       'codigoRegistoCE',
@@ -1126,23 +1283,7 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.metodoPagamento,
       this.originalEditForm.metodoPagamento,
     );
-
-    const observationValue = this.buildObservationValue();
-
-    if (observationValue !== null) {
-      payload.observacoes = observationValue;
-    }
-
-    const internalObservationValue = this.buildInternalObservationValue();
-
-    if (
-      this.canAccessInternalObservations &&
-      internalObservationValue !== null
-    ) {
-      payload.observacoesInternas = internalObservationValue;
-    }
-
-    return payload;
+return payload;
   }
 
   private assignChangedValue<
@@ -1163,58 +1304,6 @@ export class GalpSolarContractDetail implements OnInit {
       payload[key] =
         normalizedCurrent as UpdateGalpSolarContractRequest[Key];
     }
-  }
-
-  private buildObservationValue(): string | null {
-    return this.buildObservationHistoryValue(
-      this.contract?.observacoes,
-      this.observationDraft,
-    );
-  }
-
-  private buildInternalObservationValue(): string | null {
-    return this.buildObservationHistoryValue(
-      this.contract?.observacoesInternas,
-      this.internalObservationDraft,
-    );
-  }
-
-  private buildObservationHistoryValue(
-    currentValue: string | null | undefined,
-    draftValue: string,
-  ): string | null {
-    const draft = this.normalizeObservationText(draftValue);
-
-    if (!draft) {
-      return null;
-    }
-
-    const currentHistory = this.getObservationLines(currentValue).join('\n');
-    const timestamp = this.formatObservationTimestamp(new Date());
-    const entry = `${this.currentUserName} - ${timestamp} - ${draft}`;
-
-    return currentHistory ? `${currentHistory}\n${entry}` : entry;
-  }
-
-  private normalizeObservationText(value: string): string {
-    return value
-      .replace(/\r\n?/g, '\n')
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .join(' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-  }
-
-  private formatObservationTimestamp(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   private normalizeValue(value: unknown): unknown {
