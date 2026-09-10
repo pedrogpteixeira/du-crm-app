@@ -1,37 +1,51 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EventEmitter,
   Input,
   Output,
   inject,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  RouterLink,
+  RouterLinkActive,
+} from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../../environments/environment';
+
 import { Auth } from '../../../core/services/auth';
 import { AuthUser } from '../../../core/models/auth-user';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, CommonModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './sidebar.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.scss',
+  changeDetection: ChangeDetectionStrategy.Default,
 })
 export class Sidebar {
   private readonly auth = inject(Auth);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input() collapsed = false;
+
   @Output() toggle = new EventEmitter<void>();
 
   user: AuthUser | null = this.auth.getCurrentUser();
 
   constructor() {
-    this.auth.currentUser$.subscribe((user) => {
-      this.user = user;
-    });
+    this.auth.currentUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.user = user;
+      });
   }
 
   get userInitial(): string {
@@ -39,11 +53,16 @@ export class Sidebar {
       return '?';
     }
 
-    return this.user.name.charAt(0).toUpperCase();
+    return this.user.name
+      .charAt(0)
+      .toUpperCase();
   }
 
   get profilePictureUrl(): string | null {
-    if (!this.user?.profilePicture || !this.user?.id) {
+    if (
+      !this.user?.profilePicture ||
+      !this.user?.id
+    ) {
       return null;
     }
 
@@ -51,10 +70,18 @@ export class Sidebar {
   }
 
   canAccessRoles(...allowedRoles: string[]): boolean {
-    const role = this.user?.role ?? '';
+    const role = this.user?.role?.trim() ?? '';
+
+    if (!role) {
+      return false;
+    }
+
+    const normalizedRole = role.toLowerCase();
 
     return allowedRoles.some((allowedRole) =>
-      role.toLowerCase().includes(allowedRole.toLowerCase()),
+      normalizedRole.includes(
+        allowedRole.toLowerCase(),
+      ),
     );
   }
 }

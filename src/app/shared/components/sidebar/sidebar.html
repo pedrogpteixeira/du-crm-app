@@ -1,60 +1,62 @@
 <aside class="sidebar" [class.collapsed]="collapsed">
-  <button class="toggle-btn" type="button" (click)="toggle.emit()">☰</button>
+  <button
+    class="toggle-btn"
+    type="button"
+    (click)="toggle.emit()"
+    [attr.aria-label]="collapsed ? 'Expandir menu' : 'Recolher menu'"
+    [title]="collapsed ? 'Expandir menu' : 'Recolher menu'"
+  >
+    <span class="material-symbols-rounded" aria-hidden="true">
+      {{ collapsed ? 'menu' : 'menu_open' }}
+    </span>
+  </button>
 
-  <div class="brand">
-    <div class="brand-icon">Certo</div>
-    <span>CRM</span>
-  </div>
-
-  <nav class="sidebar-nav">
-    <div class="nav-section">
-      <span class="section-title">Geral</span>
-
-      <a routerLink="/home/dashboard" routerLinkActive="active">
-        <span class="icon material-symbols-rounded">dashboard</span>
-        <span class="label">Dashboard</span>
-      </a>
-
-      <a routerLink="/home/tickets" routerLinkActive="active">
-        <span class="icon material-symbols-rounded">confirmation_number</span>
-        <span class="label">Tickets</span>
-      </a>
-
-      <a 
-      *ngIf="canAccessRoles('Super Admin')"
-      routerLink="/home/users" routerLinkActive="active">
-        <span class="icon material-symbols-rounded">group</span>
-        <span class="label">Utilizadores</span>
-      </a>
-
-      <a 
-      *ngIf="canAccessRoles('Super Admin')"
-      routerLink="/home/teams" routerLinkActive="active">
-        <span class="icon material-symbols-rounded">groups</span>
-        <span class="label">Equipas</span>
-      </a>
+  <!-- BRAND / DASHBOARD -->
+  <a
+    class="brand"
+    routerLink="/home/dashboard"
+    title="Dashboard"
+    aria-label="Ir para o Dashboard"
+  >
+    <div class="brand-icon">
+      Certo
     </div>
 
-    <div 
-    class="nav-section">
-      <span 
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
-      class="section-title">CRM Repsol</span>
+    <span class="brand-text">
+      CRM
+    </span>
+  </a>
 
-      <a 
+  <nav class="sidebar-nav">
+
+    <!-- REPSOL -->
+    <div
+      class="nav-section"
       *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
-      routerLink="/home/contracts/repsol" routerLinkActive="active">
+    >
+      <span class="section-title">CRM Repsol</span>
+
+      <a
+        routerLink="/home/contracts/repsol"
+        routerLinkActive="active"
+        title="Repsol"
+      >
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Repsol</span>
       </a>
     </div>
 
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')">
-      <span class="section-title">CRM GALP</span>
+    <!-- GALP -->
+    <div
+      class="nav-section"
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
+    >
+      <span class="section-title">CRM Galp</span>
 
       <a
         routerLink="/home/contracts/galp-power-gas"
         routerLinkActive="active"
+        title="Galp Power & Gás"
       >
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Galp Power & Gás</span>
@@ -63,6 +65,7 @@
       <a
         routerLink="/home/contracts/galp-solar"
         routerLinkActive="active"
+        title="Galp Solar"
       >
         <span class="icon material-symbols-rounded">solar_power</span>
         <span class="label">Galp Solar</span>
@@ -71,110 +74,174 @@
       <a
         routerLink="/home/contracts/wallbox"
         routerLinkActive="active"
+        title="Wallbox"
       >
-        <span class="icon material-symbols-rounded">
-          ev_station
-        </span>
-
-        <span class="label">
-          Wallbox
-        </span>
+        <span class="icon material-symbols-rounded">ev_station</span>
+        <span class="label">Wallbox</span>
       </a>
     </div>
 
-    <div 
-    class="nav-section">
-      <span 
+    <!-- YES ENERGY -->
+    <div
+      class="nav-section"
       *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
-      class="section-title">CRM Yes Energy</span>
+    >
+      <span class="section-title">CRM Yes Energy</span>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
-      routerLink="/home/contracts/yes-energy" routerLinkActive="active">
+      <a
+        routerLink="/home/contracts/yes-energy"
+        routerLinkActive="active"
+        title="Yes Energy"
+      >
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Yes Energy</span>
       </a>
     </div>
 
-    <div 
-    class="nav-section">
-      <span 
+    <!-- IBERDROLA -->
+    <div
+      class="nav-section"
       *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
-      class="section-title">CRM Iberdrola</span>
+    >
+      <span class="section-title">CRM Iberdrola</span>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
-      routerLink="/home/contracts/iberdrola" routerLinkActive="active">
+      <a
+        routerLink="/home/contracts/iberdrola"
+        routerLinkActive="active"
+        title="Iberdrola"
+      >
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Iberdrola</span>
       </a>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
-      routerLink="/home/contracts/iberdrola-solar" routerLinkActive="active">
+      <a
+        routerLink="/home/contracts/iberdrola-solar"
+        routerLinkActive="active"
+        title="Iberdrola Solar"
+      >
         <span class="icon material-symbols-rounded">solar_power</span>
         <span class="label">Iberdrola Solar</span>
       </a>
     </div>
 
-    <div 
-    class="nav-section">
-      <span 
+    <!-- MEO ENERGIAS -->
+    <div
+      class="nav-section"
       *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
-      class="section-title">CRM Meo Energias</span>
+    >
+      <span class="section-title">CRM MEO Energias</span>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
-      routerLink="/home/contracts/meo-energias" routerLinkActive="active">
+      <a
+        routerLink="/home/contracts/meo-energias"
+        routerLinkActive="active"
+        title="MEO Energias"
+      >
         <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Meo Energias</span>
+        <span class="label">MEO Energias</span>
       </a>
     </div>
 
+    <!-- SIMULAÇÕES -->
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin')"
-      routerLink="/home/tariffs/create" routerLinkActive="active">
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/tariffs/create"
+        routerLinkActive="active"
+        title="Novo Tarifário"
+      >
         <span class="icon material-symbols-rounded">price_change</span>
         <span class="label">Novo Tarifário</span>
       </a>
 
-      <a 
-      *ngIf="canAccessRoles('Super Admin')"
-      routerLink="/home/tariffs/edit" routerLinkActive="active">
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/tariffs/edit"
+        routerLinkActive="active"
+        title="Editar Tarifários"
+      >
         <span class="icon material-symbols-rounded">edit_note</span>
         <span class="label">Editar Tarifários</span>
       </a>
 
-      <a routerLink="/home/invoice-compare" routerLinkActive="active">
+      <a
+        routerLink="/home/invoice-compare"
+        routerLinkActive="active"
+        title="Comparar Fatura"
+      >
         <span class="icon material-symbols-rounded">receipt_long</span>
         <span class="label">Comparar Fatura</span>
       </a>
 
       <a
         *ngIf="canAccessRoles('Super Admin')"
-        routerLink="/home/admin/omie-averages" routerLinkActive="active"
+        routerLink="/home/admin/omie-averages"
+        routerLinkActive="active"
+        title="Médias OMIE"
       >
         <span class="icon material-symbols-rounded">query_stats</span>
         <span class="label">Médias OMIE</span>
       </a>
     </div>
 
-    <div 
-    class="nav-section">
-      <span 
-      class="section-title">Conhecimento</span>
+    <!-- BASE DE CONHECIMENTO -->
+    <div class="nav-section">
+      <span class="section-title">Recursos</span>
 
-      <a routerLink="/home/knowledge-base" routerLinkActive="active">
+      <a
+        routerLink="/home/knowledge-base"
+        routerLinkActive="active"
+        title="Base de Conhecimento"
+      >
         <span class="icon material-symbols-rounded">library_books</span>
-        <span class="label">Conhecimento</span>
+        <span class="label">Base de Conhecimento</span>
+      </a>
+    </div>
+
+    <!-- GERAL -->
+    <div class="nav-section">
+      <span class="section-title">Geral</span>
+
+      <a
+        routerLink="/home/tickets"
+        routerLinkActive="active"
+        title="Tickets"
+      >
+        <span class="icon material-symbols-rounded">
+          confirmation_number
+        </span>
+        <span class="label">Tickets</span>
+      </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/users"
+        routerLinkActive="active"
+        title="Utilizadores"
+      >
+        <span class="icon material-symbols-rounded">group</span>
+        <span class="label">Utilizadores</span>
+      </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/teams"
+        routerLinkActive="active"
+        title="Equipas"
+      >
+        <span class="icon material-symbols-rounded">groups</span>
+        <span class="label">Equipas</span>
       </a>
     </div>
   </nav>
 
-  <a class="profile-card" routerLink="/home/profile">
+  <!-- PERFIL -->
+  <a
+    class="profile-card"
+    routerLink="/home/profile"
+    title="Perfil"
+  >
     <div class="avatar">
       <img
         *ngIf="profilePictureUrl; else initials"
