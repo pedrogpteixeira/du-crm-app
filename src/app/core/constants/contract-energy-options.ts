@@ -18,5 +18,5 @@ export const ANTIGA_COMERCIALIZADORA_SUGGESTIONS = [
   'Luz Boa',
 ] as const;
 
-export const DEFAULT_CPE_PREFIX = 'PT0002';
+export const DEFAULT_CPE_PREFIX = 'PT 0002';
 export const DEFAULT_CUI_PREFIX = 'PT';

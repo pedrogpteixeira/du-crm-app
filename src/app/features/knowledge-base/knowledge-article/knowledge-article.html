@@ -1,7 +1,5 @@
 <section class="article-page">
-  <p class="loading" *ngIf="isLoading">
-    A carregar artigo...
-  </p>
+  <p class="loading" *ngIf="isLoading">A carregar artigo...</p>
 
   <p class="error-message" *ngIf="errorMessage">
     {{ errorMessage }}
@@ -9,9 +7,7 @@
 
   <ng-container *ngIf="article">
     <div class="breadcrumb">
-      <a routerLink="/home/knowledge-base">
-        Base de Conhecimento
-      </a>
+      <a routerLink="/home/knowledge-base"> Base de Conhecimento </a>
 
       <span>›</span>
 
@@ -26,50 +22,23 @@
           {{ article.name }}
         </h1>
 
-        <input
-          *ngIf="isEditing"
-          class="title-input"
-          [(ngModel)]="editableArticle.name"
-        />
+        <input *ngIf="isEditing" class="title-input" [(ngModel)]="editableArticle.name" />
       </div>
 
-      <div 
-      class="actions"
-      *ngIf="canManageKnowledgeBase"
-      >
-        <button
-          *ngIf="!isEditing"
-          type="button"
-          class="secondary"
-          (click)="startEditing()"
-        >
+      <div class="actions" *ngIf="canManageKnowledgeBase">
+        <button *ngIf="!isEditing" type="button" class="secondary" (click)="startEditing()">
           Editar artigo
         </button>
 
-        <button
-          *ngIf="isEditing"
-          type="button"
-          class="secondary"
-          (click)="cancelEditing()"
-        >
+        <button *ngIf="isEditing" type="button" class="secondary" (click)="cancelEditing()">
           Cancelar
         </button>
 
-        <button
-          *ngIf="isEditing"
-          type="button"
-          [disabled]="isSaving"
-          (click)="saveArticle()"
-        >
+        <button *ngIf="isEditing" type="button" [disabled]="isSaving" (click)="saveArticle()">
           {{ isSaving ? 'A guardar...' : 'Guardar alterações' }}
         </button>
 
-        <button
-          type="button"
-          class="danger"
-          [disabled]="isDeleting"
-          (click)="deleteArticle()"
-        >
+        <button type="button" class="danger" [disabled]="isDeleting" (click)="deleteArticle()">
           {{ isDeleting ? 'A eliminar...' : 'Eliminar artigo' }}
         </button>
       </div>
@@ -90,10 +59,7 @@
             Fornecedor
 
             <select [(ngModel)]="editableArticle.supplier">
-              <option
-                *ngFor="let company of companies"
-                [value]="company.name"
-              >
+              <option *ngFor="let company of companies" [value]="company.name">
                 {{ company.name }}
               </option>
             </select>
@@ -102,13 +68,9 @@
           <label>
             Estado
             <select [(ngModel)]="editableArticle.status">
-              <option value="campaign_active">
-                Campanha ativa
-              </option>
+              <option value="campaign_active">Campanha ativa</option>
 
-              <option value="campaign_inactive">
-                Campanha inativa
-              </option>
+              <option value="campaign_inactive">Campanha inativa</option>
             </select>
           </label>
         </div>
@@ -125,9 +87,7 @@
         ></textarea>
 
         <div class="attachments">
-          <div class="section-title">
-            Anexos
-          </div>
+          <div class="section-title">Anexos</div>
 
           <div
             class="dropzone"
@@ -144,33 +104,18 @@
             <label class="file-select-btn">
               Selecionar ficheiros
 
-              <input
-                type="file"
-                multiple
-                hidden
-                (change)="onFileInputChange($event)"
-              />
+              <input type="file" multiple hidden (change)="onFileInputChange($event)" />
             </label>
           </div>
 
-          <div
-            class="selected-files"
-            *ngIf="isEditing && selectedFiles.length"
-          >
-            <div
-              class="selected-file"
-              *ngFor="let file of selectedFiles; let i = index"
-            >
+          <div class="selected-files" *ngIf="isEditing && selectedFiles.length">
+            <div class="selected-file" *ngFor="let file of selectedFiles; let i = index">
               <div>
                 <strong>{{ file.name }}</strong>
                 <span>{{ formatFileSize(file.size) }}</span>
               </div>
 
-              <button
-                type="button"
-                class="remove-file"
-                (click)="removeSelectedFile(i)"
-              >
+              <button type="button" class="remove-file" (click)="removeSelectedFile(i)">
                 Remover
               </button>
             </div>
@@ -181,27 +126,21 @@
               [disabled]="isUploadingAttachments"
               (click)="uploadSelectedAttachments()"
             >
-              {{
-                isUploadingAttachments
-                  ? 'A enviar...'
-                  : 'Enviar anexos para a base de dados'
-              }}
+              {{ isUploadingAttachments ? 'A enviar...' : 'Enviar anexos para a base de dados' }}
             </button>
           </div>
 
-          <div class="attachments-grid" *ngIf="article.attachments.length">
+          <div class="attachments-grid" *ngIf="(article.attachments | visibleAttachments).length">
             <div
               class="attachment-item"
-              *ngFor="let attachment of article.attachments"
+              *ngFor="let attachment of article.attachments | visibleAttachments"
             >
               <button
                 type="button"
                 class="attachment-link"
                 (click)="downloadAttachment(attachment)"
               >
-                <div class="file-icon">
-                  📎
-                </div>
+                <div class="file-icon">📎</div>
 
                 <div>
                   <strong>
@@ -222,24 +161,20 @@
                 (click)="deleteAttachment(attachment.fileName)"
               >
                 {{
-                  deletingAttachmentFileName === attachment.fileName
-                    ? 'A eliminar...'
-                    : 'Eliminar'
+                  deletingAttachmentFileName === attachment.fileName ? 'A eliminar...' : 'Eliminar'
                 }}
               </button>
             </div>
           </div>
 
-          <p class="empty-attachments" *ngIf="!article.attachments.length">
+          <p class="empty-attachments" *ngIf="!(article.attachments | visibleAttachments).length">
             Este artigo ainda não tem anexos.
           </p>
         </div>
       </article>
 
       <aside class="details-card">
-        <div class="section-title">
-          Detalhes
-        </div>
+        <div class="section-title">Detalhes</div>
 
         <div class="details-list">
           <div>

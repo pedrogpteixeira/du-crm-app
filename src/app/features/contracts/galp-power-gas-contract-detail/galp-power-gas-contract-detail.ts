@@ -3,12 +3,7 @@ import {
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
@@ -17,6 +12,7 @@ import { environment } from '../../../../environments/environment';
 
 import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 
 import {
@@ -25,10 +21,8 @@ import {
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
-import {
-  Campaign,
-  CampaignService,
-} from '../../../core/services/campaign';
+import { FileAccessService } from '../../../core/services/file-access';
+import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
   GALP_POWER_GAS_STATUSES,
   GalpPowerGasContractDetail as GalpPowerGasContractDetailModel,
@@ -39,10 +33,7 @@ import {
 } from '../../../core/services/galp-power-gas-contract';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
-import {
-  ProfileUser,
-  UserService,
-} from '../../../core/services/user';
+import { ProfileUser, UserService } from '../../../core/services/user';
 
 type CampaignSelectionMode = 'existing' | 'other';
 
@@ -90,7 +81,6 @@ interface EditableContractForm {
   cicloHorario: string;
   nivelTensao: string;
 
-
   campaignId: string;
   customCampaign: string;
 }
@@ -114,6 +104,8 @@ import {
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
@@ -121,6 +113,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   imports: [
     CommonModule,
     FormsModule,
+    ContractFieldMaskDirective,
+    VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
     ObservationsThread,
@@ -131,23 +125,20 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './galp-power-gas-contract-detail.scss',
 })
 export class GalpPowerGasContractDetail implements OnInit {
-  readonly qualityControlBackofficeOptions =
-    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
+  readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
+  private readonly fileAccess = inject(FileAccessService);
   private readonly campaignService = inject(CampaignService);
-  private readonly galpPowerGasContractService =
-    inject(GalpPowerGasContractService);
-  private readonly preferencesService =
-    inject(PreferencesService);
+  private readonly galpPowerGasContractService = inject(GalpPowerGasContractService);
+  private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
   private readonly userService = inject(UserService);
 
   private currentUserId = '';
   currentUserName = '';
   private suppressNextOwnSocketUpdate = false;
-  private ownSocketSuppressionTimer:
-    ReturnType<typeof setTimeout> | null = null;
+  private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
 
   private readonly router = inject(Router);
 
@@ -182,22 +173,11 @@ export class GalpPowerGasContractDetail implements OnInit {
   contractId = '';
   lastSocketUpdate = '';
 
-  readonly tipoSegmentoOptions = [
-    'Residencial',
-    'Empresarial',
-    'Condomínios',
-  ];
+  readonly tipoSegmentoOptions = ['Residencial', 'Empresarial', 'Condomínios'];
 
-  readonly tipoProdutoOptions = [
-    'Luz',
-    'Luz + Gás',
-    'Gás',
-  ];
+  readonly tipoProdutoOptions = ['Luz', 'Luz + Gás', 'Gás'];
 
-  readonly contratacaoOptions = [
-    'Contratação Papel',
-    'Contratação Digital',
-  ];
+  readonly contratacaoOptions = ['Contratação Papel', 'Contratação Digital'];
 
   readonly tipoContratacaoOptions = [
     'Mudança de Comercializadora',
@@ -216,29 +196,21 @@ export class GalpPowerGasContractDetail implements OnInit {
     'Tetra-Horário',
   ];
 
-  readonly nivelTensaoOptions = [
-    'Monofásico',
-    'Trifásico',
-  ];
+  readonly nivelTensaoOptions = ['Monofásico', 'Trifásico'];
 
-  readonly powerSuggestions =
-    ELECTRICITY_POWERS.map((power) => power.toFixed(2));
+  readonly powerSuggestions = ELECTRICITY_POWERS.map((power) => power.toFixed(2));
 
   readonly gasLevelSuggestions = GAS_LEVELS;
 
-  readonly antigaComercializadoraSuggestions =
-    ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+  readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
 
   ngOnInit(): void {
     this.resolvePermissions();
 
     const collapseByDefault =
-      this.preferencesService
-        .getPreferences()
-        .contractDetailsCollapsedByDefault;
+      this.preferencesService.getPreferences().contractDetailsCollapsedByDefault;
 
-    this.collapsedSections =
-      this.buildCollapsedSections(collapseByDefault);
+    this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
     this.route.paramMap.subscribe((params) => {
       this.contractId = params.get('id') ?? '';
@@ -248,117 +220,88 @@ export class GalpPowerGasContractDetail implements OnInit {
       }
     });
 
-    this.socketService
-      .listenGalpPowerGasContractUpdated()
-      .subscribe((event) => {
-        if (event.contractId !== this.contractId) {
-          return;
-        }
+    this.socketService.listenGalpPowerGasContractUpdated().subscribe((event) => {
+      if (event.contractId !== this.contractId) {
+        return;
+      }
 
-        const activityUpdate =
-          mergeContractActivitySocketPayload(
-            this.contract,
-            event,
-          );
+      const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
 
-        if (activityUpdate.updated) {
-          this.contract = activityUpdate.contract;
-        }
+      if (activityUpdate.updated) {
+        this.contract = activityUpdate.contract;
+      }
+
+      if (
+        this.contract &&
+        (event.observacoes !== undefined || event.observacoesInternas !== undefined)
+      ) {
+        this.contract = {
+          ...this.contract,
+          ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
+          ...(event.observacoesInternas !== undefined
+            ? { observacoesInternas: event.observacoesInternas ?? '' }
+            : {}),
+        };
+      }
+
+      const stateUpdate = mergeContractStateSocketPayload(this.contract, event, this.estadoOptions);
+
+      if (stateUpdate.updated && stateUpdate.contract) {
+        this.contract = stateUpdate.contract;
 
         if (
-          this.contract &&
-          (event.observacoes !== undefined ||
-            event.observacoesInternas !== undefined)
+          this.isEditing &&
+          stateUpdate.estado &&
+          this.editForm.estado === this.originalEditForm.estado
         ) {
-          this.contract = {
-            ...this.contract,
-            ...(event.observacoes !== undefined
-              ? { observacoes: event.observacoes ?? '' }
-              : {}),
-            ...(event.observacoesInternas !== undefined
-              ? { observacoesInternas: event.observacoesInternas ?? '' }
-              : {}),
+          this.editForm = {
+            ...this.editForm,
+            estado: stateUpdate.estado,
+          };
+
+          this.originalEditForm = {
+            ...this.originalEditForm,
+            estado: stateUpdate.estado,
           };
         }
+      }
 
-        const stateUpdate =
-          mergeContractStateSocketPayload(
-            this.contract,
-            event,
-            this.estadoOptions,
-          );
+      const currentTime = new Date().toLocaleTimeString('pt-PT');
 
-        if (
-          stateUpdate.updated &&
-          stateUpdate.contract
-        ) {
-          this.contract = stateUpdate.contract;
+      this.lastSocketUpdate = currentTime;
 
-          if (
-            this.isEditing &&
-            stateUpdate.estado &&
-            this.editForm.estado ===
-              this.originalEditForm.estado
-          ) {
-            this.editForm = {
-              ...this.editForm,
-              estado: stateUpdate.estado,
-            };
-
-            this.originalEditForm = {
-              ...this.originalEditForm,
-              estado: stateUpdate.estado,
-            };
-          }
+      if (event.ticketEvent && Array.isArray(event.tickets)) {
+        if (!Array.isArray(event.fluxo)) {
+          this.refreshContractActivity();
         }
 
-        const currentTime =
-          new Date().toLocaleTimeString('pt-PT');
+        return;
+      }
 
-        this.lastSocketUpdate = currentTime;
+      const eventUserId = this.getSocketEventUserId(event);
 
-        if (
-          event.ticketEvent &&
-          Array.isArray(event.tickets)
-        ) {
-          if (!Array.isArray(event.fluxo)) {
-            this.refreshContractActivity();
-          }
+      const isOwnSocketUpdate = Boolean(
+        eventUserId && this.currentUserId && eventUserId === this.currentUserId,
+      );
 
-          return;
+      if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
+        if (!Array.isArray(event.fluxo)) {
+          this.refreshContractActivity();
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(event);
+        this.clearOwnSocketSuppression();
+        return;
+      }
 
-        const isOwnSocketUpdate = Boolean(
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId,
-        );
+      if (this.isEditing) {
+        this.synchronizeExternalUpdate(currentTime);
+        return;
+      }
 
-        if (
-          isOwnSocketUpdate ||
-          (!eventUserId && this.suppressNextOwnSocketUpdate)
-        ) {
-          if (!Array.isArray(event.fluxo)) {
-            this.refreshContractActivity();
-          }
+      this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
 
-          this.clearOwnSocketSuppression();
-          return;
-        }
-
-        if (this.isEditing) {
-          this.synchronizeExternalUpdate(currentTime);
-          return;
-        }
-
-        this.socketMessage =
-          `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
-
-        this.loadContract(this.contractId);
-      });
+      this.loadContract(this.contractId);
+    });
   }
 
   loadContract(contractId: string): void {
@@ -378,9 +321,7 @@ export class GalpPowerGasContractDetail implements OnInit {
             this.contract = null;
             this.isLoading = false;
 
-            this.showError(
-              'Não tem permissão para aceder a este contrato.',
-            );
+            this.showError('Não tem permissão para aceder a este contrato.');
 
             this.router.navigateByUrl('/error', {
               replaceUrl: true,
@@ -394,9 +335,7 @@ export class GalpPowerGasContractDetail implements OnInit {
           this.loadCampaigns(contract.companyId);
         },
         error: () => {
-          this.showError(
-            'Não foi possível carregar o contrato Galp Power & Gás.',
-          );
+          this.showError('Não foi possível carregar o contrato Galp Power & Gás.');
         },
       });
   }
@@ -409,31 +348,20 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.submitObservationValue(message, true);
   }
 
-  private submitObservationValue(
-    message: string,
-    internal: boolean,
-  ): void {
+  private submitObservationValue(message: string, internal: boolean): void {
     if (
       !this.contract ||
       !this.contractId ||
       !this.isSuperAdmin ||
       (internal && !this.canAccessInternalObservations) ||
-      (internal
-        ? this.isSubmittingInternalObservation
-        : this.isSubmittingObservation)
+      (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
     }
 
-    const currentValue = internal
-      ? this.contract.observacoesInternas
-      : this.contract.observacoes;
+    const currentValue = internal ? this.contract.observacoesInternas : this.contract.observacoes;
 
-    const nextHistory = appendObservationHistory(
-      currentValue,
-      message,
-      this.currentUserName,
-    );
+    const nextHistory = appendObservationHistory(currentValue, message, this.currentUserName);
 
     if (!nextHistory) {
       return;
@@ -447,14 +375,10 @@ export class GalpPowerGasContractDetail implements OnInit {
 
     this.errorMessage = '';
 
-    const payload = internal
-      ? { observacoesInternas: nextHistory }
-      : { observacoes: nextHistory };
+    const payload = internal ? { observacoesInternas: nextHistory } : { observacoes: nextHistory };
 
-    this.galpPowerGasContractService.updateGalpPowerGasContract(
-      this.contractId,
-      payload,
-    )
+    this.galpPowerGasContractService
+      .updateGalpPowerGasContract(this.contractId, payload)
       .pipe(
         finalize(() => {
           if (internal) {
@@ -473,15 +397,13 @@ export class GalpPowerGasContractDetail implements OnInit {
           if (internal) {
             this.contract = {
               ...this.contract,
-              observacoesInternas:
-                updatedContract.observacoesInternas ?? nextHistory,
+              observacoesInternas: updatedContract.observacoesInternas ?? nextHistory,
             };
             this.internalObservationDraft = '';
           } else {
             this.contract = {
               ...this.contract,
-              observacoes:
-                updatedContract.observacoes ?? nextHistory,
+              observacoes: updatedContract.observacoes ?? nextHistory,
             };
             this.observationDraft = '';
           }
@@ -523,23 +445,17 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.successMessage = '';
   }
 
-
   shouldShowLuzFields(): boolean {
-    const product = this.isEditing
-      ? this.editForm.tipoProduto
-      : this.contract?.tipoProduto;
+    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
 
     return product === 'Luz' || product === 'Luz + Gás';
   }
 
   shouldShowGasFields(): boolean {
-    const product = this.isEditing
-      ? this.editForm.tipoProduto
-      : this.contract?.tipoProduto;
+    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
 
     return product === 'Gás' || product === 'Luz + Gás';
   }
-
 
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -550,11 +466,7 @@ export class GalpPowerGasContractDetail implements OnInit {
   }
 
   saveChanges(): void {
-    if (
-      !this.isSuperAdmin ||
-      !this.contract ||
-      !this.contractId
-    ) {
+    if (!this.isSuperAdmin || !this.contract || !this.contractId) {
       return;
     }
 
@@ -563,22 +475,20 @@ export class GalpPowerGasContractDetail implements OnInit {
       return;
     }
 
-    const energyValidationError =
-      getContractEnergyValidationError({
-        requiresElectricity: this.shouldShowLuzFields(),
-        requiresGas: this.shouldShowGasFields(),
-        cpe: this.editForm.cpe,
-        cui: this.editForm.cui,
-        potencia: this.editForm.potencia,
-        escalao: this.editForm.escalao,
-        cicloHorario: this.editForm.cicloHorario,
-      });
+    const energyValidationError = getContractEnergyValidationError({
+      requiresElectricity: this.shouldShowLuzFields(),
+      requiresGas: this.shouldShowGasFields(),
+      cpe: this.editForm.cpe,
+      cui: this.editForm.cui,
+      potencia: this.editForm.potencia,
+      escalao: this.editForm.escalao,
+      cicloHorario: this.editForm.cicloHorario,
+    });
 
     if (energyValidationError) {
       this.showError(energyValidationError);
       return;
     }
-
 
     const campaignValue = this.getCurrentCampaignValue();
 
@@ -588,6 +498,19 @@ export class GalpPowerGasContractDetail implements OnInit {
           ? 'O nome da campanha é obrigatório.'
           : 'É obrigatório selecionar uma campanha.',
       );
+      return;
+    }
+
+    const fieldValidationError = getContractFormValidationError(
+      this.editForm as unknown as Record<string, unknown>,
+      {
+        validateCpe: this.shouldShowLuzFields(),
+        validateCui: this.shouldShowGasFields(),
+      },
+    );
+
+    if (fieldValidationError) {
+      this.showError(fieldValidationError);
       return;
     }
 
@@ -607,10 +530,7 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.prepareOwnSocketSuppression();
 
     const updateRequest = hasContractChanges
-      ? this.galpPowerGasContractService.updateGalpPowerGasContract(
-          this.contractId,
-          payload,
-        )
+      ? this.galpPowerGasContractService.updateGalpPowerGasContract(this.contractId, payload)
       : of(this.contract);
 
     updateRequest
@@ -625,10 +545,7 @@ export class GalpPowerGasContractDetail implements OnInit {
           }
 
           return this.galpPowerGasContractService
-            .uploadAttachments(
-              this.contractId,
-              this.selectedFiles,
-            )
+            .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
                 contract: contractWithFiles,
@@ -649,13 +566,8 @@ export class GalpPowerGasContractDetail implements OnInit {
         }),
       )
       .subscribe({
-        next: ({
-          contract: updatedContract,
-          uploadFailed,
-          uploadError,
-        }) => {
-          const normalizedContract =
-            this.normalizeContractResponse(updatedContract);
+        next: ({ contract: updatedContract, uploadFailed, uploadError }) => {
+          const normalizedContract = this.normalizeContractResponse(updatedContract);
 
           this.contract = normalizedContract;
           this.initializeEditForm(normalizedContract);
@@ -707,46 +619,30 @@ export class GalpPowerGasContractDetail implements OnInit {
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const files = input.files
-      ? Array.from(input.files)
-      : [];
+    const files = input.files ? Array.from(input.files) : [];
 
     if (!files.length) {
       return;
     }
 
-    const existingFileKeys = new Set(
-      this.selectedFiles.map((file) =>
-        this.getFileKey(file),
-      ),
-    );
+    const existingFileKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
 
-    const newFiles = files.filter(
-      (file) =>
-        !existingFileKeys.has(this.getFileKey(file)),
-    );
+    const newFiles = files.filter((file) => !existingFileKeys.has(this.getFileKey(file)));
 
-    this.selectedFiles = [
-      ...this.selectedFiles,
-      ...newFiles,
-    ];
+    this.selectedFiles = [...this.selectedFiles, ...newFiles];
 
     input.value = '';
   }
 
   removeSelectedFile(index: number): void {
-    this.selectedFiles = this.selectedFiles.filter(
-      (_, fileIndex) => fileIndex !== index,
-    );
+    this.selectedFiles = this.selectedFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   clearSelectedFiles(): void {
     this.selectedFiles = [];
   }
 
-  deleteAttachment(
-    document: GalpPowerGasContractDocument,
-  ): void {
+  deleteAttachment(document: GalpPowerGasContractDocument): void {
     if (
       !this.isSuperAdmin ||
       !this.isEditing ||
@@ -757,9 +653,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Pretende remover o ficheiro "${document.originalName}"?`,
-    );
+    const confirmed = window.confirm(`Pretende remover o ficheiro "${document.originalName}"?`);
 
     if (!confirmed) {
       return;
@@ -768,14 +662,12 @@ export class GalpPowerGasContractDetail implements OnInit {
     const previousContract = this.contract;
 
     this.deletingAttachmentFileNames.add(document.fileName);
-    this.deletingAttachmentFileNames =
-      new Set(this.deletingAttachmentFileNames);
+    this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
 
     this.contract = {
       ...previousContract,
       documentos: previousContract.documentos.filter(
-        (existingDocument) =>
-          existingDocument.fileName !== document.fileName,
+        (existingDocument) => existingDocument.fileName !== document.fileName,
       ),
     };
 
@@ -784,26 +676,17 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.prepareOwnSocketSuppression();
 
     this.galpPowerGasContractService
-      .deleteAttachment(
-        this.contractId,
-        document.fileName,
-      )
+      .deleteAttachment(this.contractId, document.fileName)
       .pipe(
         finalize(() => {
-          this.deletingAttachmentFileNames.delete(
-            document.fileName,
-          );
-          this.deletingAttachmentFileNames =
-            new Set(this.deletingAttachmentFileNames);
+          this.deletingAttachmentFileNames.delete(document.fileName);
+          this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
         }),
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract =
-            this.normalizeContractResponse(updatedContract);
-          this.showSuccess(
-            `O ficheiro "${document.originalName}" foi removido com sucesso.`,
-          );
+          this.contract = this.normalizeContractResponse(updatedContract);
+          this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {
           this.clearOwnSocketSuppression();
@@ -817,12 +700,8 @@ export class GalpPowerGasContractDetail implements OnInit {
       });
   }
 
-  isDeletingAttachment(
-    document: GalpPowerGasContractDocument,
-  ): boolean {
-    return this.deletingAttachmentFileNames.has(
-      document.fileName,
-    );
+  isDeletingAttachment(document: GalpPowerGasContractDocument): boolean {
+    return this.deletingAttachmentFileNames.has(document.fileName);
   }
 
   private getFileKey(file: File): string {
@@ -830,60 +709,46 @@ export class GalpPowerGasContractDetail implements OnInit {
   }
 
   private resolvePermissions(): void {
-    const currentUser =
-      this.auth.getCurrentUser() as AuthenticatedUserLike | null;
+    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
 
-    const role =
-      currentUser?.role?.toLowerCase() ?? '';
+    const role = currentUser?.role?.toLowerCase() ?? '';
 
-    this.currentUserId =
-      currentUser?.id ?? currentUser?._id ?? '';
+    this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
 
-    this.currentUserName =
-      currentUser?.name ??
-      currentUser?.username ??
-      'Utilizador';
+    this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
-    this.isSuperAdmin =
-      role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin');
 
     if (!this.currentUserId) {
       return;
     }
 
-    this.userService
-      .getUserById(this.currentUserId)
-      .subscribe({
-        next: (user) => {
-          const teamIds =
-            (
-              user as ProfileUser & {
-                teams?: Array<{
-                  id?: string;
-                }>;
-              }
-            ).teams
-              ?.map((team) => team.id ?? '')
-              .filter(Boolean) ?? [];
+    this.userService.getUserById(this.currentUserId).subscribe({
+      next: (user) => {
+        const teamIds =
+          (
+            user as ProfileUser & {
+              teams?: Array<{
+                id?: string;
+              }>;
+            }
+          ).teams
+            ?.map((team) => team.id ?? '')
+            .filter(Boolean) ?? [];
 
-          const authorizedTeamIds = [
-            environment.EQUIPA_CRM_ID,
-            environment.EQUIPA_DU_ID,
-          ].filter(
-            (teamId): teamId is string =>
-              Boolean(teamId),
-          );
+        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+          (teamId): teamId is string => Boolean(teamId),
+        );
 
-          this.canAccessInternalObservations =
-            teamIds.some((teamId) =>
-              authorizedTeamIds.includes(teamId),
-            );
+        this.canAccessInternalObservations = teamIds.some((teamId) =>
+          authorizedTeamIds.includes(teamId),
+        );
 
-          if (!this.canAccessInternalObservations) {
-            this.internalObservationDraft = '';
-          }
-        },
-      });
+        if (!this.canAccessInternalObservations) {
+          this.internalObservationDraft = '';
+        }
+      },
+    });
   }
 
   private refreshContractActivity(): void {
@@ -891,31 +756,22 @@ export class GalpPowerGasContractDetail implements OnInit {
       return;
     }
 
-    this.galpPowerGasContractService
-      .getGalpPowerGasContractById(this.contractId)
-      .subscribe({
-        next: (latestContract) => {
-          if (
-            !this.contract ||
-            latestContract.id !== this.contractId
-          ) {
-            return;
-          }
+    this.galpPowerGasContractService.getGalpPowerGasContractById(this.contractId).subscribe({
+      next: (latestContract) => {
+        if (!this.contract || latestContract.id !== this.contractId) {
+          return;
+        }
 
-          const activityUpdate =
-            mergeContractActivitySocketPayload(
-              this.contract,
-              {
-                fluxo: latestContract.fluxo,
-                tickets: latestContract.tickets,
-              },
-            );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
+          fluxo: latestContract.fluxo,
+          tickets: latestContract.tickets,
+        });
 
-          if (activityUpdate.updated) {
-            this.contract = activityUpdate.contract;
-          }
-        },
-      });
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
+      },
+    });
   }
 
   private getSocketEventUserId(event: unknown): string {
@@ -925,12 +781,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       updatedByUserId?: string;
     };
 
-    return (
-      socketEvent.updatedBy ??
-      socketEvent.userId ??
-      socketEvent.updatedByUserId ??
-      ''
-    );
+    return socketEvent.updatedBy ?? socketEvent.userId ?? socketEvent.updatedByUserId ?? '';
   }
 
   private synchronizeExternalUpdate(currentTime: string): void {
@@ -943,77 +794,64 @@ export class GalpPowerGasContractDetail implements OnInit {
      * - ao guardar, o rascunho é acrescentado ao histórico
      *   mais recente recebido do servidor.
      */
-    const observationDraft =
-      this.observationDraft;
+    const observationDraft = this.observationDraft;
 
-    const internalObservationDraft =
-      this.internalObservationDraft;
+    const internalObservationDraft = this.internalObservationDraft;
 
-    this.galpPowerGasContractService
-      .getGalpPowerGasContractById(this.contractId)
-      .subscribe({
-        next: (latestContract) => {
-          const normalizedContract =
-            this.normalizeContractResponse(
-              latestContract,
-            );
+    this.galpPowerGasContractService.getGalpPowerGasContractById(this.contractId).subscribe({
+      next: (latestContract) => {
+        const normalizedContract = this.normalizeContractResponse(latestContract);
 
-          const result =
-            this.mergeExternalContract(
-              normalizedContract,
-            );
+        const result = this.mergeExternalContract(normalizedContract);
 
-          /*
-           * Atualiza o histórico normal e o histórico
-           * interno porque ambos pertencem ao contract,
-           * e não ao editForm.
-           */
-          this.contract =
-            normalizedContract;
+        /*
+         * Atualiza o histórico normal e o histórico
+         * interno porque ambos pertencem ao contract,
+         * e não ao editForm.
+         */
+        this.contract = normalizedContract;
 
-          /*
-           * Preserva explicitamente os dois rascunhos.
-           * Desta forma um socket nunca apaga aquilo que
-           * o utilizador está a escrever.
-           */
-          this.observationDraft =
-            observationDraft;
+        /*
+         * Preserva explicitamente os dois rascunhos.
+         * Desta forma um socket nunca apaga aquilo que
+         * o utilizador está a escrever.
+         */
+        this.observationDraft = observationDraft;
 
-          this.internalObservationDraft =
-            internalObservationDraft;
+        this.internalObservationDraft = internalObservationDraft;
 
-          if (result.conflicts > 0) {
-            this.socketMessage =
-              `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
-              `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente. ` +
-              `${result.conflicts} campo(s) que também estava a editar foram preservados com os seus valores. ` +
-              'Os históricos de observações foram sincronizados sem perder os seus rascunhos. ' +
-              'Ao guardar, os seus valores nesses campos irão prevalecer.';
-            return;
-          }
-
-          const observationsMessage =
-            this.canAccessInternalObservations
-              ? 'incluindo os históricos de observações e observações internas, bem como os anexos'
-              : 'incluindo o histórico de observações e os anexos';
-
+        if (result.conflicts > 0) {
           this.socketMessage =
             `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
-            `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente, ` +
-            `${observationsMessage}, sem perder os seus rascunhos nem os ficheiros selecionados.`;
-        },
-        error: () => {
-          this.socketMessage =
-            `Este contrato foi atualizado por outro utilizador às ${currentTime}, ` +
-            'mas não foi possível sincronizar os dados automaticamente. ' +
-            'Atualize a página antes de guardar para garantir que trabalha sobre a versão mais recente.';
-        },
-      });
+            `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente. ` +
+            `${result.conflicts} campo(s) que também estava a editar foram preservados com os seus valores. ` +
+            'Os históricos de observações foram sincronizados sem perder os seus rascunhos. ' +
+            'Ao guardar, os seus valores nesses campos irão prevalecer.';
+          return;
+        }
+
+        const observationsMessage = this.canAccessInternalObservations
+          ? 'incluindo os históricos de observações e observações internas, bem como os anexos'
+          : 'incluindo o histórico de observações e os anexos';
+
+        this.socketMessage =
+          `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
+          `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente, ` +
+          `${observationsMessage}, sem perder os seus rascunhos nem os ficheiros selecionados.`;
+      },
+      error: () => {
+        this.socketMessage =
+          `Este contrato foi atualizado por outro utilizador às ${currentTime}, ` +
+          'mas não foi possível sincronizar os dados automaticamente. ' +
+          'Atualize a página antes de guardar para garantir que trabalha sobre a versão mais recente.';
+      },
+    });
   }
 
-  private mergeExternalContract(
-    latestContract: GalpPowerGasContractDetailModel,
-  ): { updated: number; conflicts: number } {
+  private mergeExternalContract(latestContract: GalpPowerGasContractDetailModel): {
+    updated: number;
+    conflicts: number;
+  } {
     const latestState = this.buildEditableState(latestContract);
     const nextEditForm = structuredClone(this.editForm);
     const nextOriginalForm = structuredClone(this.originalEditForm);
@@ -1021,14 +859,9 @@ export class GalpPowerGasContractDetail implements OnInit {
     let updated = 0;
     let conflicts = 0;
 
-    const campaignKeys: Array<keyof EditableContractForm> = [
-      'campaignId',
-      'customCampaign',
-    ];
+    const campaignKeys: Array<keyof EditableContractForm> = ['campaignId', 'customCampaign'];
 
-    const keys = Object.keys(
-      latestState.form,
-    ) as Array<keyof EditableContractForm>;
+    const keys = Object.keys(latestState.form) as Array<keyof EditableContractForm>;
 
     keys.forEach((key) => {
       if (campaignKeys.includes(key)) {
@@ -1039,14 +872,8 @@ export class GalpPowerGasContractDetail implements OnInit {
       const originalValue = this.originalEditForm[key];
       const latestValue = latestState.form[key];
 
-      const userChanged = !this.areValuesEqual(
-        currentValue,
-        originalValue,
-      );
-      const serverChanged = !this.areValuesEqual(
-        latestValue,
-        originalValue,
-      );
+      const userChanged = !this.areValuesEqual(currentValue, originalValue);
+      const serverChanged = !this.areValuesEqual(latestValue, originalValue);
 
       if (!serverChanged) {
         return;
@@ -1062,27 +889,15 @@ export class GalpPowerGasContractDetail implements OnInit {
       this.setFormValue(nextOriginalForm, key, latestValue);
     });
 
-    const currentCampaign = this.getCampaignSnapshot(
-      this.campaignSelectionMode,
-      this.editForm,
-    );
+    const currentCampaign = this.getCampaignSnapshot(this.campaignSelectionMode, this.editForm);
     const originalCampaign = this.getCampaignSnapshot(
       this.originalCampaignSelectionMode,
       this.originalEditForm,
     );
-    const latestCampaign = this.getCampaignSnapshot(
-      latestState.campaignMode,
-      latestState.form,
-    );
+    const latestCampaign = this.getCampaignSnapshot(latestState.campaignMode, latestState.form);
 
-    const userChangedCampaign = !this.areValuesEqual(
-      currentCampaign,
-      originalCampaign,
-    );
-    const serverChangedCampaign = !this.areValuesEqual(
-      latestCampaign,
-      originalCampaign,
-    );
+    const userChangedCampaign = !this.areValuesEqual(currentCampaign, originalCampaign);
+    const serverChangedCampaign = !this.areValuesEqual(latestCampaign, originalCampaign);
 
     if (serverChangedCampaign) {
       if (!userChangedCampaign) {
@@ -1114,19 +929,15 @@ export class GalpPowerGasContractDetail implements OnInit {
   } {
     return {
       mode,
-      value:
-        mode === 'other'
-          ? form.customCampaign.trim()
-          : form.campaignId,
+      value: mode === 'other' ? form.customCampaign.trim() : form.campaignId,
     };
   }
 
-  private areValuesEqual(
-    firstValue: unknown,
-    secondValue: unknown,
-  ): boolean {
-    return JSON.stringify(this.normalizeValue(firstValue)) ===
-      JSON.stringify(this.normalizeValue(secondValue));
+  private areValuesEqual(firstValue: unknown, secondValue: unknown): boolean {
+    return (
+      JSON.stringify(this.normalizeValue(firstValue)) ===
+      JSON.stringify(this.normalizeValue(secondValue))
+    );
   }
 
   private setFormValue<Key extends keyof EditableContractForm>(
@@ -1162,25 +973,15 @@ export class GalpPowerGasContractDetail implements OnInit {
         map((campaigns) => {
           const assignedCampaign = this.contract?.campaign;
           const assignedId = assignedCampaign?.id ?? '';
-          const assignedName = this.normalizeCampaignName(
-            assignedCampaign?.name ?? '',
-          );
+          const assignedName = this.normalizeCampaignName(assignedCampaign?.name ?? '');
 
           return campaigns.filter((campaign) => {
-            const isAssignedById = Boolean(
-              assignedId && campaign.id === assignedId,
-            );
+            const isAssignedById = Boolean(assignedId && campaign.id === assignedId);
             const isAssignedByName = Boolean(
-              assignedName &&
-                this.normalizeCampaignName(campaign.name) ===
-                  assignedName,
+              assignedName && this.normalizeCampaignName(campaign.name) === assignedName,
             );
 
-            return (
-              campaign.active ||
-              isAssignedById ||
-              isAssignedByName
-            );
+            return campaign.active || isAssignedById || isAssignedByName;
           });
         }),
       )
@@ -1193,16 +994,12 @@ export class GalpPowerGasContractDetail implements OnInit {
           }
         },
         error: () => {
-          this.showError(
-            'Não foi possível carregar as campanhas.',
-          );
+          this.showError('Não foi possível carregar as campanhas.');
         },
       });
   }
 
-  private hasContractAccess(
-    contract: GalpPowerGasContractDetailModel,
-  ): boolean {
+  private hasContractAccess(contract: GalpPowerGasContractDetailModel): boolean {
     if (this.isSuperAdmin) {
       return true;
     }
@@ -1211,7 +1008,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       const followerId =
         typeof follower === 'string'
           ? follower
-          : follower.id ?? follower._id ?? follower.userId ?? '';
+          : (follower.id ?? follower._id ?? follower.userId ?? '');
 
       return followerId === this.currentUserId;
     });
@@ -1239,30 +1036,21 @@ export class GalpPowerGasContractDetail implements OnInit {
       };
     }
 
-    const matchedCampaign = this.campaigns.find(
-      (campaign) => campaign.id === rawCampaign,
-    );
+    const matchedCampaign = this.campaigns.find((campaign) => campaign.id === rawCampaign);
 
     const currentCampaign =
-      this.contract?.campaign?.id === rawCampaign
-        ? this.contract.campaign
-        : null;
+      this.contract?.campaign?.id === rawCampaign ? this.contract.campaign : null;
 
     return {
       ...contract,
       campaign: {
         id: rawCampaign,
-        name:
-          matchedCampaign?.name ??
-          currentCampaign?.name ??
-          rawCampaign,
+        name: matchedCampaign?.name ?? currentCampaign?.name ?? rawCampaign,
       },
     };
   }
 
-  private initializeEditForm(
-    contract: GalpPowerGasContractDetailModel,
-  ): void {
+  private initializeEditForm(contract: GalpPowerGasContractDetailModel): void {
     const state = this.buildEditableState(contract);
 
     this.editForm = structuredClone(state.form);
@@ -1271,9 +1059,7 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.originalCampaignSelectionMode = state.campaignMode;
   }
 
-  private buildEditableState(
-    contract: GalpPowerGasContractDetailModel,
-  ): {
+  private buildEditableState(contract: GalpPowerGasContractDetailModel): {
     form: EditableContractForm;
     campaignMode: CampaignSelectionMode;
   } {
@@ -1318,8 +1104,7 @@ export class GalpPowerGasContractDetail implements OnInit {
         debitoDireto: Boolean(contract.debitoDireto),
         iban: contract.iban ?? '',
 
-        antigaComercializadora:
-          contract.antigaComercializadora ?? '',
+        antigaComercializadora: contract.antigaComercializadora ?? '',
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
         potencia: contract.potencia ?? null,
@@ -1327,16 +1112,13 @@ export class GalpPowerGasContractDetail implements OnInit {
         cicloHorario: contract.cicloHorario ?? '',
         nivelTensao: contract.nivelTensao ?? '',
 
-
         campaignId: resolvedCampaign.campaignId,
         customCampaign: resolvedCampaign.customCampaign,
       },
     };
   }
 
-  private resolveCampaignSelection(
-    campaign: GalpPowerGasContractDetailModel['campaign'],
-  ): {
+  private resolveCampaignSelection(campaign: GalpPowerGasContractDetailModel['campaign']): {
     mode: CampaignSelectionMode;
     campaignId: string;
     customCampaign: string;
@@ -1350,23 +1132,16 @@ export class GalpPowerGasContractDetail implements OnInit {
     }
 
     const campaignId = campaign.id?.trim() ?? '';
-    const normalizedName = this.normalizeCampaignName(
-      campaign.name,
-    );
+    const normalizedName = this.normalizeCampaignName(campaign.name);
 
     const campaignById = campaignId
-      ? this.campaigns.find(
-          (availableCampaign) =>
-            availableCampaign.id === campaignId,
-        )
+      ? this.campaigns.find((availableCampaign) => availableCampaign.id === campaignId)
       : undefined;
 
     const campaignByName = normalizedName
       ? this.campaigns.find(
           (availableCampaign) =>
-            this.normalizeCampaignName(
-              availableCampaign.name,
-            ) === normalizedName,
+            this.normalizeCampaignName(availableCampaign.name) === normalizedName,
         )
       : undefined;
 
@@ -1403,8 +1178,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
-  private buildPatchPayload():
-    UpdateGalpPowerGasContractRequest {
+  private buildPatchPayload(): UpdateGalpPowerGasContractRequest {
     const payload: UpdateGalpPowerGasContractRequest = {};
 
     this.assignChangedValue(
@@ -1415,34 +1189,13 @@ export class GalpPowerGasContractDetail implements OnInit {
     );
     this.assignChangedValue(
       payload,
-      'nif',
-      this.editForm.nif,
-      this.originalEditForm.nif,
-    );
-    this.assignChangedValue(
-      payload,
       'telefone',
       this.editForm.telefone,
       this.originalEditForm.telefone,
     );
-    this.assignChangedValue(
-      payload,
-      'email',
-      this.editForm.email,
-      this.originalEditForm.email,
-    );
-    this.assignChangedValue(
-      payload,
-      'cae',
-      this.editForm.cae,
-      this.originalEditForm.cae,
-    );
-    this.assignChangedValue(
-      payload,
-      'crc',
-      this.editForm.crc,
-      this.originalEditForm.crc,
-    );
+    this.assignChangedValue(payload, 'email', this.editForm.email, this.originalEditForm.email);
+    this.assignChangedValue(payload, 'cae', this.editForm.cae, this.originalEditForm.cae);
+    this.assignChangedValue(payload, 'crc', this.editForm.crc, this.originalEditForm.crc);
     this.assignChangedValue(
       payload,
       'tipoSegmento',
@@ -1494,12 +1247,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       this.editForm.nomeRegistoCE,
       this.originalEditForm.nomeRegistoCE,
     );
-    this.assignChangedValue(
-      payload,
-      'estado',
-      this.editForm.estado,
-      this.originalEditForm.estado,
-    );
+    this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
     this.assignChangedValue(
       payload,
       'agendamento',
@@ -1566,42 +1314,22 @@ export class GalpPowerGasContractDetail implements OnInit {
       this.editForm.faturaEletronica,
       this.originalEditForm.faturaEletronica,
     );
-    this.assignChangedValue(
-      payload,
-      'sva',
-      this.editForm.sva,
-      this.originalEditForm.sva,
-    );
+    this.assignChangedValue(payload, 'sva', this.editForm.sva, this.originalEditForm.sva);
     this.assignChangedValue(
       payload,
       'debitoDireto',
       this.editForm.debitoDireto,
       this.originalEditForm.debitoDireto,
     );
-    this.assignChangedValue(
-      payload,
-      'iban',
-      this.editForm.iban,
-      this.originalEditForm.iban,
-    );
+    this.assignChangedValue(payload, 'iban', this.editForm.iban, this.originalEditForm.iban);
     this.assignChangedValue(
       payload,
       'antigaComercializadora',
       this.editForm.antigaComercializadora,
       this.originalEditForm.antigaComercializadora,
     );
-    this.assignChangedValue(
-      payload,
-      'cpe',
-      this.editForm.cpe,
-      this.originalEditForm.cpe,
-    );
-    this.assignChangedValue(
-      payload,
-      'cui',
-      this.editForm.cui,
-      this.originalEditForm.cui,
-    );
+    this.assignChangedValue(payload, 'cpe', this.editForm.cpe, this.originalEditForm.cpe);
+    this.assignChangedValue(payload, 'cui', this.editForm.cui, this.originalEditForm.cui);
     this.assignChangedValue(
       payload,
       'potencia',
@@ -1626,7 +1354,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       this.editForm.nivelTensao,
       this.originalEditForm.nivelTensao,
     );
-const currentCampaign = this.getCurrentCampaignValue();
+    const currentCampaign = this.getCurrentCampaignValue();
     const originalCampaign = this.getOriginalCampaignValue();
 
     if (currentCampaign !== originalCampaign) {
@@ -1636,25 +1364,17 @@ const currentCampaign = this.getCurrentCampaignValue();
     return payload;
   }
 
-  private assignChangedValue<
-    Key extends keyof UpdateGalpPowerGasContractRequest,
-  >(
+  private assignChangedValue<Key extends keyof UpdateGalpPowerGasContractRequest>(
     payload: UpdateGalpPowerGasContractRequest,
     key: Key,
     currentValue: UpdateGalpPowerGasContractRequest[Key],
     originalValue: UpdateGalpPowerGasContractRequest[Key],
   ): void {
-    const normalizedCurrent =
-      this.normalizeValue(currentValue);
-    const normalizedOriginal =
-      this.normalizeValue(originalValue);
+    const normalizedCurrent = this.normalizeValue(currentValue);
+    const normalizedOriginal = this.normalizeValue(originalValue);
 
-    if (
-      JSON.stringify(normalizedCurrent) !==
-      JSON.stringify(normalizedOriginal)
-    ) {
-      payload[key] =
-        normalizedCurrent as UpdateGalpPowerGasContractRequest[Key];
+    if (JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedOriginal)) {
+      payload[key] = normalizedCurrent as UpdateGalpPowerGasContractRequest[Key];
     }
   }
 
@@ -1671,14 +1391,10 @@ const currentCampaign = this.getCurrentCampaignValue();
   }
 
   private normalizeValue(value: unknown): unknown {
-    return typeof value === 'string'
-      ? value.trim()
-      : value;
+    return typeof value === 'string' ? value.trim() : value;
   }
 
-  private toDateInput(
-    value: string | null | undefined,
-  ): string {
+  private toDateInput(value: string | null | undefined): string {
     if (!value) {
       return '';
     }
@@ -1692,9 +1408,7 @@ const currentCampaign = this.getCurrentCampaignValue();
     return date.toISOString().slice(0, 10);
   }
 
-  private toDateTimeLocal(
-    value: string | null | undefined,
-  ): string {
+  private toDateTimeLocal(value: string | null | undefined): string {
     if (!value) {
       return '';
     }
@@ -1705,12 +1419,9 @@ const currentCampaign = this.getCurrentCampaignValue();
       return value.slice(0, 16);
     }
 
-    const timezoneOffset =
-      date.getTimezoneOffset() * 60_000;
+    const timezoneOffset = date.getTimezoneOffset() * 60_000;
 
-    return new Date(date.getTime() - timezoneOffset)
-      .toISOString()
-      .slice(0, 16);
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
   }
 
   private buildEmptyEditForm(): EditableContractForm {
@@ -1758,7 +1469,6 @@ const currentCampaign = this.getCurrentCampaignValue();
       cicloHorario: '',
       nivelTensao: '',
 
-
       campaignId: '',
       customCampaign: '',
     };
@@ -1777,11 +1487,8 @@ const currentCampaign = this.getCurrentCampaignValue();
     };
   }
 
-  toggleSection(
-    section: keyof typeof this.collapsedSections,
-  ): void {
-    this.collapsedSections[section] =
-      !this.collapsedSections[section];
+  toggleSection(section: keyof typeof this.collapsedSections): void {
+    this.collapsedSections[section] = !this.collapsedSections[section];
   }
 
   getStatusClass(status: GalpPowerGasContractStatus): string {
@@ -1794,41 +1501,42 @@ const currentCampaign = this.getCurrentCampaignValue();
       'Registo Plataforma Galp': 'status-signature',
       'Pendente Docs': 'status-docs',
       'Em ativação': 'status-assigned',
-      'Ativo': 'status-active',
+      Ativo: 'status-active',
       'Parcialmente Baixa': 'status-partial-low',
-      'Cancelado': 'status-cancelled',
-      'Baixa': 'status-low',
+      Cancelado: 'status-cancelled',
+      Baixa: 'status-low',
     };
 
     return classes[status];
   }
 
   downloadDocument(file: GalpPowerGasContractDocument): void {
+    if (!this.fileAccess.canViewFile(file)) {
+      this.showError('Não tem permissão para visualizar ficheiros de áudio.');
+      return;
+    }
+
     if (!this.contract?.id) {
       return;
     }
 
-    this.galpPowerGasContractService
-      .downloadDocument(this.contract.id, file)
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = window.document.createElement('a');
+    this.galpPowerGasContractService.downloadDocument(this.contract.id, file).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
 
-          link.href = url;
-          link.download = file.originalName || file.fileName;
+        link.href = url;
+        link.download = file.originalName || file.fileName;
 
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        },
-        error: () => {
-          this.showError(
-            'Não foi possível descarregar o anexo.',
-          );
-        },
-      });
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.showError('Não foi possível descarregar o anexo.');
+      },
+    });
   }
 
   formatBoolean(value: boolean): string {
@@ -1846,14 +1554,10 @@ const currentCampaign = this.getCurrentCampaignValue();
   }
 
   canManageQualityControl(): boolean {
-    return canManageQualityControlRole(
-      this.auth.getCurrentUser()?.role,
-    );
+    return canManageQualityControlRole(this.auth.getCurrentUser()?.role);
   }
 
-  getValue(
-    value: string | number | null | undefined,
-  ): string | number {
+  getValue(value: string | number | null | undefined): string | number {
     return value || '-';
   }
 

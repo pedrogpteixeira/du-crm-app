@@ -363,3 +363,154 @@ button:disabled {
     width: 100%;
   }
 }
+
+/* TICKET TYPE SPECIFIC UX */
+
+.field-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.field-hint {
+  color: #008db1;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.required-documents {
+  padding: 14px;
+  border: 1px solid rgba(0, 141, 177, 0.2);
+  border-radius: 14px;
+  background: rgba(0, 141, 177, 0.04);
+}
+
+.document-requirement-message {
+  margin: 0;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.warning-message {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* CANCELLATION CONFIRMATION */
+
+.cancellation-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1210;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.cancellation-modal {
+  width: min(520px, 100%);
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
+}
+
+.cancellation-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 22px 16px;
+
+  h3 {
+    margin: 0 0 7px;
+    color: #243646;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+}
+
+.cancellation-icon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #dc2626;
+
+  .material-symbols-rounded {
+    font-size: 23px;
+  }
+}
+
+.cancellation-modal-body {
+  padding: 0 22px 20px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+}
+
+.cancellation-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 22px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.danger-button {
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 11px;
+  background: #dc2626;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+}
+
+@media (max-width: 720px) {
+  .field-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .cancellation-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancellation-modal-actions button {
+    width: 100%;
+  }
+}

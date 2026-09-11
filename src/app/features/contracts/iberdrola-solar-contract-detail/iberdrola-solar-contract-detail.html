@@ -61,36 +61,18 @@
         ========================== -->
 
         <article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('contract')"
-          >
+          <button type="button" class="section-toggle" (click)="toggleSection('contract')">
             <span>Tipo de Segmento</span>
-            <span
-              class="chevron"
-              [class.collapsed]="collapsedSections.contract"
-            >
-              ⌄
-            </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.contract"> ⌄ </span>
           </button>
 
-          <div
-            class="section-content"
-            *ngIf="!collapsedSections.contract"
-          >
+          <div class="section-content" *ngIf="!collapsedSections.contract">
             <div class="info-grid">
               <label>
                 Tipo Segmento *
 
-                <select
-                  *ngIf="isEditing; else segmentoView"
-                  [(ngModel)]="editForm.tipoSegmento"
-                >
-                  <option
-                    *ngFor="let option of tipoSegmentoOptions"
-                    [value]="option"
-                  >
+                <select *ngIf="isEditing; else segmentoView" [(ngModel)]="editForm.tipoSegmento">
+                  <option *ngFor="let option of tipoSegmentoOptions" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -122,14 +104,8 @@
               <label>
                 Contratação *
 
-                <select
-                  *ngIf="isEditing; else contratacaoView"
-                  [(ngModel)]="editForm.contratacao"
-                >
-                  <option
-                    *ngFor="let option of contratacaoOptions"
-                    [value]="option"
-                  >
+                <select *ngIf="isEditing; else contratacaoView" [(ngModel)]="editForm.contratacao">
+                  <option *ngFor="let option of contratacaoOptions" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -145,18 +121,11 @@
                 Controle de Qualidade
 
                 <select
-                  *ngIf="
-                    isEditing &&
-                    canManageQualityControl();
-                    else qualidadeView
-                  "
+                  *ngIf="isEditing && canManageQualityControl(); else qualidadeView"
                   [(ngModel)]="editForm.controleQualidade"
                 >
                   <option value="">Sem seleção</option>
-                  <option
-                    *ngFor="let option of qualityControlBackofficeOptions"
-                    [value]="option"
-                  >
+                  <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -208,193 +177,164 @@
         ========================== -->
 
         <article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('status')"
-          >
+          <button type="button" class="section-toggle" (click)="toggleSection('status')">
             <span>Estado da Venda</span>
 
-            <span
-              class="chevron"
-              [class.collapsed]="
-                collapsedSections.status
-              "
-            >
-              ⌄
-            </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.status"> ⌄ </span>
           </button>
 
-          <div
-            class="section-content"
-            *ngIf="
-              !collapsedSections.status
-            "
-          >
+          <div class="section-content" *ngIf="!collapsedSections.status">
             <div class="status-sale-layout">
               <div class="status-sale-state">
                 <label>
-                Estado
+                  Estado
 
-                <select
-                  *ngIf="isEditing; else estadoView"
-                  [(ngModel)]="editForm.estado"
-                >
-                  <option
-                    *ngFor="let option of estadoOptions"
-                    [value]="option"
-                  >
-                    {{ option }}
-                  </option>
-                </select>
+                  <select *ngIf="isEditing; else estadoView" [(ngModel)]="editForm.estado">
+                    <option *ngFor="let option of estadoOptions" [value]="option">
+                      {{ option }}
+                    </option>
+                  </select>
 
-                <ng-template #estadoView>
-                  <span
-                    class="status-badge"
-                    [ngClass]="getStatusClass(contract.estado)"
-                  >
-                    {{ contract.estado }}
-                  </span>
-                </ng-template>
-              </label>
+                  <ng-template #estadoView>
+                    <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
+                      {{ contract.estado }}
+                    </span>
+                  </ng-template>
+                </label>
               </div>
 
               <div class="status-sale-row status-sale-row--three">
                 <label>
-                Agendamento
+                  Agendamento
 
-                <input
-                  *ngIf="isEditing; else agendamentoView"
-                  type="datetime-local"
-                  [(ngModel)]="editForm.agendamento"
-                />
+                  <input
+                    *ngIf="isEditing; else agendamentoView"
+                    type="datetime-local"
+                    [(ngModel)]="editForm.agendamento"
+                  />
 
-                <ng-template #agendamentoView>
-                  <strong>
-                    {{
-                      contract.agendamento
-                        ? formatDate(contract.agendamento)
-                        : '-'
-                    }}
-                  </strong>
-                </ng-template>
-              </label>
+                  <ng-template #agendamentoView>
+                    <strong>
+                      {{ contract.agendamento ? formatDate(contract.agendamento) : '-' }}
+                    </strong>
+                  </ng-template>
+                </label>
 
                 <label>
-                Data Contrato
+                  Data Contrato
 
-                <input
-                  *ngIf="isEditing; else dataContratoView"
-                  type="date"
-                  [(ngModel)]="editForm.dataContrato"
-                />
+                  <input
+                    *ngIf="isEditing; else dataContratoView"
+                    type="date"
+                    [(ngModel)]="editForm.dataContrato"
+                  />
 
-                <ng-template #dataContratoView>
-                  <strong>
-                    {{ formatDateOnly(contract.dataContrato) }}
-                  </strong>
-                </ng-template>
-              </label>
+                  <ng-template #dataContratoView>
+                    <strong>
+                      {{ formatDateOnly(contract.dataContrato) }}
+                    </strong>
+                  </ng-template>
+                </label>
 
                 <label>
-                Data de Registo
+                  Data de Registo
 
-                <input
-                  *ngIf="isEditing; else dataRegistoView"
-                  type="date"
-                  [(ngModel)]="editForm.dataRegisto"
-                />
+                  <input
+                    *ngIf="isEditing; else dataRegistoView"
+                    type="date"
+                    [(ngModel)]="editForm.dataRegisto"
+                  />
 
-                <ng-template #dataRegistoView>
-                  <strong>
-                    {{ formatDateOnly(contract.dataRegisto) }}
-                  </strong>
-                </ng-template>
-              </label>
+                  <ng-template #dataRegistoView>
+                    <strong>
+                      {{ formatDateOnly(contract.dataRegisto) }}
+                    </strong>
+                  </ng-template>
+                </label>
               </div>
 
               <div class="status-sale-row status-sale-row--three">
                 <label>
-                                Data Instalação
+                  Data Instalação
 
-                                <input
-                                  *ngIf="isEditing; else instalacaoView"
-                                  type="date"
-                                  [(ngModel)]="editForm.dataInstalacao"
-                                />
+                  <input
+                    *ngIf="isEditing; else instalacaoView"
+                    type="date"
+                    [(ngModel)]="editForm.dataInstalacao"
+                  />
 
-                                <ng-template #instalacaoView>
-                                  <strong>
-                                    {{ formatDateOnly(contract.dataInstalacao) }}
-                                  </strong>
-                                </ng-template>
-                              </label>
-
-                <label>
-                                Data de Ativação
-
-                                <input
-                                  *ngIf="isEditing; else ativacaoView"
-                                  type="date"
-                                  [(ngModel)]="editForm.dataAtivacao"
-                                />
-
-                                <ng-template #ativacaoView>
-                                  <strong>
-                                    {{ formatDateOnly(contract.dataAtivacao) }}
-                                  </strong>
-                                </ng-template>
-                              </label>
+                  <ng-template #instalacaoView>
+                    <strong>
+                      {{ formatDateOnly(contract.dataInstalacao) }}
+                    </strong>
+                  </ng-template>
+                </label>
 
                 <label>
-                                Data Baixa
+                  Data de Ativação
 
-                                <input
-                                  *ngIf="isEditing; else baixaView"
-                                  type="date"
-                                  [(ngModel)]="editForm.dataBaixa"
-                                />
+                  <input
+                    *ngIf="isEditing; else ativacaoView"
+                    type="date"
+                    [(ngModel)]="editForm.dataAtivacao"
+                  />
 
-                                <ng-template #baixaView>
-                                  <strong>
-                                    {{ formatDateOnly(contract.dataBaixa) }}
-                                  </strong>
-                                </ng-template>
-                              </label>
+                  <ng-template #ativacaoView>
+                    <strong>
+                      {{ formatDateOnly(contract.dataAtivacao) }}
+                    </strong>
+                  </ng-template>
+                </label>
+
+                <label>
+                  Data Baixa
+
+                  <input
+                    *ngIf="isEditing; else baixaView"
+                    type="date"
+                    [(ngModel)]="editForm.dataBaixa"
+                  />
+
+                  <ng-template #baixaView>
+                    <strong>
+                      {{ formatDateOnly(contract.dataBaixa) }}
+                    </strong>
+                  </ng-template>
+                </label>
               </div>
 
-<div class="status-sale-row status-sale-row--two">
+              <div class="status-sale-row status-sale-row--two">
                 <label>
-                                NRº Lead
+                  NRº Lead
 
-                                <input
-                                  *ngIf="isEditing; else leadView"
-                                  type="text"
-                                  [(ngModel)]="editForm.numeroLead"
-                                />
+                  <input
+                    *ngIf="isEditing; else leadView"
+                    type="text"
+                    [(ngModel)]="editForm.numeroLead"
+                  />
 
-                                <ng-template #leadView>
-                                  <strong>
-                                    {{ getValue(contract.numeroLead) }}
-                                  </strong>
-                                </ng-template>
-                              </label>
+                  <ng-template #leadView>
+                    <strong>
+                      {{ getValue(contract.numeroLead) }}
+                    </strong>
+                  </ng-template>
+                </label>
 
                 <label>
-                                OFFER
+                  OFFER
 
-                                <input
-                                  *ngIf="isEditing; else offerView"
-                                  type="text"
-                                  [(ngModel)]="editForm.offer"
-                                />
+                  <input
+                    *ngIf="isEditing; else offerView"
+                    type="text"
+                    [(ngModel)]="editForm.offer"
+                  />
 
-                                <ng-template #offerView>
-                                  <strong>
-                                    {{ getValue(contract.offer) }}
-                                  </strong>
-                                </ng-template>
-                              </label>
+                  <ng-template #offerView>
+                    <strong>
+                      {{ getValue(contract.offer) }}
+                    </strong>
+                  </ng-template>
+                </label>
               </div>
             </div>
           </div>
@@ -405,24 +345,12 @@
         ========================== -->
 
         <article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('client')"
-          >
+          <button type="button" class="section-toggle" (click)="toggleSection('client')">
             <span>Dados Cliente / Empresa</span>
-            <span
-              class="chevron"
-              [class.collapsed]="collapsedSections.client"
-            >
-              ⌄
-            </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.client"> ⌄ </span>
           </button>
 
-          <div
-            class="section-content"
-            *ngIf="!collapsedSections.client"
-          >
+          <div class="section-content" *ngIf="!collapsedSections.client">
             <div class="info-grid">
               <label>
                 Nome Cliente / Empresa *
@@ -446,7 +374,8 @@
                 <input
                   *ngIf="isEditing; else nifView"
                   type="number"
-                  [(ngModel)]="editForm.nif"
+                  [value]="contract.nif"
+                  readonly
                 />
 
                 <ng-template #nifView>
@@ -469,6 +398,7 @@
                   type="tel"
                   required
                   [(ngModel)]="editForm.telefone"
+                  appContractMask="phone"
                 />
 
                 <ng-template #telefoneView>
@@ -485,6 +415,7 @@
                   *ngIf="isEditing; else emailView"
                   type="email"
                   [(ngModel)]="editForm.email"
+                  appContractMask="email"
                 />
 
                 <ng-template #emailView>
@@ -497,11 +428,7 @@
               <label>
                 CAE
 
-                <input
-                  *ngIf="isEditing; else caeView"
-                  type="text"
-                  [(ngModel)]="editForm.cae"
-                />
+                <input *ngIf="isEditing; else caeView" type="text" [(ngModel)]="editForm.cae" />
 
                 <ng-template #caeView>
                   <strong>
@@ -517,6 +444,7 @@
                   *ngIf="isEditing; else crcView"
                   type="text"
                   [(ngModel)]="editForm.crc"
+                  appContractMask="crc"
                 />
 
                 <ng-template #crcView>
@@ -534,24 +462,12 @@
         ========================== -->
 
         <article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('billing')"
-          >
+          <button type="button" class="section-toggle" (click)="toggleSection('billing')">
             <span>Dados Morada / Faturação</span>
-            <span
-              class="chevron"
-              [class.collapsed]="collapsedSections.billing"
-            >
-              ⌄
-            </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.billing"> ⌄ </span>
           </button>
 
-          <div
-            class="section-content"
-            *ngIf="!collapsedSections.billing"
-          >
+          <div class="section-content" *ngIf="!collapsedSections.billing">
             <div class="info-grid">
               <label class="full-width">
                 Morada Instalação
@@ -588,17 +504,10 @@
               <label>
                 Fatura Eletrónica
 
-                <select
-                  *ngIf="isEditing; else faturaView"
-                  [(ngModel)]="editForm.faturaEletronica"
-                >
-                  <option [ngValue]="false">
-                    Não
-                  </option>
+                <select *ngIf="isEditing; else faturaView" [(ngModel)]="editForm.faturaEletronica">
+                  <option [ngValue]="false">Não</option>
 
-                  <option [ngValue]="true">
-                    Sim
-                  </option>
+                  <option [ngValue]="true">Sim</option>
                 </select>
 
                 <ng-template #faturaView>
@@ -611,17 +520,10 @@
               <label>
                 Débito Direto
 
-                <select
-                  *ngIf="isEditing; else debitoView"
-                  [(ngModel)]="editForm.debitoDireto"
-                >
-                  <option [ngValue]="false">
-                    Não
-                  </option>
+                <select *ngIf="isEditing; else debitoView" [(ngModel)]="editForm.debitoDireto">
+                  <option [ngValue]="false">Não</option>
 
-                  <option [ngValue]="true">
-                    Sim
-                  </option>
+                  <option [ngValue]="true">Sim</option>
                 </select>
 
                 <ng-template #debitoView>
@@ -634,11 +536,7 @@
               <label>
                 NIB
 
-                <input
-                  *ngIf="isEditing; else nibView"
-                  type="text"
-                  [(ngModel)]="editForm.nib"
-                />
+                <input *ngIf="isEditing; else nibView" type="text" [(ngModel)]="editForm.nib" />
 
                 <ng-template #nibView>
                   <strong>
@@ -655,24 +553,12 @@
         ========================== -->
 
         <article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('solar')"
-          >
+          <button type="button" class="section-toggle" (click)="toggleSection('solar')">
             <span>Dados Produto</span>
-            <span
-              class="chevron"
-              [class.collapsed]="collapsedSections.solar"
-            >
-              ⌄
-            </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.solar"> ⌄ </span>
           </button>
 
-          <div
-            class="section-content"
-            *ngIf="!collapsedSections.solar"
-          >
+          <div class="section-content" *ngIf="!collapsedSections.solar">
             <div class="info-grid">
               <label>
                 Microinversor
@@ -681,13 +567,9 @@
                   *ngIf="isEditing; else microinversorView"
                   [(ngModel)]="editForm.microinversor"
                 >
-                  <option [ngValue]="false">
-                    Não
-                  </option>
+                  <option [ngValue]="false">Não</option>
 
-                  <option [ngValue]="true">
-                    Sim
-                  </option>
+                  <option [ngValue]="true">Sim</option>
                 </select>
 
                 <ng-template #microinversorView>
@@ -700,17 +582,10 @@
               <label>
                 Baterias
 
-                <select
-                  *ngIf="isEditing; else bateriasView"
-                  [(ngModel)]="editForm.baterias"
-                >
-                  <option [ngValue]="false">
-                    Não
-                  </option>
+                <select *ngIf="isEditing; else bateriasView" [(ngModel)]="editForm.baterias">
+                  <option [ngValue]="false">Não</option>
 
-                  <option [ngValue]="true">
-                    Sim
-                  </option>
+                  <option [ngValue]="true">Sim</option>
                 </select>
 
                 <ng-template #bateriasView>
@@ -747,10 +622,7 @@
                   [(ngModel)]="editForm.metodoPagamento"
                   required
                 >
-                  <option
-                    *ngFor="let option of paymentMethodOptions"
-                    [value]="option"
-                  >
+                  <option *ngFor="let option of paymentMethodOptions" [value]="option">
                     {{ option }}
                   </option>
                 </select>
@@ -764,31 +636,24 @@
             </div>
           </div>
         </article>
-<article class="card">
-          <button
-            type="button"
-            class="section-toggle"
-            (click)="toggleSection('attachments')"
-          >
+        <article class="card">
+          <button type="button" class="section-toggle" (click)="toggleSection('attachments')">
             <span>Carregar Documentos</span>
             <span class="chevron" [class.collapsed]="collapsedSections.attachments">⌄</span>
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.attachments">
             <div class="attachment-upload" *ngIf="isEditing && isSuperAdmin">
-              <app-file-dropzone
-                [(files)]="selectedFiles"
-                [disabled]="isSaving"
-              />
+              <app-file-dropzone [(files)]="selectedFiles" [disabled]="isSaving" />
             </div>
 
             <div
               class="attachments-list"
-              *ngIf="(contract.documentos?.length ?? 0) > 0; else noDocuments"
+              *ngIf="(contract.documentos | visibleAttachments).length > 0; else noDocuments"
             >
               <div
                 class="attachment-item"
-                *ngFor="let document of contract.documentos"
+                *ngFor="let document of contract.documentos | visibleAttachments"
                 [class.deleting]="isDeletingAttachment(document)"
               >
                 <button
@@ -830,8 +695,6 @@
           </div>
         </article>
 
-        
-      
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"
           [tickets]="contract.tickets ?? []"
@@ -916,10 +779,7 @@
         <article class="card">
           <div class="section-title">Equipas</div>
 
-          <div
-            class="stack-list"
-            *ngIf="(contract.teams?.length ?? 0) > 0; else noTeams"
-          >
+          <div class="stack-list" *ngIf="(contract.teams?.length ?? 0) > 0; else noTeams">
             <a
               class="linked-item"
               *ngFor="let team of contract.teams"
@@ -937,10 +797,7 @@
         <article class="card">
           <div class="section-title">Seguidores</div>
 
-          <div
-            class="stack-list"
-            *ngIf="(contract.followers?.length ?? 0) > 0; else noFollowers"
-          >
+          <div class="stack-list" *ngIf="(contract.followers?.length ?? 0) > 0; else noFollowers">
             <a
               class="linked-item"
               *ngFor="let follower of contract.followers"

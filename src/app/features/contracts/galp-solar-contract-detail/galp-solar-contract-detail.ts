@@ -3,13 +3,7 @@ import {
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,6 +16,7 @@ import {
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
+import { FileAccessService } from '../../../core/services/file-access';
 import {
   GALP_SOLAR_PANEL_SUGGESTIONS,
   GALP_SOLAR_PAYMENT_METHOD_SUGGESTIONS,
@@ -89,6 +84,9 @@ import { appendObservationHistory } from '../../../core/utils/observation-histor
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
+import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
@@ -96,6 +94,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   imports: [
     CommonModule,
     FormsModule,
+    ContractFieldMaskDirective,
+    VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
     ObservationsThread,
@@ -106,11 +106,11 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './galp-solar-contract-detail.scss',
 })
 export class GalpSolarContractDetail implements OnInit {
-  readonly qualityControlBackofficeOptions =
-    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
+  readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(Auth);
+  private readonly fileAccess = inject(FileAccessService);
   private readonly galpSolarContractService = inject(GalpSolarContractService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
@@ -149,18 +149,11 @@ export class GalpSolarContractDetail implements OnInit {
   contractId = '';
   lastSocketUpdate = '';
 
-  readonly tipoSegmentoOptions = [
-    'Residencial',
-    'Empresarial',
-    'Condomínios',
-  ];
+  readonly tipoSegmentoOptions = ['Residencial', 'Empresarial', 'Condomínios'];
 
   readonly tipoProdutoOptions = ['Painéis Solares'];
 
-  readonly contratacaoOptions = [
-    'Contratação Papel',
-    'Contratação Digital',
-  ];
+  readonly contratacaoOptions = ['Contratação Papel', 'Contratação Digital'];
 
   readonly estadoOptions = GALP_SOLAR_STATUSES;
   readonly panelSuggestions = GALP_SOLAR_PANEL_SUGGESTIONS;
@@ -174,15 +167,13 @@ export class GalpSolarContractDetail implements OnInit {
 
     this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        this.contractId = params.get('id') ?? '';
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.contractId = params.get('id') ?? '';
 
-        if (this.contractId) {
-          this.loadContract(this.contractId);
-        }
-      });
+      if (this.contractId) {
+        this.loadContract(this.contractId);
+      }
+    });
 
     this.socketService
       .listenGalpSolarContractUpdated()
@@ -192,11 +183,7 @@ export class GalpSolarContractDetail implements OnInit {
           return;
         }
 
-        const activityUpdate =
-          mergeContractActivitySocketPayload(
-            this.contract,
-            event,
-          );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
 
         if (activityUpdate.updated) {
           this.contract = activityUpdate.contract;
@@ -204,38 +191,30 @@ export class GalpSolarContractDetail implements OnInit {
 
         if (
           this.contract &&
-          (event.observacoes !== undefined ||
-            event.observacoesInternas !== undefined)
+          (event.observacoes !== undefined || event.observacoesInternas !== undefined)
         ) {
           this.contract = {
             ...this.contract,
-            ...(event.observacoes !== undefined
-              ? { observacoes: event.observacoes ?? '' }
-              : {}),
+            ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
             ...(event.observacoesInternas !== undefined
               ? { observacoesInternas: event.observacoesInternas ?? '' }
               : {}),
           };
         }
 
-        const stateUpdate =
-          mergeContractStateSocketPayload(
-            this.contract,
-            event,
-            this.estadoOptions,
-          );
+        const stateUpdate = mergeContractStateSocketPayload(
+          this.contract,
+          event,
+          this.estadoOptions,
+        );
 
-        if (
-          stateUpdate.updated &&
-          stateUpdate.contract
-        ) {
+        if (stateUpdate.updated && stateUpdate.contract) {
           this.contract = stateUpdate.contract;
 
           if (
             this.isEditing &&
             stateUpdate.estado &&
-            this.editForm.estado ===
-              this.originalEditForm.estado
+            this.editForm.estado === this.originalEditForm.estado
           ) {
             this.editForm = {
               ...this.editForm,
@@ -249,15 +228,11 @@ export class GalpSolarContractDetail implements OnInit {
           }
         }
 
-        const currentTime =
-          new Date().toLocaleTimeString('pt-PT');
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
-        if (
-          event.ticketEvent &&
-          Array.isArray(event.tickets)
-        ) {
+        if (event.ticketEvent && Array.isArray(event.tickets)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -265,19 +240,13 @@ export class GalpSolarContractDetail implements OnInit {
           return;
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(event);
+        const eventUserId = this.getSocketEventUserId(event);
 
         const isOwnSocketUpdate = Boolean(
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId,
+          eventUserId && this.currentUserId && eventUserId === this.currentUserId,
         );
 
-        if (
-          isOwnSocketUpdate ||
-          (!eventUserId && this.suppressNextOwnSocketUpdate)
-        ) {
+        if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -291,8 +260,7 @@ export class GalpSolarContractDetail implements OnInit {
           return;
         }
 
-        this.socketMessage =
-          `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
+        this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
 
         this.loadContract(this.contractId, false);
       });
@@ -351,31 +319,20 @@ export class GalpSolarContractDetail implements OnInit {
     this.submitObservationValue(message, true);
   }
 
-  private submitObservationValue(
-    message: string,
-    internal: boolean,
-  ): void {
+  private submitObservationValue(message: string, internal: boolean): void {
     if (
       !this.contract ||
       !this.contractId ||
       !this.isSuperAdmin ||
       (internal && !this.canAccessInternalObservations) ||
-      (internal
-        ? this.isSubmittingInternalObservation
-        : this.isSubmittingObservation)
+      (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
     }
 
-    const currentValue = internal
-      ? this.contract.observacoesInternas
-      : this.contract.observacoes;
+    const currentValue = internal ? this.contract.observacoesInternas : this.contract.observacoes;
 
-    const nextHistory = appendObservationHistory(
-      currentValue,
-      message,
-      this.currentUserName,
-    );
+    const nextHistory = appendObservationHistory(currentValue, message, this.currentUserName);
 
     if (!nextHistory) {
       return;
@@ -389,14 +346,10 @@ export class GalpSolarContractDetail implements OnInit {
 
     this.errorMessage = '';
 
-    const payload = internal
-      ? { observacoesInternas: nextHistory }
-      : { observacoes: nextHistory };
+    const payload = internal ? { observacoesInternas: nextHistory } : { observacoes: nextHistory };
 
-    this.galpSolarContractService.update(
-      this.contractId,
-      payload,
-    )
+    this.galpSolarContractService
+      .update(this.contractId, payload)
       .pipe(
         finalize(() => {
           if (internal) {
@@ -415,15 +368,13 @@ export class GalpSolarContractDetail implements OnInit {
           if (internal) {
             this.contract = {
               ...this.contract,
-              observacoesInternas:
-                updatedContract.observacoesInternas ?? nextHistory,
+              observacoesInternas: updatedContract.observacoesInternas ?? nextHistory,
             };
             this.internalObservationDraft = '';
           } else {
             this.contract = {
               ...this.contract,
-              observacoes:
-                updatedContract.observacoes ?? nextHistory,
+              observacoes: updatedContract.observacoes ?? nextHistory,
             };
             this.observationDraft = '';
           }
@@ -467,7 +418,6 @@ export class GalpSolarContractDetail implements OnInit {
     this.successMessage = '';
   }
 
-
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const digits = input.value.replace(/\D/g, '').slice(0, 9);
@@ -494,9 +444,16 @@ export class GalpSolarContractDetail implements OnInit {
     const numeroPaineis = Number(this.editForm.numeroPaineisSolares);
 
     if (!Number.isFinite(numeroPaineis) || numeroPaineis < 1) {
-      this.showError(
-        'O número de painéis solares deve ser igual ou superior a 1.',
-      );
+      this.showError('O número de painéis solares deve ser igual ou superior a 1.');
+      return;
+    }
+
+    const fieldValidationError = getContractFormValidationError(
+      this.editForm as unknown as Record<string, unknown>,
+    );
+
+    if (fieldValidationError) {
+      this.showError(fieldValidationError);
       return;
     }
 
@@ -553,11 +510,7 @@ export class GalpSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: ({ contract: updatedContract, uploadFailed, uploadError }) => {
-          const contractWithActivity =
-            preserveContractActivity(
-              updatedContract,
-              this.contract,
-            );
+          const contractWithActivity = preserveContractActivity(updatedContract, this.contract);
 
           this.contract = contractWithActivity;
           this.initializeEditForm(contractWithActivity);
@@ -606,22 +559,16 @@ export class GalpSolarContractDetail implements OnInit {
       return;
     }
 
-    const existingFileKeys = new Set(
-      this.selectedFiles.map((file) => this.getFileKey(file)),
-    );
+    const existingFileKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
 
-    const newFiles = files.filter(
-      (file) => !existingFileKeys.has(this.getFileKey(file)),
-    );
+    const newFiles = files.filter((file) => !existingFileKeys.has(this.getFileKey(file)));
 
     this.selectedFiles = [...this.selectedFiles, ...newFiles];
     input.value = '';
   }
 
   removeSelectedFile(index: number): void {
-    this.selectedFiles = this.selectedFiles.filter(
-      (_, fileIndex) => fileIndex !== index,
-    );
+    this.selectedFiles = this.selectedFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   clearSelectedFiles(): void {
@@ -639,9 +586,7 @@ export class GalpSolarContractDetail implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Pretende remover o ficheiro "${document.originalName}"?`,
-    );
+    const confirmed = window.confirm(`Pretende remover o ficheiro "${document.originalName}"?`);
 
     if (!confirmed) {
       return;
@@ -650,15 +595,12 @@ export class GalpSolarContractDetail implements OnInit {
     const previousContract = this.contract;
 
     this.deletingAttachmentFileNames.add(document.fileName);
-    this.deletingAttachmentFileNames = new Set(
-      this.deletingAttachmentFileNames,
-    );
+    this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
 
     this.contract = {
       ...previousContract,
       documentos: (previousContract.documentos ?? []).filter(
-        (existingDocument) =>
-          existingDocument.fileName !== document.fileName,
+        (existingDocument) => existingDocument.fileName !== document.fileName,
       ),
     };
 
@@ -671,20 +613,13 @@ export class GalpSolarContractDetail implements OnInit {
       .pipe(
         finalize(() => {
           this.deletingAttachmentFileNames.delete(document.fileName);
-          this.deletingAttachmentFileNames = new Set(
-            this.deletingAttachmentFileNames,
-          );
+          this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
         }),
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = preserveContractActivity(
-            updatedContract,
-            this.contract,
-          );
-          this.showSuccess(
-            `O ficheiro "${document.originalName}" foi removido com sucesso.`,
-          );
+          this.contract = preserveContractActivity(updatedContract, this.contract);
+          this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {
           this.clearOwnSocketSuppression();
@@ -703,6 +638,11 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   downloadDocument(document: GalpSolarContractDocument): void {
+    if (!this.fileAccess.canViewFile(document)) {
+      this.showError('Não tem permissão para visualizar ficheiros de áudio.');
+      return;
+    }
+
     if (!this.contract?.id || !document.fileName) {
       return;
     }
@@ -762,14 +702,10 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   canManageQualityControl(): boolean {
-    return canManageQualityControlRole(
-      this.auth.getCurrentUser()?.role,
-    );
+    return canManageQualityControlRole(this.auth.getCurrentUser()?.role);
   }
 
-  getValue(
-    value: string | number | null | undefined,
-  ): string | number {
+  getValue(value: string | number | null | undefined): string | number {
     return value === null || value === undefined || value === '' ? '-' : value;
   }
 
@@ -814,14 +750,12 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   private resolvePermissions(): void {
-    const currentUser =
-      this.auth.getCurrentUser() as AuthenticatedUserLike | null;
+    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
 
     const role = currentUser?.role?.toLowerCase() ?? '';
 
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
-    this.currentUserName =
-      currentUser?.name ?? currentUser?.username ?? 'Utilizador';
+    this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
     this.isSuperAdmin = role.includes('super admin');
 
     if (!this.currentUserId) {
@@ -839,14 +773,12 @@ export class GalpSolarContractDetail implements OnInit {
             ?.map((team) => team.id ?? '')
             .filter(Boolean) ?? [];
 
-        const authorizedTeamIds = [
-          environment.EQUIPA_CRM_ID,
-          environment.EQUIPA_DU_ID,
-        ].filter((teamId): teamId is string => Boolean(teamId));
+        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+          (teamId): teamId is string => Boolean(teamId),
+        );
 
         this.canAccessInternalObservations =
-          this.isSuperAdmin ||
-          teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
+          this.isSuperAdmin || teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
 
         if (!this.canAccessInternalObservations) {
           this.internalObservationDraft = '';
@@ -861,10 +793,7 @@ export class GalpSolarContractDetail implements OnInit {
     }
 
     return (contract.followers ?? []).some((follower) => {
-      const followerId =
-        typeof follower === 'string'
-          ? follower
-          : follower.id ?? '';
+      const followerId = typeof follower === 'string' ? follower : (follower.id ?? '');
 
       return followerId === this.currentUserId;
     });
@@ -875,30 +804,22 @@ export class GalpSolarContractDetail implements OnInit {
       return;
     }
 
-    this.galpSolarContractService.getById(this.contractId)
-      .subscribe({
-        next: (latestContract) => {
-          if (
-            !this.contract ||
-            latestContract.id !== this.contractId
-          ) {
-            return;
-          }
+    this.galpSolarContractService.getById(this.contractId).subscribe({
+      next: (latestContract) => {
+        if (!this.contract || latestContract.id !== this.contractId) {
+          return;
+        }
 
-          const activityUpdate =
-            mergeContractActivitySocketPayload(
-              this.contract,
-              {
-                fluxo: latestContract.fluxo,
-                tickets: latestContract.tickets,
-              },
-            );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
+          fluxo: latestContract.fluxo,
+          tickets: latestContract.tickets,
+        });
 
-          if (activityUpdate.updated) {
-            this.contract = activityUpdate.contract;
-          }
-        },
-      });
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
+      },
+    });
   }
 
   private getSocketEventUserId(event: unknown): string {
@@ -908,12 +829,7 @@ export class GalpSolarContractDetail implements OnInit {
       updatedByUserId?: string;
     };
 
-    return (
-      socketEvent.updatedBy ??
-      socketEvent.userId ??
-      socketEvent.updatedByUserId ??
-      ''
-    );
+    return socketEvent.updatedBy ?? socketEvent.userId ?? socketEvent.updatedByUserId ?? '';
   }
 
   private synchronizeExternalUpdate(currentTime: string): void {
@@ -956,9 +872,10 @@ export class GalpSolarContractDetail implements OnInit {
     });
   }
 
-  private mergeExternalContract(
-    latestContract: GalpSolarContract,
-  ): { updated: number; conflicts: number } {
+  private mergeExternalContract(latestContract: GalpSolarContract): {
+    updated: number;
+    conflicts: number;
+  } {
     const latestForm = this.buildEditableState(latestContract);
     const nextEditForm = structuredClone(this.editForm);
     const nextOriginalForm = structuredClone(this.originalEditForm);
@@ -1090,34 +1007,13 @@ export class GalpSolarContractDetail implements OnInit {
     );
     this.assignChangedValue(
       payload,
-      'nif',
-      this.editForm.nif ?? undefined,
-      this.originalEditForm.nif ?? undefined,
-    );
-    this.assignChangedValue(
-      payload,
       'telefone',
       this.editForm.telefone,
       this.originalEditForm.telefone,
     );
-    this.assignChangedValue(
-      payload,
-      'email',
-      this.editForm.email,
-      this.originalEditForm.email,
-    );
-    this.assignChangedValue(
-      payload,
-      'cae',
-      this.editForm.cae,
-      this.originalEditForm.cae,
-    );
-    this.assignChangedValue(
-      payload,
-      'crc',
-      this.editForm.crc,
-      this.originalEditForm.crc,
-    );
+    this.assignChangedValue(payload, 'email', this.editForm.email, this.originalEditForm.email);
+    this.assignChangedValue(payload, 'cae', this.editForm.cae, this.originalEditForm.cae);
+    this.assignChangedValue(payload, 'crc', this.editForm.crc, this.originalEditForm.crc);
     this.assignChangedValue(
       payload,
       'tipoSegmento',
@@ -1142,12 +1038,7 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.numeroLead,
       this.originalEditForm.numeroLead,
     );
-    this.assignChangedValue(
-      payload,
-      'offer',
-      this.editForm.offer,
-      this.originalEditForm.offer,
-    );
+    this.assignChangedValue(payload, 'offer', this.editForm.offer, this.originalEditForm.offer);
 
     if (this.canManageQualityControl()) {
       this.assignChangedValue(
@@ -1169,12 +1060,7 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.nomeRegistoCE,
       this.originalEditForm.nomeRegistoCE,
     );
-    this.assignChangedValue(
-      payload,
-      'estado',
-      this.editForm.estado,
-      this.originalEditForm.estado,
-    );
+    this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
     this.assignChangedValue(
       payload,
       'agendamento',
@@ -1247,12 +1133,7 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.debitoDireto,
       this.originalEditForm.debitoDireto,
     );
-    this.assignChangedValue(
-      payload,
-      'nib',
-      this.editForm.nib,
-      this.originalEditForm.nib,
-    );
+    this.assignChangedValue(payload, 'nib', this.editForm.nib, this.originalEditForm.nib);
     this.assignChangedValue(
       payload,
       'tipoPainel',
@@ -1283,12 +1164,10 @@ export class GalpSolarContractDetail implements OnInit {
       this.editForm.metodoPagamento,
       this.originalEditForm.metodoPagamento,
     );
-return payload;
+    return payload;
   }
 
-  private assignChangedValue<
-    Key extends keyof UpdateGalpSolarContractRequest,
-  >(
+  private assignChangedValue<Key extends keyof UpdateGalpSolarContractRequest>(
     payload: UpdateGalpSolarContractRequest,
     key: Key,
     currentValue: UpdateGalpSolarContractRequest[Key],
@@ -1297,12 +1176,8 @@ return payload;
     const normalizedCurrent = this.normalizeValue(currentValue);
     const normalizedOriginal = this.normalizeValue(originalValue);
 
-    if (
-      JSON.stringify(normalizedCurrent) !==
-      JSON.stringify(normalizedOriginal)
-    ) {
-      payload[key] =
-        normalizedCurrent as UpdateGalpSolarContractRequest[Key];
+    if (JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedOriginal)) {
+      payload[key] = normalizedCurrent as UpdateGalpSolarContractRequest[Key];
     }
   }
 
@@ -1337,9 +1212,7 @@ return payload;
 
     const timezoneOffset = date.getTimezoneOffset() * 60_000;
 
-    return new Date(date.getTime() - timezoneOffset)
-      .toISOString()
-      .slice(0, 16);
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
   }
 
   private buildEmptyEditForm(): EditableContractForm {

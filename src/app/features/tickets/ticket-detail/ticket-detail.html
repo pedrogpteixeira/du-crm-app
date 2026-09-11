@@ -24,12 +24,7 @@
       </div>
 
       <div class="header-actions" *ngIf="canEditTicket">
-        <button
-          *ngIf="!isEditing"
-          type="button"
-          class="primary-button"
-          (click)="startEditing()"
-        >
+        <button *ngIf="!isEditing" type="button" class="primary-button" (click)="startEditing()">
           Editar
         </button>
 
@@ -70,15 +65,10 @@
             <label>
               Tipo
 
-              <select *ngIf="isEditing; else tipoView" formControlName="tipo">
-                <option *ngFor="let option of ticketTypeOptions" [value]="option">
-                  {{ option }}
-                </option>
-              </select>
-
-              <ng-template #tipoView>
-                <strong>{{ ticket.tipo }}</strong>
-              </ng-template>
+              <strong>{{ ticket.tipo }}</strong>
+              <small class="readonly-hint" *ngIf="isEditing">
+                O tipo do Ticket não pode ser alterado após a criação.
+              </small>
             </label>
 
             <label>
@@ -91,10 +81,7 @@
               </select>
 
               <ng-template #estadoView>
-                <span
-                  class="ticket-status"
-                  [ngClass]="getTicketStatusClass(ticket.estado)"
-                >
+                <span class="ticket-status" [ngClass]="getTicketStatusClass(ticket.estado)">
                   {{ ticket.estado }}
                 </span>
               </ng-template>
@@ -103,23 +90,14 @@
             <label>
               Prioridade
 
-              <select
-                *ngIf="isEditing; else prioridadeView"
-                formControlName="prioridade"
-              >
-                <option
-                  *ngFor="let option of ticketPriorityOptions"
-                  [value]="option"
-                >
+              <select *ngIf="isEditing; else prioridadeView" formControlName="prioridade">
+                <option *ngFor="let option of ticketPriorityOptions" [value]="option">
                   {{ option }}
                 </option>
               </select>
 
               <ng-template #prioridadeView>
-                <span
-                  class="ticket-priority"
-                  [ngClass]="getTicketPriorityClass(ticket.prioridade)"
-                >
+                <span class="ticket-priority" [ngClass]="getTicketPriorityClass(ticket.prioridade)">
                   {{ ticket.prioridade }}
                 </span>
               </ng-template>
@@ -205,7 +183,12 @@
         </article>
 
         <article class="card">
-          <div class="section-title">Documentos</div>
+          <div class="section-title-row">
+            <div class="section-title">Documentos</div>
+            <span class="treatment-document-hint" *ngIf="isEditing && isTreatmentEditType">
+              Obrigatório para Tratamento de Pendência
+            </span>
+          </div>
 
           <div class="attachment-upload" *ngIf="isEditing && canEditTicket">
             <app-file-dropzone
@@ -216,11 +199,11 @@
 
           <div
             class="attachments-list"
-            *ngIf="ticket.anexos.length; else noDocuments"
+            *ngIf="(ticket.anexos | visibleAttachments).length; else noDocuments"
           >
             <div
               class="attachment-item"
-              *ngFor="let document of ticket.anexos"
+              *ngFor="let document of ticket.anexos | visibleAttachments"
               [class.deleting]="isDeletingAttachment(document)"
             >
               <button
@@ -258,6 +241,19 @@
           <ng-template #noDocuments>
             <p class="empty-state">Sem documentos associados.</p>
           </ng-template>
+
+          <p
+            class="treatment-document-warning"
+            *ngIf="
+              isEditing &&
+              isTreatmentEditType &&
+              ticket.anexos.length === 0 &&
+              selectedFiles.length === 0
+            "
+          >
+            É necessário associar pelo menos um documento antes de guardar um Ticket de Tratamento
+            de Pendência.
+          </p>
         </article>
       </div>
 
@@ -268,20 +264,14 @@
           <div class="side-list">
             <label>
               Estado
-              <span
-                class="ticket-status"
-                [ngClass]="getTicketStatusClass(ticket.estado)"
-              >
+              <span class="ticket-status" [ngClass]="getTicketStatusClass(ticket.estado)">
                 {{ ticket.estado }}
               </span>
             </label>
 
             <label>
               Prioridade
-              <span
-                class="ticket-priority"
-                [ngClass]="getTicketPriorityClass(ticket.prioridade)"
-              >
+              <span class="ticket-priority" [ngClass]="getTicketPriorityClass(ticket.prioridade)">
                 {{ ticket.prioridade }}
               </span>
             </label>

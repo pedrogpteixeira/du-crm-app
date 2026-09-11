@@ -61,6 +61,7 @@ export interface CreateTicketRequest {
   observacoes?: string;
   userId: string;
   teams: TicketTeam[];
+  documentosConfirmados?: boolean;
 }
 
 export interface UpdateTicketRequest {
@@ -72,6 +73,7 @@ export interface UpdateTicketRequest {
   observacoes?: string;
   userId?: string;
   teams?: TicketTeam[];
+  documentosConfirmados?: boolean;
 }
 
 export interface CreatedTicket {
@@ -219,6 +221,98 @@ export const TICKET_PRIORITY_OPTIONS: readonly TicketPrioridade[] = [
   'Alto',
   'Urgente',
 ];
+
+export const TREATMENT_TICKET_TYPE: TicketTipo = 'Tratamento de Pendência';
+export const CANCELLATION_TICKET_TYPE: TicketTipo = 'Pedido de Anulação';
+
+export function getEffectiveTicketType(
+  currentTicket: Pick<TicketDetail, 'tipo'>,
+  changes: Pick<UpdateTicketRequest, 'tipo'>,
+): TicketTipo {
+  return changes.tipo ?? currentTicket.tipo;
+}
+
+export function hasRequiredDocuments(
+  existingDocuments: readonly TicketDocument[] = [],
+  newFiles: readonly File[] = [],
+  removedFileNames: readonly string[] = [],
+): boolean {
+  const removedFiles = new Set(removedFileNames);
+  const remainingDocuments = existingDocuments.filter(
+    (document) => !removedFiles.has(document.fileName),
+  );
+
+  return remainingDocuments.length + newFiles.length > 0;
+}
+
+export function prepareTicketCreatePayload(
+  payload: CreateTicketRequest,
+  hasDocuments: boolean,
+): CreateTicketRequest {
+  const {
+    documentosConfirmados: _documentosConfirmados,
+    ...sanitizedPayload
+  } = payload;
+
+  if (payload.tipo === TREATMENT_TICKET_TYPE && hasDocuments) {
+    return {
+      ...sanitizedPayload,
+      documentosConfirmados: true,
+    };
+  }
+
+  return sanitizedPayload;
+}
+
+export function prepareTicketUpdatePayload(
+  currentTicket: TicketDetail,
+  changes: UpdateTicketRequest,
+): UpdateTicketRequest {
+  const {
+    documentosConfirmados: _documentosConfirmados,
+    ...sanitizedChanges
+  } = changes;
+  const effectiveType = getEffectiveTicketType(
+    currentTicket,
+    sanitizedChanges,
+  );
+
+  if (effectiveType === TREATMENT_TICKET_TYPE) {
+    return {
+      ...sanitizedChanges,
+      documentosConfirmados: true,
+    };
+  }
+
+  return sanitizedChanges;
+}
+
+export function buildCancellationDescription(
+  currentDescription: string | null | undefined,
+  reason: string,
+): string {
+  const description = currentDescription?.trim();
+  const cancellationReason = `Motivo da anulação: ${reason.trim()}`;
+
+  return description
+    ? `${description}\n\n${cancellationReason}`
+    : cancellationReason;
+}
+
+export function isDocumentConfirmationApiError(
+  message: string | null | undefined,
+): boolean {
+  const normalizedMessage = (message ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+  return (
+    normalizedMessage.includes('documentosconfirmados') ||
+    (normalizedMessage.includes('document') &&
+      normalizedMessage.includes('confirm'))
+  );
+}
 
 @Injectable({
   providedIn: 'root',

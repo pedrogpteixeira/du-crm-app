@@ -4,32 +4,16 @@ import {
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-} from '@angular/router';
-import {
-  Observable,
-  catchError,
-  finalize,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 
 import {
@@ -38,16 +22,11 @@ import {
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
-import {
-  Campaign,
-  CampaignService,
-} from '../../../core/services/campaign';
+import { FileAccessService } from '../../../core/services/file-access';
+import { Campaign, CampaignService } from '../../../core/services/campaign';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
-import {
-  ProfileUser,
-  UserService,
-} from '../../../core/services/user';
+import { ProfileUser, UserService } from '../../../core/services/user';
 import {
   UpdateMeoEnergiasContractRequest,
   MEO_ENERGIAS_CONTRACT_STATUSES,
@@ -65,9 +44,7 @@ import {
   MeoEnergiasTipoSegmento,
 } from '../../../core/services/meo-energias-contract';
 
-type CampaignSelectionMode =
-  | 'existing'
-  | 'other';
+type CampaignSelectionMode = 'existing' | 'other';
 
 interface EditableContractForm {
   nomeClienteEmpresa: string;
@@ -81,13 +58,9 @@ interface EditableContractForm {
   tipoProduto: MeoEnergiasTipoProduto;
   contratacao: MeoEnergiasContratacao;
 
-  tipoContratacaoLuz:
-    | MeoEnergiasTipoContratacao
-    | '';
+  tipoContratacaoLuz: MeoEnergiasTipoContratacao | '';
 
-  tipoContratacaoGas:
-    | MeoEnergiasTipoContratacao
-    | '';
+  tipoContratacaoGas: MeoEnergiasTipoContratacao | '';
 
   controleQualidade: string;
   codigoRegistoCE: string;
@@ -118,13 +91,9 @@ interface EditableContractForm {
   potencia: string;
   escalao: string;
 
-  cicloHorario:
-    | MeoEnergiasCicloHorario
-    | '';
+  cicloHorario: MeoEnergiasCicloHorario | '';
 
-  nivelTensao:
-    | MeoEnergiasNivelTensao
-    | '';
+  nivelTensao: MeoEnergiasNivelTensao | '';
 
   campaignId: string;
   customCampaign: string;
@@ -144,8 +113,7 @@ interface AuthenticatedUserLike {
   username?: string;
 }
 
-interface MeoEnergiasContractApiShape
-  extends MeoEnergiasContractDetailModel {
+interface MeoEnergiasContractApiShape extends MeoEnergiasContractDetailModel {
   campanha?: string | null;
 }
 import {
@@ -156,6 +124,8 @@ import {
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
@@ -163,63 +133,46 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   imports: [
     CommonModule,
     FormsModule,
+    ContractFieldMaskDirective,
+    VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
     ObservationsThread,
     FileDropzone,
   ],
-  templateUrl:
-    './meo-energias-contract-detail.html',
-  changeDetection:
-    ChangeDetectionStrategy.Eager,
-  styleUrl:
-    './meo-energias-contract-detail.scss',
+  templateUrl: './meo-energias-contract-detail.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './meo-energias-contract-detail.scss',
 })
-export class MeoEnergiasContractDetail
-  implements OnInit
-{
-  readonly qualityControlBackofficeOptions =
-    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
-  private readonly destroyRef =
-    inject(DestroyRef);
+export class MeoEnergiasContractDetail implements OnInit {
+  private readonly fileAccess = inject(FileAccessService);
+  readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
+  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly route =
-    inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
-  private readonly router =
-    inject(Router);
+  private readonly router = inject(Router);
 
-  private readonly auth =
-    inject(Auth);
+  private readonly auth = inject(Auth);
 
-  private readonly campaignService =
-    inject(CampaignService);
+  private readonly campaignService = inject(CampaignService);
 
-  private readonly meoEnergiasContractService =
-    inject(MeoEnergiasContractService);
+  private readonly meoEnergiasContractService = inject(MeoEnergiasContractService);
 
-  private readonly preferencesService =
-    inject(PreferencesService);
+  private readonly preferencesService = inject(PreferencesService);
 
-  private readonly socketService =
-    inject(SocketService);
+  private readonly socketService = inject(SocketService);
 
-  private readonly userService =
-    inject(UserService);
+  private readonly userService = inject(UserService);
 
   private currentUserId = '';
   currentUserName = '';
 
-  private suppressNextOwnSocketUpdate =
-    false;
+  private suppressNextOwnSocketUpdate = false;
 
-  private ownSocketSuppressionTimer:
-    ReturnType<typeof setTimeout> | null =
-    null;
+  private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
 
-  contract:
-    MeoEnergiasContractDetailModel | null =
-    null;
+  contract: MeoEnergiasContractDetailModel | null = null;
 
   campaigns: Campaign[] = [];
 
@@ -230,33 +183,24 @@ export class MeoEnergiasContractDetail
 
   selectedFiles: File[] = [];
 
-  deletingAttachmentFileNames =
-    new Set<string>();
+  deletingAttachmentFileNames = new Set<string>();
 
-  editForm =
-    this.buildEmptyEditForm();
+  editForm = this.buildEmptyEditForm();
 
-  originalEditForm =
-    this.buildEmptyEditForm();
+  originalEditForm = this.buildEmptyEditForm();
 
-  campaignSelectionMode:
-    CampaignSelectionMode =
-    'existing';
+  campaignSelectionMode: CampaignSelectionMode = 'existing';
 
-  originalCampaignSelectionMode:
-    CampaignSelectionMode =
-    'existing';
+  originalCampaignSelectionMode: CampaignSelectionMode = 'existing';
 
-  collapsedSections =
-    this.buildCollapsedSections(false);
+  collapsedSections = this.buildCollapsedSections(false);
 
   isLoading = false;
   isSaving = false;
   isEditing = false;
   isSuperAdmin = false;
 
-  canAccessInternalObservations =
-    false;
+  canAccessInternalObservations = false;
 
   errorMessage = '';
   successMessage = '';
@@ -265,111 +209,65 @@ export class MeoEnergiasContractDetail
   contractId = '';
   lastSocketUpdate = '';
 
-  readonly tipoSegmentoOptions:
-    MeoEnergiasTipoSegmento[] = [
-      'Residencial',
-      'Empresarial',
-    ];
+  readonly tipoSegmentoOptions: MeoEnergiasTipoSegmento[] = ['Residencial', 'Empresarial'];
 
-  readonly tipoProdutoOptions:
-    MeoEnergiasTipoProduto[] = [
-      'Luz',
-      'Luz + Gás',
-      'Gás',
-    ];
+  readonly tipoProdutoOptions: MeoEnergiasTipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
-  readonly contratacaoOptions:
-    MeoEnergiasContratacao[] = [
-      'Contratação Digital',
-      'Contratação Papel',
-    ];
+  readonly contratacaoOptions: MeoEnergiasContratacao[] = [
+    'Contratação Digital',
+    'Contratação Papel',
+  ];
 
-  readonly tipoContratacaoOptions:
-    MeoEnergiasTipoContratacao[] = [
-      'Mudança de Comercializadora',
-      'Mudança de Comercializadora & AT',
-      'Entrada Direta',
-    ];
+  readonly tipoContratacaoOptions: MeoEnergiasTipoContratacao[] = [
+    'Mudança de Comercializadora',
+    'Mudança de Comercializadora & AT',
+    'Entrada Direta',
+  ];
 
-  readonly estadoOptions:
-    readonly MeoEnergiasContractStatus[] =
-      MEO_ENERGIAS_CONTRACT_STATUSES;
+  readonly estadoOptions: readonly MeoEnergiasContractStatus[] = MEO_ENERGIAS_CONTRACT_STATUSES;
 
-  readonly cicloHorarioOptions:
-    MeoEnergiasCicloHorario[] = [
-      'Simples',
-      'Bi-Horário Diário',
-      'Bi-Horário Semanal',
-      'Tri-Horário Diário',
-      'Tri-Horário Semanal',
-      'Tetra-Horário',
-    ];
+  readonly cicloHorarioOptions: MeoEnergiasCicloHorario[] = [
+    'Simples',
+    'Bi-Horário Diário',
+    'Bi-Horário Semanal',
+    'Tri-Horário Diário',
+    'Tri-Horário Semanal',
+    'Tetra-Horário',
+  ];
 
-  readonly nivelTensaoOptions:
-    MeoEnergiasNivelTensao[] = [
-      'Monofásico',
-      'Trifásico',
-    ];
+  readonly nivelTensaoOptions: MeoEnergiasNivelTensao[] = ['Monofásico', 'Trifásico'];
 
-  readonly powerSuggestions =
-    MEO_ENERGIAS_POWER_SUGGESTIONS;
+  readonly powerSuggestions = MEO_ENERGIAS_POWER_SUGGESTIONS;
 
-  readonly gasLevelSuggestions =
-    MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS;
+  readonly gasLevelSuggestions = MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS;
 
-  readonly antigaComercializadoraSuggestions =
-    ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+  readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
 
   ngOnInit(): void {
     this.resolvePermissions();
 
     const collapseByDefault =
-      this.preferencesService
-        .getPreferences()
-        .contractDetailsCollapsedByDefault;
+      this.preferencesService.getPreferences().contractDetailsCollapsedByDefault;
 
-    this.collapsedSections =
-      this.buildCollapsedSections(
-        collapseByDefault,
-      );
+    this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
-    this.route.paramMap
-      .pipe(
-        takeUntilDestroyed(
-          this.destroyRef,
-        ),
-      )
-      .subscribe((params) => {
-        this.contractId =
-          params.get('id') ?? '';
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.contractId = params.get('id') ?? '';
 
-        if (this.contractId) {
-          this.loadContract(
-            this.contractId,
-          );
-        }
-      });
+      if (this.contractId) {
+        this.loadContract(this.contractId);
+      }
+    });
 
     this.socketService
       .listenMeoEnergiasContractUpdated()
-      .pipe(
-        takeUntilDestroyed(
-          this.destroyRef,
-        ),
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {
-        if (
-          event.contractId !==
-          this.contractId
-        ) {
+        if (event.contractId !== this.contractId) {
           return;
         }
 
-        const activityUpdate =
-          mergeContractActivitySocketPayload(
-            this.contract,
-            event,
-          );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
 
         if (activityUpdate.updated) {
           this.contract = activityUpdate.contract;
@@ -377,38 +275,30 @@ export class MeoEnergiasContractDetail
 
         if (
           this.contract &&
-          (event.observacoes !== undefined ||
-            event.observacoesInternas !== undefined)
+          (event.observacoes !== undefined || event.observacoesInternas !== undefined)
         ) {
           this.contract = {
             ...this.contract,
-            ...(event.observacoes !== undefined
-              ? { observacoes: event.observacoes ?? '' }
-              : {}),
+            ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
             ...(event.observacoesInternas !== undefined
               ? { observacoesInternas: event.observacoesInternas ?? '' }
               : {}),
           };
         }
 
-        const stateUpdate =
-          mergeContractStateSocketPayload(
-            this.contract,
-            event,
-            this.estadoOptions,
-          );
+        const stateUpdate = mergeContractStateSocketPayload(
+          this.contract,
+          event,
+          this.estadoOptions,
+        );
 
-        if (
-          stateUpdate.updated &&
-          stateUpdate.contract
-        ) {
+        if (stateUpdate.updated && stateUpdate.contract) {
           this.contract = stateUpdate.contract;
 
           if (
             this.isEditing &&
             stateUpdate.estado &&
-            this.editForm.estado ===
-              this.originalEditForm.estado
+            this.editForm.estado === this.originalEditForm.estado
           ) {
             this.editForm = {
               ...this.editForm,
@@ -422,15 +312,11 @@ export class MeoEnergiasContractDetail
           }
         }
 
-        const currentTime =
-          new Date().toLocaleTimeString('pt-PT');
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
-        if (
-          event.ticketEvent &&
-          Array.isArray(event.tickets)
-        ) {
+        if (event.ticketEvent && Array.isArray(event.tickets)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -438,19 +324,13 @@ export class MeoEnergiasContractDetail
           return;
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(event);
+        const eventUserId = this.getSocketEventUserId(event);
 
         const isOwnSocketUpdate = Boolean(
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId,
+          eventUserId && this.currentUserId && eventUserId === this.currentUserId,
         );
 
-        if (
-          isOwnSocketUpdate ||
-          (!eventUserId && this.suppressNextOwnSocketUpdate)
-        ) {
+        if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -460,32 +340,23 @@ export class MeoEnergiasContractDetail
         }
 
         if (this.isEditing) {
-          this.synchronizeExternalUpdate(
-            currentTime,
-          );
+          this.synchronizeExternalUpdate(currentTime);
 
           return;
         }
 
-        this.socketMessage =
-          `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
+        this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
 
-        this.loadContract(
-          this.contractId,
-        );
+        this.loadContract(this.contractId);
       });
   }
 
-  loadContract(
-    contractId: string,
-  ): void {
+  loadContract(contractId: string): void {
     this.isLoading = true;
     this.errorMessage = '';
 
     this.meoEnergiasContractService
-      .getMeoEnergiasContractById(
-        contractId,
-      )
+      .getMeoEnergiasContractById(contractId)
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -493,48 +364,29 @@ export class MeoEnergiasContractDetail
       )
       .subscribe({
         next: (contract) => {
-          if (
-            !this.hasContractAccess(
-              contract,
-            )
-          ) {
+          if (!this.hasContractAccess(contract)) {
             this.contract = null;
 
-            this.showError(
-              'Não tem permissão para aceder a este contrato.',
-            );
+            this.showError('Não tem permissão para aceder a este contrato.');
 
-            this.router.navigateByUrl(
-              '/error',
-              {
-                replaceUrl: true,
-              },
-            );
+            this.router.navigateByUrl('/error', {
+              replaceUrl: true,
+            });
 
             return;
           }
 
-          const normalizedContract =
-            this.normalizeContractResponse(
-              contract,
-            );
+          const normalizedContract = this.normalizeContractResponse(contract);
 
-          this.contract =
-            normalizedContract;
+          this.contract = normalizedContract;
 
-          this.initializeEditForm(
-            normalizedContract,
-          );
+          this.initializeEditForm(normalizedContract);
 
-          this.loadCampaigns(
-            normalizedContract.companyId,
-          );
+          this.loadCampaigns(normalizedContract.companyId);
         },
 
         error: () => {
-          this.showError(
-            'Não foi possível carregar o contrato Meo Energias.',
-          );
+          this.showError('Não foi possível carregar o contrato Meo Energias.');
         },
       });
   }
@@ -547,31 +399,20 @@ export class MeoEnergiasContractDetail
     this.submitObservationValue(message, true);
   }
 
-  private submitObservationValue(
-    message: string,
-    internal: boolean,
-  ): void {
+  private submitObservationValue(message: string, internal: boolean): void {
     if (
       !this.contract ||
       !this.contractId ||
       !this.isSuperAdmin ||
       (internal && !this.canAccessInternalObservations) ||
-      (internal
-        ? this.isSubmittingInternalObservation
-        : this.isSubmittingObservation)
+      (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
     }
 
-    const currentValue = internal
-      ? this.contract.observacoesInternas
-      : this.contract.observacoes;
+    const currentValue = internal ? this.contract.observacoesInternas : this.contract.observacoes;
 
-    const nextHistory = appendObservationHistory(
-      currentValue,
-      message,
-      this.currentUserName,
-    );
+    const nextHistory = appendObservationHistory(currentValue, message, this.currentUserName);
 
     if (!nextHistory) {
       return;
@@ -585,14 +426,10 @@ export class MeoEnergiasContractDetail
 
     this.errorMessage = '';
 
-    const payload = internal
-      ? { observacoesInternas: nextHistory }
-      : { observacoes: nextHistory };
+    const payload = internal ? { observacoesInternas: nextHistory } : { observacoes: nextHistory };
 
-    this.meoEnergiasContractService.updateMeoEnergiasContract(
-      this.contractId,
-      payload,
-    )
+    this.meoEnergiasContractService
+      .updateMeoEnergiasContract(this.contractId, payload)
       .pipe(
         finalize(() => {
           if (internal) {
@@ -611,15 +448,13 @@ export class MeoEnergiasContractDetail
           if (internal) {
             this.contract = {
               ...this.contract,
-              observacoesInternas:
-                updatedContract.observacoesInternas ?? nextHistory,
+              observacoesInternas: updatedContract.observacoesInternas ?? nextHistory,
             };
             this.internalObservationDraft = '';
           } else {
             this.contract = {
               ...this.contract,
-              observacoes:
-                updatedContract.observacoes ?? nextHistory,
+              observacoes: updatedContract.observacoes ?? nextHistory,
             };
             this.observationDraft = '';
           }
@@ -639,19 +474,13 @@ export class MeoEnergiasContractDetail
   }
 
   startEditing(): void {
-    if (
-      !this.isSuperAdmin ||
-      !this.contract
-    ) {
+    if (!this.isSuperAdmin || !this.contract) {
       return;
     }
 
-    this.initializeEditForm(
-      this.contract,
-    );
+    this.initializeEditForm(this.contract);
 
-    this.internalObservationDraft =
-      '';
+    this.internalObservationDraft = '';
 
     this.selectedFiles = [];
 
@@ -663,13 +492,10 @@ export class MeoEnergiasContractDetail
 
   cancelEditing(): void {
     if (this.contract) {
-      this.initializeEditForm(
-        this.contract,
-      );
+      this.initializeEditForm(this.contract);
     }
 
-    this.internalObservationDraft =
-      '';
+    this.internalObservationDraft = '';
 
     this.selectedFiles = [];
 
@@ -690,29 +516,16 @@ export class MeoEnergiasContractDetail
   }
 
   shouldShowLuzFields(): boolean {
-    const product =
-      this.isEditing
-        ? this.editForm.tipoProduto
-        : this.contract?.tipoProduto;
+    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
 
-    return (
-      product === 'Luz' ||
-      product === 'Luz + Gás'
-    );
+    return product === 'Luz' || product === 'Luz + Gás';
   }
 
   shouldShowGasFields(): boolean {
-    const product =
-      this.isEditing
-        ? this.editForm.tipoProduto
-        : this.contract?.tipoProduto;
+    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
 
-    return (
-      product === 'Gás' ||
-      product === 'Luz + Gás'
-    );
+    return product === 'Gás' || product === 'Luz + Gás';
   }
-
 
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -723,30 +536,18 @@ export class MeoEnergiasContractDetail
   }
 
   saveChanges(): void {
-    if (
-      !this.isSuperAdmin ||
-      !this.contract ||
-      !this.contractId
-    ) {
+    if (!this.isSuperAdmin || !this.contract || !this.contractId) {
       return;
     }
 
-    if (
-      !this.editForm
-        .nomeClienteEmpresa
-        .trim()
-    ) {
-      this.showError(
-        'O nome do cliente é obrigatório.',
-      );
+    if (!this.editForm.nomeClienteEmpresa.trim()) {
+      this.showError('O nome do cliente é obrigatório.');
 
       return;
     }
 
     if (!this.editForm.nif) {
-      this.showError(
-        'O NIF é obrigatório.',
-      );
+      this.showError('O NIF é obrigatório.');
 
       return;
     }
@@ -756,43 +557,32 @@ export class MeoEnergiasContractDetail
       return;
     }
 
-    const energyValidationError =
-      getContractEnergyValidationError({
-        requiresElectricity: this.shouldShowLuzFields(),
-        requiresGas: this.shouldShowGasFields(),
-        cpe: this.editForm.cpe,
-        cui: this.editForm.cui,
-        potencia: this.editForm.potencia,
-        escalao: this.editForm.escalao,
-        cicloHorario: this.editForm.cicloHorario,
-      });
+    const energyValidationError = getContractEnergyValidationError({
+      requiresElectricity: this.shouldShowLuzFields(),
+      requiresGas: this.shouldShowGasFields(),
+      cpe: this.editForm.cpe,
+      cui: this.editForm.cui,
+      potencia: this.editForm.potencia,
+      escalao: this.editForm.escalao,
+      cicloHorario: this.editForm.cicloHorario,
+    });
 
     if (energyValidationError) {
       this.showError(energyValidationError);
       return;
     }
 
-
-    if (
-      this.editForm.email.trim() &&
-      !this.isValidEmail(
-        this.editForm.email,
-      )
-    ) {
-      this.showError(
-        'Indica um email válido.',
-      );
+    if (this.editForm.email.trim() && !this.isValidEmail(this.editForm.email)) {
+      this.showError('Indica um email válido.');
 
       return;
     }
 
-    const campaignValue =
-      this.getCurrentCampaignValue();
+    const campaignValue = this.getCurrentCampaignValue();
 
     if (!campaignValue) {
       this.showError(
-        this.campaignSelectionMode ===
-          'other'
+        this.campaignSelectionMode === 'other'
           ? 'O nome da campanha é obrigatório.'
           : 'É obrigatório selecionar uma campanha.',
       );
@@ -800,22 +590,27 @@ export class MeoEnergiasContractDetail
       return;
     }
 
-    const payload =
-      this.buildPatchPayload();
+    const fieldValidationError = getContractFormValidationError(
+      this.editForm as unknown as Record<string, unknown>,
+      {
+        validateCpe: this.shouldShowLuzFields(),
+        validateCui: this.shouldShowGasFields(),
+      },
+    );
 
-    const hasContractChanges =
-      Object.keys(payload).length > 0;
+    if (fieldValidationError) {
+      this.showError(fieldValidationError);
+      return;
+    }
 
-    const hasFiles =
-      this.selectedFiles.length > 0;
+    const payload = this.buildPatchPayload();
 
-    if (
-      !hasContractChanges &&
-      !hasFiles
-    ) {
-      this.showSuccess(
-        'Não existem alterações para guardar.',
-      );
+    const hasContractChanges = Object.keys(payload).length > 0;
+
+    const hasFiles = this.selectedFiles.length > 0;
+
+    if (!hasContractChanges && !hasFiles) {
+      this.showSuccess('Não existem alterações para guardar.');
 
       this.isEditing = false;
 
@@ -828,127 +623,70 @@ export class MeoEnergiasContractDetail
 
     this.prepareOwnSocketSuppression();
 
-    const updateRequest:
-      Observable<MeoEnergiasContractDetailModel> =
-      hasContractChanges
-        ? this.meoEnergiasContractService
-            .updateMeoEnergiasContract(
-              this.contractId,
-              payload,
-            )
-        : of(this.contract);
+    const updateRequest: Observable<MeoEnergiasContractDetailModel> = hasContractChanges
+      ? this.meoEnergiasContractService.updateMeoEnergiasContract(this.contractId, payload)
+      : of(this.contract);
 
     updateRequest
       .pipe(
-        switchMap(
-          (): Observable<SaveContractResult> => {
-            if (!hasFiles) {
-              return this
-                .meoEnergiasContractService
-                .getMeoEnergiasContractById(
-                  this.contractId,
-                )
-                .pipe(
-                  map(
-                    (
-                      contract,
-                    ): SaveContractResult => ({
-                      contract,
-                      uploadFailed: false,
-                      uploadError: null,
+        switchMap((): Observable<SaveContractResult> => {
+          if (!hasFiles) {
+            return this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
+              map((contract): SaveContractResult => ({
+                contract,
+                uploadFailed: false,
+                uploadError: null,
+              })),
+            );
+          }
+
+          return this.meoEnergiasContractService
+            .uploadAttachments(this.contractId, this.selectedFiles)
+            .pipe(
+              switchMap(() =>
+                this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
+                  map((contract): SaveContractResult => ({
+                    contract,
+                    uploadFailed: false,
+                    uploadError: null,
+                  })),
+                ),
+              ),
+
+              catchError((uploadError: unknown) =>
+                this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
+                  map((contract): SaveContractResult => ({
+                    contract,
+                    uploadFailed: true,
+                    uploadError,
+                  })),
+
+                  catchError(() =>
+                    of<SaveContractResult>({
+                      contract: this.contract!,
+                      uploadFailed: true,
+                      uploadError,
                     }),
                   ),
-                );
-            }
-
-            return this
-              .meoEnergiasContractService
-              .uploadAttachments(
-                this.contractId,
-                this.selectedFiles,
-              )
-              .pipe(
-                switchMap(() =>
-                  this
-                    .meoEnergiasContractService
-                    .getMeoEnergiasContractById(
-                      this.contractId,
-                    )
-                    .pipe(
-                      map(
-                        (
-                          contract,
-                        ): SaveContractResult => ({
-                          contract,
-                          uploadFailed: false,
-                          uploadError: null,
-                        }),
-                      ),
-                    ),
                 ),
-
-                catchError(
-                  (
-                    uploadError:
-                      unknown,
-                  ) =>
-                    this
-                      .meoEnergiasContractService
-                      .getMeoEnergiasContractById(
-                        this.contractId,
-                      )
-                      .pipe(
-                        map(
-                          (
-                            contract,
-                          ): SaveContractResult => ({
-                            contract,
-                            uploadFailed: true,
-                            uploadError,
-                          }),
-                        ),
-
-                        catchError(() =>
-                          of<SaveContractResult>({
-                            contract:
-                              this.contract!,
-                            uploadFailed:
-                              true,
-                            uploadError,
-                          }),
-                        ),
-                      ),
-                ),
-              );
-          },
-        ),
+              ),
+            );
+        }),
 
         finalize(() => {
           this.isSaving = false;
         }),
       )
       .subscribe({
-        next: ({
-          contract:
-            updatedContract,
-          uploadFailed,
-          uploadError,
-        }: SaveContractResult) => {
-          const normalizedContract =
-            this.normalizeContractResponse(
-              updatedContract,
-            );
+        next: ({ contract: updatedContract, uploadFailed, uploadError }: SaveContractResult) => {
+          const normalizedContract = this.normalizeContractResponse(updatedContract);
 
-          this.contract =
-            normalizedContract;
+          this.contract = normalizedContract;
 
-          this.initializeEditForm(
-            normalizedContract,
-          );
+          this.initializeEditForm(normalizedContract);
 
           this.observationDraft = '';
-          this.internalObservationDraft =
-            '';
+          this.internalObservationDraft = '';
 
           if (uploadFailed) {
             this.isEditing = true;
@@ -967,8 +705,7 @@ export class MeoEnergiasContractDetail
             return;
           }
 
-          const uploadedFiles =
-            this.selectedFiles.length;
+          const uploadedFiles = this.selectedFiles.length;
 
           this.selectedFiles = [];
           this.isEditing = false;
@@ -980,15 +717,11 @@ export class MeoEnergiasContractDetail
           );
         },
 
-        error: (
-          error:
-            HttpErrorResponse,
-        ) => {
+        error: (error: HttpErrorResponse) => {
           this.clearOwnSocketSuppression();
 
           this.showError(
-            error?.error?.details
-              ?.join(' ') ||
+            error?.error?.details?.join(' ') ||
               error?.error?.message ||
               'Não foi possível atualizar o contrato Meo Energias.',
           );
@@ -997,10 +730,7 @@ export class MeoEnergiasContractDetail
   }
 
   onCampaignModeChange(): void {
-    if (
-      this.campaignSelectionMode ===
-      'other'
-    ) {
+    if (this.campaignSelectionMode === 'other') {
       this.editForm.campaignId = '';
 
       return;
@@ -1009,109 +739,61 @@ export class MeoEnergiasContractDetail
     this.editForm.customCampaign = '';
   }
 
-  onFilesSelected(
-    event: Event,
-  ): void {
-    const input =
-      event.target as HTMLInputElement;
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
-    const files =
-      input.files
-        ? Array.from(
-            input.files,
-          )
-        : [];
+    const files = input.files ? Array.from(input.files) : [];
 
     if (!files.length) {
       return;
     }
 
-    const existingFileKeys =
-      new Set(
-        this.selectedFiles.map(
-          (file) =>
-            this.getFileKey(file),
-        ),
-      );
+    const existingFileKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
 
-    const newFiles =
-      files.filter(
-        (file) =>
-          !existingFileKeys.has(
-            this.getFileKey(file),
-          ),
-      );
+    const newFiles = files.filter((file) => !existingFileKeys.has(this.getFileKey(file)));
 
-    this.selectedFiles = [
-      ...this.selectedFiles,
-      ...newFiles,
-    ];
+    this.selectedFiles = [...this.selectedFiles, ...newFiles];
 
     input.value = '';
   }
 
-  removeSelectedFile(
-    index: number,
-  ): void {
-    this.selectedFiles =
-      this.selectedFiles.filter(
-        (_, fileIndex) =>
-          fileIndex !== index,
-      );
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   clearSelectedFiles(): void {
     this.selectedFiles = [];
   }
 
-  deleteAttachment(
-    document:
-      MeoEnergiasContractDocument,
-  ): void {
+  deleteAttachment(document: MeoEnergiasContractDocument): void {
     if (
       !this.isSuperAdmin ||
       !this.isEditing ||
       !this.contract ||
       !this.contractId ||
-      this.deletingAttachmentFileNames
-        .has(document.fileName)
+      this.deletingAttachmentFileNames.has(document.fileName)
     ) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Pretende remover o ficheiro "${document.originalName}"?`,
-      );
+    const confirmed = window.confirm(`Pretende remover o ficheiro "${document.originalName}"?`);
 
     if (!confirmed) {
       return;
     }
 
-    const previousContract =
-      this.contract;
+    const previousContract = this.contract;
 
-    this.deletingAttachmentFileNames
-      .add(document.fileName);
+    this.deletingAttachmentFileNames.add(document.fileName);
 
-    this.deletingAttachmentFileNames =
-      new Set(
-        this.deletingAttachmentFileNames,
-      );
+    this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
 
     this.contract = {
       ...previousContract,
 
-      documentos:
-        previousContract.documentos
-          .filter(
-            (
-              existingDocument,
-            ) =>
-              existingDocument
-                .fileName !==
-              document.fileName,
-          ),
+      documentos: previousContract.documentos.filter(
+        (existingDocument) => existingDocument.fileName !== document.fileName,
+      ),
     };
 
     this.errorMessage = '';
@@ -1120,53 +802,29 @@ export class MeoEnergiasContractDetail
     this.prepareOwnSocketSuppression();
 
     this.meoEnergiasContractService
-      .deleteAttachment(
-        this.contractId,
-        document.fileName,
-      )
+      .deleteAttachment(this.contractId, document.fileName)
       .pipe(
         switchMap(() =>
-          this
-            .meoEnergiasContractService
-            .getMeoEnergiasContractById(
-              this.contractId,
-            ),
+          this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId),
         ),
 
         finalize(() => {
-          this.deletingAttachmentFileNames
-            .delete(
-              document.fileName,
-            );
+          this.deletingAttachmentFileNames.delete(document.fileName);
 
-          this.deletingAttachmentFileNames =
-            new Set(
-              this.deletingAttachmentFileNames,
-            );
+          this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
         }),
       )
       .subscribe({
-        next: (
-          updatedContract,
-        ) => {
-          this.contract =
-            this.normalizeContractResponse(
-              updatedContract,
-            );
+        next: (updatedContract) => {
+          this.contract = this.normalizeContractResponse(updatedContract);
 
-          this.showSuccess(
-            `O ficheiro "${document.originalName}" foi removido com sucesso.`,
-          );
+          this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
 
-        error: (
-          error:
-            HttpErrorResponse,
-        ) => {
+        error: (error: HttpErrorResponse) => {
           this.clearOwnSocketSuppression();
 
-          this.contract =
-            previousContract;
+          this.contract = previousContract;
 
           this.showError(
             error?.error?.message ||
@@ -1176,183 +834,99 @@ export class MeoEnergiasContractDetail
       });
   }
 
-  isDeletingAttachment(
-    document:
-      MeoEnergiasContractDocument,
-  ): boolean {
-    return this
-      .deletingAttachmentFileNames
-      .has(document.fileName);
+  isDeletingAttachment(document: MeoEnergiasContractDocument): boolean {
+    return this.deletingAttachmentFileNames.has(document.fileName);
   }
 
-  downloadDocument(
-    file:
-      MeoEnergiasContractDocument,
-  ): void {
+  downloadDocument(file: MeoEnergiasContractDocument): void {
+    if (!this.fileAccess.canViewFile(file)) {
+      this.showError('Não tem permissão para visualizar ficheiros de áudio.');
+      return;
+    }
+
     if (!this.contract?.id) {
       return;
     }
 
-    this.meoEnergiasContractService
-      .downloadDocument(
-        this.contract.id,
-        file,
-      )
-      .subscribe({
-        next: (blob) => {
-          const url =
-            window.URL
-              .createObjectURL(
-                blob,
-              );
+    this.meoEnergiasContractService.downloadDocument(this.contract.id, file).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
 
-          const link =
-            window.document
-              .createElement('a');
+        const link = window.document.createElement('a');
 
-          link.href = url;
+        link.href = url;
 
-          link.download =
-            file.originalName ||
-            file.fileName;
+        link.download = file.originalName || file.fileName;
 
-          window.document.body
-            .appendChild(link);
+        window.document.body.appendChild(link);
 
-          link.click();
+        link.click();
 
-          window.document.body
-            .removeChild(link);
+        window.document.body.removeChild(link);
 
-          window.URL
-            .revokeObjectURL(
-              url,
-            );
-        },
+        window.URL.revokeObjectURL(url);
+      },
 
-        error: () => {
-          this.showError(
-            'Não foi possível descarregar o anexo.',
-          );
-        },
-      });
+      error: () => {
+        this.showError('Não foi possível descarregar o anexo.');
+      },
+    });
   }
 
-  toggleSection(
-    section:
-      keyof typeof this.collapsedSections,
-  ): void {
-    this.collapsedSections[
-      section
-    ] =
-      !this.collapsedSections[
-        section
-      ];
+  toggleSection(section: keyof typeof this.collapsedSections): void {
+    this.collapsedSections[section] = !this.collapsedSections[section];
   }
 
-  getStatusClass(
-    status:
-      MeoEnergiasContractStatus,
-  ): string {
-    const classes:
-      Record<
-        MeoEnergiasContractStatus,
-        string
-      > = {
-        'Pedido de Chamada':
-          'status-call-request',
-        'Em validação':
-          'status-validation',
-        'Não Conformidade':
-          'status-non-compliance',
-        'Pendente Docs':
-          'status-docs',
-        'Documentos Enviados':
-          'status-docs-sent',
-        'Registo MEO':
-          'status-meo-registration',
-        Anulado:
-          'status-cancelled',
-        Ativo:
-          'status-active',
-        Baixa:
-          'status-low',
-      };
+  getStatusClass(status: MeoEnergiasContractStatus): string {
+    const classes: Record<MeoEnergiasContractStatus, string> = {
+      'Pedido de Chamada': 'status-call-request',
+      'Em validação': 'status-validation',
+      'Não Conformidade': 'status-non-compliance',
+      'Pendente Docs': 'status-docs',
+      'Documentos Enviados': 'status-docs-sent',
+      'Registo MEO': 'status-meo-registration',
+      Anulado: 'status-cancelled',
+      Ativo: 'status-active',
+      Baixa: 'status-low',
+    };
 
     return classes[status];
   }
 
-  formatBoolean(
-    value:
-      | boolean
-      | null
-      | undefined,
-  ): string {
-    return value
-      ? 'Sim'
-      : 'Não';
+  formatBoolean(value: boolean | null | undefined): string {
+    return value ? 'Sim' : 'Não';
   }
 
-  formatDateTime(
-    value:
-      | string
-      | null
-      | undefined,
-  ): string {
+  formatDateTime(value: string | null | undefined): string {
     if (!value) {
       return '—';
     }
 
-    const date =
-      new Date(value);
+    const date = new Date(value);
 
-    if (
-      Number.isNaN(
-        date.getTime(),
-      )
-    ) {
+    if (Number.isNaN(date.getTime())) {
       return value;
     }
 
-    return new Intl
-      .DateTimeFormat(
-        'pt-PT',
-        {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      )
-      .format(date);
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
   }
 
-  formatDateOnly(
-    value:
-      | string
-      | null
-      | undefined,
-  ): string {
+  formatDateOnly(value: string | null | undefined): string {
     if (!value) {
       return '—';
     }
 
-    const normalized =
-      value.slice(0, 10);
+    const normalized = value.slice(0, 10);
 
-    const [
-      year,
-      month,
-      day,
-    ] =
-      normalized.split('-');
+    const [year, month, day] = normalized.split('-');
 
-    if (
-      year &&
-      month &&
-      day
-    ) {
+    if (year && month && day) {
       return `${day}/${month}/${year}`;
     }
 
@@ -1360,84 +934,43 @@ export class MeoEnergiasContractDetail
   }
 
   canManageQualityControl(): boolean {
-    return canManageQualityControlRole(
-      this.auth.getCurrentUser()?.role,
-    );
+    return canManageQualityControlRole(this.auth.getCurrentUser()?.role);
   }
 
-  getValue(
-    value:
-      | string
-      | number
-      | null
-      | undefined,
-  ): string | number {
-    if (
-      value === null ||
-      value === undefined ||
-      value === ''
-    ) {
+  getValue(value: string | number | null | undefined): string | number {
+    if (value === null || value === undefined || value === '') {
       return '—';
     }
 
     return value;
   }
 
-  formatFileSize(
-    bytes: number,
-  ): string {
+  formatFileSize(bytes: number): string {
     if (bytes < 1024) {
       return `${bytes} B`;
     }
 
-    if (
-      bytes <
-      1024 * 1024
-    ) {
-      return `${(
-        bytes / 1024
-      ).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
     }
 
-    return `${(
-      bytes /
-      1024 /
-      1024
-    ).toFixed(1)} MB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
-  getFileIcon(
-    mimetype: string,
-  ): string {
-    if (
-      mimetype.startsWith(
-        'audio/',
-      )
-    ) {
+  getFileIcon(mimetype: string): string {
+    if (mimetype.startsWith('audio/')) {
       return '🎧';
     }
 
-    if (
-      mimetype.includes(
-        'pdf',
-      )
-    ) {
+    if (mimetype.includes('pdf')) {
       return '📄';
     }
 
-    if (
-      mimetype.includes(
-        'word',
-      )
-    ) {
+    if (mimetype.includes('word')) {
       return '📝';
     }
 
-    if (
-      mimetype.startsWith(
-        'image/',
-      )
-    ) {
+    if (mimetype.startsWith('image/')) {
       return '🖼️';
     }
 
@@ -1445,87 +978,46 @@ export class MeoEnergiasContractDetail
   }
 
   private resolvePermissions(): void {
-    const currentUser =
-      this.auth
-        .getCurrentUser() as
-        | AuthenticatedUserLike
-        | null;
+    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
 
-    const role =
-      currentUser?.role
-        ?.toLowerCase() ?? '';
+    const role = currentUser?.role?.toLowerCase() ?? '';
 
-    this.currentUserId =
-      currentUser?.id ??
-      currentUser?._id ??
-      '';
+    this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
 
-    this.currentUserName =
-      currentUser?.name ??
-      currentUser?.username ??
-      'Utilizador';
+    this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
-    this.isSuperAdmin =
-      role.includes(
-        'super admin',
-      );
+    this.isSuperAdmin = role.includes('super admin');
 
     if (!this.currentUserId) {
       return;
     }
 
-    this.userService
-      .getUserById(
-        this.currentUserId,
-      )
-      .subscribe({
-        next: (user) => {
-          const teamIds =
-            (
-              user as ProfileUser & {
-                teams?: Array<{
-                  id?: string;
-                }>;
-              }
-            ).teams
-              ?.map(
-                (team) =>
-                  team.id ?? '',
-              )
-              .filter(Boolean) ??
-            [];
+    this.userService.getUserById(this.currentUserId).subscribe({
+      next: (user) => {
+        const teamIds =
+          (
+            user as ProfileUser & {
+              teams?: Array<{
+                id?: string;
+              }>;
+            }
+          ).teams
+            ?.map((team) => team.id ?? '')
+            .filter(Boolean) ?? [];
 
-          const authorizedTeamIds =
-            [
-              environment
-                .EQUIPA_CRM_ID,
-              environment
-                .EQUIPA_DU_ID,
-            ].filter(
-              (
-                teamId,
-              ): teamId is string =>
-                Boolean(teamId),
-            );
+        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+          (teamId): teamId is string => Boolean(teamId),
+        );
 
-          this.canAccessInternalObservations =
-            teamIds.some(
-              (teamId) =>
-                authorizedTeamIds
-                  .includes(
-                    teamId,
-                  ),
-            );
+        this.canAccessInternalObservations = teamIds.some((teamId) =>
+          authorizedTeamIds.includes(teamId),
+        );
 
-          if (
-            !this
-              .canAccessInternalObservations
-          ) {
-            this.internalObservationDraft =
-              '';
-          }
-        },
-      });
+        if (!this.canAccessInternalObservations) {
+          this.internalObservationDraft = '';
+        }
+      },
+    });
   }
 
   private refreshContractActivity(): void {
@@ -1533,291 +1025,161 @@ export class MeoEnergiasContractDetail
       return;
     }
 
-    this.meoEnergiasContractService
-      .getMeoEnergiasContractById(this.contractId)
-      .subscribe({
-        next: (latestContract) => {
-          if (
-            !this.contract ||
-            latestContract.id !== this.contractId
-          ) {
-            return;
-          }
+    this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).subscribe({
+      next: (latestContract) => {
+        if (!this.contract || latestContract.id !== this.contractId) {
+          return;
+        }
 
-          const activityUpdate =
-            mergeContractActivitySocketPayload(
-              this.contract,
-              {
-                fluxo: latestContract.fluxo,
-                tickets: latestContract.tickets,
-              },
-            );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
+          fluxo: latestContract.fluxo,
+          tickets: latestContract.tickets,
+        });
 
-          if (activityUpdate.updated) {
-            this.contract = activityUpdate.contract;
-          }
-        },
-      });
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
+      },
+    });
   }
 
-  private getSocketEventUserId(
-    event: unknown,
-  ): string {
-    const socketEvent =
-      event as {
-        updatedBy?: string;
-        userId?: string;
-        updatedByUserId?: string;
-      };
+  private getSocketEventUserId(event: unknown): string {
+    const socketEvent = event as {
+      updatedBy?: string;
+      userId?: string;
+      updatedByUserId?: string;
+    };
 
-    return (
-      socketEvent.updatedBy ??
-      socketEvent.userId ??
-      socketEvent
-        .updatedByUserId ??
-      ''
-    );
+    return socketEvent.updatedBy ?? socketEvent.userId ?? socketEvent.updatedByUserId ?? '';
   }
 
-  private synchronizeExternalUpdate(
-    currentTime: string,
-  ): void {
-    const observationDraft =
-      this.observationDraft;
+  private synchronizeExternalUpdate(currentTime: string): void {
+    const observationDraft = this.observationDraft;
 
-    const internalObservationDraft =
-      this.internalObservationDraft;
+    const internalObservationDraft = this.internalObservationDraft;
 
-    const selectedFiles = [
-      ...this.selectedFiles,
-    ];
+    const selectedFiles = [...this.selectedFiles];
 
-    this.meoEnergiasContractService
-      .getMeoEnergiasContractById(
-        this.contractId,
-      )
-      .subscribe({
-        next: (
-          latestContract,
-        ) => {
-          const normalizedContract =
-            this.normalizeContractResponse(
-              latestContract,
-            );
+    this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).subscribe({
+      next: (latestContract) => {
+        const normalizedContract = this.normalizeContractResponse(latestContract);
 
-          const result =
-            this.mergeExternalContract(
-              normalizedContract,
-            );
+        const result = this.mergeExternalContract(normalizedContract);
 
-          this.contract =
-            normalizedContract;
+        this.contract = normalizedContract;
 
-          this.observationDraft =
-            observationDraft;
+        this.observationDraft = observationDraft;
 
-          this.internalObservationDraft =
-            internalObservationDraft;
+        this.internalObservationDraft = internalObservationDraft;
 
-          this.selectedFiles =
-            selectedFiles;
+        this.selectedFiles = selectedFiles;
 
-          if (
-            result.conflicts > 0
-          ) {
-            this.socketMessage =
-              `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
-              `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente. ` +
-              `${result.conflicts} campo(s) que também estava a editar foram preservados com os seus valores. ` +
-              'Ao guardar, os seus valores nesses campos irão prevalecer.';
-
-            return;
-          }
-
+        if (result.conflicts > 0) {
           this.socketMessage =
             `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
-            `${result.updated} campo(s) foram sincronizados automaticamente sem perder os seus rascunhos nem os ficheiros selecionados.`;
-        },
+            `${result.updated} campo(s) não alterado(s) por si foram atualizados automaticamente. ` +
+            `${result.conflicts} campo(s) que também estava a editar foram preservados com os seus valores. ` +
+            'Ao guardar, os seus valores nesses campos irão prevalecer.';
 
-        error: () => {
-          this.socketMessage =
-            `Este contrato foi atualizado por outro utilizador às ${currentTime}, ` +
-            'mas não foi possível sincronizar os dados automaticamente. Atualize a página antes de guardar.';
-        },
-      });
+          return;
+        }
+
+        this.socketMessage =
+          `Este contrato foi atualizado por outro utilizador às ${currentTime}. ` +
+          `${result.updated} campo(s) foram sincronizados automaticamente sem perder os seus rascunhos nem os ficheiros selecionados.`;
+      },
+
+      error: () => {
+        this.socketMessage =
+          `Este contrato foi atualizado por outro utilizador às ${currentTime}, ` +
+          'mas não foi possível sincronizar os dados automaticamente. Atualize a página antes de guardar.';
+      },
+    });
   }
 
-  private mergeExternalContract(
-    latestContract:
-      MeoEnergiasContractDetailModel,
-  ): {
+  private mergeExternalContract(latestContract: MeoEnergiasContractDetailModel): {
     updated: number;
     conflicts: number;
   } {
-    const latestState =
-      this.buildEditableState(
-        latestContract,
-      );
+    const latestState = this.buildEditableState(latestContract);
 
-    const nextEditForm =
-      structuredClone(
-        this.editForm,
-      );
+    const nextEditForm = structuredClone(this.editForm);
 
-    const nextOriginalForm =
-      structuredClone(
-        this.originalEditForm,
-      );
+    const nextOriginalForm = structuredClone(this.originalEditForm);
 
     let updated = 0;
     let conflicts = 0;
 
-    const campaignKeys:
-      Array<
-        keyof EditableContractForm
-      > = [
-        'campaignId',
-        'customCampaign',
-      ];
+    const campaignKeys: Array<keyof EditableContractForm> = ['campaignId', 'customCampaign'];
 
-    const keys =
-      Object.keys(
-        latestState.form,
-      ) as Array<
-        keyof EditableContractForm
-      >;
+    const keys = Object.keys(latestState.form) as Array<keyof EditableContractForm>;
 
     keys.forEach((key) => {
-      if (
-        campaignKeys.includes(
-          key,
-        )
-      ) {
+      if (campaignKeys.includes(key)) {
         return;
       }
 
-      const currentValue =
-        this.editForm[key];
+      const currentValue = this.editForm[key];
 
-      const originalValue =
-        this.originalEditForm[
-          key
-        ];
+      const originalValue = this.originalEditForm[key];
 
-      const latestValue =
-        latestState.form[key];
+      const latestValue = latestState.form[key];
 
-      const userChanged =
-        !this.areValuesEqual(
-          currentValue,
-          originalValue,
-        );
+      const userChanged = !this.areValuesEqual(currentValue, originalValue);
 
-      const serverChanged =
-        !this.areValuesEqual(
-          latestValue,
-          originalValue,
-        );
+      const serverChanged = !this.areValuesEqual(latestValue, originalValue);
 
       if (!serverChanged) {
         return;
       }
 
       if (!userChanged) {
-        this.setFormValue(
-          nextEditForm,
-          key,
-          latestValue,
-        );
+        this.setFormValue(nextEditForm, key, latestValue);
 
         updated += 1;
-      } else if (
-        !this.areValuesEqual(
-          currentValue,
-          latestValue,
-        )
-      ) {
+      } else if (!this.areValuesEqual(currentValue, latestValue)) {
         conflicts += 1;
       }
 
-      this.setFormValue(
-        nextOriginalForm,
-        key,
-        latestValue,
-      );
+      this.setFormValue(nextOriginalForm, key, latestValue);
     });
 
-    const currentCampaign =
-      this.getCampaignSnapshot(
-        this.campaignSelectionMode,
-        this.editForm,
-      );
+    const currentCampaign = this.getCampaignSnapshot(this.campaignSelectionMode, this.editForm);
 
-    const originalCampaign =
-      this.getCampaignSnapshot(
-        this
-          .originalCampaignSelectionMode,
-        this.originalEditForm,
-      );
+    const originalCampaign = this.getCampaignSnapshot(
+      this.originalCampaignSelectionMode,
+      this.originalEditForm,
+    );
 
-    const latestCampaign =
-      this.getCampaignSnapshot(
-        latestState.campaignMode,
-        latestState.form,
-      );
+    const latestCampaign = this.getCampaignSnapshot(latestState.campaignMode, latestState.form);
 
-    const userChangedCampaign =
-      !this.areValuesEqual(
-        currentCampaign,
-        originalCampaign,
-      );
+    const userChangedCampaign = !this.areValuesEqual(currentCampaign, originalCampaign);
 
-    const serverChangedCampaign =
-      !this.areValuesEqual(
-        latestCampaign,
-        originalCampaign,
-      );
+    const serverChangedCampaign = !this.areValuesEqual(latestCampaign, originalCampaign);
 
     if (serverChangedCampaign) {
       if (!userChangedCampaign) {
-        this.campaignSelectionMode =
-          latestState.campaignMode;
+        this.campaignSelectionMode = latestState.campaignMode;
 
-        nextEditForm.campaignId =
-          latestState.form
-            .campaignId;
+        nextEditForm.campaignId = latestState.form.campaignId;
 
-        nextEditForm.customCampaign =
-          latestState.form
-            .customCampaign;
+        nextEditForm.customCampaign = latestState.form.customCampaign;
 
         updated += 1;
-      } else if (
-        !this.areValuesEqual(
-          currentCampaign,
-          latestCampaign,
-        )
-      ) {
+      } else if (!this.areValuesEqual(currentCampaign, latestCampaign)) {
         conflicts += 1;
       }
 
-      this.originalCampaignSelectionMode =
-        latestState.campaignMode;
+      this.originalCampaignSelectionMode = latestState.campaignMode;
 
-      nextOriginalForm.campaignId =
-        latestState.form
-          .campaignId;
+      nextOriginalForm.campaignId = latestState.form.campaignId;
 
-      nextOriginalForm.customCampaign =
-        latestState.form
-          .customCampaign;
+      nextOriginalForm.customCampaign = latestState.form.customCampaign;
     }
 
-    this.editForm =
-      nextEditForm;
+    this.editForm = nextEditForm;
 
-    this.originalEditForm =
-      nextOriginalForm;
+    this.originalEditForm = nextOriginalForm;
 
     return {
       updated,
@@ -1826,10 +1188,8 @@ export class MeoEnergiasContractDetail
   }
 
   private getCampaignSnapshot(
-    mode:
-      CampaignSelectionMode,
-    form:
-      EditableContractForm,
+    mode: CampaignSelectionMode,
+    form: EditableContractForm,
   ): {
     mode: CampaignSelectionMode;
     value: string;
@@ -1837,196 +1197,110 @@ export class MeoEnergiasContractDetail
     return {
       mode,
 
-      value:
-        mode === 'other'
-          ? form
-              .customCampaign
-              .trim()
-          : form.campaignId,
+      value: mode === 'other' ? form.customCampaign.trim() : form.campaignId,
     };
   }
 
-  private areValuesEqual(
-    firstValue: unknown,
-    secondValue: unknown,
-  ): boolean {
+  private areValuesEqual(firstValue: unknown, secondValue: unknown): boolean {
     return (
-      JSON.stringify(
-        this.normalizeValue(
-          firstValue,
-        ),
-      ) ===
-      JSON.stringify(
-        this.normalizeValue(
-          secondValue,
-        ),
-      )
+      JSON.stringify(this.normalizeValue(firstValue)) ===
+      JSON.stringify(this.normalizeValue(secondValue))
     );
   }
 
-  private setFormValue<
-    Key extends
-      keyof EditableContractForm,
-  >(
-    form:
-      EditableContractForm,
+  private setFormValue<Key extends keyof EditableContractForm>(
+    form: EditableContractForm,
     key: Key,
-    value:
-      EditableContractForm[Key],
+    value: EditableContractForm[Key],
   ): void {
     form[key] = value;
   }
 
-  private prepareOwnSocketSuppression():
-    void {
+  private prepareOwnSocketSuppression(): void {
     this.clearOwnSocketSuppression();
 
-    this.suppressNextOwnSocketUpdate =
-      true;
+    this.suppressNextOwnSocketUpdate = true;
 
-    this.ownSocketSuppressionTimer =
-      setTimeout(() => {
-        this.clearOwnSocketSuppression();
-      }, 10000);
+    this.ownSocketSuppressionTimer = setTimeout(() => {
+      this.clearOwnSocketSuppression();
+    }, 10000);
   }
 
-  private clearOwnSocketSuppression():
-    void {
-    this.suppressNextOwnSocketUpdate =
-      false;
+  private clearOwnSocketSuppression(): void {
+    this.suppressNextOwnSocketUpdate = false;
 
-    if (
-      this
-        .ownSocketSuppressionTimer
-    ) {
-      clearTimeout(
-        this
-          .ownSocketSuppressionTimer,
-      );
+    if (this.ownSocketSuppressionTimer) {
+      clearTimeout(this.ownSocketSuppressionTimer);
 
-      this.ownSocketSuppressionTimer =
-        null;
+      this.ownSocketSuppressionTimer = null;
     }
   }
 
-  private loadCampaigns(
-    companyId: string,
-  ): void {
+  private loadCampaigns(companyId: string): void {
     this.campaignService
-      .getCampaignsByCompanyId(
-        companyId,
-      )
+      .getCampaignsByCompanyId(companyId)
       .pipe(
         map((campaigns) => {
-          const assignedCampaign =
-            this.contract?.campaign;
+          const assignedCampaign = this.contract?.campaign;
 
-          const assignedId =
-            assignedCampaign?.id ??
-            '';
+          const assignedId = assignedCampaign?.id ?? '';
 
-          const assignedName =
-            this.normalizeCampaignName(
-              assignedCampaign?.name ??
-                '',
+          const assignedName = this.normalizeCampaignName(assignedCampaign?.name ?? '');
+
+          return campaigns.filter((campaign) => {
+            const isAssignedById = Boolean(assignedId && campaign.id === assignedId);
+
+            const isAssignedByName = Boolean(
+              assignedName && this.normalizeCampaignName(campaign.name) === assignedName,
             );
 
-          return campaigns.filter(
-            (campaign) => {
-              const isAssignedById =
-                Boolean(
-                  assignedId &&
-                    campaign.id ===
-                      assignedId,
-                );
-
-              const isAssignedByName =
-                Boolean(
-                  assignedName &&
-                    this
-                      .normalizeCampaignName(
-                        campaign.name,
-                      ) ===
-                      assignedName,
-                );
-
-              return (
-                campaign.active ||
-                isAssignedById ||
-                isAssignedByName
-              );
-            },
-          );
+            return campaign.active || isAssignedById || isAssignedByName;
+          });
         }),
       )
       .subscribe({
         next: (campaigns) => {
-          this.campaigns =
-            campaigns;
+          this.campaigns = campaigns;
 
           if (this.contract) {
-            this.contract =
-              this.normalizeContractResponse(
-                this.contract,
-              );
+            this.contract = this.normalizeContractResponse(this.contract);
 
             if (!this.isEditing) {
-              this.initializeEditForm(
-                this.contract,
-              );
+              this.initializeEditForm(this.contract);
             }
           }
         },
 
         error: () => {
-          this.showError(
-            'Não foi possível carregar as campanhas.',
-          );
+          this.showError('Não foi possível carregar as campanhas.');
         },
       });
   }
 
-  private hasContractAccess(
-    contract:
-      MeoEnergiasContractDetailModel,
-  ): boolean {
+  private hasContractAccess(contract: MeoEnergiasContractDetailModel): boolean {
     if (this.isSuperAdmin) {
       return true;
     }
 
-    return (
-      contract.followers ?? []
-    ).some((follower) => {
-      return (
-        follower.id ===
-        this.currentUserId
-      );
+    return (contract.followers ?? []).some((follower) => {
+      return follower.id === this.currentUserId;
     });
   }
 
   private normalizeContractResponse(
-    contract:
-      MeoEnergiasContractDetailModel,
+    contract: MeoEnergiasContractDetailModel,
   ): MeoEnergiasContractDetailModel {
     contract = preserveContractActivity(contract, this.contract);
 
-    const apiContract =
-      contract as
-        MeoEnergiasContractApiShape;
+    const apiContract = contract as MeoEnergiasContractApiShape;
 
-    const rawCampaign =
-      apiContract.campanha
-        ?.trim() ?? '';
+    const rawCampaign = apiContract.campanha?.trim() ?? '';
 
     if (!rawCampaign) {
       return contract;
     }
 
-    if (
-      !rawCampaign.startsWith(
-        'cam_',
-      )
-    ) {
+    if (!rawCampaign.startsWith('cam_')) {
       return {
         ...contract,
 
@@ -2037,19 +1311,10 @@ export class MeoEnergiasContractDetail
       };
     }
 
-    const matchedCampaign =
-      this.campaigns.find(
-        (campaign) =>
-          campaign.id ===
-          rawCampaign,
-      );
+    const matchedCampaign = this.campaigns.find((campaign) => campaign.id === rawCampaign);
 
     const currentCampaign =
-      this.contract?.campaign
-        ?.id === rawCampaign
-        ? this.contract
-            .campaign
-        : null;
+      this.contract?.campaign?.id === rawCampaign ? this.contract.campaign : null;
 
     return {
       ...contract,
@@ -2057,236 +1322,114 @@ export class MeoEnergiasContractDetail
       campaign: {
         id: rawCampaign,
 
-        name:
-          matchedCampaign?.name ??
-          currentCampaign?.name ??
-          rawCampaign,
+        name: matchedCampaign?.name ?? currentCampaign?.name ?? rawCampaign,
       },
     };
   }
 
-  private initializeEditForm(
-    contract:
-      MeoEnergiasContractDetailModel,
-  ): void {
-    const state =
-      this.buildEditableState(
-        contract,
-      );
+  private initializeEditForm(contract: MeoEnergiasContractDetailModel): void {
+    const state = this.buildEditableState(contract);
 
-    this.editForm =
-      structuredClone(
-        state.form,
-      );
+    this.editForm = structuredClone(state.form);
 
-    this.originalEditForm =
-      structuredClone(
-        state.form,
-      );
+    this.originalEditForm = structuredClone(state.form);
 
-    this.campaignSelectionMode =
-      state.campaignMode;
+    this.campaignSelectionMode = state.campaignMode;
 
-    this.originalCampaignSelectionMode =
-      state.campaignMode;
+    this.originalCampaignSelectionMode = state.campaignMode;
   }
 
-  private buildEditableState(
-    contract:
-      MeoEnergiasContractDetailModel,
-  ): {
-    form:
-      EditableContractForm;
-    campaignMode:
-      CampaignSelectionMode;
+  private buildEditableState(contract: MeoEnergiasContractDetailModel): {
+    form: EditableContractForm;
+    campaignMode: CampaignSelectionMode;
   } {
-    const resolvedCampaign =
-      this.resolveCampaignSelection(
-        contract.campaign,
-      );
+    const resolvedCampaign = this.resolveCampaignSelection(contract.campaign);
 
     return {
-      campaignMode:
-        resolvedCampaign.mode,
+      campaignMode: resolvedCampaign.mode,
 
       form: {
-        nomeClienteEmpresa:
-          contract
-            .nomeClienteEmpresa ??
-          '',
+        nomeClienteEmpresa: contract.nomeClienteEmpresa ?? '',
 
-        nif:
-          contract.nif ?? null,
+        nif: contract.nif ?? null,
 
+        telefone: contract.telefone ?? null,
 
-        telefone:
-          contract.telefone ??
-          null,
+        email: contract.email ?? '',
 
-        email:
-          contract.email ?? '',
+        cae: contract.cae ?? '',
 
-        cae:
-          contract.cae ?? '',
+        crc: contract.crc ?? '',
 
-        crc:
-          contract.crc ?? '',
+        tipoSegmento: contract.tipoSegmento,
 
-        tipoSegmento:
-          contract.tipoSegmento,
+        tipoProduto: contract.tipoProduto,
 
-        tipoProduto:
-          contract.tipoProduto,
+        contratacao: contract.contratacao,
 
-        contratacao:
-          contract.contratacao,
+        tipoContratacaoLuz: contract.tipoContratacaoLuz ?? '',
 
-        tipoContratacaoLuz:
-          contract
-            .tipoContratacaoLuz ??
-          '',
+        tipoContratacaoGas: contract.tipoContratacaoGas ?? '',
 
-        tipoContratacaoGas:
-          contract
-            .tipoContratacaoGas ??
-          '',
+        controleQualidade: contract.controleQualidade ?? '',
 
-        controleQualidade:
-          contract
-            .controleQualidade ??
-          '',
+        codigoRegistoCE: contract.codigoRegistoCE ?? '',
 
-        codigoRegistoCE:
-          contract
-            .codigoRegistoCE ??
-          '',
+        nomeRegistoCE: contract.nomeRegistoCE ?? '',
 
-        nomeRegistoCE:
-          contract
-            .nomeRegistoCE ??
-          '',
+        estado: contract.estado,
 
-        estado:
-          contract.estado,
+        agendamento: this.toDateTimeLocal(contract.agendamento),
 
-        agendamento:
-          this.toDateTimeLocal(
-            contract.agendamento,
-          ),
+        dataAssinatura: this.toDateInput(contract.dataAssinatura),
 
-        dataAssinatura:
-          this.toDateInput(
-            contract
-              .dataAssinatura,
-          ),
+        dataContrato: this.toDateInput(contract.dataContrato),
 
-        dataContrato:
-          this.toDateInput(
-            contract.dataContrato,
-          ),
+        dataRegisto: this.toDateInput(contract.dataRegisto),
 
-        dataRegisto:
-          this.toDateInput(
-            contract.dataRegisto,
-          ),
+        dataAtivacaoCPE: this.toDateInput(contract.dataAtivacaoCPE),
 
-        dataAtivacaoCPE:
-          this.toDateInput(
-            contract
-              .dataAtivacaoCPE,
-          ),
+        dataBaixaCPE: this.toDateInput(contract.dataBaixaCPE),
 
-        dataBaixaCPE:
-          this.toDateInput(
-            contract.dataBaixaCPE,
-          ),
+        dataAtivacaoCUI: this.toDateInput(contract.dataAtivacaoCUI),
 
-        dataAtivacaoCUI:
-          this.toDateInput(
-            contract
-              .dataAtivacaoCUI,
-          ),
+        dataBaixaCUI: this.toDateInput(contract.dataBaixaCUI),
 
-        dataBaixaCUI:
-          this.toDateInput(
-            contract.dataBaixaCUI,
-          ),
+        moradaInstalacao: contract.moradaInstalacao ?? '',
 
-        moradaInstalacao:
-          contract
-            .moradaInstalacao ??
-          '',
+        moradaFaturacao: contract.moradaFaturacao ?? '',
 
-        moradaFaturacao:
-          contract
-            .moradaFaturacao ??
-          '',
+        faturaEletronica: Boolean(contract.faturaEletronica),
 
-        faturaEletronica:
-          Boolean(
-            contract
-              .faturaEletronica,
-          ),
+        tarifaSocial: Boolean(contract.tarifaSocial),
 
-        tarifaSocial:
-          Boolean(
-            contract.tarifaSocial,
-          ),
+        debitoDireto: Boolean(contract.debitoDireto),
 
-        debitoDireto:
-          Boolean(
-            contract
-              .debitoDireto,
-          ),
+        iban: contract.iban ?? '',
 
-        iban:
-          contract.iban ?? '',
-
-        antigaComercializadora:
-          contract
-            .antigaComercializadora ??
-          '',
+        antigaComercializadora: contract.antigaComercializadora ?? '',
 
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
 
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
 
-        potencia:
-          contract.potencia ??
-          '',
+        potencia: contract.potencia ?? '',
 
-        escalao:
-          contract.escalao ?? '',
+        escalao: contract.escalao ?? '',
 
-        cicloHorario:
-          contract
-            .cicloHorario ??
-          '',
+        cicloHorario: contract.cicloHorario ?? '',
 
-        nivelTensao:
-          contract
-            .nivelTensao ??
-          '',
+        nivelTensao: contract.nivelTensao ?? '',
 
-        campaignId:
-          resolvedCampaign
-            .campaignId,
+        campaignId: resolvedCampaign.campaignId,
 
-        customCampaign:
-          resolvedCampaign
-            .customCampaign,
+        customCampaign: resolvedCampaign.customCampaign,
       },
     };
   }
 
-  private resolveCampaignSelection(
-    campaign:
-      MeoEnergiasContractDetailModel[
-        'campaign'
-      ],
-  ): {
-    mode:
-      CampaignSelectionMode;
+  private resolveCampaignSelection(campaign: MeoEnergiasContractDetailModel['campaign']): {
+    mode: CampaignSelectionMode;
     campaignId: string;
     customCampaign: string;
   } {
@@ -2298,50 +1441,27 @@ export class MeoEnergiasContractDetail
       };
     }
 
-    const campaignId =
-      campaign.id?.trim() ?? '';
+    const campaignId = campaign.id?.trim() ?? '';
 
-    const normalizedName =
-      this.normalizeCampaignName(
-        campaign.name,
-      );
+    const normalizedName = this.normalizeCampaignName(campaign.name);
 
-    const campaignById =
-      campaignId
-        ? this.campaigns.find(
-            (
-              availableCampaign,
-            ) =>
-              availableCampaign
-                .id ===
-              campaignId,
-          )
-        : undefined;
+    const campaignById = campaignId
+      ? this.campaigns.find((availableCampaign) => availableCampaign.id === campaignId)
+      : undefined;
 
-    const campaignByName =
-      normalizedName
-        ? this.campaigns.find(
-            (
-              availableCampaign,
-            ) =>
-              this
-                .normalizeCampaignName(
-                  availableCampaign
-                    .name,
-                ) ===
-              normalizedName,
-          )
-        : undefined;
+    const campaignByName = normalizedName
+      ? this.campaigns.find(
+          (availableCampaign) =>
+            this.normalizeCampaignName(availableCampaign.name) === normalizedName,
+        )
+      : undefined;
 
-    const existingCampaign =
-      campaignById ??
-      campaignByName;
+    const existingCampaign = campaignById ?? campaignByName;
 
     if (existingCampaign) {
       return {
         mode: 'existing',
-        campaignId:
-          existingCampaign.id,
+        campaignId: existingCampaign.id,
         customCampaign: '',
       };
     }
@@ -2357,259 +1477,176 @@ export class MeoEnergiasContractDetail
     return {
       mode: 'other',
       campaignId: '',
-      customCampaign:
-        campaign.name
-          ?.trim() ?? '',
+      customCampaign: campaign.name?.trim() ?? '',
     };
   }
 
-  private normalizeCampaignName(
-    value: string,
-  ): string {
+  private normalizeCampaignName(value: string): string {
     return value
       .trim()
-      .toLocaleLowerCase(
-        'pt-PT',
-      )
+      .toLocaleLowerCase('pt-PT')
       .normalize('NFD')
-      .replace(
-        /[\u0300-\u036f]/g,
-        '',
-      );
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
-  private buildPatchPayload():
-    UpdateMeoEnergiasContractRequest {
-    const payload:
-      UpdateMeoEnergiasContractRequest =
-      {};
+  private buildPatchPayload(): UpdateMeoEnergiasContractRequest {
+    const payload: UpdateMeoEnergiasContractRequest = {};
 
     this.assignChangedValue(
       payload,
       'nomeClienteEmpresa',
-      this.editForm
-        .nomeClienteEmpresa,
-      this.originalEditForm
-        .nomeClienteEmpresa,
+      this.editForm.nomeClienteEmpresa,
+      this.originalEditForm.nomeClienteEmpresa,
     );
-
-    this.assignChangedValue(
-      payload,
-      'nif',
-      this.editForm.nif,
-      this.originalEditForm.nif,
-    );
-
 
     this.assignChangedValue(
       payload,
       'telefone',
       this.editForm.telefone,
-      this.originalEditForm
-        .telefone,
+      this.originalEditForm.telefone,
     );
 
-    this.assignChangedValue(
-      payload,
-      'email',
-      this.editForm.email,
-      this.originalEditForm.email,
-    );
+    this.assignChangedValue(payload, 'email', this.editForm.email, this.originalEditForm.email);
 
-    this.assignChangedValue(
-      payload,
-      'cae',
-      this.editForm.cae,
-      this.originalEditForm.cae,
-    );
+    this.assignChangedValue(payload, 'cae', this.editForm.cae, this.originalEditForm.cae);
 
-    this.assignChangedValue(
-      payload,
-      'crc',
-      this.editForm.crc,
-      this.originalEditForm.crc,
-    );
+    this.assignChangedValue(payload, 'crc', this.editForm.crc, this.originalEditForm.crc);
 
     this.assignChangedValue(
       payload,
       'tipoSegmento',
-      this.editForm
-        .tipoSegmento,
-      this.originalEditForm
-        .tipoSegmento,
+      this.editForm.tipoSegmento,
+      this.originalEditForm.tipoSegmento,
     );
 
     this.assignChangedValue(
       payload,
       'tipoProduto',
-      this.editForm
-        .tipoProduto,
-      this.originalEditForm
-        .tipoProduto,
+      this.editForm.tipoProduto,
+      this.originalEditForm.tipoProduto,
     );
 
     this.assignChangedValue(
       payload,
       'contratacao',
-      this.editForm
-        .contratacao,
-      this.originalEditForm
-        .contratacao,
+      this.editForm.contratacao,
+      this.originalEditForm.contratacao,
     );
 
     this.assignChangedValue(
       payload,
       'tipoContratacaoLuz',
-      this.editForm
-        .tipoContratacaoLuz,
-      this.originalEditForm
-        .tipoContratacaoLuz,
+      this.editForm.tipoContratacaoLuz,
+      this.originalEditForm.tipoContratacaoLuz,
     );
 
     this.assignChangedValue(
       payload,
       'tipoContratacaoGas',
-      this.editForm
-        .tipoContratacaoGas,
-      this.originalEditForm
-        .tipoContratacaoGas,
+      this.editForm.tipoContratacaoGas,
+      this.originalEditForm.tipoContratacaoGas,
     );
-
 
     if (this.canManageQualityControl()) {
       this.assignChangedValue(
         payload,
         'controleQualidade',
-        this.editForm
-          .controleQualidade,
-        this.originalEditForm
-          .controleQualidade,
+        this.editForm.controleQualidade,
+        this.originalEditForm.controleQualidade,
       );
     }
 
     this.assignChangedValue(
       payload,
       'codigoRegistoCE',
-      this.editForm
-        .codigoRegistoCE,
-      this.originalEditForm
-        .codigoRegistoCE,
+      this.editForm.codigoRegistoCE,
+      this.originalEditForm.codigoRegistoCE,
     );
 
     this.assignChangedValue(
       payload,
       'nomeRegistoCE',
-      this.editForm
-        .nomeRegistoCE,
-      this.originalEditForm
-        .nomeRegistoCE,
+      this.editForm.nomeRegistoCE,
+      this.originalEditForm.nomeRegistoCE,
     );
 
-    this.assignChangedValue(
-      payload,
-      'estado',
-      this.editForm.estado,
-      this.originalEditForm.estado,
-    );
-
+    this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
 
     this.assignChangedValue(
       payload,
       'agendamento',
-      this.editForm
-        .agendamento,
-      this.originalEditForm
-        .agendamento,
+      this.editForm.agendamento,
+      this.originalEditForm.agendamento,
     );
 
     this.assignChangedValue(
       payload,
       'dataAssinatura',
-      this.editForm
-        .dataAssinatura,
-      this.originalEditForm
-        .dataAssinatura,
+      this.editForm.dataAssinatura,
+      this.originalEditForm.dataAssinatura,
     );
 
     this.assignChangedValue(
       payload,
       'dataContrato',
-      this.editForm
-        .dataContrato,
-      this.originalEditForm
-        .dataContrato,
+      this.editForm.dataContrato,
+      this.originalEditForm.dataContrato,
     );
 
     this.assignChangedValue(
       payload,
       'dataRegisto',
-      this.editForm
-        .dataRegisto,
-      this.originalEditForm
-        .dataRegisto,
+      this.editForm.dataRegisto,
+      this.originalEditForm.dataRegisto,
     );
 
     this.assignChangedValue(
       payload,
       'dataAtivacaoCPE',
-      this.editForm
-        .dataAtivacaoCPE,
-      this.originalEditForm
-        .dataAtivacaoCPE,
+      this.editForm.dataAtivacaoCPE,
+      this.originalEditForm.dataAtivacaoCPE,
     );
 
     this.assignChangedValue(
       payload,
       'dataBaixaCPE',
-      this.editForm
-        .dataBaixaCPE,
-      this.originalEditForm
-        .dataBaixaCPE,
+      this.editForm.dataBaixaCPE,
+      this.originalEditForm.dataBaixaCPE,
     );
 
     this.assignChangedValue(
       payload,
       'dataAtivacaoCUI',
-      this.editForm
-        .dataAtivacaoCUI,
-      this.originalEditForm
-        .dataAtivacaoCUI,
+      this.editForm.dataAtivacaoCUI,
+      this.originalEditForm.dataAtivacaoCUI,
     );
 
     this.assignChangedValue(
       payload,
       'dataBaixaCUI',
-      this.editForm
-        .dataBaixaCUI,
-      this.originalEditForm
-        .dataBaixaCUI,
+      this.editForm.dataBaixaCUI,
+      this.originalEditForm.dataBaixaCUI,
     );
 
     this.assignChangedValue(
       payload,
       'moradaInstalacao',
-      this.editForm
-        .moradaInstalacao,
-      this.originalEditForm
-        .moradaInstalacao,
+      this.editForm.moradaInstalacao,
+      this.originalEditForm.moradaInstalacao,
     );
 
     this.assignChangedValue(
       payload,
       'moradaFaturacao',
-      this.editForm
-        .moradaFaturacao,
-      this.originalEditForm
-        .moradaFaturacao,
+      this.editForm.moradaFaturacao,
+      this.originalEditForm.moradaFaturacao,
     );
 
     this.assignChangedValue(
       payload,
       'faturaEletronica',
-      this.editForm
-        .faturaEletronica,
-      this.originalEditForm
-        .faturaEletronica,
+      this.editForm.faturaEletronica,
+      this.originalEditForm.faturaEletronica,
     );
 
     this.assignChangedValue(
@@ -2622,204 +1659,118 @@ export class MeoEnergiasContractDetail
     this.assignChangedValue(
       payload,
       'debitoDireto',
-      this.editForm
-        .debitoDireto,
-      this.originalEditForm
-        .debitoDireto,
+      this.editForm.debitoDireto,
+      this.originalEditForm.debitoDireto,
     );
 
-    this.assignChangedValue(
-      payload,
-      'iban',
-      this.editForm.iban,
-      this.originalEditForm.iban,
-    );
+    this.assignChangedValue(payload, 'iban', this.editForm.iban, this.originalEditForm.iban);
 
     this.assignChangedValue(
       payload,
       'antigaComercializadora',
-      this.editForm
-        .antigaComercializadora,
-      this.originalEditForm
-        .antigaComercializadora,
+      this.editForm.antigaComercializadora,
+      this.originalEditForm.antigaComercializadora,
     );
 
-    this.assignChangedValue(
-      payload,
-      'cpe',
-      this.editForm.cpe,
-      this.originalEditForm.cpe,
-    );
+    this.assignChangedValue(payload, 'cpe', this.editForm.cpe, this.originalEditForm.cpe);
 
-    this.assignChangedValue(
-      payload,
-      'cui',
-      this.editForm.cui,
-      this.originalEditForm.cui,
-    );
+    this.assignChangedValue(payload, 'cui', this.editForm.cui, this.originalEditForm.cui);
 
     this.assignChangedValue(
       payload,
       'potencia',
       this.editForm.potencia,
-      this.originalEditForm
-        .potencia,
+      this.originalEditForm.potencia,
     );
 
     this.assignChangedValue(
       payload,
       'escalao',
       this.editForm.escalao,
-      this.originalEditForm
-        .escalao,
+      this.originalEditForm.escalao,
     );
 
     this.assignChangedValue(
       payload,
       'cicloHorario',
-      this.editForm
-        .cicloHorario,
-      this.originalEditForm
-        .cicloHorario,
+      this.editForm.cicloHorario,
+      this.originalEditForm.cicloHorario,
     );
 
     this.assignChangedValue(
       payload,
       'nivelTensao',
-      this.editForm
-        .nivelTensao,
-      this.originalEditForm
-        .nivelTensao,
+      this.editForm.nivelTensao,
+      this.originalEditForm.nivelTensao,
     );
 
-    const currentCampaign =
-      this.getCurrentCampaignValue();
+    const currentCampaign = this.getCurrentCampaignValue();
 
-    const originalCampaign =
-      this.getOriginalCampaignValue();
+    const originalCampaign = this.getOriginalCampaignValue();
 
-    if (
-      currentCampaign !==
-      originalCampaign
-    ) {
-      payload.campanha =
-        currentCampaign;
+    if (currentCampaign !== originalCampaign) {
+      payload.campanha = currentCampaign;
     }
 
     return payload;
   }
 
   private assignChangedValue(
-    payload:
-      UpdateMeoEnergiasContractRequest,
-    key:
-      keyof UpdateMeoEnergiasContractRequest,
+    payload: UpdateMeoEnergiasContractRequest,
+    key: keyof UpdateMeoEnergiasContractRequest,
     currentValue: unknown,
     originalValue: unknown,
   ): void {
-    const normalizedCurrent =
-      this.normalizeValue(
-        currentValue,
-      );
+    const normalizedCurrent = this.normalizeValue(currentValue);
 
-    const normalizedOriginal =
-      this.normalizeValue(
-        originalValue,
-      );
+    const normalizedOriginal = this.normalizeValue(originalValue);
 
-    if (
-      JSON.stringify(
-        normalizedCurrent,
-      ) !==
-      JSON.stringify(
-        normalizedOriginal,
-      )
-    ) {
-      (
-        payload as unknown as Record<
-          string,
-          unknown
-        >
-      )[key] =
-        normalizedCurrent;
+    if (JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedOriginal)) {
+      (payload as unknown as Record<string, unknown>)[key] = normalizedCurrent;
     }
   }
 
-  private getCurrentCampaignValue():
-    string {
-    return (
-      this.campaignSelectionMode ===
-      'other'
-        ? this.editForm
-            .customCampaign
-            .trim()
-        : this.editForm
-            .campaignId
-    );
+  private getCurrentCampaignValue(): string {
+    return this.campaignSelectionMode === 'other'
+      ? this.editForm.customCampaign.trim()
+      : this.editForm.campaignId;
   }
 
-  private getOriginalCampaignValue():
-    string {
-    return (
-      this
-        .originalCampaignSelectionMode ===
-      'other'
-        ? this.originalEditForm
-            .customCampaign
-            .trim()
-        : this.originalEditForm
-            .campaignId
-    );
+  private getOriginalCampaignValue(): string {
+    return this.originalCampaignSelectionMode === 'other'
+      ? this.originalEditForm.customCampaign.trim()
+      : this.originalEditForm.campaignId;
   }
 
-  private normalizeValue(
-    value: unknown,
-  ): unknown {
-    return typeof value ===
-      'string'
-      ? value.trim()
-      : value;
+  private normalizeValue(value: unknown): unknown {
+    return typeof value === 'string' ? value.trim() : value;
   }
 
-  private clearElectricityFields():
-    void {
-    this.editForm
-      .tipoContratacaoLuz = '';
+  private clearElectricityFields(): void {
+    this.editForm.tipoContratacaoLuz = '';
 
     this.editForm.cpe = '';
     this.editForm.potencia = '';
-    this.editForm
-      .cicloHorario = '';
-    this.editForm
-      .nivelTensao = '';
+    this.editForm.cicloHorario = '';
+    this.editForm.nivelTensao = '';
 
-    this.editForm
-      .dataAtivacaoCPE = '';
+    this.editForm.dataAtivacaoCPE = '';
 
-    this.editForm
-      .dataBaixaCPE = '';
+    this.editForm.dataBaixaCPE = '';
   }
 
   private clearGasFields(): void {
-    this.editForm
-      .tipoContratacaoGas = '';
+    this.editForm.tipoContratacaoGas = '';
 
     this.editForm.cui = '';
     this.editForm.escalao = '';
 
-    this.editForm
-      .dataAtivacaoCUI = '';
+    this.editForm.dataAtivacaoCUI = '';
 
-    this.editForm
-      .dataBaixaCUI = '';
+    this.editForm.dataBaixaCUI = '';
   }
 
-  private toDateInput(
-    value:
-      | string
-      | null
-      | undefined,
-  ): string {
+  private toDateInput(value: string | null | undefined): string {
     if (!value) {
       return '';
     }
@@ -2827,41 +1778,23 @@ export class MeoEnergiasContractDetail
     return value.slice(0, 10);
   }
 
-  private toDateTimeLocal(
-    value:
-      | string
-      | null
-      | undefined,
-  ): string {
+  private toDateTimeLocal(value: string | null | undefined): string {
     if (!value) {
       return '';
     }
 
-    const date =
-      new Date(value);
+    const date = new Date(value);
 
-    if (
-      Number.isNaN(
-        date.getTime(),
-      )
-    ) {
+    if (Number.isNaN(date.getTime())) {
       return value.slice(0, 16);
     }
 
-    const timezoneOffset =
-      date.getTimezoneOffset() *
-      60_000;
+    const timezoneOffset = date.getTimezoneOffset() * 60_000;
 
-    return new Date(
-      date.getTime() -
-        timezoneOffset,
-    )
-      .toISOString()
-      .slice(0, 16);
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
   }
 
-  private buildEmptyEditForm():
-    EditableContractForm {
+  private buildEmptyEditForm(): EditableContractForm {
     return {
       nomeClienteEmpresa: '',
       nif: null,
@@ -2870,14 +1803,11 @@ export class MeoEnergiasContractDetail
       cae: '',
       crc: '',
 
-      tipoSegmento:
-        'Residencial',
+      tipoSegmento: 'Residencial',
 
-      tipoProduto:
-        'Luz + Gás',
+      tipoProduto: 'Luz + Gás',
 
-      contratacao:
-        'Contratação Digital',
+      contratacao: 'Contratação Digital',
 
       tipoContratacaoLuz: '',
       tipoContratacaoGas: '',
@@ -2886,9 +1816,7 @@ export class MeoEnergiasContractDetail
       codigoRegistoCE: '',
       nomeRegistoCE: '',
 
-      estado:
-        'Pedido de Chamada',
-
+      estado: 'Pedido de Chamada',
 
       agendamento: '',
       dataAssinatura: '',
@@ -2920,9 +1848,7 @@ export class MeoEnergiasContractDetail
     };
   }
 
-  private buildCollapsedSections(
-    value: boolean,
-  ) {
+  private buildCollapsedSections(value: boolean) {
     return {
       client: value,
       contract: value,
@@ -2932,51 +1858,33 @@ export class MeoEnergiasContractDetail
       energy: value,
       attachments: value,
       observations: value,
-      internalObservations:
-        value,
+      internalObservations: value,
     };
   }
 
-  private getFileKey(
-    file: File,
-  ): string {
+  private getFileKey(file: File): string {
     return `${file.name}-${file.size}-${file.lastModified}`;
   }
 
-  private isValidEmail(
-    value: string,
-  ): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      .test(value.trim());
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   }
 
-  private showSuccess(
-    message: string,
-  ): void {
-    this.successMessage =
-      message;
+  private showSuccess(message: string): void {
+    this.successMessage = message;
 
     setTimeout(() => {
-      if (
-        this.successMessage ===
-        message
-      ) {
+      if (this.successMessage === message) {
         this.successMessage = '';
       }
     }, 5000);
   }
 
-  private showError(
-    message: string,
-  ): void {
-    this.errorMessage =
-      message;
+  private showError(message: string): void {
+    this.errorMessage = message;
 
     setTimeout(() => {
-      if (
-        this.errorMessage ===
-        message
-      ) {
+      if (this.errorMessage === message) {
         this.errorMessage = '';
       }
     }, 5000);

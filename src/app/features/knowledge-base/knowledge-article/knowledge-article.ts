@@ -13,10 +13,12 @@ import { Company, CompanyService } from '../../../core/services/company';
 
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
+import { FileAccessService } from '../../../core/services/file-access';
 
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
 @Component({
   selector: 'app-knowledge-article',
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, VisibleAttachmentsPipe],
   templateUrl: './knowledge-article.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-article.scss',
@@ -27,6 +29,7 @@ export class KnowledgeArticle implements OnInit {
   private readonly router = inject(Router);
   private readonly companyService = inject(CompanyService);
   private readonly auth = inject(Auth);
+  private readonly fileAccess = inject(FileAccessService);
 
   readonly apiUrl = environment.apiUrl;
 
@@ -82,9 +85,7 @@ export class KnowledgeArticle implements OnInit {
 
     const role = currentUser?.role ?? '';
 
-    this.canManageKnowledgeBase = role
-      .toLowerCase()
-      .includes('super admin');
+    this.canManageKnowledgeBase = role.toLowerCase().includes('super admin');
   }
 
   private ensureCanManageKnowledgeBase(): boolean {
@@ -92,8 +93,7 @@ export class KnowledgeArticle implements OnInit {
       return true;
     }
 
-    this.errorMessage =
-      'Não tens permissão para realizar esta operação.';
+    this.errorMessage = 'Não tens permissão para realizar esta operação.';
 
     return false;
   }
@@ -284,6 +284,11 @@ export class KnowledgeArticle implements OnInit {
   }
 
   downloadAttachment(attachment: KnowledgeAttachment): void {
+    if (!this.fileAccess.canViewFile(attachment)) {
+      this.errorMessage = 'Não tem permissão para visualizar ficheiros de áudio.';
+      return;
+    }
+
     if (!this.article?.id) {
       return;
     }
@@ -338,7 +343,7 @@ export class KnowledgeArticle implements OnInit {
     if (!this.ensureCanManageKnowledgeBase()) {
       return;
     }
-    
+
     if (!this.isEditing) {
       return;
     }
@@ -352,7 +357,7 @@ export class KnowledgeArticle implements OnInit {
       return;
     }
 
-    this.selectedFiles = [...this.selectedFiles, ...files];
+    this.addAllowedFiles(files);
   }
 
   onFileInputChange(event: Event): void {
@@ -367,9 +372,33 @@ export class KnowledgeArticle implements OnInit {
       return;
     }
 
-    this.selectedFiles = [...this.selectedFiles, ...files];
+    this.addAllowedFiles(files);
 
     input.value = '';
+  }
+
+  private addAllowedFiles(files: File[]): void {
+    const { allowedFiles, rejectedAudioFiles } = this.fileAccess.filterUploadFiles(files);
+
+    if (rejectedAudioFiles.length) {
+      this.errorMessage =
+        'Ficheiros de áudio só podem ser carregados por utilizadores Super Admin ou DU.';
+    }
+
+    if (!allowedFiles.length) {
+      return;
+    }
+
+    const existingKeys = new Set(
+      this.selectedFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`),
+    );
+
+    this.selectedFiles = [
+      ...this.selectedFiles,
+      ...allowedFiles.filter(
+        (file) => !existingKeys.has(`${file.name}:${file.size}:${file.lastModified}`),
+      ),
+    ];
   }
 
   removeSelectedFile(index: number): void {

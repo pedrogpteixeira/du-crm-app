@@ -12,45 +12,30 @@
   <label class="file-select-btn" [class.disabled]="disabled">
     {{ selectLabel }}
 
-    <input
-      type="file"
-      multiple
-      hidden
-      [disabled]="disabled"
-      (change)="onFileInputChange($event)"
-    />
+    <input type="file" multiple hidden [disabled]="disabled" (change)="onFileInputChange($event)" />
   </label>
 </div>
+
+<p class="file-access-message" *ngIf="fileAccessMessage">
+  {{ fileAccessMessage }}
+</p>
 
 <div class="selected-files" *ngIf="files.length">
   <div class="selected-files-header">
     <strong>Ficheiros selecionados ({{ files.length }})</strong>
 
-    <button
-      type="button"
-      class="clear-files-button"
-      [disabled]="disabled"
-      (click)="clearFiles()"
-    >
+    <button type="button" class="clear-files-button" [disabled]="disabled" (click)="clearFiles()">
       Limpar seleção
     </button>
   </div>
 
-  <div
-    class="selected-file"
-    *ngFor="let file of files; let index = index"
-  >
+  <div class="selected-file" *ngFor="let file of files; let index = index">
     <div>
       <strong>{{ file.name }}</strong>
       <span>{{ formatFileSize(file.size) }}</span>
     </div>
 
-    <button
-      type="button"
-      class="remove-file"
-      [disabled]="disabled"
-      (click)="removeFile(index)"
-    >
+    <button type="button" class="remove-file" [disabled]="disabled" (click)="removeFile(index)">
       Remover
     </button>
   </div>

@@ -1,76 +1,46 @@
 <section class="create-contract-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">
-        Contratos › Iberdrola Solar › Novo contrato
-      </span>
+      <span class="breadcrumb"> Contratos › Iberdrola Solar › Novo contrato </span>
 
-      <h1>
-        Novo contrato Iberdrola Solar
-      </h1>
+      <h1>Novo contrato Iberdrola Solar</h1>
 
-      <p>
-        Preenche os dados necessários para criar um novo contrato Iberdrola Solar.
-      </p>
+      <p>Preenche os dados necessários para criar um novo contrato Iberdrola Solar.</p>
     </div>
   </header>
 
-  <p
-    class="error-message"
-    *ngIf="errorMessage"
-  >
+  <p class="error-message" *ngIf="errorMessage">
     {{ errorMessage }}
   </p>
 
-  <p
-    class="success-message"
-    *ngIf="successMessage"
-  >
+  <p class="success-message" *ngIf="successMessage">
     {{ successMessage }}
   </p>
 
   <!-- IDENTIFICAÇÃO -->
 
   <article class="card">
-    <div class="section-title">
-      Identificação do Cliente
-    </div>
+    <div class="section-title">Identificação do Cliente</div>
 
     <div class="form-grid">
       <label>
         NIF do Cliente *
 
         <div class="inline-field">
-          <input
-            type="number"
-            [(ngModel)]="nif"
-            [disabled]="!!client"
-          />
+          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
 
           <button
             type="button"
-            [disabled]="
-              isCheckingClient ||
-              !!client
-            "
+            [disabled]="isCheckingClient || !!client"
             (click)="checkClientByNif()"
           >
-            {{
-              isCheckingClient
-                ? 'A procurar...'
-                : 'Verificar'
-            }}
+            {{ isCheckingClient ? 'A procurar...' : 'Verificar' }}
           </button>
         </div>
       </label>
 
-      <div
-        class="client-result"
-        *ngIf="client"
-      >
-        <span>
-          Cliente identificado
-        </span>
+      <div class="client-result" *ngIf="client">
+        <span> Cliente identificado </span>
 
         <strong>
           {{ client.name }}
@@ -82,39 +52,20 @@
         </small>
       </div>
 
-      <ng-container
-        *ngIf="clientNotFound"
-      >
+      <ng-container *ngIf="clientNotFound">
         <p class="warning-message">
-          Cliente não encontrado.
-          Preenche o nome para criar
-          uma ficha de cliente.
+          Cliente não encontrado. Preenche o nome para criar uma ficha de cliente.
         </p>
 
         <label>
           Nome Cliente / Empresa *
 
-          <input
-            type="text"
-            [(ngModel)]="
-              clientName
-            "
-          />
+          <input type="text" [(ngModel)]="clientName" />
         </label>
 
         <div class="actions">
-          <button
-            type="button"
-            [disabled]="
-              isCreatingClient
-            "
-            (click)="createClient()"
-          >
-            {{
-              isCreatingClient
-                ? 'A criar cliente...'
-                : 'Criar cliente'
-            }}
+          <button type="button" [disabled]="isCreatingClient" (click)="createClient()">
+            {{ isCreatingClient ? 'A criar cliente...' : 'Criar cliente' }}
           </button>
         </div>
       </ng-container>
@@ -122,221 +73,100 @@
   </article>
 
   <ng-container *ngIf="client">
-
     <!-- ATRIBUIÇÃO -->
 
     <article class="card">
-      <div class="section-title">
-        Atribuição
-      </div>
+      <div class="section-title">Atribuição</div>
 
-      <p
-        class="error-message"
-        *ngIf="
-          assignmentErrorMessage
-        "
-      >
+      <p class="error-message" *ngIf="assignmentErrorMessage">
         {{ assignmentErrorMessage }}
       </p>
 
-      <p
-        class="muted"
-        *ngIf="
-          isLoadingAssignment
-        "
-      >
-        A carregar utilizadores e equipas...
-      </p>
+      <p class="muted" *ngIf="isLoadingAssignment">A carregar utilizadores e equipas...</p>
 
-      <div
-        class="
-          form-grid
-          two-columns
-        "
-        *ngIf="
-          !isLoadingAssignment
-        "
-      >
+      <div class="form-grid two-columns" *ngIf="!isLoadingAssignment">
         <label>
           Utilizador atribuído *
 
           <select
-            [(ngModel)]="
-              assignedUserId
-            "
-            [disabled]="
-              !canAssignOtherUsers()
-            "
-            (ngModelChange)="
-              onAssignedUserChange()
-            "
+            [(ngModel)]="assignedUserId"
+            [disabled]="!canAssignOtherUsers()"
+            (ngModelChange)="onAssignedUserChange()"
           >
-            <option
-              value=""
-              disabled
-            >
-              Selecionar utilizador
-            </option>
+            <option value="" disabled>Selecionar utilizador</option>
 
-            <option
-              *ngFor="
-                let user of
-                  assignableUsers
-              "
-              [value]="user.id"
-            >
+            <option *ngFor="let user of assignableUsers" [value]="user.id">
               {{ user.name }}
               — {{ user.username }}
             </option>
           </select>
         </label>
 
-        <div
-          class="
-            team-selection-field
-          "
-        >
-          <span class="field-label">
-            Equipas
-          </span>
+        <div class="team-selection-field">
+          <span class="field-label"> Equipas </span>
 
-          <div
-            class="
-              selected-team-tags
-            "
-            *ngIf="
-              selectedTeams.length
-            "
-          >
-            <span
-              class="team-tag"
-              *ngFor="
-                let team of
-                  selectedTeams
-              "
-            >
+          <div class="selected-team-tags" *ngIf="selectedTeams.length">
+            <span class="team-tag" *ngFor="let team of selectedTeams">
               {{ team.name }}
               — {{ team.position }}
 
               <button
-                *ngIf="
-                  !isRequiredTeam(
-                    team.id
-                  )
-                "
+                *ngIf="!isRequiredTeam(team.id)"
                 type="button"
                 class="remove-team"
-                [attr.aria-label]="
-                  'Remover equipa ' +
-                  team.name
-                "
-                (click)="
-                  removeSelectedTeam(
-                    team.id
-                  )
-                "
+                [attr.aria-label]="'Remover equipa ' + team.name"
+                (click)="removeSelectedTeam(team.id)"
               >
                 ×
               </button>
             </span>
           </div>
 
-          <div
-            class="team-add-row"
-          >
-            <select
-              [(ngModel)]="
-                teamToAddId
-              "
-              [disabled]="
-                !teamsAvailableToAdd
-                  .length
-              "
-            >
+          <div class="team-add-row">
+            <select [(ngModel)]="teamToAddId" [disabled]="!teamsAvailableToAdd.length">
               <option value="">
                 {{
-                  teamsAvailableToAdd
-                    .length
+                  teamsAvailableToAdd.length
                     ? 'Adicionar equipa...'
                     : 'Sem mais equipas disponíveis'
                 }}
               </option>
 
-              <option
-                *ngFor="
-                  let team of
-                    teamsAvailableToAdd
-                "
-                [value]="team.id"
-              >
+              <option *ngFor="let team of teamsAvailableToAdd" [value]="team.id">
                 {{ team.name }}
                 — {{ team.position }}
               </option>
             </select>
 
-            <button
-              type="button"
-              [disabled]="
-                !teamToAddId
-              "
-              (click)="
-                addSelectedTeam()
-              "
-            >
+            <button type="button" [disabled]="!teamToAddId" (click)="addSelectedTeam()">
               Adicionar
             </button>
           </div>
 
-          <p
-            class="
-              muted
-              no-teams-message
-            "
-            *ngIf="
-              !selectedTeams.length &&
-              !availableTeams.length
-            "
-          >
+          <p class="muted no-teams-message" *ngIf="!selectedTeams.length && !availableTeams.length">
             Não existem equipas disponíveis.
           </p>
         </div>
       </div>
 
       <p class="assignment-helper">
-        A posição hierárquica é obtida
-        automaticamente da relação do
-        utilizador com cada equipa.
-        Super Admin, Admin, Backoffice
-        e Coordenador podem atribuir o
-        contrato a utilizadores das
-        equipas onde possuem essas
-        funções.
+        A posição hierárquica é obtida automaticamente da relação do utilizador com cada equipa.
+        Super Admin, Admin, Backoffice e Coordenador podem atribuir o contrato a utilizadores das
+        equipas onde possuem essas funções.
       </p>
     </article>
 
     <!-- DADOS CONTRATO -->
 
     <article class="card">
-      <div class="section-title">
-        Tipo de Segmento
-      </div>
+      <div class="section-title">Tipo de Segmento</div>
 
       <div class="form-grid three-columns">
         <label>
           Tipo Segmento *
 
-          <select
-            [(ngModel)]="
-              contractForm.tipoSegmento
-            "
-          >
-            <option
-              *ngFor="
-                let option of
-                  tipoSegmentoOptions
-              "
-              [value]="option"
-            >
+          <select [(ngModel)]="contractForm.tipoSegmento">
+            <option *ngFor="let option of tipoSegmentoOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -345,28 +175,14 @@
         <label>
           Tipo Produto *
 
-          <input
-            type="text"
-            [value]="contractForm.tipoProduto"
-            readonly
-          />
+          <input type="text" [value]="contractForm.tipoProduto" readonly />
         </label>
 
         <label>
           Contratação *
 
-          <select
-            [(ngModel)]="
-              contractForm.contratacao
-            "
-          >
-            <option
-              *ngFor="
-                let option of
-                  contratacaoOptions
-              "
-              [value]="option"
-            >
+          <select [(ngModel)]="contractForm.contratacao">
+            <option *ngFor="let option of contratacaoOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -380,10 +196,7 @@
             [disabled]="!canManageQualityControl()"
           >
             <option value="">Sem seleção</option>
-            <option
-              *ngFor="let option of qualityControlBackofficeOptions"
-              [value]="option"
-            >
+            <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -393,27 +206,15 @@
           Código Registo C.E.
 
           <select
-            [(ngModel)]="
-              selectedRegistrationTeamId
-            "
-            (ngModelChange)="
-              onRegistrationTeamChange($event)
-            "
+            [(ngModel)]="selectedRegistrationTeamId"
+            (ngModelChange)="onRegistrationTeamChange($event)"
             [disabled]="!availableTeams.length"
           >
-            <option value="">
-              Sem equipa disponível
-            </option>
+            <option value="">Sem equipa disponível</option>
 
-            <option
-              *ngFor="
-                let team of availableTeams
-              "
-              [value]="team.id"
-            >
+            <option *ngFor="let team of availableTeams" [value]="team.id">
               {{
-                team.registrationNumber !== null &&
-                team.registrationNumber !== undefined
+                team.registrationNumber !== null && team.registrationNumber !== undefined
                   ? team.registrationNumber
                   : 'Sem código'
               }}
@@ -425,24 +226,13 @@
           Nome Registo C.E.
 
           <select
-            [(ngModel)]="
-              selectedRegistrationTeamId
-            "
-            (ngModelChange)="
-              onRegistrationTeamChange($event)
-            "
+            [(ngModel)]="selectedRegistrationTeamId"
+            (ngModelChange)="onRegistrationTeamChange($event)"
             [disabled]="!availableTeams.length"
           >
-            <option value="">
-              Sem equipa disponível
-            </option>
+            <option value="">Sem equipa disponível</option>
 
-            <option
-              *ngFor="
-                let team of availableTeams
-              "
-              [value]="team.id"
-            >
+            <option *ngFor="let team of availableTeams" [value]="team.id">
               {{ team.name }}
             </option>
           </select>
@@ -451,24 +241,18 @@
     </article>
 
     <article class="card">
-      <div class="section-title">
-        Estado da Venda
-      </div>
+      <div class="section-title">Estado da Venda</div>
 
       <div class="status-sale-layout">
         <div class="status-sale-state">
           <label>
-          Estado
+            Estado
 
-          <select [(ngModel)]="contractForm.estado">
-            <option
-              *ngFor="let option of estadoOptions"
-              [value]="option"
-            >
-              {{ option }}
-            </option>
-          </select>
-        </label>
+            <div class="initial-status-field">
+              <input type="text" class="readonly-status" [value]="estadoOptions[0]" readonly />
+              <small>O contrato é criado sempre no estado inicial.</small>
+            </div>
+          </label>
         </div>
 
         <div class="status-sale-row status-sale-row--three">
@@ -488,7 +272,6 @@
           </label>
         </div>
 
-
         <div class="status-sale-row status-sale-row--three">
           <label>
             Data Instalação
@@ -506,7 +289,6 @@
           </label>
         </div>
 
-
         <div class="status-sale-row status-sale-row--two">
           <label>
             NRº Lead
@@ -518,313 +300,180 @@
             <input type="text" [(ngModel)]="contractForm.offer" />
           </label>
         </div>
-
       </div>
     </article>
 
     <article class="card">
-      <div class="section-title">
-        Dados Cliente / Empresa
-      </div>
+      <div class="section-title">Dados Cliente / Empresa</div>
 
       <div class="form-grid three-columns">
         <label>
           Nome Cliente / Empresa *
 
-          <input
-            type="text"
-            [value]="client.name"
-            readonly
-          />
+          <input type="text" [value]="client.name" readonly />
         </label>
 
         <label>
           NIF *
 
-          <input
-            type="number"
-            [value]="client.nif"
-            readonly
-          />
+          <input type="number" [value]="client.nif" readonly />
         </label>
 
         <label>
           Telefone *
 
-          <input
-            type="number"
-            [(ngModel)]="
-              contractForm.telefone
-            "
-            required
-          />
+          <input type="tel" [(ngModel)]="contractForm.telefone" required appContractMask="phone" />
         </label>
 
         <label>
           Email
 
-          <input
-            type="email"
-            [(ngModel)]="
-              contractForm.email
-            "
-          />
+          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" />
         </label>
 
         <label>
           CAE
 
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.cae
-            "
-          />
+          <input type="text" [(ngModel)]="contractForm.cae" />
         </label>
 
         <label>
           CRC
 
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.crc
-            "
-          />
+          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" />
         </label>
       </div>
     </article>
 
     <article class="card">
-      <div class="section-title">
-        Dados Morada / Faturação
-      </div>
+      <div class="section-title">Dados Morada / Faturação</div>
 
       <div class="address-selection">
         <label>
           Morada Faturação - Seleção
 
-          <select
-            [(ngModel)]="
-              contractForm.moradaFaturacaoSelecao
-            "
-          >
-            <option
-              *ngFor="
-                let option of
-                  moradaFaturacaoOptions
-              "
-              [value]="option"
-            >
+          <select [(ngModel)]="contractForm.moradaFaturacaoSelecao">
+            <option *ngFor="let option of moradaFaturacaoOptions" [value]="option">
               {{ option }}
             </option>
           </select>
         </label>
       </div>
 
-      <div
-        class="address-grid"
-        [class.two-addresses]="
-          shouldShowBillingAddress()
-        "
-      >
+      <div class="address-grid" [class.two-addresses]="shouldShowBillingAddress()">
         <div class="address-block">
           <label>
             Morada Instalação
 
-            <input
-              type="text"
-              placeholder="Rua"
-              [(ngModel)]="
-                contractForm.moradaInstalacaoRua
-              "
-            />
+            <input type="text" placeholder="Rua" [(ngModel)]="contractForm.moradaInstalacaoRua" />
           </label>
 
           <div class="address-row">
             <input
               type="text"
               placeholder="Cidade"
-              [(ngModel)]="
-                contractForm.moradaInstalacaoCidade
-              "
+              [(ngModel)]="contractForm.moradaInstalacaoCidade"
             />
 
             <input
               type="text"
               placeholder="Distrito"
-              [(ngModel)]="
-                contractForm.moradaInstalacaoDistrito
-              "
+              [(ngModel)]="contractForm.moradaInstalacaoDistrito"
             />
 
             <input
               type="text"
               placeholder="Código postal"
-              [(ngModel)]="
-                contractForm.moradaInstalacaoCodigoPostal
-              "
+              [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
+              appContractMask="postalCode"
             />
           </div>
 
-          <input
-            type="text"
-            placeholder="País"
-            [(ngModel)]="
-              contractForm.moradaInstalacaoPais
-            "
-          />
+          <input type="text" placeholder="País" [(ngModel)]="contractForm.moradaInstalacaoPais" />
         </div>
 
-        <div
-          class="address-block"
-          *ngIf="
-            shouldShowBillingAddress()
-          "
-        >
+        <div class="address-block" *ngIf="shouldShowBillingAddress()">
           <label>
             Morada Faturação
 
-            <input
-              type="text"
-              placeholder="Rua"
-              [(ngModel)]="
-                contractForm.moradaFaturacaoRua
-              "
-            />
+            <input type="text" placeholder="Rua" [(ngModel)]="contractForm.moradaFaturacaoRua" />
           </label>
 
           <div class="address-row">
             <input
               type="text"
               placeholder="Cidade"
-              [(ngModel)]="
-                contractForm.moradaFaturacaoCidade
-              "
+              [(ngModel)]="contractForm.moradaFaturacaoCidade"
             />
 
             <input
               type="text"
               placeholder="Distrito"
-              [(ngModel)]="
-                contractForm.moradaFaturacaoDistrito
-              "
+              [(ngModel)]="contractForm.moradaFaturacaoDistrito"
             />
 
             <input
               type="text"
               placeholder="Código postal"
-              [(ngModel)]="
-                contractForm.moradaFaturacaoCodigoPostal
-              "
+              [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
+              appContractMask="postalCode"
             />
           </div>
 
-          <input
-            type="text"
-            placeholder="País"
-            [(ngModel)]="
-              contractForm.moradaFaturacaoPais
-            "
-          />
+          <input type="text" placeholder="País" [(ngModel)]="contractForm.moradaFaturacaoPais" />
         </div>
       </div>
 
-      <div
-        class="
-          form-grid
-          three-columns
-          billing-data-grid
-        "
-      >
+      <div class="form-grid three-columns billing-data-grid">
         <label>
           Fatura Eletrónica
 
-          <select
-            [(ngModel)]="
-              contractForm.faturaEletronica
-            "
-          >
-            <option [ngValue]="false">
-              Não
-            </option>
+          <select [(ngModel)]="contractForm.faturaEletronica">
+            <option [ngValue]="false">Não</option>
 
-            <option [ngValue]="true">
-              Sim
-            </option>
+            <option [ngValue]="true">Sim</option>
           </select>
         </label>
 
         <label>
           Débito Direto
 
-          <select
-            [(ngModel)]="
-              contractForm.debitoDireto
-            "
-          >
-            <option [ngValue]="false">
-              Não
-            </option>
+          <select [(ngModel)]="contractForm.debitoDireto">
+            <option [ngValue]="false">Não</option>
 
-            <option [ngValue]="true">
-              Sim
-            </option>
+            <option [ngValue]="true">Sim</option>
           </select>
         </label>
 
         <label>
           NIB
 
-          <input
-            type="text"
-            [(ngModel)]="
-              contractForm.nib
-            "
-          />
+          <input type="text" [(ngModel)]="contractForm.nib" />
         </label>
       </div>
     </article>
 
     <article class="card">
-      <div class="section-title">
-        Dados Produto
-      </div>
+      <div class="section-title">Dados Produto</div>
 
       <div class="form-grid two-columns">
         <label>
           Microinversor
 
-          <select
-            [(ngModel)]="
-              contractForm.microinversor
-            "
-          >
-            <option [ngValue]="false">
-              Não
-            </option>
+          <select [(ngModel)]="contractForm.microinversor">
+            <option [ngValue]="false">Não</option>
 
-            <option [ngValue]="true">
-              Sim
-            </option>
+            <option [ngValue]="true">Sim</option>
           </select>
         </label>
 
         <label>
           Baterias
 
-          <select
-            [(ngModel)]="
-              contractForm.baterias
-            "
-          >
-            <option [ngValue]="false">
-              Não
-            </option>
+          <select [(ngModel)]="contractForm.baterias">
+            <option [ngValue]="false">Não</option>
 
-            <option [ngValue]="true">
-              Sim
-            </option>
+            <option [ngValue]="true">Sim</option>
           </select>
         </label>
 
@@ -836,28 +485,15 @@
             min="1"
             step="1"
             required
-            [(ngModel)]="
-              contractForm.numeroPaineisSolares
-            "
+            [(ngModel)]="contractForm.numeroPaineisSolares"
           />
         </label>
 
         <label>
           Método de Pagamento *
 
-          <select
-            [(ngModel)]="
-              contractForm.metodoPagamento
-            "
-            required
-          >
-            <option
-              *ngFor="
-                let option of
-                  paymentMethodOptions
-              "
-              [value]="option"
-            >
+          <select [(ngModel)]="contractForm.metodoPagamento" required>
+            <option *ngFor="let option of paymentMethodOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -866,37 +502,22 @@
     </article>
 
     <article class="card">
-      <div class="section-title">
-        Carregar Documentos
-      </div>
+      <div class="section-title">Carregar Documentos</div>
 
-      <p class="muted">
-        Seleciona os documentos que serão
-        enviados depois da criação do
-        contrato.
-      </p>
+      <p class="muted">Seleciona os documentos que serão enviados depois da criação do contrato.</p>
 
       <app-file-dropzone
         [(files)]="selectedFiles"
         [disabled]="isCreatingContract || isUploadingDocuments"
       />
 
-      <p
-        class="muted"
-        *ngIf="
-          isUploadingDocuments
-        "
-      >
-        A carregar documentos...
-      </p>
+      <p class="muted" *ngIf="isUploadingDocuments">A carregar documentos...</p>
     </article>
 
     <!-- OBSERVAÇÕES -->
 
     <article class="card">
-      <div class="section-title">
-        Observações / Tipo de Pendência
-      </div>
+      <div class="section-title">Observações / Tipo de Pendência</div>
 
       <label>
         Tipo de Pendência / Observações
@@ -909,17 +530,10 @@
       </label>
     </article>
 
-    <article
-      class="card"
-      *ngIf="canAccessInternalObservations"
-    >
-      <div class="section-title">
-        Observações / Tipo de Pendência
-      </div>
+    <article class="card" *ngIf="canAccessInternalObservations">
+      <div class="section-title">Observações / Tipo de Pendência</div>
 
-      <p class="muted">
-        Informação visível apenas para as equipas de Backoffice autorizadas.
-      </p>
+      <p class="muted">Informação visível apenas para as equipas de Backoffice autorizadas.</p>
 
       <label>
         Observações internas
@@ -941,22 +555,12 @@
         routerLink="
           /home/contracts/iberdrola-solar
         "
-        [disabled]="
-          isCreatingContract
-        "
+        [disabled]="isCreatingContract"
       >
         Cancelar
       </button>
 
-      <button
-        type="button"
-        [disabled]="
-          isCreatingContract
-        "
-        (click)="
-          createContract()
-        "
-      >
+      <button type="button" [disabled]="isCreatingContract" (click)="createContract()">
         {{
           isUploadingDocuments
             ? 'A carregar documentos...'

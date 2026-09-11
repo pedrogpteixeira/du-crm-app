@@ -1,20 +1,16 @@
-<div
-  class="ticket-modal-backdrop"
-  (click)="close()"
->
+<div class="ticket-modal-backdrop" (click)="close()">
   <section
     class="ticket-modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="ticket-create-title"
+    [formGroup]="ticketForm"
     (click)="$event.stopPropagation()"
   >
     <header class="ticket-modal-header">
       <div>
         <h2 id="ticket-create-title">Novo Ticket</h2>
-        <p>
-          O Ticket será associado automaticamente ao contrato atual.
-        </p>
+        <p>O Ticket será associado automaticamente ao contrato atual.</p>
       </div>
 
       <button
@@ -29,28 +25,21 @@
     </header>
 
     <div class="ticket-modal-body">
-      <p
-        class="loading-message"
-        *ngIf="isLoadingAssignment"
-      >
+      <p class="loading-message" *ngIf="isLoadingAssignment">
         A carregar utilizadores e equipas...
       </p>
 
-      <div
-        class="ticket-form-grid two-columns"
-        *ngIf="!isLoadingAssignment"
-      >
+      <p class="warning-message" *ngIf="hasPendingAttachmentRetry">
+        O ticket foi criado, mas não foi possível carregar os documentos. Pode ajustar a seleção
+        abaixo e tentar novamente o envio sem criar outro Ticket.
+      </p>
+
+      <div class="ticket-form-grid two-columns" *ngIf="!isLoadingAssignment">
         <label>
           Tipo *
 
-          <select
-            [(ngModel)]="tipo"
-            [disabled]="isCreatingTicket"
-          >
-            <option
-              *ngFor="let option of ticketTypeOptions"
-              [value]="option"
-            >
+          <select formControlName="tipo" [disabled]="isFormLocked">
+            <option *ngFor="let option of ticketTypeOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -59,14 +48,8 @@
         <label>
           Prioridade
 
-          <select
-            [(ngModel)]="prioridade"
-            [disabled]="isCreatingTicket"
-          >
-            <option
-              *ngFor="let option of priorityOptions"
-              [value]="option"
-            >
+          <select formControlName="prioridade" [disabled]="isFormLocked">
+            <option *ngFor="let option of priorityOptions" [value]="option">
               {{ option }}
             </option>
           </select>
@@ -76,21 +59,13 @@
           Responsável *
 
           <select
-            [(ngModel)]="assignedUserId"
-            [disabled]="
-              isCreatingTicket ||
-              !canAssignOtherUsers()
-            "
-            (ngModelChange)="onAssignedUserChange()"
+            formControlName="assignedUserId"
+            [disabled]="isFormLocked || !canAssignOtherUsers()"
+            (change)="onAssignedUserChange()"
           >
-            <option value="" disabled>
-              Selecionar utilizador
-            </option>
+            <option value="" disabled>Selecionar utilizador</option>
 
-            <option
-              *ngFor="let user of assignableUsers"
-              [value]="user.id"
-            >
+            <option *ngFor="let user of assignableUsers" [value]="user.id">
               {{ user.name }} — {{ user.username }}
             </option>
           </select>
@@ -99,34 +74,21 @@
         <label>
           Agendamento
 
-          <input
-            type="datetime-local"
-            [(ngModel)]="agendamento"
-            [disabled]="isCreatingTicket"
-          />
+          <input type="datetime-local" formControlName="agendamento" [disabled]="isFormLocked" />
         </label>
       </div>
 
-      <div
-        class="team-selection"
-        *ngIf="!isLoadingAssignment"
-      >
+      <div class="team-selection" *ngIf="!isLoadingAssignment">
         <span class="field-label">Equipas *</span>
 
-        <div
-          class="selected-team-tags"
-          *ngIf="selectedTeams.length"
-        >
-          <span
-            class="team-tag"
-            *ngFor="let team of selectedTeams"
-          >
+        <div class="selected-team-tags" *ngIf="selectedTeams.length">
+          <span class="team-tag" *ngFor="let team of selectedTeams">
             {{ team.name }} — {{ team.position }}
 
             <button
               type="button"
               class="remove-team-button"
-              [disabled]="isCreatingTicket || isRequiredTeam(team.id)"
+              [disabled]="isFormLocked || isRequiredTeam(team.id)"
               [attr.aria-label]="'Remover equipa ' + team.name"
               (click)="removeSelectedTeam(team.id)"
             >
@@ -137,24 +99,17 @@
 
         <div class="team-add-row">
           <select
-            [(ngModel)]="teamToAddId"
-            [disabled]="
-              isCreatingTicket ||
-              !teamsAvailableToAdd.length
-            "
+            [value]="teamToAddId"
+            [disabled]="isFormLocked || !teamsAvailableToAdd.length"
+            (change)="onTeamToAddChange($event)"
           >
             <option value="">
               {{
-                teamsAvailableToAdd.length
-                  ? 'Adicionar equipa...'
-                  : 'Sem mais equipas disponíveis'
+                teamsAvailableToAdd.length ? 'Adicionar equipa...' : 'Sem mais equipas disponíveis'
               }}
             </option>
 
-            <option
-              *ngFor="let team of teamsAvailableToAdd"
-              [value]="team.id"
-            >
+            <option *ngFor="let team of teamsAvailableToAdd" [value]="team.id">
               {{ team.name }} — {{ team.position }}
             </option>
           </select>
@@ -162,7 +117,7 @@
           <button
             type="button"
             class="secondary-button"
-            [disabled]="isCreatingTicket || !teamToAddId"
+            [disabled]="isFormLocked || !teamToAddId"
             (click)="addSelectedTeam()"
           >
             Adicionar
@@ -175,37 +130,47 @@
 
         <textarea
           rows="4"
-          [(ngModel)]="descricao"
-          [disabled]="isCreatingTicket"
+          formControlName="descricao"
+          [disabled]="isFormLocked"
           placeholder="Descreva o pedido ou a pendência..."
         ></textarea>
       </label>
-
 
       <label class="description-field">
         Observações iniciais
 
         <textarea
           rows="3"
-          [(ngModel)]="observacoes"
-          [disabled]="isCreatingTicket"
+          formControlName="observacoes"
+          [disabled]="isFormLocked"
           placeholder="Informação inicial para a conversa do Ticket..."
         ></textarea>
       </label>
 
-      <div class="attachments-field">
-        <span class="field-label">Anexos</span>
+      <div class="attachments-field" [class.required-documents]="isTreatmentSelected">
+        <div class="field-heading">
+          <span class="field-label"> Documentos<span *ngIf="isTreatmentSelected"> *</span> </span>
+
+          <span class="field-hint" *ngIf="isTreatmentSelected">
+            Obrigatório para Tratamento de Pendência
+          </span>
+        </div>
 
         <app-file-dropzone
           [(files)]="selectedFiles"
           [disabled]="isCreatingTicket || isUploadingAttachments"
         />
+
+        <p
+          class="document-requirement-message"
+          *ngIf="isTreatmentSelected && selectedFiles.length === 0"
+        >
+          Para criar um ticket de Tratamento de Pendência é obrigatório adicionar pelo menos um
+          documento.
+        </p>
       </div>
 
-      <p
-        class="error-message"
-        *ngIf="errorMessage"
-      >
+      <p class="error-message" *ngIf="errorMessage">
         {{ errorMessage }}
       </p>
     </div>
@@ -217,7 +182,7 @@
         [disabled]="isCreatingTicket || isUploadingAttachments"
         (click)="close()"
       >
-        Cancelar
+        {{ hasPendingAttachmentRetry ? 'Fechar' : 'Cancelar' }}
       </button>
 
       <button
@@ -234,12 +199,80 @@
       >
         {{
           isUploadingAttachments
-            ? 'A carregar anexos...'
+            ? 'A carregar documentos...'
             : isCreatingTicket
               ? 'A criar Ticket...'
-              : 'Criar Ticket'
+              : hasPendingAttachmentRetry
+                ? 'Tentar novamente envio'
+                : 'Criar Ticket'
         }}
       </button>
     </footer>
   </section>
+
+  <div
+    *ngIf="isCancellationModalOpen"
+    class="cancellation-modal-backdrop"
+    (click)="$event.stopPropagation(); closeCancellationConfirmation()"
+  >
+    <section
+      class="cancellation-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancellation-modal-title"
+      [formGroup]="cancellationForm"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="cancellation-modal-header">
+        <div class="cancellation-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">warning</span>
+        </div>
+
+        <div>
+          <h3 id="cancellation-modal-title">Confirmar pedido de anulação</h3>
+          <p>
+            Tem a certeza de que pretende solicitar a anulação deste contrato? Esta ação irá alterar
+            o estado do contrato.
+          </p>
+        </div>
+      </header>
+
+      <div class="cancellation-modal-body">
+        <label>
+          Motivo da anulação *
+
+          <textarea
+            rows="5"
+            formControlName="reason"
+            [disabled]="isCreatingTicket"
+            placeholder="Explique o motivo..."
+          ></textarea>
+        </label>
+
+        <p class="error-message" *ngIf="cancellationErrorMessage">
+          {{ cancellationErrorMessage }}
+        </p>
+      </div>
+
+      <footer class="cancellation-modal-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="isCreatingTicket"
+          (click)="closeCancellationConfirmation()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="danger-button"
+          [disabled]="isCreatingTicket || !hasValidCancellationReason"
+          (click)="confirmCancellation()"
+        >
+          {{ isCreatingTicket ? 'A confirmar...' : 'Confirmar pedido' }}
+        </button>
+      </footer>
+    </section>
+  </div>
 </div>

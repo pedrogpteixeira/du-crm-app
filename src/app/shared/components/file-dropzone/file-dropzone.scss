@@ -172,3 +172,21 @@
     flex-direction: column;
   }
 }
+
+.audio-access-note {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+  text-align: center;
+}
+
+.file-access-message {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+}

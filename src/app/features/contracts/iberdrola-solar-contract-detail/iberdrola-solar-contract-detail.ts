@@ -3,13 +3,7 @@ import {
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,10 +16,8 @@ import {
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
-import {
-  Campaign,
-  CampaignService,
-} from '../../../core/services/campaign';
+import { FileAccessService } from '../../../core/services/file-access';
+import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
   IBERDROLA_SOLAR_CONTRACT_STATUSES,
   IBERDROLA_SOLAR_PAYMENT_METHODS,
@@ -80,12 +72,10 @@ interface EditableContractForm {
   microinversor: boolean;
   baterias: boolean;
   numeroPaineisSolares: number;
-  metodoPagamento:
-    IberdrolaSolarMetodoPagamento;
+  metodoPagamento: IberdrolaSolarMetodoPagamento;
 }
 
-interface IberdrolaSolarContractApiShape
-  extends IberdrolaSolarContract {
+interface IberdrolaSolarContractApiShape extends IberdrolaSolarContract {
   campanha?: string | null;
 }
 
@@ -100,6 +90,9 @@ import { appendObservationHistory } from '../../../core/utils/observation-histor
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
+import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
@@ -107,6 +100,8 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   imports: [
     CommonModule,
     FormsModule,
+    ContractFieldMaskDirective,
+    VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
     ObservationsThread,
@@ -117,13 +112,12 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
   styleUrl: './iberdrola-solar-contract-detail.scss',
 })
 export class IberdrolaSolarContractDetail implements OnInit {
-  readonly qualityControlBackofficeOptions =
-    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
+  readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(Auth);
-  private readonly campaignService =
-    inject(CampaignService);
+  private readonly fileAccess = inject(FileAccessService);
+  private readonly campaignService = inject(CampaignService);
   private readonly iberdrolaSolarContractService = inject(IberdrolaSolarContractService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
@@ -164,29 +158,19 @@ export class IberdrolaSolarContractDetail implements OnInit {
   contractId = '';
   lastSocketUpdate = '';
 
-  readonly tipoSegmentoOptions:
-    IberdrolaSolarTipoSegmento[] = [
-      'Residencial',
-      'Empresarial',
-    ];
+  readonly tipoSegmentoOptions: IberdrolaSolarTipoSegmento[] = ['Residencial', 'Empresarial'];
 
-  readonly tipoProdutoOptions:
-    IberdrolaSolarTipoProduto[] = [
-      'Painéis Solares',
-    ];
+  readonly tipoProdutoOptions: IberdrolaSolarTipoProduto[] = ['Painéis Solares'];
 
-  readonly contratacaoOptions:
-    IberdrolaSolarContratacao[] = [
-      'Contratação Papel',
-      'Contratação Digital',
-    ];
+  readonly contratacaoOptions: IberdrolaSolarContratacao[] = [
+    'Contratação Papel',
+    'Contratação Digital',
+  ];
 
-  readonly estadoOptions =
-    IBERDROLA_SOLAR_CONTRACT_STATUSES;
+  readonly estadoOptions = IBERDROLA_SOLAR_CONTRACT_STATUSES;
 
-  readonly paymentMethodOptions:
-    readonly IberdrolaSolarMetodoPagamento[] =
-      IBERDROLA_SOLAR_PAYMENT_METHODS;
+  readonly paymentMethodOptions: readonly IberdrolaSolarMetodoPagamento[] =
+    IBERDROLA_SOLAR_PAYMENT_METHODS;
 
   ngOnInit(): void {
     this.resolvePermissions();
@@ -196,15 +180,13 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        this.contractId = params.get('id') ?? '';
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.contractId = params.get('id') ?? '';
 
-        if (this.contractId) {
-          this.loadContract(this.contractId);
-        }
-      });
+      if (this.contractId) {
+        this.loadContract(this.contractId);
+      }
+    });
 
     this.socketService
       .listenIberdrolaSolarContractUpdated()
@@ -214,11 +196,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
           return;
         }
 
-        const activityUpdate =
-          mergeContractActivitySocketPayload(
-            this.contract,
-            event,
-          );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
 
         if (activityUpdate.updated) {
           this.contract = activityUpdate.contract;
@@ -226,38 +204,30 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
         if (
           this.contract &&
-          (event.observacoes !== undefined ||
-            event.observacoesInternas !== undefined)
+          (event.observacoes !== undefined || event.observacoesInternas !== undefined)
         ) {
           this.contract = {
             ...this.contract,
-            ...(event.observacoes !== undefined
-              ? { observacoes: event.observacoes ?? '' }
-              : {}),
+            ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
             ...(event.observacoesInternas !== undefined
               ? { observacoesInternas: event.observacoesInternas ?? '' }
               : {}),
           };
         }
 
-        const stateUpdate =
-          mergeContractStateSocketPayload(
-            this.contract,
-            event,
-            this.estadoOptions,
-          );
+        const stateUpdate = mergeContractStateSocketPayload(
+          this.contract,
+          event,
+          this.estadoOptions,
+        );
 
-        if (
-          stateUpdate.updated &&
-          stateUpdate.contract
-        ) {
+        if (stateUpdate.updated && stateUpdate.contract) {
           this.contract = stateUpdate.contract;
 
           if (
             this.isEditing &&
             stateUpdate.estado &&
-            this.editForm.estado ===
-              this.originalEditForm.estado
+            this.editForm.estado === this.originalEditForm.estado
           ) {
             this.editForm = {
               ...this.editForm,
@@ -271,15 +241,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
           }
         }
 
-        const currentTime =
-          new Date().toLocaleTimeString('pt-PT');
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
-        if (
-          event.ticketEvent &&
-          Array.isArray(event.tickets)
-        ) {
+        if (event.ticketEvent && Array.isArray(event.tickets)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -287,19 +253,13 @@ export class IberdrolaSolarContractDetail implements OnInit {
           return;
         }
 
-        const eventUserId =
-          this.getSocketEventUserId(event);
+        const eventUserId = this.getSocketEventUserId(event);
 
         const isOwnSocketUpdate = Boolean(
-          eventUserId &&
-          this.currentUserId &&
-          eventUserId === this.currentUserId,
+          eventUserId && this.currentUserId && eventUserId === this.currentUserId,
         );
 
-        if (
-          isOwnSocketUpdate ||
-          (!eventUserId && this.suppressNextOwnSocketUpdate)
-        ) {
+        if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
           if (!Array.isArray(event.fluxo)) {
             this.refreshContractActivity();
           }
@@ -313,8 +273,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
           return;
         }
 
-        this.socketMessage =
-          `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
+        this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
 
         this.loadContract(this.contractId, false);
       });
@@ -356,21 +315,13 @@ export class IberdrolaSolarContractDetail implements OnInit {
             return;
           }
 
-          const normalizedContract =
-            this.normalizeContractResponse(
-              contract,
-            );
+          const normalizedContract = this.normalizeContractResponse(contract);
 
-          this.contract =
-            normalizedContract;
+          this.contract = normalizedContract;
 
-          this.initializeEditForm(
-            normalizedContract,
-          );
+          this.initializeEditForm(normalizedContract);
 
-          this.loadCampaigns(
-            normalizedContract.companyId,
-          );
+          this.loadCampaigns(normalizedContract.companyId);
         },
         error: () => {
           this.showError('Não foi possível carregar o contrato Iberdrola Solar.');
@@ -386,31 +337,20 @@ export class IberdrolaSolarContractDetail implements OnInit {
     this.submitObservationValue(message, true);
   }
 
-  private submitObservationValue(
-    message: string,
-    internal: boolean,
-  ): void {
+  private submitObservationValue(message: string, internal: boolean): void {
     if (
       !this.contract ||
       !this.contractId ||
       !this.isSuperAdmin ||
       (internal && !this.canAccessInternalObservations) ||
-      (internal
-        ? this.isSubmittingInternalObservation
-        : this.isSubmittingObservation)
+      (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
     }
 
-    const currentValue = internal
-      ? this.contract.observacoesInternas
-      : this.contract.observacoes;
+    const currentValue = internal ? this.contract.observacoesInternas : this.contract.observacoes;
 
-    const nextHistory = appendObservationHistory(
-      currentValue,
-      message,
-      this.currentUserName,
-    );
+    const nextHistory = appendObservationHistory(currentValue, message, this.currentUserName);
 
     if (!nextHistory) {
       return;
@@ -424,14 +364,10 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     this.errorMessage = '';
 
-    const payload = internal
-      ? { observacoesInternas: nextHistory }
-      : { observacoes: nextHistory };
+    const payload = internal ? { observacoesInternas: nextHistory } : { observacoes: nextHistory };
 
-    this.iberdrolaSolarContractService.update(
-      this.contractId,
-      payload,
-    )
+    this.iberdrolaSolarContractService
+      .update(this.contractId, payload)
       .pipe(
         finalize(() => {
           if (internal) {
@@ -450,15 +386,13 @@ export class IberdrolaSolarContractDetail implements OnInit {
           if (internal) {
             this.contract = {
               ...this.contract,
-              observacoesInternas:
-                updatedContract.observacoesInternas ?? nextHistory,
+              observacoesInternas: updatedContract.observacoesInternas ?? nextHistory,
             };
             this.internalObservationDraft = '';
           } else {
             this.contract = {
               ...this.contract,
-              observacoes:
-                updatedContract.observacoes ?? nextHistory,
+              observacoes: updatedContract.observacoes ?? nextHistory,
             };
             this.observationDraft = '';
           }
@@ -502,7 +436,6 @@ export class IberdrolaSolarContractDetail implements OnInit {
     this.successMessage = '';
   }
 
-
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const digits = input.value.replace(/\D/g, '').slice(0, 9);
@@ -521,14 +454,9 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-
     const numeroPaineis = Number(this.editForm.numeroPaineisSolares);
 
-    if (
-      !Number.isFinite(numeroPaineis) ||
-      !Number.isInteger(numeroPaineis) ||
-      numeroPaineis < 1
-    ) {
+    if (!Number.isFinite(numeroPaineis) || !Number.isInteger(numeroPaineis) || numeroPaineis < 1) {
       this.showError(
         'O número de painéis solares deve ser um número inteiro igual ou superior a 1.',
       );
@@ -536,9 +464,16 @@ export class IberdrolaSolarContractDetail implements OnInit {
     }
 
     if (!this.editForm.metodoPagamento) {
-      this.showError(
-        'O método de pagamento é obrigatório.',
-      );
+      this.showError('O método de pagamento é obrigatório.');
+      return;
+    }
+
+    const fieldValidationError = getContractFormValidationError(
+      this.editForm as unknown as Record<string, unknown>,
+    );
+
+    if (fieldValidationError) {
+      this.showError(fieldValidationError);
       return;
     }
 
@@ -642,22 +577,16 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-    const existingFileKeys = new Set(
-      this.selectedFiles.map((file) => this.getFileKey(file)),
-    );
+    const existingFileKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
 
-    const newFiles = files.filter(
-      (file) => !existingFileKeys.has(this.getFileKey(file)),
-    );
+    const newFiles = files.filter((file) => !existingFileKeys.has(this.getFileKey(file)));
 
     this.selectedFiles = [...this.selectedFiles, ...newFiles];
     input.value = '';
   }
 
   removeSelectedFile(index: number): void {
-    this.selectedFiles = this.selectedFiles.filter(
-      (_, fileIndex) => fileIndex !== index,
-    );
+    this.selectedFiles = this.selectedFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   clearSelectedFiles(): void {
@@ -675,9 +604,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Pretende remover o ficheiro "${document.originalName}"?`,
-    );
+    const confirmed = window.confirm(`Pretende remover o ficheiro "${document.originalName}"?`);
 
     if (!confirmed) {
       return;
@@ -686,15 +613,12 @@ export class IberdrolaSolarContractDetail implements OnInit {
     const previousContract = this.contract;
 
     this.deletingAttachmentFileNames.add(document.fileName);
-    this.deletingAttachmentFileNames = new Set(
-      this.deletingAttachmentFileNames,
-    );
+    this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
 
     this.contract = {
       ...previousContract,
       documentos: (previousContract.documentos ?? []).filter(
-        (existingDocument) =>
-          existingDocument.fileName !== document.fileName,
+        (existingDocument) => existingDocument.fileName !== document.fileName,
       ),
     };
 
@@ -707,17 +631,13 @@ export class IberdrolaSolarContractDetail implements OnInit {
       .pipe(
         finalize(() => {
           this.deletingAttachmentFileNames.delete(document.fileName);
-          this.deletingAttachmentFileNames = new Set(
-            this.deletingAttachmentFileNames,
-          );
+          this.deletingAttachmentFileNames = new Set(this.deletingAttachmentFileNames);
         }),
       )
       .subscribe({
         next: (updatedContract) => {
           this.contract = updatedContract;
-          this.showSuccess(
-            `O ficheiro "${document.originalName}" foi removido com sucesso.`,
-          );
+          this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {
           this.clearOwnSocketSuppression();
@@ -736,6 +656,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   downloadDocument(document: IberdrolaSolarContractDocument): void {
+    if (!this.fileAccess.canViewFile(document)) {
+      this.showError('Não tem permissão para visualizar ficheiros de áudio.');
+      return;
+    }
+
     if (!this.contract?.id || !document.fileName) {
       return;
     }
@@ -765,30 +690,16 @@ export class IberdrolaSolarContractDetail implements OnInit {
     this.collapsedSections[section] = !this.collapsedSections[section];
   }
 
-  getStatusClass(
-    status:
-      IberdrolaSolarContractStatus,
-  ): string {
-    const classes:
-      Record<
-        IberdrolaSolarContractStatus,
-        string
-      > = {
-        'Pedido de Proposta':
-          'status-proposal-request',
-        'Proposta Enviada':
-          'status-proposal-sent',
-        'Pendente Docs':
-          'status-docs',
-        'Documentos Enviados':
-          'status-docs-sent',
-        'Em instalação':
-          'status-installation',
-        Cancelado:
-          'status-cancelled',
-        Ativo:
-          'status-active',
-      };
+  getStatusClass(status: IberdrolaSolarContractStatus): string {
+    const classes: Record<IberdrolaSolarContractStatus, string> = {
+      'Pedido de Proposta': 'status-proposal-request',
+      'Proposta Enviada': 'status-proposal-sent',
+      'Pendente Docs': 'status-docs',
+      'Documentos Enviados': 'status-docs-sent',
+      'Em instalação': 'status-installation',
+      Cancelado: 'status-cancelled',
+      Ativo: 'status-active',
+    };
 
     return classes[status];
   }
@@ -807,18 +718,14 @@ export class IberdrolaSolarContractDetail implements OnInit {
     }).format(new Date(date));
   }
 
-  formatDateOnly(
-    value: string | null | undefined,
-  ): string {
+  formatDateOnly(value: string | null | undefined): string {
     if (!value) {
       return '—';
     }
 
-    const normalized =
-      value.slice(0, 10);
+    const normalized = value.slice(0, 10);
 
-    const [year, month, day] =
-      normalized.split('-');
+    const [year, month, day] = normalized.split('-');
 
     if (year && month && day) {
       return `${day}/${month}/${year}`;
@@ -828,14 +735,10 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   canManageQualityControl(): boolean {
-    return canManageQualityControlRole(
-      this.auth.getCurrentUser()?.role,
-    );
+    return canManageQualityControlRole(this.auth.getCurrentUser()?.role);
   }
 
-  getValue(
-    value: string | number | null | undefined,
-  ): string | number {
+  getValue(value: string | number | null | undefined): string | number {
     return value === null || value === undefined || value === '' ? '-' : value;
   }
 
@@ -880,14 +783,12 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   private resolvePermissions(): void {
-    const currentUser =
-      this.auth.getCurrentUser() as AuthenticatedUserLike | null;
+    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
 
     const role = currentUser?.role?.toLowerCase() ?? '';
 
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
-    this.currentUserName =
-      currentUser?.name ?? currentUser?.username ?? 'Utilizador';
+    this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
     this.isSuperAdmin = role.includes('super admin');
 
     if (!this.currentUserId) {
@@ -905,14 +806,12 @@ export class IberdrolaSolarContractDetail implements OnInit {
             ?.map((team) => team.id ?? '')
             .filter(Boolean) ?? [];
 
-        const authorizedTeamIds = [
-          environment.EQUIPA_CRM_ID,
-          environment.EQUIPA_DU_ID,
-        ].filter((teamId): teamId is string => Boolean(teamId));
+        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+          (teamId): teamId is string => Boolean(teamId),
+        );
 
         this.canAccessInternalObservations =
-          this.isSuperAdmin ||
-          teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
+          this.isSuperAdmin || teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
 
         if (!this.canAccessInternalObservations) {
           this.internalObservationDraft = '';
@@ -921,107 +820,57 @@ export class IberdrolaSolarContractDetail implements OnInit {
     });
   }
 
-  private loadCampaigns(
-    companyId: string,
-  ): void {
+  private loadCampaigns(companyId: string): void {
     this.campaignService
-      .getCampaignsByCompanyId(
-        companyId,
-      )
+      .getCampaignsByCompanyId(companyId)
       .pipe(
         map((campaigns) => {
-          const assignedCampaign =
-            this.contract?.campaign;
+          const assignedCampaign = this.contract?.campaign;
 
-          const assignedId =
-            assignedCampaign?.id ??
-            '';
+          const assignedId = assignedCampaign?.id ?? '';
 
-          const assignedName =
-            this.normalizeCampaignName(
-              assignedCampaign?.name ??
-                '',
+          const assignedName = this.normalizeCampaignName(assignedCampaign?.name ?? '');
+
+          return campaigns.filter((campaign) => {
+            const isAssignedById = Boolean(assignedId && campaign.id === assignedId);
+
+            const isAssignedByName = Boolean(
+              assignedName && this.normalizeCampaignName(campaign.name) === assignedName,
             );
 
-          return campaigns.filter(
-            (campaign) => {
-              const isAssignedById =
-                Boolean(
-                  assignedId &&
-                    campaign.id ===
-                      assignedId,
-                );
-
-              const isAssignedByName =
-                Boolean(
-                  assignedName &&
-                    this
-                      .normalizeCampaignName(
-                        campaign.name,
-                      ) ===
-                      assignedName,
-                );
-
-              return (
-                campaign.active ||
-                isAssignedById ||
-                isAssignedByName
-              );
-            },
-          );
+            return campaign.active || isAssignedById || isAssignedByName;
+          });
         }),
       )
       .subscribe({
         next: (campaigns) => {
-          this.campaigns =
-            campaigns;
+          this.campaigns = campaigns;
 
-          if (
-            this.contract &&
-            !this.isEditing
-          ) {
-            this.contract =
-              this.normalizeContractResponse(
-                this.contract,
-              );
+          if (this.contract && !this.isEditing) {
+            this.contract = this.normalizeContractResponse(this.contract);
 
-            this.initializeEditForm(
-              this.contract,
-            );
+            this.initializeEditForm(this.contract);
           }
         },
 
         error: () => {
-          this.showError(
-            'Não foi possível carregar as campanhas.',
-          );
+          this.showError('Não foi possível carregar as campanhas.');
         },
       });
   }
 
-  private normalizeContractResponse(
-    contract:
-      IberdrolaSolarContract,
-  ): IberdrolaSolarContract {
+  private normalizeContractResponse(contract: IberdrolaSolarContract): IberdrolaSolarContract {
     contract = preserveContractActivity(contract, this.contract);
 
-    const apiContract =
-      contract as
-        IberdrolaSolarContractApiShape;
+    const apiContract = contract as IberdrolaSolarContractApiShape;
 
-    const rawCampaign =
-      apiContract.campanha
-        ?.trim() ?? '';
+    const rawCampaign = apiContract.campanha?.trim() ?? '';
 
     if (!rawCampaign) {
       return contract;
     }
 
-    if (
-      !rawCampaign.startsWith(
-        'cam_',
-      )
-    ) {
+    if (!rawCampaign.startsWith('cam_')) {
       return {
         ...contract,
         campaign: {
@@ -1031,31 +880,18 @@ export class IberdrolaSolarContractDetail implements OnInit {
       };
     }
 
-    const matchedCampaign =
-      this.campaigns.find(
-        (campaign) =>
-          campaign.id ===
-          rawCampaign,
-      );
+    const matchedCampaign = this.campaigns.find((campaign) => campaign.id === rawCampaign);
 
     return {
       ...contract,
       campaign: {
         id: rawCampaign,
-        name:
-          matchedCampaign?.name ??
-          contract.campaign?.name ??
-          rawCampaign,
+        name: matchedCampaign?.name ?? contract.campaign?.name ?? rawCampaign,
       },
     };
   }
 
-  private resolveCampaignSelection(
-    campaign:
-      IberdrolaSolarContract[
-        'campaign'
-      ],
-  ): {
+  private resolveCampaignSelection(campaign: IberdrolaSolarContract['campaign']): {
     mode: 'existing' | 'other';
     campaignId: string;
     customCampaign: string;
@@ -1068,42 +904,27 @@ export class IberdrolaSolarContractDetail implements OnInit {
       };
     }
 
-    const campaignId =
-      campaign.id?.trim() ?? '';
+    const campaignId = campaign.id?.trim() ?? '';
 
-    const normalizedName =
-      this.normalizeCampaignName(
-        campaign.name,
-      );
+    const normalizedName = this.normalizeCampaignName(campaign.name);
 
-    const campaignById =
-      campaignId
-        ? this.campaigns.find(
-            (availableCampaign) =>
-              availableCampaign.id ===
-              campaignId,
-          )
-        : undefined;
+    const campaignById = campaignId
+      ? this.campaigns.find((availableCampaign) => availableCampaign.id === campaignId)
+      : undefined;
 
-    const campaignByName =
-      normalizedName
-        ? this.campaigns.find(
-            (availableCampaign) =>
-              this.normalizeCampaignName(
-                availableCampaign.name,
-              ) === normalizedName,
-          )
-        : undefined;
+    const campaignByName = normalizedName
+      ? this.campaigns.find(
+          (availableCampaign) =>
+            this.normalizeCampaignName(availableCampaign.name) === normalizedName,
+        )
+      : undefined;
 
-    const existingCampaign =
-      campaignById ??
-      campaignByName;
+    const existingCampaign = campaignById ?? campaignByName;
 
     if (existingCampaign) {
       return {
         mode: 'existing',
-        campaignId:
-          existingCampaign.id,
+        campaignId: existingCampaign.id,
         customCampaign: '',
       };
     }
@@ -1119,24 +940,16 @@ export class IberdrolaSolarContractDetail implements OnInit {
     return {
       mode: 'other',
       campaignId: '',
-      customCampaign:
-        campaign.name.trim(),
+      customCampaign: campaign.name.trim(),
     };
   }
 
-  private normalizeCampaignName(
-    value: string,
-  ): string {
+  private normalizeCampaignName(value: string): string {
     return value
       .trim()
-      .toLocaleLowerCase(
-        'pt-PT',
-      )
+      .toLocaleLowerCase('pt-PT')
       .normalize('NFD')
-      .replace(
-        /[\u0300-\u036f]/g,
-        '',
-      );
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   private hasContractAccess(contract: IberdrolaSolarContract): boolean {
@@ -1145,10 +958,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
     }
 
     return (contract.followers ?? []).some((follower) => {
-      const followerId =
-        typeof follower === 'string'
-          ? follower
-          : follower.id ?? '';
+      const followerId = typeof follower === 'string' ? follower : (follower.id ?? '');
 
       return followerId === this.currentUserId;
     });
@@ -1159,30 +969,22 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-    this.iberdrolaSolarContractService.getById(this.contractId)
-      .subscribe({
-        next: (latestContract) => {
-          if (
-            !this.contract ||
-            latestContract.id !== this.contractId
-          ) {
-            return;
-          }
+    this.iberdrolaSolarContractService.getById(this.contractId).subscribe({
+      next: (latestContract) => {
+        if (!this.contract || latestContract.id !== this.contractId) {
+          return;
+        }
 
-          const activityUpdate =
-            mergeContractActivitySocketPayload(
-              this.contract,
-              {
-                fluxo: latestContract.fluxo,
-                tickets: latestContract.tickets,
-              },
-            );
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
+          fluxo: latestContract.fluxo,
+          tickets: latestContract.tickets,
+        });
 
-          if (activityUpdate.updated) {
-            this.contract = activityUpdate.contract;
-          }
-        },
-      });
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
+      },
+    });
   }
 
   private getSocketEventUserId(event: unknown): string {
@@ -1192,12 +994,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       updatedByUserId?: string;
     };
 
-    return (
-      socketEvent.updatedBy ??
-      socketEvent.userId ??
-      socketEvent.updatedByUserId ??
-      ''
-    );
+    return socketEvent.updatedBy ?? socketEvent.userId ?? socketEvent.updatedByUserId ?? '';
   }
 
   private synchronizeExternalUpdate(currentTime: string): void {
@@ -1206,18 +1003,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     this.iberdrolaSolarContractService.getById(this.contractId).subscribe({
       next: (latestContract) => {
-        const normalizedContract =
-          this.normalizeContractResponse(
-            latestContract,
-          );
+        const normalizedContract = this.normalizeContractResponse(latestContract);
 
-        const result =
-          this.mergeExternalContract(
-            normalizedContract,
-          );
+        const result = this.mergeExternalContract(normalizedContract);
 
-        this.contract =
-          normalizedContract;
+        this.contract = normalizedContract;
         this.observationDraft = observationDraft;
         this.internalObservationDraft = internalObservationDraft;
 
@@ -1249,9 +1039,10 @@ export class IberdrolaSolarContractDetail implements OnInit {
     });
   }
 
-  private mergeExternalContract(
-    latestContract: IberdrolaSolarContract,
-  ): { updated: number; conflicts: number } {
+  private mergeExternalContract(latestContract: IberdrolaSolarContract): {
+    updated: number;
+    conflicts: number;
+  } {
     const latestForm = this.buildEditableState(latestContract);
     const nextEditForm = structuredClone(this.editForm);
     const nextOriginalForm = structuredClone(this.originalEditForm);
@@ -1322,400 +1113,240 @@ export class IberdrolaSolarContractDetail implements OnInit {
     }
   }
 
-  private initializeEditForm(
-    contract: IberdrolaSolarContract,
-  ): void {
-    const form =
-      this.buildEditableState(
-        contract,
-      );
+  private initializeEditForm(contract: IberdrolaSolarContract): void {
+    const form = this.buildEditableState(contract);
 
-    this.editForm =
-      structuredClone(form);
+    this.editForm = structuredClone(form);
 
-    this.originalEditForm =
-      structuredClone(form);
+    this.originalEditForm = structuredClone(form);
   }
 
-  private buildEditableState(
-    contract: IberdrolaSolarContract,
-  ): EditableContractForm {
-    const campaign =
-      this.resolveCampaignSelection(
-        contract.campaign,
-      );
+  private buildEditableState(contract: IberdrolaSolarContract): EditableContractForm {
+    const campaign = this.resolveCampaignSelection(contract.campaign);
 
     return {
-      nomeClienteEmpresa:
-        contract.nomeClienteEmpresa ??
-        '',
-      nif:
-        contract.nif ?? null,
-      telefone:
-        contract.telefone ?? null,
-      email:
-        contract.email ?? '',
-      cae:
-        contract.cae ?? '',
-      crc:
-        contract.crc ?? '',
+      nomeClienteEmpresa: contract.nomeClienteEmpresa ?? '',
+      nif: contract.nif ?? null,
+      telefone: contract.telefone ?? null,
+      email: contract.email ?? '',
+      cae: contract.cae ?? '',
+      crc: contract.crc ?? '',
 
-      tipoSegmento:
-        contract.tipoSegmento,
-      tipoProduto:
-        contract.tipoProduto,
-      contratacao:
-        contract.contratacao,
-      numeroLead:
-        contract.numeroLead ?? '',
-      offer:
-        contract.offer ?? '',
+      tipoSegmento: contract.tipoSegmento,
+      tipoProduto: contract.tipoProduto,
+      contratacao: contract.contratacao,
+      numeroLead: contract.numeroLead ?? '',
+      offer: contract.offer ?? '',
 
-      controleQualidade:
-        contract.controleQualidade ??
-        '',
-      codigoRegistoCE:
-        contract.codigoRegistoCE ??
-        '',
-      nomeRegistoCE:
-        contract.nomeRegistoCE ??
-        '',
-      estado:
-        contract.estado,
+      controleQualidade: contract.controleQualidade ?? '',
+      codigoRegistoCE: contract.codigoRegistoCE ?? '',
+      nomeRegistoCE: contract.nomeRegistoCE ?? '',
+      estado: contract.estado,
 
-      agendamento:
-        this.toDateTimeLocal(
-          contract.agendamento,
-        ),
-      dataAssinatura:
-        this.toDateInput(
-          contract.dataAssinatura,
-        ),
-      dataContrato:
-        this.toDateInput(
-          contract.dataContrato,
-        ),
-      dataRegisto:
-        this.toDateInput(
-          contract.dataRegisto,
-        ),
-      dataInstalacao:
-        this.toDateInput(
-          contract.dataInstalacao,
-        ),
-      dataAtivacao:
-        this.toDateInput(
-          contract.dataAtivacao,
-        ),
-      dataBaixa:
-        this.toDateInput(
-          contract.dataBaixa,
-        ),
+      agendamento: this.toDateTimeLocal(contract.agendamento),
+      dataAssinatura: this.toDateInput(contract.dataAssinatura),
+      dataContrato: this.toDateInput(contract.dataContrato),
+      dataRegisto: this.toDateInput(contract.dataRegisto),
+      dataInstalacao: this.toDateInput(contract.dataInstalacao),
+      dataAtivacao: this.toDateInput(contract.dataAtivacao),
+      dataBaixa: this.toDateInput(contract.dataBaixa),
 
-      moradaInstalacao:
-        contract.moradaInstalacao ??
-        '',
-      moradaFaturacao:
-        contract.moradaFaturacao ??
-        '',
+      moradaInstalacao: contract.moradaInstalacao ?? '',
+      moradaFaturacao: contract.moradaFaturacao ?? '',
 
-      faturaEletronica:
-        Boolean(
-          contract.faturaEletronica,
-        ),
-      debitoDireto:
-        Boolean(
-          contract.debitoDireto,
-        ),
-      nib:
-        contract.nib ?? '',
+      faturaEletronica: Boolean(contract.faturaEletronica),
+      debitoDireto: Boolean(contract.debitoDireto),
+      nib: contract.nib ?? '',
 
-      microinversor:
-        Boolean(
-          contract.microinversor,
-        ),
-      baterias:
-        Boolean(contract.baterias),
-      numeroPaineisSolares:
-        contract.numeroPaineisSolares ??
-        1,
-      metodoPagamento:
-        contract.metodoPagamento,
+      microinversor: Boolean(contract.microinversor),
+      baterias: Boolean(contract.baterias),
+      numeroPaineisSolares: contract.numeroPaineisSolares ?? 1,
+      metodoPagamento: contract.metodoPagamento,
     };
   }
 
-
-  private buildPatchPayload():
-    UpdateIberdrolaSolarContractRequest {
-    const payload:
-      UpdateIberdrolaSolarContractRequest =
-        {};
+  private buildPatchPayload(): UpdateIberdrolaSolarContractRequest {
+    const payload: UpdateIberdrolaSolarContractRequest = {};
 
     this.assignChangedValue(
       payload,
       'nomeClienteEmpresa',
-      this.editForm
-        .nomeClienteEmpresa,
-      this.originalEditForm
-        .nomeClienteEmpresa,
-    );
-
-    this.assignChangedValue(
-      payload,
-      'nif',
-      this.editForm.nif ??
-        undefined,
-      this.originalEditForm.nif ??
-        undefined,
+      this.editForm.nomeClienteEmpresa,
+      this.originalEditForm.nomeClienteEmpresa,
     );
 
     this.assignChangedValue(
       payload,
       'telefone',
-      this.editForm.telefone ??
-        undefined,
-      this.originalEditForm.telefone ??
-        undefined,
+      this.editForm.telefone ?? undefined,
+      this.originalEditForm.telefone ?? undefined,
     );
 
-    this.assignChangedValue(
-      payload,
-      'email',
-      this.editForm.email,
-      this.originalEditForm.email,
-    );
+    this.assignChangedValue(payload, 'email', this.editForm.email, this.originalEditForm.email);
 
-    this.assignChangedValue(
-      payload,
-      'cae',
-      this.editForm.cae,
-      this.originalEditForm.cae,
-    );
+    this.assignChangedValue(payload, 'cae', this.editForm.cae, this.originalEditForm.cae);
 
-    this.assignChangedValue(
-      payload,
-      'crc',
-      this.editForm.crc,
-      this.originalEditForm.crc,
-    );
+    this.assignChangedValue(payload, 'crc', this.editForm.crc, this.originalEditForm.crc);
 
     this.assignChangedValue(
       payload,
       'tipoSegmento',
-      this.editForm
-        .tipoSegmento,
-      this.originalEditForm
-        .tipoSegmento,
+      this.editForm.tipoSegmento,
+      this.originalEditForm.tipoSegmento,
     );
 
     this.assignChangedValue(
       payload,
       'contratacao',
-      this.editForm
-        .contratacao,
-      this.originalEditForm
-        .contratacao,
+      this.editForm.contratacao,
+      this.originalEditForm.contratacao,
     );
 
     this.assignChangedValue(
       payload,
       'numeroLead',
       this.editForm.numeroLead,
-      this.originalEditForm
-        .numeroLead,
+      this.originalEditForm.numeroLead,
     );
 
-    this.assignChangedValue(
-      payload,
-      'offer',
-      this.editForm.offer,
-      this.originalEditForm.offer,
-    );
-
+    this.assignChangedValue(payload, 'offer', this.editForm.offer, this.originalEditForm.offer);
 
     if (this.canManageQualityControl()) {
       this.assignChangedValue(
         payload,
         'controleQualidade',
-        this.editForm
-          .controleQualidade,
-        this.originalEditForm
-          .controleQualidade,
+        this.editForm.controleQualidade,
+        this.originalEditForm.controleQualidade,
       );
     }
 
     this.assignChangedValue(
       payload,
       'codigoRegistoCE',
-      this.editForm
-        .codigoRegistoCE,
-      this.originalEditForm
-        .codigoRegistoCE,
+      this.editForm.codigoRegistoCE,
+      this.originalEditForm.codigoRegistoCE,
     );
 
     this.assignChangedValue(
       payload,
       'nomeRegistoCE',
-      this.editForm
-        .nomeRegistoCE,
-      this.originalEditForm
-        .nomeRegistoCE,
+      this.editForm.nomeRegistoCE,
+      this.originalEditForm.nomeRegistoCE,
     );
 
-    this.assignChangedValue(
-      payload,
-      'estado',
-      this.editForm.estado,
-      this.originalEditForm.estado,
-    );
+    this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
 
     this.assignChangedValue(
       payload,
       'agendamento',
       this.editForm.agendamento,
-      this.originalEditForm
-        .agendamento,
+      this.originalEditForm.agendamento,
     );
 
     this.assignChangedValue(
       payload,
       'dataAssinatura',
-      this.editForm
-        .dataAssinatura,
-      this.originalEditForm
-        .dataAssinatura,
+      this.editForm.dataAssinatura,
+      this.originalEditForm.dataAssinatura,
     );
 
     this.assignChangedValue(
       payload,
       'dataContrato',
-      this.editForm
-        .dataContrato,
-      this.originalEditForm
-        .dataContrato,
+      this.editForm.dataContrato,
+      this.originalEditForm.dataContrato,
     );
 
     this.assignChangedValue(
       payload,
       'dataRegisto',
       this.editForm.dataRegisto,
-      this.originalEditForm
-        .dataRegisto,
+      this.originalEditForm.dataRegisto,
     );
 
     this.assignChangedValue(
       payload,
       'dataInstalacao',
-      this.editForm
-        .dataInstalacao,
-      this.originalEditForm
-        .dataInstalacao,
+      this.editForm.dataInstalacao,
+      this.originalEditForm.dataInstalacao,
     );
 
     this.assignChangedValue(
       payload,
       'dataAtivacao',
       this.editForm.dataAtivacao,
-      this.originalEditForm
-        .dataAtivacao,
+      this.originalEditForm.dataAtivacao,
     );
 
     this.assignChangedValue(
       payload,
       'dataBaixa',
       this.editForm.dataBaixa,
-      this.originalEditForm
-        .dataBaixa,
+      this.originalEditForm.dataBaixa,
     );
 
     this.assignChangedValue(
       payload,
       'moradaInstalacao',
-      this.editForm
-        .moradaInstalacao,
-      this.originalEditForm
-        .moradaInstalacao,
+      this.editForm.moradaInstalacao,
+      this.originalEditForm.moradaInstalacao,
     );
 
     this.assignChangedValue(
       payload,
       'moradaFaturacao',
-      this.editForm
-        .moradaFaturacao,
-      this.originalEditForm
-        .moradaFaturacao,
+      this.editForm.moradaFaturacao,
+      this.originalEditForm.moradaFaturacao,
     );
 
     this.assignChangedValue(
       payload,
       'faturaEletronica',
-      this.editForm
-        .faturaEletronica,
-      this.originalEditForm
-        .faturaEletronica,
+      this.editForm.faturaEletronica,
+      this.originalEditForm.faturaEletronica,
     );
 
     this.assignChangedValue(
       payload,
       'debitoDireto',
-      this.editForm
-        .debitoDireto,
-      this.originalEditForm
-        .debitoDireto,
+      this.editForm.debitoDireto,
+      this.originalEditForm.debitoDireto,
     );
 
-    this.assignChangedValue(
-      payload,
-      'nib',
-      this.editForm.nib,
-      this.originalEditForm.nib,
-    );
+    this.assignChangedValue(payload, 'nib', this.editForm.nib, this.originalEditForm.nib);
 
     this.assignChangedValue(
       payload,
       'microinversor',
-      this.editForm
-        .microinversor,
-      this.originalEditForm
-        .microinversor,
+      this.editForm.microinversor,
+      this.originalEditForm.microinversor,
     );
 
     this.assignChangedValue(
       payload,
       'baterias',
       this.editForm.baterias,
-      this.originalEditForm
-        .baterias,
+      this.originalEditForm.baterias,
     );
 
     this.assignChangedValue(
       payload,
       'numeroPaineisSolares',
-      Number(
-        this.editForm
-          .numeroPaineisSolares,
-      ),
-      Number(
-        this.originalEditForm
-          .numeroPaineisSolares,
-      ),
+      Number(this.editForm.numeroPaineisSolares),
+      Number(this.originalEditForm.numeroPaineisSolares),
     );
 
     this.assignChangedValue(
       payload,
       'metodoPagamento',
-      this.editForm
-        .metodoPagamento,
-      this.originalEditForm
-        .metodoPagamento,
+      this.editForm.metodoPagamento,
+      this.originalEditForm.metodoPagamento,
     );
 
     return payload;
   }
 
-  private assignChangedValue<
-    Key extends keyof UpdateIberdrolaSolarContractRequest,
-  >(
+  private assignChangedValue<Key extends keyof UpdateIberdrolaSolarContractRequest>(
     payload: UpdateIberdrolaSolarContractRequest,
     key: Key,
     currentValue: UpdateIberdrolaSolarContractRequest[Key],
@@ -1724,12 +1355,8 @@ export class IberdrolaSolarContractDetail implements OnInit {
     const normalizedCurrent = this.normalizeValue(currentValue);
     const normalizedOriginal = this.normalizeValue(originalValue);
 
-    if (
-      JSON.stringify(normalizedCurrent) !==
-      JSON.stringify(normalizedOriginal)
-    ) {
-      payload[key] =
-        normalizedCurrent as UpdateIberdrolaSolarContractRequest[Key];
+    if (JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedOriginal)) {
+      payload[key] = normalizedCurrent as UpdateIberdrolaSolarContractRequest[Key];
     }
   }
 
@@ -1764,13 +1391,10 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     const timezoneOffset = date.getTimezoneOffset() * 60_000;
 
-    return new Date(date.getTime() - timezoneOffset)
-      .toISOString()
-      .slice(0, 16);
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
   }
 
-  private buildEmptyEditForm():
-    EditableContractForm {
+  private buildEmptyEditForm(): EditableContractForm {
     return {
       nomeClienteEmpresa: '',
       nif: null,
@@ -1779,20 +1403,16 @@ export class IberdrolaSolarContractDetail implements OnInit {
       cae: '',
       crc: '',
 
-      tipoSegmento:
-        'Residencial',
-      tipoProduto:
-        'Painéis Solares',
-      contratacao:
-        'Contratação Digital',
+      tipoSegmento: 'Residencial',
+      tipoProduto: 'Painéis Solares',
+      contratacao: 'Contratação Digital',
       numeroLead: '',
       offer: '',
 
       controleQualidade: '',
       codigoRegistoCE: '',
       nomeRegistoCE: '',
-      estado:
-        'Pedido de Proposta',
+      estado: 'Pedido de Proposta',
 
       agendamento: '',
       dataAssinatura: '',
@@ -1812,8 +1432,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       microinversor: false,
       baterias: false,
       numeroPaineisSolares: 1,
-      metodoPagamento:
-        'Pronto Pagamento',
+      metodoPagamento: 'Pronto Pagamento',
     };
   }
 

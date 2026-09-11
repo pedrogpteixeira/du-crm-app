@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+
+import { FileAccessService } from '../../../core/services/file-access';
 
 @Component({
   selector: 'app-file-dropzone',
@@ -8,6 +10,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   styleUrl: './file-dropzone.scss',
 })
 export class FileDropzone {
+  private readonly fileAccess = inject(FileAccessService);
+
   @Input() files: File[] = [];
   @Input() disabled = false;
   @Input() title = 'Arrasta ficheiros para aqui';
@@ -16,6 +20,11 @@ export class FileDropzone {
   @Output() filesChange = new EventEmitter<File[]>();
 
   isDraggingFiles = false;
+  fileAccessMessage = '';
+
+  get canAccessAudioFiles(): boolean {
+    return this.fileAccess.canAccessAudioFiles();
+  }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -58,9 +67,7 @@ export class FileDropzone {
       return;
     }
 
-    this.filesChange.emit(
-      this.files.filter((_, currentIndex) => currentIndex !== index),
-    );
+    this.filesChange.emit(this.files.filter((_, currentIndex) => currentIndex !== index));
   }
 
   clearFiles(): void {
@@ -92,13 +99,19 @@ export class FileDropzone {
       return;
     }
 
-    const existingKeys = new Set(
-      this.files.map((file) => this.getFileKey(file)),
-    );
+    const { allowedFiles, rejectedAudioFiles } = this.fileAccess.filterUploadFiles(files);
 
-    const newFiles = files.filter(
-      (file) => !existingKeys.has(this.getFileKey(file)),
-    );
+    this.fileAccessMessage = rejectedAudioFiles.length
+      ? 'Ficheiros de áudio só podem ser carregados por utilizadores Super Admin ou DU.'
+      : '';
+
+    if (!allowedFiles.length) {
+      return;
+    }
+
+    const existingKeys = new Set(this.files.map((file) => this.getFileKey(file)));
+
+    const newFiles = allowedFiles.filter((file) => !existingKeys.has(this.getFileKey(file)));
 
     if (!newFiles.length) {
       return;

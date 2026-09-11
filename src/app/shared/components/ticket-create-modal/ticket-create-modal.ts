@@ -10,7 +10,7 @@ import {
   Output,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   catchError,
   finalize,
@@ -22,10 +22,16 @@ import {
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
 import {
+  buildCancellationDescription,
+  CANCELLATION_TICKET_TYPE,
   CreateTicketRequest,
   CreatedTicket,
+  hasRequiredDocuments,
+  isDocumentConfirmationApiError,
+  prepareTicketCreatePayload,
   TICKET_PRIORITY_OPTIONS,
   TICKET_TYPE_OPTIONS,
+  TREATMENT_TICKET_TYPE,
   TicketPrioridade,
   TicketService,
   TicketTeam,
@@ -61,7 +67,7 @@ import { FileDropzone } from '../file-dropzone/file-dropzone';
   selector: 'app-ticket-create-modal',
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     FileDropzone,
   ],
   templateUrl: './ticket-create-modal.html',
@@ -70,6 +76,7 @@ import { FileDropzone } from '../file-dropzone/file-dropzone';
 })
 export class TicketCreateModal implements OnInit {
   private readonly auth = inject(Auth);
+  private readonly fb = inject(FormBuilder);
   private readonly userService = inject(UserService);
   private readonly ticketService = inject(TicketService);
 
@@ -83,25 +90,77 @@ export class TicketCreateModal implements OnInit {
   assignableUsers: ProfileUser[] = [];
   availableTeams: AssignableTicketTeam[] = [];
 
-  assignedUserId = '';
   selectedTeamIds: string[] = [];
   teamToAddId = '';
-
-  tipo: TicketTipo = 'Tratamento de Pendência';
-  prioridade: TicketPrioridade = 'Normal';
-  agendamento = '';
-  descricao = '';
-  observacoes = '';
-
   selectedFiles: File[] = [];
 
   isLoadingAssignment = false;
   isCreatingTicket = false;
   isUploadingAttachments = false;
+  isCancellationModalOpen = false;
   errorMessage = '';
+  cancellationErrorMessage = '';
+
+  private createdTicketPendingAttachments: CreatedTicket | null = null;
 
   readonly ticketTypeOptions = TICKET_TYPE_OPTIONS;
   readonly priorityOptions = TICKET_PRIORITY_OPTIONS;
+
+  readonly ticketForm = this.fb.group({
+    tipo: this.fb.nonNullable.control<TicketTipo>(
+      TREATMENT_TICKET_TYPE,
+      Validators.required,
+    ),
+    prioridade: this.fb.nonNullable.control<TicketPrioridade>('Normal'),
+    assignedUserId: this.fb.nonNullable.control('', Validators.required),
+    agendamento: this.fb.nonNullable.control(''),
+    descricao: this.fb.nonNullable.control(''),
+    observacoes: this.fb.nonNullable.control(''),
+  });
+
+  readonly cancellationForm = this.fb.group({
+    reason: this.fb.nonNullable.control('', Validators.required),
+  });
+
+  get tipo(): TicketTipo {
+    return this.ticketForm.controls.tipo.value;
+  }
+
+  get prioridade(): TicketPrioridade {
+    return this.ticketForm.controls.prioridade.value;
+  }
+
+  get assignedUserId(): string {
+    return this.ticketForm.controls.assignedUserId.value;
+  }
+
+  get agendamento(): string {
+    return this.ticketForm.controls.agendamento.value;
+  }
+
+  get descricao(): string {
+    return this.ticketForm.controls.descricao.value;
+  }
+
+  get observacoes(): string {
+    return this.ticketForm.controls.observacoes.value;
+  }
+
+  get isTreatmentSelected(): boolean {
+    return this.tipo === TREATMENT_TICKET_TYPE;
+  }
+
+  get hasValidCancellationReason(): boolean {
+    return this.cancellationForm.controls.reason.value.trim().length > 0;
+  }
+
+  get hasPendingAttachmentRetry(): boolean {
+    return this.createdTicketPendingAttachments !== null;
+  }
+
+  get isFormLocked(): boolean {
+    return this.isCreatingTicket || this.hasPendingAttachmentRetry;
+  }
 
   ngOnInit(): void {
     this.loadAssignmentData();
@@ -141,6 +200,10 @@ export class TicketCreateModal implements OnInit {
     }
 
     this.loadAssignedUserTeams(this.assignedUserId);
+  }
+
+  onTeamToAddChange(event: Event): void {
+    this.teamToAddId = (event.target as HTMLSelectElement).value;
   }
 
   addSelectedTeam(): void {
@@ -222,16 +285,153 @@ export class TicketCreateModal implements OnInit {
       return;
     }
 
+    if (this.createdTicketPendingAttachments) {
+      this.retryAttachmentUpload();
+      return;
+    }
+
     const validationError = this.validateForm();
 
     if (validationError) {
       this.errorMessage = validationError;
+      this.ticketForm.markAllAsTouched();
       return;
     }
 
-    const payload = this.buildPayload();
+    if (
+      this.isTreatmentSelected &&
+      !hasRequiredDocuments([], this.selectedFiles)
+    ) {
+      this.errorMessage =
+        'Para criar um ticket de Tratamento de Pendência é obrigatório adicionar pelo menos um documento.';
+      return;
+    }
+
+    if (this.tipo === CANCELLATION_TICKET_TYPE) {
+      this.openCancellationConfirmation();
+      return;
+    }
+
+    this.createTicket();
+  }
+
+  openCancellationConfirmation(): void {
+    if (this.isCreatingTicket || this.isUploadingAttachments) {
+      return;
+    }
+
+    this.cancellationErrorMessage = '';
+    this.isCancellationModalOpen = true;
+  }
+
+  closeCancellationConfirmation(): void {
+    if (this.isCreatingTicket) {
+      return;
+    }
+
+    this.isCancellationModalOpen = false;
+    this.cancellationErrorMessage = '';
+  }
+
+  confirmCancellation(): void {
+    if (this.isCreatingTicket || this.isUploadingAttachments) {
+      return;
+    }
+
+    const reason = this.cancellationForm.controls.reason.value.trim();
+
+    if (!reason) {
+      this.cancellationForm.controls.reason.markAsTouched();
+      this.cancellationErrorMessage = 'Indique o motivo da anulação.';
+      return;
+    }
+
+    const validationError = this.validateForm();
+
+    if (validationError) {
+      this.cancellationErrorMessage = validationError;
+      return;
+    }
+
+    this.cancellationErrorMessage = '';
+    this.createTicket(reason);
+  }
+
+  retryAttachmentUpload(): void {
+    const ticket = this.createdTicketPendingAttachments;
+
+    if (!ticket || this.isUploadingAttachments || this.isCreatingTicket) {
+      return;
+    }
+
+    if (!this.selectedFiles.length) {
+      this.errorMessage =
+        ticket.tipo === TREATMENT_TICKET_TYPE
+          ? 'Para concluir o envio de um Ticket de Tratamento de Pendência é obrigatório manter pelo menos um documento selecionado.'
+          : 'Selecione pelo menos um documento para repetir o envio dos anexos.';
+      return;
+    }
 
     this.errorMessage = '';
+    this.isUploadingAttachments = true;
+
+    this.ticketService
+      .uploadAttachments(ticket.ticketId, this.selectedFiles)
+      .pipe(
+        finalize(() => {
+          this.isUploadingAttachments = false;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.createdTicketPendingAttachments = null;
+          this.finishCreation({
+            ticket,
+            attachmentsUploaded: true,
+            attachmentUploadFailed: false,
+          });
+        },
+        error: () => {
+          this.errorMessage =
+            'O ticket foi criado, mas não foi possível carregar os documentos. Tente novamente o envio dos anexos.';
+        },
+      });
+  }
+
+  close(): void {
+    if (this.isCancellationModalOpen) {
+      this.closeCancellationConfirmation();
+      return;
+    }
+
+    if (this.isCreatingTicket || this.isUploadingAttachments) {
+      return;
+    }
+
+    if (this.createdTicketPendingAttachments) {
+      const ticket = this.createdTicketPendingAttachments;
+      this.createdTicketPendingAttachments = null;
+      this.created.emit({
+        ticket,
+        attachmentsUploaded: false,
+        attachmentUploadFailed: true,
+      });
+      return;
+    }
+
+    this.closed.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.close();
+  }
+
+  private createTicket(cancellationReason?: string): void {
+    const payload = this.buildPayload(cancellationReason);
+
+    this.errorMessage = '';
+    this.cancellationErrorMessage = '';
     this.isCreatingTicket = true;
 
     this.ticketService
@@ -243,7 +443,8 @@ export class TicketCreateModal implements OnInit {
               ticket,
               attachmentsUploaded: false,
               attachmentUploadFailed: false,
-            } satisfies TicketCreateModalResult);
+              uploadError: null,
+            });
           }
 
           this.isUploadingAttachments = true;
@@ -258,13 +459,15 @@ export class TicketCreateModal implements OnInit {
                 ticket,
                 attachmentsUploaded: true,
                 attachmentUploadFailed: false,
-              } satisfies TicketCreateModalResult)),
-              catchError(() =>
+                uploadError: null,
+              })),
+              catchError((uploadError: unknown) =>
                 of({
                   ticket,
                   attachmentsUploaded: false,
                   attachmentUploadFailed: true,
-                } satisfies TicketCreateModalResult),
+                  uploadError,
+                }),
               ),
               finalize(() => {
                 this.isUploadingAttachments = false;
@@ -277,25 +480,42 @@ export class TicketCreateModal implements OnInit {
       )
       .subscribe({
         next: (result) => {
-          this.created.emit(result);
+          if (result.attachmentUploadFailed) {
+            this.createdTicketPendingAttachments = result.ticket;
+
+            if (result.ticket.tipo === CANCELLATION_TICKET_TYPE) {
+              this.isCancellationModalOpen = false;
+              this.cancellationForm.reset({ reason: '' });
+              this.cancellationErrorMessage = '';
+            }
+
+            this.errorMessage =
+              'O ticket foi criado, mas não foi possível carregar os documentos. Tente novamente o envio dos anexos.';
+            return;
+          }
+
+          this.finishCreation(result);
         },
         error: (error: unknown) => {
-          this.errorMessage = this.getApiErrorMessage(error);
+          const message = this.getApiErrorMessage(error);
+
+          if (cancellationReason !== undefined) {
+            this.cancellationErrorMessage = message;
+          } else {
+            this.errorMessage = message;
+          }
         },
       });
   }
 
-  close(): void {
-    if (this.isCreatingTicket || this.isUploadingAttachments) {
-      return;
+  private finishCreation(result: TicketCreateModalResult): void {
+    if (result.ticket.tipo === CANCELLATION_TICKET_TYPE) {
+      this.isCancellationModalOpen = false;
+      this.cancellationForm.reset({ reason: '' });
+      this.cancellationErrorMessage = '';
     }
 
-    this.closed.emit();
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.close();
+    this.created.emit(result);
   }
 
   private loadAssignmentData(): void {
@@ -382,7 +602,7 @@ export class TicketCreateModal implements OnInit {
     updateAssignedUser = true,
   ): void {
     if (updateAssignedUser) {
-      this.assignedUserId = user.id;
+      this.ticketForm.controls.assignedUserId.setValue(user.id);
     }
 
     this.availableTeams = this.resolveAssignableTeams(user);
@@ -605,11 +825,15 @@ export class TicketCreateModal implements OnInit {
     return null;
   }
 
-  private buildPayload(): CreateTicketRequest {
+  private buildPayload(cancellationReason?: string): CreateTicketRequest {
     const description = this.descricao.trim();
     const observations = this.observacoes.trim();
+    const finalDescription =
+      cancellationReason !== undefined
+        ? buildCancellationDescription(description, cancellationReason)
+        : description;
 
-    return {
+    const payload: CreateTicketRequest = {
       contractId: this.contractId,
       companyId: this.companyId,
       tipo: this.tipo,
@@ -619,8 +843,8 @@ export class TicketCreateModal implements OnInit {
       ...(this.agendamento
         ? { agendamento: new Date(this.agendamento).toISOString() }
         : {}),
-      ...(description
-        ? { descricao: description }
+      ...(finalDescription
+        ? { descricao: finalDescription }
         : {}),
       ...(observations
         ? { observacoes: observations }
@@ -628,9 +852,17 @@ export class TicketCreateModal implements OnInit {
       userId: this.assignedUserId,
       teams: this.resolveTicketTeams(),
     };
+
+    return prepareTicketCreatePayload(
+      payload,
+      hasRequiredDocuments([], this.selectedFiles),
+    );
   }
 
-  private getApiErrorMessage(error: unknown): string {
+  private getApiErrorMessage(
+    error: unknown,
+    fallback = 'Não foi possível criar o Ticket.',
+  ): string {
     if (error instanceof HttpErrorResponse) {
       const apiMessage =
         typeof error.error === 'object' &&
@@ -640,14 +872,22 @@ export class TicketCreateModal implements OnInit {
           ? error.error.message
           : '';
 
-      return apiMessage || 'Não foi possível criar o Ticket.';
+      if (isDocumentConfirmationApiError(apiMessage)) {
+        return 'É necessário confirmar a existência de documentação para um Tratamento de Pendência.';
+      }
+
+      return apiMessage || fallback;
     }
 
     if (error instanceof Error && error.message) {
+      if (isDocumentConfirmationApiError(error.message)) {
+        return 'É necessário confirmar a existência de documentação para um Tratamento de Pendência.';
+      }
+
       return error.message;
     }
 
-    return 'Não foi possível criar o Ticket.';
+    return fallback;
   }
 
   private getFileKey(file: File): string {

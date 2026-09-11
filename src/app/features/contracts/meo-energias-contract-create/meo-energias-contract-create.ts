@@ -4,23 +4,10 @@ import {
 } from '../../../core/config/quality-control';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  EMPTY,
-  catchError,
-  finalize,
-  map,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -29,28 +16,17 @@ import {
 } from '../../../core/constants/contract-energy-options';
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
+import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 
 import { Auth } from '../../../core/services/auth';
 
-import {
-  Campaign,
-  CampaignService,
-} from '../../../core/services/campaign';
+import { Campaign, CampaignService } from '../../../core/services/campaign';
 
-import {
-  Client,
-  ClientService,
-} from '../../../core/services/client';
+import { Client, ClientService } from '../../../core/services/client';
 
-import {
-  ContractLayout,
-  PreferencesService,
-} from '../../../core/services/preferences';
+import { ContractLayout, PreferencesService } from '../../../core/services/preferences';
 
-import {
-  ProfileUser,
-  UserService,
-} from '../../../core/services/user';
+import { ProfileUser, UserService } from '../../../core/services/user';
 
 import {
   CreateMeoEnergiasContractRequest,
@@ -70,9 +46,7 @@ import {
   MeoEnergiasTipoSegmento,
 } from '../../../core/services/meo-energias-contract';
 
-type MoradaFaturacaoSelecao =
-  | 'Igual à de Instalação'
-  | 'Outra';
+type MoradaFaturacaoSelecao = 'Igual à de Instalação' | 'Outra';
 
 interface AssignableContractTeam {
   id: string;
@@ -83,7 +57,6 @@ interface AssignableContractTeam {
   active?: boolean;
 }
 
-
 interface MeoEnergiasContractCreateForm {
   companyId: typeof MEO_ENERGIAS_COMPANY_ID;
 
@@ -91,13 +64,9 @@ interface MeoEnergiasContractCreateForm {
   tipoProduto: MeoEnergiasTipoProduto;
   contratacao: MeoEnergiasContratacao;
 
-  tipoContratacaoLuz:
-    | MeoEnergiasTipoContratacao
-    | '';
+  tipoContratacaoLuz: MeoEnergiasTipoContratacao | '';
 
-  tipoContratacaoGas:
-    | MeoEnergiasTipoContratacao
-    | '';
+  tipoContratacaoGas: MeoEnergiasTipoContratacao | '';
 
   controleQualidade: string;
   nomeRegistoCE: string;
@@ -146,73 +115,48 @@ interface MeoEnergiasContractCreateForm {
   potencia: string;
   escalao: string;
 
-  cicloHorario:
-    | MeoEnergiasCicloHorario
-    | '';
+  cicloHorario: MeoEnergiasCicloHorario | '';
 
-  nivelTensao:
-    | MeoEnergiasNivelTensao
-    | '';
+  nivelTensao: MeoEnergiasNivelTensao | '';
 
   observacoes: string;
   observacoesInternas: string;
 }
 
-interface ProfileUserWithTeamPositions
-  extends ProfileUser {
+interface ProfileUserWithTeamPositions extends ProfileUser {
   teams: AssignableContractTeam[];
-  defaultTeam:
-    | AssignableContractTeam
-    | null;
+  defaultTeam: AssignableContractTeam | null;
 }
 
+import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-meo-energias-contract-create',
-  imports: [
-    CommonModule,
-    FormsModule,
-    FileDropzone,
-  ],
-  templateUrl:
-    './meo-energias-contract-create.html',
-  changeDetection:
-    ChangeDetectionStrategy.Eager,
-  styleUrl:
-    './meo-energias-contract-create.scss',
+  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone],
+  templateUrl: './meo-energias-contract-create.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styleUrl: './meo-energias-contract-create.scss',
 })
-export class MeoEnergiasContractCreate
-  implements OnInit
-{
-  readonly qualityControlBackofficeOptions =
-    QUALITY_CONTROL_BACKOFFICE_OPTIONS;
-  private readonly clientService =
-    inject(ClientService);
+export class MeoEnergiasContractCreate implements OnInit {
+  readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
+  private readonly clientService = inject(ClientService);
 
-  private readonly campaignService =
-    inject(CampaignService);
+  private readonly campaignService = inject(CampaignService);
 
-  private readonly meoEnergiasContractService =
-    inject(MeoEnergiasContractService);
+  private readonly meoEnergiasContractService = inject(MeoEnergiasContractService);
 
-  private readonly preferencesService =
-    inject(PreferencesService);
+  private readonly preferencesService = inject(PreferencesService);
 
-  private readonly userService =
-    inject(UserService);
+  private readonly userService = inject(UserService);
 
-  private readonly auth =
-    inject(Auth);
+  private readonly auth = inject(Auth);
 
-  private readonly router =
-    inject(Router);
+  private readonly router = inject(Router);
 
-  readonly meoEnergiasCompanyId =
-    MEO_ENERGIAS_COMPANY_ID;
+  readonly meoEnergiasCompanyId = MEO_ENERGIAS_COMPANY_ID;
 
-  contractLayout:
-    ContractLayout = 'light';
+  contractLayout: ContractLayout = 'light';
 
   nif: number | null = null;
   clientName = '';
@@ -220,14 +164,11 @@ export class MeoEnergiasContractCreate
 
   campaigns: Campaign[] = [];
 
-  currentUser:
-    ProfileUser | null = null;
+  currentUser: ProfileUser | null = null;
 
-  assignableUsers:
-    ProfileUser[] = [];
+  assignableUsers: ProfileUser[] = [];
 
-  availableTeams:
-    AssignableContractTeam[] = [];
+  availableTeams: AssignableContractTeam[] = [];
 
   assignedUserId = '';
   selectedTeamIds: string[] = [];
@@ -238,8 +179,7 @@ export class MeoEnergiasContractCreate
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
 
-  canAccessInternalObservations =
-    false;
+  canAccessInternalObservations = false;
 
   selectedFiles: File[] = [];
 
@@ -254,69 +194,43 @@ export class MeoEnergiasContractCreate
   errorMessage = '';
   successMessage = '';
 
-  campaignSelectionMode:
-    | 'existing'
-    | 'other' = 'existing';
+  campaignSelectionMode: 'existing' | 'other' = 'existing';
 
   customCampaign = '';
 
-  readonly tipoSegmentoOptions:
-    MeoEnergiasTipoSegmento[] = [
-      'Residencial',
-      'Empresarial',
-    ];
+  readonly tipoSegmentoOptions: MeoEnergiasTipoSegmento[] = ['Residencial', 'Empresarial'];
 
-  readonly tipoProdutoOptions:
-    MeoEnergiasTipoProduto[] = [
-      'Luz',
-      'Luz + Gás',
-      'Gás',
-    ];
+  readonly tipoProdutoOptions: MeoEnergiasTipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
-  readonly contratacaoOptions:
-    MeoEnergiasContratacao[] = [
-      'Contratação Digital',
-      'Contratação Papel',
-    ];
+  readonly contratacaoOptions: MeoEnergiasContratacao[] = [
+    'Contratação Digital',
+    'Contratação Papel',
+  ];
 
-  readonly tipoContratacaoOptions:
-    MeoEnergiasTipoContratacao[] = [
-      'Mudança de Comercializadora',
-      'Mudança de Comercializadora & AT',
-      'Entrada Direta',
-    ];
+  readonly tipoContratacaoOptions: MeoEnergiasTipoContratacao[] = [
+    'Mudança de Comercializadora',
+    'Mudança de Comercializadora & AT',
+    'Entrada Direta',
+  ];
 
-  readonly estadoOptions:
-    readonly MeoEnergiasContractStatus[] =
-      MEO_ENERGIAS_CONTRACT_STATUSES;
+  readonly estadoOptions: readonly MeoEnergiasContractStatus[] = MEO_ENERGIAS_CONTRACT_STATUSES;
 
-  readonly cicloHorarioOptions:
-    MeoEnergiasCicloHorario[] = [
-      'Simples',
-      'Bi-Horário Diário',
-      'Bi-Horário Semanal',
-      'Tri-Horário Diário',
-      'Tri-Horário Semanal',
-      'Tetra-Horário',
-    ];
+  readonly cicloHorarioOptions: MeoEnergiasCicloHorario[] = [
+    'Simples',
+    'Bi-Horário Diário',
+    'Bi-Horário Semanal',
+    'Tri-Horário Diário',
+    'Tri-Horário Semanal',
+    'Tetra-Horário',
+  ];
 
-  readonly nivelTensaoOptions:
-    MeoEnergiasNivelTensao[] = [
-      'Monofásico',
-      'Trifásico',
-    ];
+  readonly nivelTensaoOptions: MeoEnergiasNivelTensao[] = ['Monofásico', 'Trifásico'];
 
-  readonly powerSuggestions =
-    MEO_ENERGIAS_POWER_SUGGESTIONS;
+  readonly powerSuggestions = MEO_ENERGIAS_POWER_SUGGESTIONS;
 
-  readonly gasLevelSuggestions =
-    MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS;
+  readonly gasLevelSuggestions = MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS;
 
-  readonly moradaFaturacaoOptions:
-    MoradaFaturacaoSelecao[] = [
-      'Igual à de Instalação',
-      'Outra',
-    ];
+  readonly moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
 
   contractForm: MeoEnergiasContractCreateForm = {
     companyId: MEO_ENERGIAS_COMPANY_ID,
@@ -325,11 +239,9 @@ export class MeoEnergiasContractCreate
     tipoProduto: 'Luz + Gás',
     contratacao: 'Contratação Digital',
 
-    tipoContratacaoLuz:
-      'Mudança de Comercializadora',
+    tipoContratacaoLuz: 'Mudança de Comercializadora',
 
-    tipoContratacaoGas:
-      'Mudança de Comercializadora',
+    tipoContratacaoGas: 'Mudança de Comercializadora',
 
     controleQualidade: '',
     nomeRegistoCE: '',
@@ -351,8 +263,7 @@ export class MeoEnergiasContractCreate
     cae: '',
     crc: '',
 
-    moradaFaturacaoSelecao:
-      'Igual à de Instalação',
+    moradaFaturacaoSelecao: 'Igual à de Instalação',
 
     moradaInstalacaoRua: '',
     moradaInstalacaoCidade: '',
@@ -393,30 +304,19 @@ export class MeoEnergiasContractCreate
   }
 
   isLightLayout(): boolean {
-    return (
-      this.contractLayout ===
-      'light'
-    );
+    return this.contractLayout === 'light';
   }
 
   isProLayout(): boolean {
-    return (
-      this.contractLayout ===
-      'pro'
-    );
+    return this.contractLayout === 'pro';
   }
 
   canManageQualityControl(): boolean {
-    return canManageQualityControlRole(
-      this.currentUser?.role,
-    );
+    return canManageQualityControlRole(this.currentUser?.role);
   }
 
   isSuperAdmin(): boolean {
-    return Boolean(
-      this.currentUser?.role
-        .includes('Super Admin'),
-    );
+    return Boolean(this.currentUser?.role.includes('Super Admin'));
   }
 
   canAssignOtherUsers(): boolean {
@@ -424,52 +324,27 @@ export class MeoEnergiasContractCreate
       return true;
     }
 
-    return (
-      this.getManagedTeamIds()
-        .length > 0
-    );
+    return this.getManagedTeamIds().length > 0;
   }
 
-  get selectedTeams():
-    AssignableContractTeam[] {
+  get selectedTeams(): AssignableContractTeam[] {
     return this.selectedTeamIds
-      .map((teamId) =>
-        this.availableTeams.find(
-          (team) =>
-            team.id === teamId,
-        ),
-      )
-      .filter(
-        (
-          team,
-        ): team is AssignableContractTeam =>
-          Boolean(team),
-      );
+      .map((teamId) => this.availableTeams.find((team) => team.id === teamId))
+      .filter((team): team is AssignableContractTeam => Boolean(team));
   }
 
-  get teamsAvailableToAdd():
-    AssignableContractTeam[] {
-    return this.availableTeams
-      .filter(
-        (team) =>
-          !this.selectedTeamIds
-            .includes(team.id),
-      );
+  get teamsAvailableToAdd(): AssignableContractTeam[] {
+    return this.availableTeams.filter((team) => !this.selectedTeamIds.includes(team.id));
   }
 
   onAssignedUserChange(): void {
-    if (
-      !this.canAssignOtherUsers() ||
-      !this.assignedUserId
-    ) {
+    if (!this.canAssignOtherUsers() || !this.assignedUserId) {
       return;
     }
 
     this.clearRegistrationFields();
 
-    this.loadAssignedUserTeams(
-      this.assignedUserId,
-    );
+    this.loadAssignedUserTeams(this.assignedUserId);
   }
 
   onTipoProdutoChange(): void {
@@ -487,23 +362,11 @@ export class MeoEnergiasContractCreate
   }
 
   shouldShowLuzFields(): boolean {
-    return (
-      this.contractForm
-        .tipoProduto === 'Luz' ||
-      this.contractForm
-        .tipoProduto ===
-        'Luz + Gás'
-    );
+    return this.contractForm.tipoProduto === 'Luz' || this.contractForm.tipoProduto === 'Luz + Gás';
   }
 
   shouldShowGasFields(): boolean {
-    return (
-      this.contractForm
-        .tipoProduto === 'Gás' ||
-      this.contractForm
-        .tipoProduto ===
-        'Luz + Gás'
-    );
+    return this.contractForm.tipoProduto === 'Gás' || this.contractForm.tipoProduto === 'Luz + Gás';
   }
 
   addSelectedTeam(): void {
@@ -511,38 +374,24 @@ export class MeoEnergiasContractCreate
       return;
     }
 
-    this.selectedTeamIds = [
-      ...new Set([
-        ...this.selectedTeamIds,
-        this.teamToAddId,
-      ]),
-    ];
+    this.selectedTeamIds = [...new Set([...this.selectedTeamIds, this.teamToAddId])];
 
     this.teamToAddId = '';
   }
 
-  removeSelectedTeam(
-    teamId: string,
-  ): void {
-    this.selectedTeamIds =
-      this.selectedTeamIds.filter(
-        (selectedTeamId) =>
-          selectedTeamId !== teamId,
-      );
+  removeSelectedTeam(teamId: string): void {
+    this.selectedTeamIds = this.selectedTeamIds.filter(
+      (selectedTeamId) => selectedTeamId !== teamId,
+    );
   }
 
-  isRequiredTeam(
-    teamId: string,
-  ): boolean {
-    return this
-      .getRequiredTeamIds()
-      .includes(teamId);
+  isRequiredTeam(teamId: string): boolean {
+    return this.getRequiredTeamIds().includes(teamId);
   }
 
   checkClientByNif(): void {
     if (!this.nif) {
-      this.errorMessage =
-        'O NIF é obrigatório.';
+      this.errorMessage = 'O NIF é obrigatório.';
       return;
     }
 
@@ -557,19 +406,16 @@ export class MeoEnergiasContractCreate
       .getClientByNif(this.nif)
       .pipe(
         finalize(() => {
-          this.isCheckingClient =
-            false;
+          this.isCheckingClient = false;
         }),
       )
       .subscribe({
         next: (client) => {
           this.client = client;
-          this.clientName =
-            client.name;
+          this.clientName = client.name;
 
           this.clientChecked = true;
-          this.clientNotFound =
-            false;
+          this.clientNotFound = false;
 
           /*  
           this.successMessage =
@@ -580,30 +426,22 @@ export class MeoEnergiasContractCreate
         error: (error) => {
           this.clientChecked = true;
 
-          if (
-            error?.status === 404
-          ) {
-            this.clientNotFound =
-              true;
+          if (error?.status === 404) {
+            this.clientNotFound = true;
 
             this.client = null;
             this.clientName = '';
             return;
           }
 
-          this.errorMessage =
-            'Não foi possível verificar o cliente.';
+          this.errorMessage = 'Não foi possível verificar o cliente.';
         },
       });
   }
 
   createClient(): void {
-    if (
-      !this.nif ||
-      !this.clientName.trim()
-    ) {
-      this.errorMessage =
-        'O NIF e o nome do cliente são obrigatórios.';
+    if (!this.nif || !this.clientName.trim()) {
+      this.errorMessage = 'O NIF e o nome do cliente são obrigatórios.';
       return;
     }
 
@@ -617,216 +455,136 @@ export class MeoEnergiasContractCreate
 
     this.clientService
       .createClient({
-        name:
-          this.clientName.trim(),
+        name: this.clientName.trim(),
         nif: this.nif,
       })
       .pipe(
         finalize(() => {
-          this.isCreatingClient =
-            false;
+          this.isCreatingClient = false;
         }),
       )
       .subscribe({
         next: (client) => {
           this.client = client;
 
-          this.clientName =
-            client.name;
+          this.clientName = client.name;
 
-          this.clientNotFound =
-            false;
+          this.clientNotFound = false;
 
-          this.clientChecked =
-            true;
+          this.clientChecked = true;
 
-          this.successMessage =
-            'Cliente criado com sucesso.';
+          this.successMessage = 'Cliente criado com sucesso.';
         },
 
         error: () => {
-          this.errorMessage =
-            'Não foi possível criar o cliente.';
+          this.errorMessage = 'Não foi possível criar o cliente.';
         },
       });
   }
 
-  onFilesSelected(
-    event: Event,
-  ): void {
-    const input =
-      event.target as HTMLInputElement;
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
-    const files =
-      input.files
-        ? Array.from(
-            input.files,
-          )
-        : [];
+    const files = input.files ? Array.from(input.files) : [];
 
     if (!files.length) {
       return;
     }
 
-    const existingFileKeys =
-      new Set(
-        this.selectedFiles.map(
-          (file) =>
-            this.getFileKey(file),
-        ),
-      );
+    const existingFileKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
 
-    const newFiles =
-      files.filter(
-        (file) =>
-          !existingFileKeys.has(
-            this.getFileKey(file),
-          ),
-      );
+    const newFiles = files.filter((file) => !existingFileKeys.has(this.getFileKey(file)));
 
-    this.selectedFiles = [
-      ...this.selectedFiles,
-      ...newFiles,
-    ];
+    this.selectedFiles = [...this.selectedFiles, ...newFiles];
 
     input.value = '';
   }
 
-  removeSelectedFile(
-    index: number,
-  ): void {
-    this.selectedFiles =
-      this.selectedFiles.filter(
-        (_, fileIndex) =>
-          fileIndex !== index,
-      );
+  removeSelectedFile(index: number): void {
+    this.selectedFiles = this.selectedFiles.filter((_, fileIndex) => fileIndex !== index);
   }
 
   clearSelectedFiles(): void {
     this.selectedFiles = [];
   }
 
-  formatFileSize(
-    size: number,
-  ): string {
+  formatFileSize(size: number): string {
     if (size < 1024) {
       return `${size} B`;
     }
 
-    if (
-      size <
-      1024 * 1024
-    ) {
-      return `${(
-        size / 1024
-      ).toFixed(1)} KB`;
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
     }
 
-    return `${(
-      size /
-      (1024 * 1024)
-    ).toFixed(1)} MB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   cancel(): void {
-    if (
-      this.isCreatingContract
-    ) {
+    if (this.isCreatingContract) {
       return;
     }
 
-    this.router.navigate([
-      '/home/contracts/meo-energias',
-    ]);
+    this.router.navigate(['/home/contracts/meo-energias']);
   }
 
   createContract(): void {
-    if (
-      this.isCreatingContract
-    ) {
+    this.contractForm.estado = this.estadoOptions[0];
+
+    if (this.isCreatingContract) {
       return;
     }
 
     if (!this.client) {
-      this.errorMessage =
-        'É necessário identificar ou criar o cliente.';
+      this.errorMessage = 'É necessário identificar ou criar o cliente.';
       return;
     }
 
     if (!this.currentUser?.id) {
-      this.errorMessage =
-        'Não foi possível identificar o utilizador autenticado.';
+      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
       return;
     }
 
     if (!this.assignedUserId) {
-      this.errorMessage =
-        'É obrigatório selecionar o utilizador atribuído.';
+      this.errorMessage = 'É obrigatório selecionar o utilizador atribuído.';
       return;
     }
 
-    if (
-      !this.contractForm
-        .tipoSegmento
-    ) {
-      this.errorMessage =
-        'O tipo de segmento é obrigatório.';
+    if (!this.contractForm.tipoSegmento) {
+      this.errorMessage = 'O tipo de segmento é obrigatório.';
       return;
     }
 
-    if (
-      !this.contractForm
-        .tipoProduto
-    ) {
-      this.errorMessage =
-        'O tipo de produto é obrigatório.';
+    if (!this.contractForm.tipoProduto) {
+      this.errorMessage = 'O tipo de produto é obrigatório.';
       return;
     }
 
-    if (
-      !this.contractForm
-        .contratacao
-    ) {
-      this.errorMessage =
-        'O tipo de contratação é obrigatório.';
+    if (!this.contractForm.contratacao) {
+      this.errorMessage = 'O tipo de contratação é obrigatório.';
       return;
     }
 
-    if (
-      !this.contractForm.telefone
-    ) {
-      this.errorMessage =
-        'O telefone é obrigatório.';
+    if (!this.contractForm.telefone) {
+      this.errorMessage = 'O telefone é obrigatório.';
       return;
     }
 
-    if (
-      this.contractForm
-        .email.trim() &&
-      !this.isValidEmail(
-        this.contractForm.email,
-      )
-    ) {
-      this.errorMessage =
-        'Indica um email válido.';
+    if (this.contractForm.email.trim() && !this.isValidEmail(this.contractForm.email)) {
+      this.errorMessage = 'Indica um email válido.';
       return;
     }
-
 
     if (this.isProLayout()) {
-      const energyValidationError =
-        getContractEnergyValidationError({
-          requiresElectricity:
-            this.shouldShowLuzFields(),
-          requiresGas:
-            this.shouldShowGasFields(),
-          cpe: this.contractForm.cpe,
-          cui: this.contractForm.cui,
-          potencia: this.contractForm.potencia,
-          escalao: this.contractForm.escalao,
-          cicloHorario:
-            this.contractForm.cicloHorario,
-        });
+      const energyValidationError = getContractEnergyValidationError({
+        requiresElectricity: this.shouldShowLuzFields(),
+        requiresGas: this.shouldShowGasFields(),
+        cpe: this.contractForm.cpe,
+        cui: this.contractForm.cui,
+        potencia: this.contractForm.potencia,
+        escalao: this.contractForm.escalao,
+        cicloHorario: this.contractForm.cicloHorario,
+      });
 
       if (energyValidationError) {
         this.errorMessage = energyValidationError;
@@ -835,271 +593,180 @@ export class MeoEnergiasContractCreate
     }
 
     const campaignIsMissing =
-      this
-        .campaignSelectionMode ===
-      'existing'
-        ? !this.contractForm
-            .campanha
-        : !this.customCampaign
-            .trim();
+      this.campaignSelectionMode === 'existing'
+        ? !this.contractForm.campanha
+        : !this.customCampaign.trim();
 
     if (campaignIsMissing) {
-      this.errorMessage =
-        'É obrigatório selecionar ou indicar uma campanha.';
+      this.errorMessage = 'É obrigatório selecionar ou indicar uma campanha.';
       return;
     }
 
-    const teamValidationError =
-      this.validateSelectedTeams();
+    const teamValidationError = this.validateSelectedTeams();
 
-    if (
-      teamValidationError
-    ) {
-      this.errorMessage =
-        teamValidationError;
+    if (teamValidationError) {
+      this.errorMessage = teamValidationError;
       return;
     }
 
     if (this.isLightLayout()) {
-      this.contractForm.estado =
-        'Pedido de Chamada';
+      this.contractForm.estado = 'Pedido de Chamada';
     }
 
-    const payload =
-      this.buildContractPayload();
+    const fieldValidationError = getContractFormValidationError(
+      this.contractForm as unknown as Record<string, unknown>,
+      {
+        validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
+        validateCui: this.isProLayout() && this.shouldShowGasFields(),
+      },
+    );
 
-    this.isCreatingContract =
-      true;
+    if (fieldValidationError) {
+      this.errorMessage = fieldValidationError;
+      return;
+    }
 
-    this.isUploadingDocuments =
-      false;
+    const payload = this.buildContractPayload();
+
+    this.isCreatingContract = true;
+
+    this.isUploadingDocuments = false;
 
     this.errorMessage = '';
     this.successMessage = '';
 
-    let createdContract:
-      MeoEnergiasContractDetail | null =
-        null;
+    let createdContract: MeoEnergiasContractDetail | null = null;
 
     this.meoEnergiasContractService
-      .createMeoEnergiasContract(
-        payload,
-      )
+      .createMeoEnergiasContract(payload)
       .pipe(
         tap((contract) => {
-          createdContract =
-            contract;
+          createdContract = contract;
         }),
 
         switchMap((contract) => {
-          if (
-            !this.selectedFiles
-              .length
-          ) {
+          if (!this.selectedFiles.length) {
             return of(contract);
           }
 
-          this.isUploadingDocuments =
-            true;
+          this.isUploadingDocuments = true;
 
-          return this
-            .meoEnergiasContractService
-            .uploadAttachments(
-              contract.id,
-              this.selectedFiles,
-            )
+          return this.meoEnergiasContractService
+            .uploadAttachments(contract.id, this.selectedFiles)
             .pipe(
               tap(() => {
-                this.isUploadingDocuments =
-                  false;
+                this.isUploadingDocuments = false;
               }),
 
-              catchError(
-                (
-                  error:
-                    HttpErrorResponse,
-                ) => {
-                  this.isUploadingDocuments =
-                    false;
+              catchError((error: HttpErrorResponse) => {
+                this.isUploadingDocuments = false;
 
-                  this.errorMessage =
-                    error?.error
-                      ?.message ||
-                    'O contrato foi criado, mas não foi possível carregar os documentos.';
+                this.errorMessage =
+                  error?.error?.message ||
+                  'O contrato foi criado, mas não foi possível carregar os documentos.';
 
-                  return EMPTY;
-                },
-              ),
+                return EMPTY;
+              }),
             );
         }),
 
         finalize(() => {
-          this.isCreatingContract =
-            false;
+          this.isCreatingContract = false;
 
-          this.isUploadingDocuments =
-            false;
+          this.isUploadingDocuments = false;
         }),
       )
       .subscribe({
         next: (contract) => {
-          this.successMessage =
-            this.selectedFiles
-              .length
-              ? 'Contrato e documentos criados com sucesso.'
-              : 'Contrato criado com sucesso.';
+          this.successMessage = this.selectedFiles.length
+            ? 'Contrato e documentos criados com sucesso.'
+            : 'Contrato criado com sucesso.';
 
-          this.router.navigate([
-            '/home/contracts/meo-energias',
-            contract.id,
-          ]);
+          this.router.navigate(['/home/contracts/meo-energias', contract.id]);
         },
 
-        error: (
-          error:
-            HttpErrorResponse,
-        ) => {
+        error: (error: HttpErrorResponse) => {
           this.errorMessage =
-            error?.error?.details
-              ?.join(' ') ||
+            error?.error?.details?.join(' ') ||
             error?.error?.message ||
             'Não foi possível criar o contrato Meo Energias.';
         },
 
         complete: () => {
-          if (
-            createdContract &&
-            this.errorMessage
-              .includes(
-                'O contrato foi criado',
-              )
-          ) {
-            this.successMessage =
-              `Contrato ${createdContract.id} criado com sucesso.`;
+          if (createdContract && this.errorMessage.includes('O contrato foi criado')) {
+            this.successMessage = `Contrato ${createdContract.id} criado com sucesso.`;
           }
         },
       });
   }
 
-  private loadContractLayout():
-    void {
-    this.contractLayout =
-      this.preferencesService
-        .getContractLayout();
+  private loadContractLayout(): void {
+    this.contractLayout = this.preferencesService.getContractLayout();
 
     if (this.isLightLayout()) {
-      this.contractForm.estado =
-        'Pedido de Chamada';
+      this.contractForm.estado = 'Pedido de Chamada';
     }
   }
 
   private loadCampaigns(): void {
     this.campaignService
-      .getCampaignsByCompanyId(
-        MEO_ENERGIAS_COMPANY_ID,
-      )
-      .pipe(
-        map((campaigns) =>
-          campaigns.filter(
-            (campaign) =>
-              campaign.active,
-          ),
-        ),
-      )
+      .getCampaignsByCompanyId(MEO_ENERGIAS_COMPANY_ID)
+      .pipe(map((campaigns) => campaigns.filter((campaign) => campaign.active)))
       .subscribe({
         next: (campaigns) => {
-          this.campaigns =
-            campaigns;
+          this.campaigns = campaigns;
         },
 
         error: () => {
-          this.errorMessage =
-            'Não foi possível carregar as campanhas.';
+          this.errorMessage = 'Não foi possível carregar as campanhas.';
         },
       });
   }
 
-  private loadAssignmentData():
-    void {
-    const authenticatedUser =
-      this.auth
-        .getCurrentUser() as
-        | Partial<ProfileUser>
-        | null;
+  private loadAssignmentData(): void {
+    const authenticatedUser = this.auth.getCurrentUser() as Partial<ProfileUser> | null;
 
-    if (
-      !authenticatedUser?.id
-    ) {
-      this.assignmentErrorMessage =
-        'Não foi possível identificar o utilizador autenticado.';
+    if (!authenticatedUser?.id) {
+      this.assignmentErrorMessage = 'Não foi possível identificar o utilizador autenticado.';
       return;
     }
 
-    this.isLoadingAssignment =
-      true;
+    this.isLoadingAssignment = true;
 
-    this.assignmentErrorMessage =
-      '';
+    this.assignmentErrorMessage = '';
 
     this.userService
-      .getUserById(
-        authenticatedUser.id,
-      )
+      .getUserById(authenticatedUser.id)
       .pipe(
-        switchMap(
-          (currentUser) => {
-            this.currentUser =
-              currentUser;
+        switchMap((currentUser) => {
+          this.currentUser = currentUser;
 
-            this.resolveInternalObservationsAccess(
-              currentUser,
+          this.resolveInternalObservationsAccess(currentUser);
+
+          if (this.isSuperAdmin() || this.getManagedTeamIds(currentUser).length > 0) {
+            return this.userService.getUsers().pipe(
+              map((users) => ({
+                currentUser,
+                users,
+              })),
             );
+          }
 
-            if (
-              this.isSuperAdmin() ||
-              this.getManagedTeamIds(
-                currentUser,
-              ).length > 0
-            ) {
-              return this
-                .userService
-                .getUsers()
-                .pipe(
-                  map((users) => ({
-                    currentUser,
-                    users,
-                  })),
-                );
-            }
-
-            return of({
-              currentUser,
-              users: [
-                currentUser,
-              ],
-            });
-          },
-        ),
+          return of({
+            currentUser,
+            users: [currentUser],
+          });
+        }),
 
         finalize(() => {
-          this.isLoadingAssignment =
-            false;
+          this.isLoadingAssignment = false;
         }),
       )
       .subscribe({
-        next: ({
-          currentUser,
-          users,
-        }) => {
-          this.assignableUsers =
-            this.resolveAssignableUsers(
-              currentUser,
-              users,
-            );
+        next: ({ currentUser, users }) => {
+          this.assignableUsers = this.resolveAssignableUsers(currentUser, users);
 
-          this.initializeAssignment(
-            currentUser,
-          );
+          this.initializeAssignment(currentUser);
         },
 
         error: () => {
@@ -1109,195 +776,90 @@ export class MeoEnergiasContractCreate
       });
   }
 
-  private resolveAssignableUsers(
-    currentUser: ProfileUser,
-    users: ProfileUser[],
-  ): ProfileUser[] {
-    const activeUsers =
-      users.filter(
-        (user) =>
-          user.active,
-      );
+  private resolveAssignableUsers(currentUser: ProfileUser, users: ProfileUser[]): ProfileUser[] {
+    const activeUsers = users.filter((user) => user.active);
 
     if (this.isSuperAdmin()) {
       return activeUsers;
     }
 
-    const managedTeamIds =
-      this.getManagedTeamIds(
-        currentUser,
-      );
+    const managedTeamIds = this.getManagedTeamIds(currentUser);
 
-    if (
-      !managedTeamIds.length
-    ) {
-      return activeUsers.filter(
-        (user) =>
-          user.id ===
-          currentUser.id,
-      );
+    if (!managedTeamIds.length) {
+      return activeUsers.filter((user) => user.id === currentUser.id);
     }
 
-    const managedTeamIdSet =
-      new Set(
-        managedTeamIds,
-      );
+    const managedTeamIdSet = new Set(managedTeamIds);
 
-    return activeUsers.filter(
-      (user) => {
-        if (
-          user.id ===
-          currentUser.id
-        ) {
-          return true;
-        }
+    return activeUsers.filter((user) => {
+      if (user.id === currentUser.id) {
+        return true;
+      }
 
-        return this
-          .getUserTeamIds(user)
-          .some((teamId) =>
-            managedTeamIdSet
-              .has(teamId),
-          );
-      },
-    );
+      return this.getUserTeamIds(user).some((teamId) => managedTeamIdSet.has(teamId));
+    });
   }
 
-  private getManagedTeamIds(
-    user:
-      ProfileUser | null =
-        this.currentUser,
-  ): string[] {
+  private getManagedTeamIds(user: ProfileUser | null = this.currentUser): string[] {
     if (!user) {
       return [];
     }
 
-    const teams =
-      (
-        user as
-          ProfileUserWithTeamPositions
-      ).teams ?? [];
+    const teams = (user as ProfileUserWithTeamPositions).teams ?? [];
 
     return [
       ...new Set(
         teams
-          .filter((team) =>
-            this.isAssignmentManagerPosition(
-              team.position,
-            ),
-          )
-          .map(
-            (team) =>
-              team.id,
-          )
+          .filter((team) => this.isAssignmentManagerPosition(team.position))
+          .map((team) => team.id)
           .filter(Boolean),
       ),
     ];
   }
 
-  private getUserTeamIds(
-    user: ProfileUser,
-  ): string[] {
-    const typedUser =
-      user as
-        ProfileUserWithTeamPositions;
+  private getUserTeamIds(user: ProfileUser): string[] {
+    const typedUser = user as ProfileUserWithTeamPositions;
 
-    const teamIds =
-      typedUser.teams
-        ?.map(
-          (team) =>
-            team.id,
-        )
-        .filter(Boolean) ??
-      [];
+    const teamIds = typedUser.teams?.map((team) => team.id).filter(Boolean) ?? [];
 
-    const defaultTeamId =
-      typedUser.defaultTeam
-        ?.id;
+    const defaultTeamId = typedUser.defaultTeam?.id;
 
-    return [
-      ...new Set([
-        ...teamIds,
-        ...(defaultTeamId
-          ? [defaultTeamId]
-          : []),
-      ]),
-    ];
+    return [...new Set([...teamIds, ...(defaultTeamId ? [defaultTeamId] : [])])];
   }
 
-  private isAssignmentManagerPosition(
-    position:
-      | string
-      | null
-      | undefined,
-  ): boolean {
-    const normalizedPosition =
-      (position ?? '')
-        .normalize('NFD')
-        .replace(
-          /[\u0300-\u036f]/g,
-          '',
-        )
-        .toLowerCase()
-        .replace(
-          /[^a-z0-9]/g,
-          '',
-        );
+  private isAssignmentManagerPosition(position: string | null | undefined): boolean {
+    const normalizedPosition = (position ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
 
     return (
-      normalizedPosition
-        .includes('admin') ||
-      normalizedPosition
-        .includes('backoffice') ||
-      normalizedPosition
-        .includes(
-          'coordenador',
-        )
+      normalizedPosition.includes('admin') ||
+      normalizedPosition.includes('backoffice') ||
+      normalizedPosition.includes('coordenador')
     );
   }
 
-  private resolveInternalObservationsAccess(
-    user: ProfileUser,
-  ): void {
-    const authorizedTeamIds =
-      this.getRequiredTeamIds();
+  private resolveInternalObservationsAccess(user: ProfileUser): void {
+    const authorizedTeamIds = this.getRequiredTeamIds();
 
     const userTeamIds =
-      (
-        user as
-          ProfileUserWithTeamPositions
-      ).teams
-        ?.map(
-          (team) =>
-            team.id,
-        )
-        .filter(Boolean) ??
-      [];
+      (user as ProfileUserWithTeamPositions).teams?.map((team) => team.id).filter(Boolean) ?? [];
 
-    this.canAccessInternalObservations =
-      userTeamIds.some(
-        (teamId) =>
-          authorizedTeamIds
-            .includes(teamId),
-      );
+    this.canAccessInternalObservations = userTeamIds.some((teamId) =>
+      authorizedTeamIds.includes(teamId),
+    );
 
-    if (
-      !this
-        .canAccessInternalObservations
-    ) {
-      this.contractForm
-        .observacoesInternas =
-        '';
+    if (!this.canAccessInternalObservations) {
+      this.contractForm.observacoesInternas = '';
     }
   }
 
-  private loadAssignedUserTeams(
-    userId: string,
-  ): void {
-    this.isLoadingAssignment =
-      true;
+  private loadAssignedUserTeams(userId: string): void {
+    this.isLoadingAssignment = true;
 
-    this.assignmentErrorMessage =
-      '';
+    this.assignmentErrorMessage = '';
 
     this.availableTeams = [];
     this.selectedTeamIds = [];
@@ -1309,18 +871,12 @@ export class MeoEnergiasContractCreate
       .getUserById(userId)
       .pipe(
         finalize(() => {
-          this.isLoadingAssignment =
-            false;
+          this.isLoadingAssignment = false;
         }),
       )
       .subscribe({
-        next: (
-          selectedUser,
-        ) => {
-          this.initializeAssignment(
-            selectedUser,
-            false,
-          );
+        next: (selectedUser) => {
+          this.initializeAssignment(selectedUser, false);
         },
 
         error: () => {
@@ -1330,50 +886,29 @@ export class MeoEnergiasContractCreate
       });
   }
 
-  private initializeAssignment(
-    user: ProfileUser,
-    updateAssignedUser = true,
-  ): void {
+  private initializeAssignment(user: ProfileUser, updateAssignedUser = true): void {
     if (updateAssignedUser) {
-      this.assignedUserId =
-        user.id;
+      this.assignedUserId = user.id;
     }
 
-    this.availableTeams =
-      this.resolveAssignableTeams(
-        user,
-      );
+    this.availableTeams = this.resolveAssignableTeams(user);
 
-    this.selectedTeamIds =
-      this.resolveInitialTeamIds(
-        user,
-      );
+    this.selectedTeamIds = this.resolveInitialTeamIds(user);
 
-    this.syncRegistrationFields(
-      user,
-    );
+    this.syncRegistrationFields(user);
 
     this.teamToAddId = '';
   }
 
-  private resolveAssignableTeams(
-    user: ProfileUser,
-  ): AssignableContractTeam[] {
-    const rawTeams =
-      (
-        user as
-          ProfileUserWithTeamPositions
-      ).teams ?? [];
+  private resolveAssignableTeams(user: ProfileUser): AssignableContractTeam[] {
+    const rawTeams = (user as ProfileUserWithTeamPositions).teams ?? [];
 
     return rawTeams
       .filter((team) => {
         return (
           Boolean(team?.id) &&
-          Number.isInteger(
-            team.positionIndex,
-          ) &&
-          team.positionIndex >=
-            0 &&
+          Number.isInteger(team.positionIndex) &&
+          team.positionIndex >= 0 &&
           team.active !== false
         );
       })
@@ -1381,58 +916,31 @@ export class MeoEnergiasContractCreate
         id: team.id,
         name: team.name,
 
-        registrationNumber:
-          team.registrationNumber ??
-          null,
+        registrationNumber: team.registrationNumber ?? null,
 
-        positionIndex:
-          team.positionIndex,
+        positionIndex: team.positionIndex,
 
-        position:
-          team.position?.trim() ||
-          `Posição ${team.positionIndex}`,
+        position: team.position?.trim() || `Posição ${team.positionIndex}`,
 
         active: team.active,
       }));
   }
 
-  private resolveInitialTeamIds(
-    user: ProfileUser,
-  ): string[] {
-    const defaultTeamId =
-      (
-        user as
-          ProfileUserWithTeamPositions
-      ).defaultTeam?.id;
+  private resolveInitialTeamIds(user: ProfileUser): string[] {
+    const defaultTeamId = (user as ProfileUserWithTeamPositions).defaultTeam?.id;
 
     const initialTeamId =
-      defaultTeamId &&
-      this.availableTeams.some(
-        (team) =>
-          team.id ===
-          defaultTeamId,
-      )
+      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
         ? defaultTeamId
-        : this.availableTeams[
-            0
-          ]?.id;
+        : this.availableTeams[0]?.id;
 
-    return initialTeamId
-      ? [initialTeamId]
-      : [];
+    return initialTeamId ? [initialTeamId] : [];
   }
 
-  onRegistrationTeamChange(
-    teamId: string,
-  ): void {
-    this.selectedRegistrationTeamId =
-      teamId;
+  onRegistrationTeamChange(teamId: string): void {
+    this.selectedRegistrationTeamId = teamId;
 
-    const team =
-      this.availableTeams.find(
-        (availableTeam) =>
-          availableTeam.id === teamId,
-      );
+    const team = this.availableTeams.find((availableTeam) => availableTeam.id === teamId);
 
     if (!team) {
       this.clearRegistrationFields();
@@ -1440,470 +948,208 @@ export class MeoEnergiasContractCreate
     }
 
     this.contractForm.codigoRegistoCE =
-      team.registrationNumber !== null &&
-      team.registrationNumber !== undefined
+      team.registrationNumber !== null && team.registrationNumber !== undefined
         ? String(team.registrationNumber)
         : '';
 
-    this.contractForm.nomeRegistoCE =
-      team.name?.trim() ?? '';
+    this.contractForm.nomeRegistoCE = team.name?.trim() ?? '';
   }
 
-  private syncRegistrationFields(
-    user: ProfileUser,
-  ): void {
-    const userWithTeams =
-      user as ProfileUserWithTeamPositions;
+  private syncRegistrationFields(user: ProfileUser): void {
+    const userWithTeams = user as ProfileUserWithTeamPositions;
 
-    const defaultTeamId =
-      userWithTeams.defaultTeam?.id;
+    const defaultTeamId = userWithTeams.defaultTeam?.id;
 
     const initialTeamId =
-      defaultTeamId &&
-      this.availableTeams.some(
-        (team) =>
-          team.id === defaultTeamId,
-      )
+      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
         ? defaultTeamId
-        : this.availableTeams[0]?.id ?? '';
+        : (this.availableTeams[0]?.id ?? '');
 
     if (!initialTeamId) {
       this.clearRegistrationFields();
       return;
     }
 
-    this.onRegistrationTeamChange(
-      initialTeamId,
-    );
+    this.onRegistrationTeamChange(initialTeamId);
   }
 
   private clearRegistrationFields(): void {
     this.selectedRegistrationTeamId = '';
 
-    this.contractForm.codigoRegistoCE =
-      '';
+    this.contractForm.codigoRegistoCE = '';
 
-    this.contractForm.nomeRegistoCE =
-      '';
+    this.contractForm.nomeRegistoCE = '';
   }
 
-  private getRequiredTeamIds():
-    string[] {
-    return [
-      environment
-        .EQUIPA_CRM_ID,
-      environment
-        .EQUIPA_DU_ID,
-    ].filter(
-      (
-        teamId,
-      ): teamId is string =>
-        Boolean(teamId),
+  private getRequiredTeamIds(): string[] {
+    return [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+      (teamId): teamId is string => Boolean(teamId),
     );
   }
 
-  private validateSelectedTeams():
-    string | null {
-    const invalidTeamId =
-      this.selectedTeamIds
-        .find((teamId) => {
-          const team =
-            this.availableTeams
-              .find(
-                (
-                  availableTeam,
-                ) =>
-                  availableTeam.id ===
-                  teamId,
-              );
+  private validateSelectedTeams(): string | null {
+    const invalidTeamId = this.selectedTeamIds.find((teamId) => {
+      const team = this.availableTeams.find((availableTeam) => availableTeam.id === teamId);
 
-          return (
-            !team ||
-            !Number.isInteger(
-              team.positionIndex,
-            ) ||
-            team.positionIndex <
-              0
-          );
-        });
+      return !team || !Number.isInteger(team.positionIndex) || team.positionIndex < 0;
+    });
 
     if (invalidTeamId) {
-      return (
-        'Uma das equipas selecionadas não possui uma posição hierárquica válida para o utilizador atribuído.'
-      );
+      return 'Uma das equipas selecionadas não possui uma posição hierárquica válida para o utilizador atribuído.';
     }
 
     return null;
   }
 
-  private resolveContractTeams():
-    MeoEnergiasContractTeamVisibility[] {
-    const userTeams =
-      this.selectedTeamIds
-        .map((teamId) =>
-          this.availableTeams
-            .find(
-              (team) =>
-                team.id ===
-                teamId,
-            ),
-        )
-        .filter(
-          (
-            team,
-          ): team is AssignableContractTeam => {
-            if (!team) {
-              return false;
-            }
+  private resolveContractTeams(): MeoEnergiasContractTeamVisibility[] {
+    const userTeams = this.selectedTeamIds
+      .map((teamId) => this.availableTeams.find((team) => team.id === teamId))
+      .filter((team): team is AssignableContractTeam => {
+        if (!team) {
+          return false;
+        }
 
-            return (
-              Number.isInteger(
-                team.positionIndex,
-              ) &&
-              team.positionIndex >=
-                0
-            );
-          },
-        )
-        .map((team) => ({
-          teamId: team.id,
+        return Number.isInteger(team.positionIndex) && team.positionIndex >= 0;
+      })
+      .map((team) => ({
+        teamId: team.id,
 
-          minimumPositionIndex:
-            team.positionIndex,
-        }));
+        minimumPositionIndex: team.positionIndex,
+      }));
 
-    const existingTeamIds =
-      new Set(
-        userTeams.map(
-          (team) =>
-            team.teamId,
-        ),
-      );
+    const existingTeamIds = new Set(userTeams.map((team) => team.teamId));
 
-    const requiredTeams =
-      this.getRequiredTeamIds()
-        .filter(
-          (teamId) =>
-            !existingTeamIds
-              .has(teamId),
-        )
-        .map((teamId) => ({
-          teamId,
-          minimumPositionIndex: 0,
-        }));
+    const requiredTeams = this.getRequiredTeamIds()
+      .filter((teamId) => !existingTeamIds.has(teamId))
+      .map((teamId) => ({
+        teamId,
+        minimumPositionIndex: 0,
+      }));
 
-    return [
-      ...userTeams,
-      ...requiredTeams,
-    ];
+    return [...userTeams, ...requiredTeams];
   }
 
-  private buildContractPayload():
-    CreateMeoEnergiasContractRequest {
+  private buildContractPayload(): CreateMeoEnergiasContractRequest {
     if (!this.client) {
-      throw new Error(
-        'Cliente não identificado.',
-      );
+      throw new Error('Cliente não identificado.');
     }
 
-    if (
-      !this.contractForm.telefone
-    ) {
-      throw new Error(
-        'Telefone não preenchido.',
-      );
+    if (!this.contractForm.telefone) {
+      throw new Error('Telefone não preenchido.');
     }
 
     const campanha =
-      this
-        .campaignSelectionMode ===
-      'other'
-        ? this.customCampaign
-            .trim()
-        : this.contractForm
-            .campanha;
+      this.campaignSelectionMode === 'other'
+        ? this.customCampaign.trim()
+        : this.contractForm.campanha;
 
-    const estado:
-      MeoEnergiasContractStatus =
-        this.isLightLayout()
-          ? 'Pedido de Chamada'
-          : this.contractForm
-              .estado;
+    const estado: MeoEnergiasContractStatus = this.estadoOptions[0];
 
-    const payload:
-      CreateMeoEnergiasContractRequest =
-        {
-          companyId:
-            MEO_ENERGIAS_COMPANY_ID,
+    const payload: CreateMeoEnergiasContractRequest = {
+      companyId: MEO_ENERGIAS_COMPANY_ID,
 
-          clientId:
-            this.client.id,
+      clientId: this.client.id,
 
-          tipoSegmento:
-            this.contractForm
-              .tipoSegmento,
+      tipoSegmento: this.contractForm.tipoSegmento,
 
-          tipoProduto:
-            this.contractForm
-              .tipoProduto,
+      tipoProduto: this.contractForm.tipoProduto,
 
-          contratacao:
-            this.contractForm
-              .contratacao,
+      contratacao: this.contractForm.contratacao,
 
-          estado,
+      estado,
 
-          nomeClienteEmpresa:
-            this.client.name,
+      nomeClienteEmpresa: this.client.name,
 
-          nif:
-            this.client.nif,
+      nif: this.client.nif,
 
-          telefone:
-            this.contractForm
-              .telefone,
+      telefone: this.contractForm.telefone,
 
-          campanha,
+      campanha,
 
-          userId:
-            this.assignedUserId,
+      userId: this.assignedUserId,
 
-          teams:
-            this.resolveContractTeams(),
+      teams: this.resolveContractTeams(),
 
-          faturaEletronica:
-            this.contractForm
-              .faturaEletronica,
+      faturaEletronica: this.contractForm.faturaEletronica,
 
-          debitoDireto:
-            this.contractForm
-              .debitoDireto,
+      debitoDireto: this.contractForm.debitoDireto,
 
-          tarifaSocial:
-            this.contractForm.tarifaSocial,
-        };
+      tarifaSocial: this.contractForm.tarifaSocial,
+    };
 
+    this.addIfFilled(payload, 'email', this.contractForm.email.trim());
 
-    this.addIfFilled(
-      payload,
-      'email',
-      this.contractForm
-        .email.trim(),
-    );
+    this.addIfFilled(payload, 'cae', this.contractForm.cae.trim());
 
-
-    this.addIfFilled(
-      payload,
-      'cae',
-      this.contractForm
-        .cae.trim(),
-    );
-
-    this.addIfFilled(
-      payload,
-      'crc',
-      this.contractForm
-        .crc.trim(),
-    );
-
+    this.addIfFilled(payload, 'crc', this.contractForm.crc.trim());
 
     if (this.canManageQualityControl()) {
-      this.addIfFilled(
-        payload,
-        'controleQualidade',
-        this.contractForm
-          .controleQualidade.trim(),
-      );
+      this.addIfFilled(payload, 'controleQualidade', this.contractForm.controleQualidade.trim());
     }
 
-    this.addIfFilled(
-      payload,
-      'nomeRegistoCE',
-      this.contractForm
-        .nomeRegistoCE.trim(),
-    );
+    this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE.trim());
 
-    this.addIfFilled(
-      payload,
-      'codigoRegistoCE',
-      this.contractForm
-        .codigoRegistoCE.trim(),
-    );
+    this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE.trim());
 
-    this.addIfFilled(
-      payload,
-      'agendamento',
-      this.contractForm
-        .agendamento,
-    );
+    this.addIfFilled(payload, 'agendamento', this.contractForm.agendamento);
 
-    this.addIfFilled(
-      payload,
-      'dataAssinatura',
-      this.contractForm
-        .dataAssinatura,
-    );
+    this.addIfFilled(payload, 'dataAssinatura', this.contractForm.dataAssinatura);
 
-    this.addIfFilled(
-      payload,
-      'dataContrato',
-      this.contractForm
-        .dataContrato,
-    );
+    this.addIfFilled(payload, 'dataContrato', this.contractForm.dataContrato);
 
-    this.addIfFilled(
-      payload,
-      'dataRegisto',
-      this.contractForm
-        .dataRegisto,
-    );
+    this.addIfFilled(payload, 'dataRegisto', this.contractForm.dataRegisto);
 
-    this.addIfFilled(
-      payload,
-      'moradaInstalacao',
-      this.getMoradaInstalacao(),
-    );
+    this.addIfFilled(payload, 'moradaInstalacao', this.getMoradaInstalacao());
 
-    this.addIfFilled(
-      payload,
-      'moradaFaturacao',
-      this.getMoradaFaturacao(),
-    );
+    this.addIfFilled(payload, 'moradaFaturacao', this.getMoradaFaturacao());
 
-    this.addIfFilled(
-      payload,
-      'iban',
-      this.contractForm
-        .iban.trim(),
-    );
+    this.addIfFilled(payload, 'iban', this.contractForm.iban.trim());
 
     this.addIfFilled(
       payload,
       'antigaComercializadora',
-      this.contractForm
-        .antigaComercializadora
-        .trim(),
+      this.contractForm.antigaComercializadora.trim(),
     );
 
-    if (
-      this.shouldShowLuzFields()
-    ) {
-      this.addIfFilled(
-        payload,
-        'tipoContratacaoLuz',
-        this.contractForm
-          .tipoContratacaoLuz,
-      );
+    if (this.shouldShowLuzFields()) {
+      this.addIfFilled(payload, 'tipoContratacaoLuz', this.contractForm.tipoContratacaoLuz);
 
-      this.addIfFilled(
-        payload,
-        'cpe',
-        this.contractForm
-          .cpe.trim(),
-      );
+      this.addIfFilled(payload, 'cpe', this.contractForm.cpe.trim());
 
-      this.addIfFilled(
-        payload,
-        'potencia',
-        this.contractForm
-          .potencia.trim(),
-      );
+      this.addIfFilled(payload, 'potencia', this.contractForm.potencia.trim());
 
-      this.addIfFilled(
-        payload,
-        'cicloHorario',
-        this.contractForm
-          .cicloHorario,
-      );
+      this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
 
-      this.addIfFilled(
-        payload,
-        'nivelTensao',
-        this.contractForm
-          .nivelTensao,
-      );
+      this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
 
-      this.addIfFilled(
-        payload,
-        'dataAtivacaoCPE',
-        this.contractForm
-          .dataAtivacaoCPE,
-      );
+      this.addIfFilled(payload, 'dataAtivacaoCPE', this.contractForm.dataAtivacaoCPE);
 
-      this.addIfFilled(
-        payload,
-        'dataBaixaCPE',
-        this.contractForm
-          .dataBaixaCPE,
-      );
+      this.addIfFilled(payload, 'dataBaixaCPE', this.contractForm.dataBaixaCPE);
     }
 
-    if (
-      this.shouldShowGasFields()
-    ) {
-      this.addIfFilled(
-        payload,
-        'tipoContratacaoGas',
-        this.contractForm
-          .tipoContratacaoGas,
-      );
+    if (this.shouldShowGasFields()) {
+      this.addIfFilled(payload, 'tipoContratacaoGas', this.contractForm.tipoContratacaoGas);
 
-      this.addIfFilled(
-        payload,
-        'cui',
-        this.contractForm
-          .cui.trim(),
-      );
+      this.addIfFilled(payload, 'cui', this.contractForm.cui.trim());
 
-      this.addIfFilled(
-        payload,
-        'escalao',
-        this.contractForm
-          .escalao.trim(),
-      );
+      this.addIfFilled(payload, 'escalao', this.contractForm.escalao.trim());
 
-      this.addIfFilled(
-        payload,
-        'dataAtivacaoCUI',
-        this.contractForm
-          .dataAtivacaoCUI,
-      );
+      this.addIfFilled(payload, 'dataAtivacaoCUI', this.contractForm.dataAtivacaoCUI);
 
-      this.addIfFilled(
-        payload,
-        'dataBaixaCUI',
-        this.contractForm
-          .dataBaixaCUI,
-      );
+      this.addIfFilled(payload, 'dataBaixaCUI', this.contractForm.dataBaixaCUI);
     }
 
-    this.addIfFilled(
-      payload,
-      'observacoes',
-      this.buildInitialObservation(),
-    );
+    this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 
-    if (
-      this
-        .canAccessInternalObservations
-    ) {
-      this.addIfFilled(
-        payload,
-        'observacoesInternas',
-        this.buildInitialInternalObservation(),
-      );
+    if (this.canAccessInternalObservations) {
+      this.addIfFilled(payload, 'observacoesInternas', this.buildInitialInternalObservation());
     }
 
     return payload;
   }
 
-
   shouldShowBillingAddress(): boolean {
-    return (
-      this.contractForm
-        .moradaFaturacaoSelecao ===
-      'Outra'
-    );
+    return this.contractForm.moradaFaturacaoSelecao === 'Outra';
   }
 
   private buildAddress(
@@ -1913,13 +1159,7 @@ export class MeoEnergiasContractCreate
     codigoPostal: string,
     pais: string,
   ): string {
-    return [
-      rua,
-      cidade,
-      distrito,
-      codigoPostal,
-      pais,
-    ]
+    return [rua, cidade, distrito, codigoPostal, pais]
       .map((value) => value.trim())
       .filter(Boolean)
       .join(', ');
@@ -1927,189 +1167,112 @@ export class MeoEnergiasContractCreate
 
   private getMoradaInstalacao(): string {
     return this.buildAddress(
-      this.contractForm
-        .moradaInstalacaoRua,
-      this.contractForm
-        .moradaInstalacaoCidade,
-      this.contractForm
-        .moradaInstalacaoDistrito,
-      this.contractForm
-        .moradaInstalacaoCodigoPostal,
-      this.contractForm
-        .moradaInstalacaoPais,
+      this.contractForm.moradaInstalacaoRua,
+      this.contractForm.moradaInstalacaoCidade,
+      this.contractForm.moradaInstalacaoDistrito,
+      this.contractForm.moradaInstalacaoCodigoPostal,
+      this.contractForm.moradaInstalacaoPais,
     );
   }
 
   private getMoradaFaturacao(): string {
-    if (
-      this.contractForm
-        .moradaFaturacaoSelecao ===
-      'Igual à de Instalação'
-    ) {
+    if (this.contractForm.moradaFaturacaoSelecao === 'Igual à de Instalação') {
       return this.getMoradaInstalacao();
     }
 
     return this.buildAddress(
-      this.contractForm
-        .moradaFaturacaoRua,
-      this.contractForm
-        .moradaFaturacaoCidade,
-      this.contractForm
-        .moradaFaturacaoDistrito,
-      this.contractForm
-        .moradaFaturacaoCodigoPostal,
-      this.contractForm
-        .moradaFaturacaoPais,
+      this.contractForm.moradaFaturacaoRua,
+      this.contractForm.moradaFaturacaoCidade,
+      this.contractForm.moradaFaturacaoDistrito,
+      this.contractForm.moradaFaturacaoCodigoPostal,
+      this.contractForm.moradaFaturacaoPais,
     );
   }
 
-  private clearElectricityFields():
-    void {
-    this.contractForm
-      .tipoContratacaoLuz = '';
+  private clearElectricityFields(): void {
+    this.contractForm.tipoContratacaoLuz = '';
 
     this.contractForm.cpe = '';
     this.contractForm.potencia = '';
-    this.contractForm
-      .cicloHorario = '';
-    this.contractForm
-      .nivelTensao = '';
+    this.contractForm.cicloHorario = '';
+    this.contractForm.nivelTensao = '';
 
-    this.contractForm
-      .dataAtivacaoCPE = '';
+    this.contractForm.dataAtivacaoCPE = '';
 
-    this.contractForm
-      .dataBaixaCPE = '';
+    this.contractForm.dataBaixaCPE = '';
   }
 
   private clearGasFields(): void {
-    this.contractForm
-      .tipoContratacaoGas = '';
+    this.contractForm.tipoContratacaoGas = '';
 
     this.contractForm.cui = '';
     this.contractForm.escalao = '';
 
-    this.contractForm
-      .dataAtivacaoCUI = '';
+    this.contractForm.dataAtivacaoCUI = '';
 
-    this.contractForm
-      .dataBaixaCUI = '';
+    this.contractForm.dataBaixaCUI = '';
   }
 
-  private buildInitialObservation():
-    string {
-    return this.buildInitialObservationEntry(
-      this.contractForm
-        .observacoes,
-    );
+  private buildInitialObservation(): string {
+    return this.buildInitialObservationEntry(this.contractForm.observacoes);
   }
 
-  private buildInitialInternalObservation():
-    string {
-    return this.buildInitialObservationEntry(
-      this.contractForm
-        .observacoesInternas,
-    );
+  private buildInitialInternalObservation(): string {
+    return this.buildInitialObservationEntry(this.contractForm.observacoesInternas);
   }
 
-  private buildInitialObservationEntry(
-    value: string,
-  ): string {
-    const normalizedValue =
-      value
-        .replace(/\r\n?/g, '\n')
-        .split('\n')
-        .map((line) =>
-          line.trim(),
-        )
-        .filter(Boolean)
-        .join(' ')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
+  private buildInitialObservationEntry(value: string): string {
+    const normalizedValue = value
+      .replace(/\r\n?/g, '\n')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
 
     if (!normalizedValue) {
       return '';
     }
 
-    const userName =
-      this.currentUser?.name ??
-      this.currentUser
-        ?.username ??
-      'Utilizador';
+    const userName = this.currentUser?.name ?? this.currentUser?.username ?? 'Utilizador';
 
-    const timestamp =
-      this.formatObservationTimestamp(
-        new Date(),
-      );
+    const timestamp = this.formatObservationTimestamp(new Date());
 
     return `${userName} - ${timestamp} - ${normalizedValue}`;
   }
 
-  private formatObservationTimestamp(
-    date: Date,
-  ): string {
-    const day =
-      String(
-        date.getDate(),
-      ).padStart(2, '0');
+  private formatObservationTimestamp(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
 
-    const month =
-      String(
-        date.getMonth() + 1,
-      ).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
 
-    const year =
-      date.getFullYear();
+    const year = date.getFullYear();
 
-    const hours =
-      String(
-        date.getHours(),
-      ).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
 
-    const minutes =
-      String(
-        date.getMinutes(),
-      ).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
-  private addIfFilled<
-    Key extends
-      keyof CreateMeoEnergiasContractRequest,
-  >(
-    payload:
-      CreateMeoEnergiasContractRequest,
+  private addIfFilled<Key extends keyof CreateMeoEnergiasContractRequest>(
+    payload: CreateMeoEnergiasContractRequest,
     key: Key,
-    value:
-      CreateMeoEnergiasContractRequest[Key]
-      | ''
-      | null
-      | undefined,
+    value: CreateMeoEnergiasContractRequest[Key] | '' | null | undefined,
   ): void {
-    if (
-      value === null ||
-      value === undefined ||
-      value === ''
-    ) {
+    if (value === null || value === undefined || value === '') {
       return;
     }
 
-    payload[key] =
-      value as
-        CreateMeoEnergiasContractRequest[Key];
+    payload[key] = value as CreateMeoEnergiasContractRequest[Key];
   }
 
-  private getFileKey(
-    file: File,
-  ): string {
+  private getFileKey(file: File): string {
     return `${file.name}-${file.size}-${file.lastModified}`;
   }
 
-  private isValidEmail(
-    value: string,
-  ): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      .test(value.trim());
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   }
 }
