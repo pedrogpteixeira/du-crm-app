@@ -10,9 +10,16 @@ import {
 import {
   BehaviorSubject,
   distinctUntilChanged,
+  forkJoin,
   map,
   Observable,
+  of,
+  shareReplay,
   tap,
+  catchError,
+  finalize,
+  switchMap,
+  throwError,
 } from 'rxjs';
 
 import {
@@ -24,6 +31,12 @@ import { Notification } from '../models/notification.model';
 
 import { Auth } from './auth';
 import { SocketService } from './socket';
+
+export interface MarkNotificationsAsReadResponse {
+  success: boolean;
+  requestedCount: number;
+  modifiedCount: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -40,6 +53,11 @@ export class NotificationService {
 
   private readonly notificationsSubject =
     new BehaviorSubject<Notification[]>([]);
+
+  private readonly pendingReadIds =
+    new Set<string>();
+
+  private flushInFlight$: Observable<MarkNotificationsAsReadResponse | null> | null = null;
 
   readonly notifications$ =
     this.notificationsSubject.asObservable();
@@ -132,41 +150,184 @@ export class NotificationService {
       });
   }
 
-  markAsRead(
-    notificationId: string,
-  ): void {
-    this.http
-      .patch<Notification>(
-        `${this.apiUrl}/api/notifications/${notificationId}/read`,
-        {},
-      )
-      .subscribe({
-        next: () => {
-          const notifications =
-            this.notificationsSubject.value.filter(
-              (notification) =>
-                notification.id !==
-                notificationId,
-            );
+  /**
+   * Marca a notificação como lida apenas no estado local.
+   * O request é adiado até flushPendingReads().
+   */
+  queueAsRead(notificationId: string): void {
+    const currentUser =
+      this.auth.getCurrentUser();
 
-          this.notificationsSubject.next(
-            notifications,
-          );
-        },
-      });
+    if (!currentUser?.id) {
+      return;
+    }
+
+    const notification =
+      this.notificationsSubject.value.find(
+        (item) => item.id === notificationId,
+      );
+
+    if (
+      !notification ||
+      notification.readBy?.includes(currentUser.id)
+    ) {
+      return;
+    }
+
+    this.pendingReadIds.add(notificationId);
+    this.applyOptimisticReadState(
+      new Set([notificationId]),
+      currentUser.id,
+    );
   }
 
-  markAllAsRead(): Observable<void> {
-    return this.http
-      .patch<void>(
-        `${this.apiUrl}/api/notifications/read-all`,
-        {},
+  /**
+   * Coloca todas as notificações atualmente não lidas na fila local.
+   * Não faz qualquer request por si só.
+   */
+  queueAllAsRead(): number {
+    const currentUser =
+      this.auth.getCurrentUser();
+
+    if (!currentUser?.id) {
+      return 0;
+    }
+
+    const ids = this.notificationsSubject.value
+      .filter(
+        (notification) =>
+          !notification.readBy?.includes(
+            currentUser.id,
+          ),
       )
-      .pipe(
-        tap(() => {
-          this.notificationsSubject.next([]);
-        }),
+      .map((notification) => notification.id);
+
+    if (!ids.length) {
+      return 0;
+    }
+
+    ids.forEach((id) =>
+      this.pendingReadIds.add(id),
+    );
+
+    this.applyOptimisticReadState(
+      new Set(ids),
+      currentUser.id,
+    );
+
+    return ids.length;
+  }
+
+  /**
+   * Envia as leituras acumuladas através do endpoint bulk.
+   * Cada request contém no máximo 200 IDs e a fila é drenada até ficar
+   * vazia, incluindo IDs que possam ter sido adicionados durante um flush.
+   */
+  flushPendingReads(): Observable<MarkNotificationsAsReadResponse | null> {
+    if (this.flushInFlight$) {
+      return this.flushInFlight$;
+    }
+
+    if (!this.pendingReadIds.size) {
+      return of(null);
+    }
+
+    const request$ = this.flushPendingReadQueue().pipe(
+      finalize(() => {
+        this.flushInFlight$ = null;
+      }),
+      shareReplay({
+        bufferSize: 1,
+        refCount: false,
+      }),
+    );
+
+    this.flushInFlight$ = request$;
+
+    return request$;
+  }
+
+  private flushPendingReadQueue(): Observable<MarkNotificationsAsReadResponse | null> {
+    const notificationIds =
+      Array.from(this.pendingReadIds);
+
+    if (!notificationIds.length) {
+      return of(null);
+    }
+
+    const batches =
+      this.chunkNotificationIds(
+        notificationIds,
+        200,
       );
+
+    const requests = batches.map((ids) =>
+      this.http.patch<MarkNotificationsAsReadResponse>(
+        `${this.apiUrl}/api/notifications/read`,
+        {
+          notificationIds: ids,
+        },
+      ),
+    );
+
+    const currentFlush$ =
+      requests.length === 1
+        ? requests[0]
+        : forkJoin(requests).pipe(
+            map((responses) =>
+              this.mergeBulkReadResponses(responses),
+            ),
+          );
+
+    return currentFlush$.pipe(
+      tap(() => {
+        this.commitPendingReads(
+          notificationIds,
+        );
+      }),
+      switchMap((response) => {
+        if (!this.pendingReadIds.size) {
+          return of(response);
+        }
+
+        return this.flushPendingReadQueue().pipe(
+          map((nextResponse) =>
+            nextResponse
+              ? this.mergeBulkReadResponses([
+                  response,
+                  nextResponse,
+                ])
+              : response,
+          ),
+        );
+      }),
+      catchError((error) => {
+        this.rollbackPendingReads(
+          notificationIds,
+        );
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  private mergeBulkReadResponses(
+    responses: MarkNotificationsAsReadResponse[],
+  ): MarkNotificationsAsReadResponse {
+    return {
+      success: responses.every(
+        (response) => response.success,
+      ),
+      requestedCount: responses.reduce(
+        (total, response) =>
+          total + response.requestedCount,
+        0,
+      ),
+      modifiedCount: responses.reduce(
+        (total, response) =>
+          total + response.modifiedCount,
+        0,
+      ),
+    };
   }
 
   handleNewNotification(
@@ -213,7 +374,113 @@ export class NotificationService {
   }
 
   clearNotifications(): void {
+    this.pendingReadIds.clear();
     this.notificationsSubject.next([]);
+  }
+
+  private applyOptimisticReadState(
+    notificationIds: Set<string>,
+    currentUserId: string,
+  ): void {
+    const notifications =
+      this.notificationsSubject.value.map(
+        (notification) => {
+          if (
+            !notificationIds.has(notification.id)
+          ) {
+            return notification;
+          }
+
+          return {
+            ...notification,
+            readBy: Array.from(
+              new Set([
+                ...(notification.readBy ?? []),
+                currentUserId,
+              ]),
+            ),
+          };
+        },
+      );
+
+    this.notificationsSubject.next(
+      notifications,
+    );
+  }
+
+  private commitPendingReads(
+    notificationIds: string[],
+  ): void {
+    const committedIds =
+      new Set(notificationIds);
+
+    notificationIds.forEach((id) =>
+      this.pendingReadIds.delete(id),
+    );
+
+    this.notificationsSubject.next(
+      this.notificationsSubject.value.filter(
+        (notification) =>
+          !committedIds.has(notification.id),
+      ),
+    );
+  }
+
+  private rollbackPendingReads(
+    notificationIds: string[],
+  ): void {
+    const currentUser =
+      this.auth.getCurrentUser();
+
+    const rolledBackIds =
+      new Set(notificationIds);
+
+    notificationIds.forEach((id) =>
+      this.pendingReadIds.delete(id),
+    );
+
+    if (!currentUser?.id) {
+      return;
+    }
+
+    this.notificationsSubject.next(
+      this.notificationsSubject.value.map(
+        (notification) => {
+          if (!rolledBackIds.has(notification.id)) {
+            return notification;
+          }
+
+          return {
+            ...notification,
+            readBy: (notification.readBy ?? []).filter(
+              (userId) => userId !== currentUser.id,
+            ),
+          };
+        },
+      ),
+    );
+  }
+
+  private chunkNotificationIds(
+    notificationIds: string[],
+    chunkSize: number,
+  ): string[][] {
+    const chunks: string[][] = [];
+
+    for (
+      let index = 0;
+      index < notificationIds.length;
+      index += chunkSize
+    ) {
+      chunks.push(
+        notificationIds.slice(
+          index,
+          index + chunkSize,
+        ),
+      );
+    }
+
+    return chunks;
   }
 
   private observeAuthentication(): void {

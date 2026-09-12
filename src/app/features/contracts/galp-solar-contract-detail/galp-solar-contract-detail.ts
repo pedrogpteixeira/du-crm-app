@@ -14,6 +14,7 @@ import {
   mergeContractActivitySocketPayload,
   mergeContractStateSocketPayload,
   preserveContractActivity,
+  preserveContractAssignmentContext,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
@@ -491,7 +492,10 @@ export class GalpSolarContractDetail implements OnInit {
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
-                contract: contractWithFiles,
+                contract: preserveContractAssignmentContext(
+                  contractWithFiles,
+                  updatedContract,
+                ),
                 uploadFailed: false,
                 uploadError: null as unknown,
               })),
@@ -618,7 +622,12 @@ export class GalpSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = preserveContractActivity(updatedContract, this.contract);
+          const contractWithAssignment = preserveContractAssignmentContext(
+            updatedContract,
+            previousContract,
+          );
+
+          this.contract = preserveContractActivity(contractWithAssignment, this.contract);
           this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {

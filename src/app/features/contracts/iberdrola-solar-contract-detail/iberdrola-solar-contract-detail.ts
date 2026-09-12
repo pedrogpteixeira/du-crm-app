@@ -14,6 +14,7 @@ import {
   mergeContractActivitySocketPayload,
   mergeContractStateSocketPayload,
   preserveContractActivity,
+  preserveContractAssignmentContext,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
@@ -511,7 +512,10 @@ export class IberdrolaSolarContractDetail implements OnInit {
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
-                contract: contractWithFiles,
+                contract: preserveContractAssignmentContext(
+                  contractWithFiles,
+                  updatedContract,
+                ),
                 uploadFailed: false,
                 uploadError: null as unknown,
               })),
@@ -530,8 +534,15 @@ export class IberdrolaSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: ({ contract: updatedContract, uploadFailed, uploadError }) => {
-          this.contract = updatedContract;
-          this.initializeEditForm(updatedContract);
+          const contractWithAssignment = preserveContractAssignmentContext(
+            updatedContract,
+            this.contract,
+          );
+
+          const normalizedContract = this.normalizeContractResponse(contractWithAssignment);
+
+          this.contract = normalizedContract;
+          this.initializeEditForm(normalizedContract);
           this.observationDraft = '';
           this.internalObservationDraft = '';
 
@@ -636,7 +647,12 @@ export class IberdrolaSolarContractDetail implements OnInit {
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = updatedContract;
+          const contractWithAssignment = preserveContractAssignmentContext(
+            updatedContract,
+            previousContract,
+          );
+
+          this.contract = this.normalizeContractResponse(contractWithAssignment);
           this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {

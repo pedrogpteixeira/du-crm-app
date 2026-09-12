@@ -27,6 +27,7 @@ import { SocketService } from './core/services/socket';
 import { authInterceptor } from './core/interceptors/auth-interceptor';
 
 import { NotificationService } from './core/services/notification';
+import { UserService } from './core/services/user';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -53,6 +54,7 @@ export const appConfig: ApplicationConfig = {
       
       inject(SocketService);
       inject(NotificationService);
+      inject(UserService);
 
       return firstValueFrom(
         auth.initializeAuthentication(),

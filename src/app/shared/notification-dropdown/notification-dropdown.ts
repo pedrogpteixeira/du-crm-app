@@ -5,10 +5,12 @@ import {
   HostListener,
   inject,
 } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { finalize } from 'rxjs';
 
 import { Notification } from '../../core/models/notification.model';
+import { getNotificationRoute } from '../../core/utils/notification-route';
 import { Auth } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notification';
 
@@ -28,6 +30,9 @@ export class NotificationDropdown {
   private readonly auth =
     inject(Auth);
 
+  private readonly router =
+    inject(Router);
+
   readonly notifications$ =
     this.notificationService.notifications$;
 
@@ -41,12 +46,55 @@ export class NotificationDropdown {
   toggleDropdown(event: MouseEvent): void {
     event.stopPropagation();
 
-    this.isOpen = !this.isOpen;
+    if (this.isOpen) {
+      this.closeDropdown();
+      return;
+    }
+
+    this.isOpen = true;
     this.markAllErrorMessage = '';
   }
 
   closeDropdown(): void {
+    if (!this.isOpen) {
+      return;
+    }
+
     this.isOpen = false;
+    this.flushPendingReads();
+  }
+
+  hasNotificationRoute(notification: Notification): boolean {
+    return getNotificationRoute(notification) !== null;
+  }
+
+  openNotification(notification: Notification): void {
+    this.markAsRead(notification);
+
+    const route = getNotificationRoute(notification);
+
+    if (!route) {
+      return;
+    }
+
+    this.closeDropdown();
+    void this.router.navigate([...route]);
+  }
+
+  onNotificationKeydown(
+    event: KeyboardEvent,
+    notification: Notification,
+  ): void {
+    if (!this.hasNotificationRoute(notification)) {
+      return;
+    }
+
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    this.openNotification(notification);
   }
 
   markAsRead(notification: Notification): void {
@@ -54,9 +102,19 @@ export class NotificationDropdown {
       return;
     }
 
-    this.notificationService.markAsRead(
+    this.notificationService.queueAsRead(
       notification.id,
     );
+  }
+
+  markNotificationAsRead(
+    event: MouseEvent,
+    notification: Notification,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.markAsRead(notification);
   }
 
   markAllAsRead(event: MouseEvent): void {
@@ -66,11 +124,13 @@ export class NotificationDropdown {
       return;
     }
 
+    this.notificationService.queueAllAsRead();
+
     this.isMarkingAllAsRead = true;
     this.markAllErrorMessage = '';
 
     this.notificationService
-      .markAllAsRead()
+      .flushPendingReads()
       .pipe(
         finalize(() => {
           this.isMarkingAllAsRead = false;
@@ -133,7 +193,20 @@ export class NotificationDropdown {
       );
 
     if (!clickedInside) {
-      this.isOpen = false;
+      this.closeDropdown();
     }
+  }
+
+  private flushPendingReads(): void {
+    this.notificationService
+      .flushPendingReads()
+      .subscribe({
+        error: () => {
+          /*
+           * O service faz rollback do estado otimista.
+           * A notificação voltará a aparecer como não lida.
+           */
+        },
+      });
   }
 }

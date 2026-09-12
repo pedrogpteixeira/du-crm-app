@@ -78,7 +78,11 @@
         [class.success]="notification.type === 'success'"
         [class.warning]="notification.type === 'warning'"
         [class.error]="notification.type === 'error'"
-        (click)="markAsRead(notification)"
+        [class.clickable]="hasNotificationRoute(notification)"
+        [attr.tabindex]="hasNotificationRoute(notification) ? 0 : null"
+        [attr.role]="hasNotificationRoute(notification) ? 'link' : null"
+        (click)="openNotification(notification)"
+        (keydown)="onNotificationKeydown($event, notification)"
       >
         <div class="notification-icon">
           <span class="material-symbols-rounded">
@@ -95,6 +99,7 @@
             <span
               class="unread-dot"
               *ngIf="!isRead(notification)"
+              aria-label="Não lida"
             ></span>
           </div>
 
@@ -102,9 +107,37 @@
             {{ notification.message }}
           </p>
 
-          <small>
-            {{ formatDate(notification.createdAt) }}
-          </small>
+          <div class="notification-footer">
+            <small>
+              {{ formatDate(notification.createdAt) }}
+            </small>
+
+            <div class="notification-actions">
+              <button
+                *ngIf="!isRead(notification)"
+                type="button"
+                class="mark-read-button"
+                aria-label="Marcar notificação como lida"
+                title="Marcar como lida"
+                (click)="markNotificationAsRead($event, notification)"
+              >
+                <span
+                  class="material-symbols-rounded"
+                  aria-hidden="true"
+                >
+                  done
+                </span>
+              </button>
+
+              <span
+                class="notification-link-icon material-symbols-rounded"
+                *ngIf="hasNotificationRoute(notification)"
+                aria-hidden="true"
+              >
+                arrow_forward
+              </span>
+            </div>
+          </div>
         </div>
       </article>
 

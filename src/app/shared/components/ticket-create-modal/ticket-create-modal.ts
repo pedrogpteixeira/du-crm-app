@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   EventEmitter,
   HostListener,
   Input,
@@ -10,14 +11,9 @@ import {
   Output,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  catchError,
-  finalize,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
@@ -78,6 +74,7 @@ export class TicketCreateModal implements OnInit {
   private readonly auth = inject(Auth);
   private readonly fb = inject(FormBuilder);
   private readonly userService = inject(UserService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly ticketService = inject(TicketService);
 
   @Input({ required: true }) contractId = '';
@@ -112,7 +109,10 @@ export class TicketCreateModal implements OnInit {
       Validators.required,
     ),
     prioridade: this.fb.nonNullable.control<TicketPrioridade>('Normal'),
-    assignedUserId: this.fb.nonNullable.control('', Validators.required),
+    assignedUserId: this.fb.nonNullable.control(
+      { value: '', disabled: true },
+      Validators.required,
+    ),
     agendamento: this.fb.nonNullable.control(''),
     descricao: this.fb.nonNullable.control(''),
     observacoes: this.fb.nonNullable.control(''),
@@ -185,14 +185,10 @@ export class TicketCreateModal implements OnInit {
       (team) => !this.selectedTeamIds.includes(team.id),
     );
   }
-
   canAssignOtherUsers(): boolean {
-    if (this.isSuperAdmin()) {
-      return true;
-    }
-
-    return this.getManagedTeamIds().length > 0;
+    return this.assignableUsers.length > 1;
   }
+
 
   onAssignedUserChange(): void {
     if (!this.assignedUserId) {
@@ -385,6 +381,7 @@ export class TicketCreateModal implements OnInit {
       .subscribe({
         next: () => {
           this.createdTicketPendingAttachments = null;
+          this.syncReactiveFormDisabledState();
           this.finishCreation({
             ticket,
             attachmentsUploaded: true,
@@ -433,6 +430,7 @@ export class TicketCreateModal implements OnInit {
     this.errorMessage = '';
     this.cancellationErrorMessage = '';
     this.isCreatingTicket = true;
+    this.syncReactiveFormDisabledState();
 
     this.ticketService
       .createTicket(payload)
@@ -476,12 +474,14 @@ export class TicketCreateModal implements OnInit {
         }),
         finalize(() => {
           this.isCreatingTicket = false;
+          this.syncReactiveFormDisabledState();
         }),
       )
       .subscribe({
         next: (result) => {
           if (result.attachmentUploadFailed) {
             this.createdTicketPendingAttachments = result.ticket;
+            this.syncReactiveFormDisabledState();
 
             if (result.ticket.tipo === CANCELLATION_TICKET_TYPE) {
               this.isCancellationModalOpen = false;
@@ -517,6 +517,23 @@ export class TicketCreateModal implements OnInit {
 
     this.created.emit(result);
   }
+  private syncReactiveFormDisabledState(): void {
+    if (this.isFormLocked) {
+      this.ticketForm.disable({ emitEvent: false });
+    } else {
+      this.ticketForm.enable({ emitEvent: false });
+
+      if (!this.canAssignOtherUsers()) {
+        this.ticketForm.controls.assignedUserId.disable({ emitEvent: false });
+      }
+    }
+
+    if (this.isCreatingTicket) {
+      this.cancellationForm.disable({ emitEvent: false });
+    } else {
+      this.cancellationForm.enable({ emitEvent: false });
+    }
+  }
 
   private loadAssignmentData(): void {
     const authenticatedUser = this.auth.getCurrentUser();
@@ -527,75 +544,95 @@ export class TicketCreateModal implements OnInit {
       return;
     }
 
-    this.isLoadingAssignment = true;
-    this.errorMessage = '';
+    this.userService.assignableUsersState$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state) => {
+        this.isLoadingAssignment = state.loading && !state.loaded;
 
-    this.userService
-      .getUserById(authenticatedUser.id)
-      .pipe(
-        switchMap((currentUser) => {
-          this.currentUser = currentUser;
+        if (state.loading) {
+          return;
+        }
 
-          if (
-            this.isSuperAdmin() ||
-            this.getManagedTeamIds(currentUser).length > 0
-          ) {
-            return this.userService.getUsers().pipe(
-              map((users) => ({
-                currentUser,
-                users,
-              })),
-            );
+        if (!state.loaded) {
+          if (state.error) {
+            this.errorMessage =
+              'Não foi possível carregar os utilizadores e equipas disponíveis.';
           }
+          return;
+        }
 
-          return of({
-            currentUser,
-            users: [currentUser],
-          });
-        }),
-        finalize(() => {
-          this.isLoadingAssignment = false;
-        }),
-      )
-      .subscribe({
-        next: ({ currentUser, users }) => {
-          this.assignableUsers = this.resolveAssignableUsers(
-            currentUser,
-            users,
-          );
-          this.initializeAssignment(currentUser);
-        },
-        error: () => {
+        this.assignableUsers = state.users;
+
+        const currentUser =
+          state.users.find((user) => user.id === authenticatedUser.id) ?? null;
+
+        if (!currentUser) {
+          this.currentUser = null;
           this.errorMessage =
-            'Não foi possível carregar os utilizadores e equipas disponíveis.';
-        },
+            'Não foi possível localizar o utilizador autenticado entre os utilizadores atribuíveis.';
+          this.syncReactiveFormDisabledState();
+          return;
+        }
+
+        this.currentUser = currentUser;
+
+        if (!this.assignedUserId) {
+          this.initializeAssignment(currentUser);
+        } else {
+          const selectedUser =
+            state.users.find((user) => user.id === this.assignedUserId) ?? null;
+
+          if (!selectedUser) {
+            this.errorMessage =
+              'O responsável selecionado deixou de estar disponível. Foi reposto o utilizador atual.';
+            this.initializeAssignment(currentUser);
+          } else {
+            this.refreshAssignmentFromCache(selectedUser);
+          }
+        }
+
+        this.syncReactiveFormDisabledState();
       });
   }
 
+  private refreshAssignmentFromCache(user: ProfileUser): void {
+    const previousSelectedTeamIds = [...this.selectedTeamIds];
+
+    this.availableTeams = this.resolveAssignableTeams(user);
+
+    const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
+    this.selectedTeamIds = previousSelectedTeamIds.filter((teamId) =>
+      availableTeamIds.has(teamId),
+    );
+
+    if (!this.selectedTeamIds.length) {
+      this.selectedTeamIds = this.resolveInitialTeamIds(user);
+    }
+
+    if (this.teamToAddId && !availableTeamIds.has(this.teamToAddId)) {
+      this.teamToAddId = '';
+    }
+  }
+
   private loadAssignedUserTeams(userId: string): void {
-    this.isLoadingAssignment = true;
     this.errorMessage = '';
     this.availableTeams = [];
     this.selectedTeamIds = [];
     this.teamToAddId = '';
 
-    this.userService
-      .getUserById(userId)
-      .pipe(
-        finalize(() => {
-          this.isLoadingAssignment = false;
-        }),
-      )
-      .subscribe({
-        next: (selectedUser) => {
-          this.initializeAssignment(selectedUser, false);
-        },
-        error: () => {
-          this.errorMessage =
-            'Não foi possível carregar as equipas e posições do responsável selecionado.';
-        },
-      });
+    const selectedUser = this.assignableUsers.find(
+      (user) => user.id === userId,
+    ) ?? null;
+
+    if (!selectedUser) {
+      this.errorMessage =
+        'O responsável selecionado já não está disponível para atribuição.';
+      return;
+    }
+
+    this.initializeAssignment(selectedUser, false);
   }
+
 
   private initializeAssignment(
     user: ProfileUser,
@@ -608,37 +645,6 @@ export class TicketCreateModal implements OnInit {
     this.availableTeams = this.resolveAssignableTeams(user);
     this.selectedTeamIds = this.resolveInitialTeamIds(user);
     this.teamToAddId = '';
-  }
-
-  private resolveAssignableUsers(
-    currentUser: ProfileUser,
-    users: ProfileUser[],
-  ): ProfileUser[] {
-    const activeUsers = users.filter((user) => user.active);
-
-    if (this.isSuperAdmin()) {
-      return activeUsers;
-    }
-
-    const managedTeamIds = this.getManagedTeamIds(currentUser);
-
-    if (!managedTeamIds.length) {
-      return activeUsers.filter(
-        (user) => user.id === currentUser.id,
-      );
-    }
-
-    const managedTeamIdSet = new Set(managedTeamIds);
-
-    return activeUsers.filter((user) => {
-      if (user.id === currentUser.id) {
-        return true;
-      }
-
-      return this.getUserTeamIds(user).some((teamId) =>
-        managedTeamIdSet.has(teamId),
-      );
-    });
   }
 
   private resolveAssignableTeams(
@@ -677,66 +683,6 @@ export class TicketCreateModal implements OnInit {
         : this.availableTeams[0]?.id;
 
     return initialTeamId ? [initialTeamId] : [];
-  }
-
-  private getManagedTeamIds(
-    user: ProfileUser | null = this.currentUser,
-  ): string[] {
-    if (!user) {
-      return [];
-    }
-
-    const teams =
-      (user as ProfileUserWithTeamPositions).teams ?? [];
-
-    return [
-      ...new Set(
-        teams
-          .filter((team) =>
-            this.isAssignmentManagerPosition(team.position),
-          )
-          .map((team) => team.id)
-          .filter(Boolean),
-      ),
-    ];
-  }
-
-  private getUserTeamIds(user: ProfileUser): string[] {
-    const typedUser = user as ProfileUserWithTeamPositions;
-    const teamIds =
-      typedUser.teams?.map((team) => team.id).filter(Boolean) ?? [];
-    const defaultTeamId = typedUser.defaultTeam?.id;
-
-    return [
-      ...new Set([
-        ...teamIds,
-        ...(defaultTeamId ? [defaultTeamId] : []),
-      ]),
-    ];
-  }
-
-  private isAssignmentManagerPosition(
-    position: string | null | undefined,
-  ): boolean {
-    const normalizedPosition = (position ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-
-    return (
-      normalizedPosition.includes('admin') ||
-      normalizedPosition.includes('backoffice') ||
-      normalizedPosition.includes('coordenador')
-    );
-  }
-
-  private isSuperAdmin(): boolean {
-    return Boolean(
-      this.currentUser?.role
-        ?.toLowerCase()
-        .includes('super admin'),
-    );
   }
 
   private getRequiredTeamIds(): string[] {

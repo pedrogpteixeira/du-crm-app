@@ -38,6 +38,38 @@ export interface ContractActivitySocketPayload {
   ticketEvent?: ContractTicketSocketEventType;
 }
 
+
+export interface ContractAssignmentCarrier {
+  id?: string;
+  teams?: unknown[];
+  followers?: unknown[];
+}
+
+export function preserveContractAssignmentContext<
+  T extends ContractAssignmentCarrier,
+>(
+  incoming: T,
+  current: ContractAssignmentCarrier | null | undefined,
+): T {
+  if (
+    incoming.id &&
+    current?.id &&
+    incoming.id !== current.id
+  ) {
+    return incoming;
+  }
+
+  return {
+    ...incoming,
+    ...(Array.isArray(current?.teams)
+      ? { teams: current.teams }
+      : {}),
+    ...(Array.isArray(current?.followers)
+      ? { followers: current.followers }
+      : {}),
+  } as T;
+}
+
 export function preserveContractActivity<
   T extends ContractActivityCarrier,
 >(

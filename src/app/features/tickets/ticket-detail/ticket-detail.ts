@@ -4,7 +4,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, finalize, forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
@@ -588,14 +588,10 @@ export class TicketDetail implements OnInit {
   isRequiredTeam(teamId: string): boolean {
     return this.getRequiredTeamIds().includes(teamId);
   }
-
   canAssignOtherUsers(): boolean {
-    if (this.isSuperAdmin) {
-      return true;
-    }
-
-    return this.getManagedTeamIds().length > 0;
+    return this.assignableUsers.length > 1;
   }
+
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -833,29 +829,64 @@ export class TicketDetail implements OnInit {
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.isSuperAdmin = role.includes('super admin');
   }
-
   private loadSupportingData(): void {
-    const currentUserRequest = this.currentUserId
-      ? this.userService
-          .getUserById(this.currentUserId)
-          .pipe(catchError(() => of<ProfileUser | null>(null)))
-      : of<ProfileUser | null>(null);
+    this.supportingDataLoaded = true;
 
-    forkJoin({
-      currentUser: currentUserRequest,
-      users: this.userService.getUsers().pipe(catchError(() => of<ProfileUser[]>([]))),
-      teams: this.teamService.getTeams().pipe(catchError(() => of<Team[]>([]))),
-    })
+    this.userService.assignableUsersState$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ currentUser, users, teams }) => {
-        this.currentUserProfile = currentUser;
-        this.allUsers = users;
+      .subscribe((state) => {
+        this.isLoadingAssignment = state.loading && !state.loaded;
+
+        if (state.loading || !state.loaded) {
+          return;
+        }
+
+        this.currentUserProfile =
+          state.users.find((user) => user.id === this.currentUserId) ?? null;
+        this.allUsers = state.users;
+        this.assignableUsers = state.users;
+
+        if (this.isEditing) {
+          const selectedUserId = this.ticketForm.controls.userId.value;
+          const selectedTeamIds = this.ticketForm.controls.teams.value;
+
+          if (
+            selectedUserId &&
+            state.users.some((user) => user.id === selectedUserId)
+          ) {
+            this.prepareAssignmentForUser(
+              selectedUserId,
+              selectedTeamIds,
+              false,
+            );
+          }
+        }
+
+        this.updateCanEditTicket();
+      });
+
+    this.teamService
+      .getTeams()
+      .pipe(
+        catchError(() => of<Team[]>([])),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((teams) => {
         this.teamCatalog = teams;
-        this.supportingDataLoaded = true;
-        this.assignableUsers = currentUser
-          ? this.resolveAssignableUsers(currentUser, users)
-          : users.filter((user) => user.active);
-        this.ensureCurrentResponsibleIsAssignable();
+
+        if (this.isEditing) {
+          const selectedUserId = this.ticketForm.controls.userId.value;
+          const selectedTeamIds = this.ticketForm.controls.teams.value;
+
+          if (selectedUserId) {
+            this.prepareAssignmentForUser(
+              selectedUserId,
+              selectedTeamIds,
+              false,
+            );
+          }
+        }
+
         this.updateCanEditTicket();
       });
   }
@@ -971,7 +1002,6 @@ export class TicketDetail implements OnInit {
 
     return payload;
   }
-
   private prepareAssignmentForUser(
     userId: string,
     preferredTeamIds: string[],
@@ -982,82 +1012,42 @@ export class TicketDetail implements OnInit {
       return;
     }
 
-    this.isLoadingAssignment = true;
     this.teamToAddId = '';
 
-    this.userService
-      .getUserById(userId)
-      .pipe(
-        finalize(() => {
-          this.isLoadingAssignment = false;
-        }),
-      )
-      .subscribe({
-        next: (user) => {
-          this.availableTeams = this.mergeTicketTeamsIntoAssignableTeams(
-            this.resolveAssignableTeams(user),
-          );
+    const user = this.assignableUsers.find((entry) => entry.id === userId) ?? null;
 
-          const preferred = preferredTeamIds.filter((teamId) =>
+    if (!user) {
+      this.showError(
+        'O responsável selecionado já não está disponível para atribuição.',
+      );
+      return;
+    }
+
+    this.availableTeams = this.mergeTicketTeamsIntoAssignableTeams(
+      this.resolveAssignableTeams(user),
+    );
+
+    const preferred = preferredTeamIds.filter((teamId) =>
+      this.availableTeams.some((team) => team.id === teamId),
+    );
+
+    if (!resetToDefault && preferred.length) {
+      const preferredWithRequired = [
+        ...new Set([
+          ...preferred,
+          ...this.getRequiredTeamIds().filter((teamId) =>
             this.availableTeams.some((team) => team.id === teamId),
-          );
+          ),
+        ]),
+      ];
 
-          if (!resetToDefault && preferred.length) {
-            const preferredWithRequired = [
-              ...new Set([
-                ...preferred,
-                ...this.getRequiredTeamIds().filter((teamId) =>
-                  this.availableTeams.some((team) => team.id === teamId),
-                ),
-              ]),
-            ];
-
-            this.ticketForm.controls.teams.setValue(preferredWithRequired);
-            return;
-          }
-
-          const initialIds = this.resolveInitialTeamIds(user);
-          this.ticketForm.controls.teams.setValue(initialIds);
-          this.ticketForm.controls.teams.markAsDirty();
-        },
-        error: () => {
-          this.showError(
-            'Não foi possível carregar as equipas e posições do responsável selecionado.',
-          );
-        },
-      });
-  }
-
-  private resolveAssignableUsers(currentUser: ProfileUser, users: ProfileUser[]): ProfileUser[] {
-    const activeUsers = users.filter((user) => user.active);
-
-    if (this.isSuperAdmin) {
-      return activeUsers;
+      this.ticketForm.controls.teams.setValue(preferredWithRequired);
+      return;
     }
 
-    const managedTeamIds = this.getManagedTeamIds(currentUser);
-
-    if (!managedTeamIds.length) {
-      return activeUsers.filter((user) => user.id === currentUser.id);
-    }
-
-    const managedTeamSet = new Set(managedTeamIds);
-
-    return activeUsers.filter((user) => {
-      if (user.id === currentUser.id) {
-        return true;
-      }
-
-      return this.getUserTeamIds(user).some((teamId) => managedTeamSet.has(teamId));
-    });
-  }
-
-  private ensureCurrentResponsibleIsAssignable(): void {
-    const responsible = this.ticket ? this.findUserById(this.ticket.userId) : null;
-
-    if (responsible && !this.assignableUsers.some((user) => user.id === responsible.id)) {
-      this.assignableUsers = [responsible, ...this.assignableUsers];
-    }
+    const initialIds = this.resolveInitialTeamIds(user);
+    this.ticketForm.controls.teams.setValue(initialIds);
+    this.ticketForm.controls.teams.markAsDirty();
   }
 
   private resolveAssignableTeams(user: ProfileUser | null): AssignableTicketTeam[] {
@@ -1189,45 +1179,6 @@ export class TicketDetail implements OnInit {
       }));
 
     return this.normalizeTicketTeams([...selected, ...required]);
-  }
-
-  private getManagedTeamIds(user: ProfileUser | null = this.currentUserProfile): string[] {
-    if (!user) {
-      return [];
-    }
-
-    const teams = (user as ProfileUserWithTeamPositions).teams ?? [];
-
-    return [
-      ...new Set(
-        teams
-          .filter((team) => this.isAssignmentManagerPosition(team.position))
-          .map((team) => team.id)
-          .filter(Boolean),
-      ),
-    ];
-  }
-
-  private getUserTeamIds(user: ProfileUser): string[] {
-    const typedUser = user as ProfileUserWithTeamPositions;
-    const teamIds = typedUser.teams?.map((team) => team.id).filter(Boolean) ?? [];
-    const defaultTeamId = typedUser.defaultTeam?.id;
-
-    return [...new Set([...teamIds, ...(defaultTeamId ? [defaultTeamId] : [])])];
-  }
-
-  private isAssignmentManagerPosition(position: string | null | undefined): boolean {
-    const normalized = (position ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-
-    return (
-      normalized.includes('admin') ||
-      normalized.includes('backoffice') ||
-      normalized.includes('coordenador')
-    );
   }
 
   private getRequiredTeamIds(): string[] {

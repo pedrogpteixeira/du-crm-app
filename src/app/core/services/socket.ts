@@ -41,6 +41,12 @@ interface ContractSocketBaseEvent extends ContractActivitySocketPayload {
 }
 
 
+
+export interface AssignableUsersInvalidationEvent {
+  reason?: string;
+  timestamp?: string;
+}
+
 export interface TicketSocketEvent extends TicketApiModel {
   ticketId?: string;
   id?: string;
@@ -327,6 +333,12 @@ export class SocketService {
     );
   }
 
+
+  listenAssignableUsersInvalidated(): Observable<AssignableUsersInvalidationEvent> {
+    return this.createEventObservable<AssignableUsersInvalidationEvent>(
+      'users:assignable:invalidated',
+    );
+  }
 
   listenTicketCreated(): Observable<TicketSocketEvent> {
     return this.createEventObservable<TicketSocketEvent>(

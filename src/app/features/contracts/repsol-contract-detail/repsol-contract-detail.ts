@@ -19,6 +19,7 @@ import {
   mergeContractActivitySocketPayload,
   mergeContractStateSocketPayload,
   preserveContractActivity,
+  preserveContractAssignmentContext,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
@@ -548,7 +549,10 @@ export class RepsolContractDetail implements OnInit {
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
-                contract: contractWithFiles,
+                contract: preserveContractAssignmentContext(
+                  contractWithFiles,
+                  updatedContract,
+                ),
                 uploadFailed: false,
                 uploadError: null as unknown,
               })),
@@ -685,7 +689,12 @@ export class RepsolContractDetail implements OnInit {
       )
       .subscribe({
         next: (updatedContract) => {
-          this.contract = this.normalizeContractResponse(updatedContract);
+          const contractWithAssignment = preserveContractAssignmentContext(
+            updatedContract,
+            previousContract,
+          );
+
+          this.contract = this.normalizeContractResponse(contractWithAssignment);
           this.showSuccess(`O ficheiro "${document.originalName}" foi removido com sucesso.`);
         },
         error: (error) => {

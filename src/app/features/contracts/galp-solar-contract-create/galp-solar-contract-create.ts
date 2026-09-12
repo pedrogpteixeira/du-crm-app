@@ -3,7 +3,8 @@ import {
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
@@ -67,6 +68,8 @@ export class GalpSolarContractCreate implements OnInit {
   private readonly galpSolarContractService = inject(GalpSolarContractService);
 
   private readonly userService = inject(UserService);
+
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly auth = inject(Auth);
 
@@ -225,18 +228,10 @@ export class GalpSolarContractCreate implements OnInit {
   canManageQualityControl(): boolean {
     return canManageQualityControlRole(this.currentUser?.role);
   }
-
-  isSuperAdmin(): boolean {
-    return Boolean(this.currentUser?.role.includes('Super Admin'));
-  }
-
   canAssignOtherUsers(): boolean {
-    if (this.isSuperAdmin()) {
-      return true;
-    }
-
-    return this.getManagedTeamIds().length > 0;
+    return this.assignableUsers.length > 1;
   }
+
 
   get selectedTeams(): AssignableContractTeam[] {
     return this.selectedTeamIds
@@ -553,124 +548,93 @@ export class GalpSolarContractCreate implements OnInit {
         },
       });
   }
-
   private loadAssignmentData(): void {
     const authenticatedUser = this.auth.getCurrentUser() as Partial<ProfileUser> | null;
 
     if (!authenticatedUser?.id) {
       this.assignmentErrorMessage = 'Não foi possível identificar o utilizador autenticado.';
-
       return;
     }
 
-    this.isLoadingAssignment = true;
+    this.userService.assignableUsersState$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state) => {
+        this.isLoadingAssignment = state.loading && !state.loaded;
 
-    this.assignmentErrorMessage = '';
+        if (state.loading) {
+          return;
+        }
 
-    this.userService
-      .getUserById(authenticatedUser.id)
-      .pipe(
-        switchMap((currentUser) => {
-          this.currentUser = currentUser;
-
-          this.resolveInternalObservationsAccess(currentUser);
-
-          if (this.isSuperAdmin() || this.getManagedTeamIds(currentUser).length > 0) {
-            return this.userService.getUsers().pipe(
-              map((users) => ({
-                currentUser,
-                users,
-              })),
-            );
+        if (!state.loaded) {
+          if (state.error) {
+            this.assignmentErrorMessage =
+              'Não foi possível carregar os dados de atribuição do contrato.';
           }
+          return;
+        }
 
-          return of({
-            currentUser,
-            users: [currentUser],
-          });
-        }),
+        this.assignmentErrorMessage = '';
+        this.assignableUsers = state.users;
 
-        finalize(() => {
-          this.isLoadingAssignment = false;
-        }),
-      )
-      .subscribe({
-        next: ({ currentUser, users }) => {
-          this.assignableUsers = this.resolveAssignableUsers(currentUser, users);
+        const currentUser =
+          state.users.find((user) => user.id === authenticatedUser.id) ?? null;
 
-          this.initializeAssignment(currentUser);
-        },
-
-        error: () => {
+        if (!currentUser) {
+          this.currentUser = null;
           this.assignmentErrorMessage =
-            'Não foi possível carregar os dados de atribuição do contrato.';
-        },
+            'Não foi possível localizar o utilizador autenticado entre os utilizadores atribuíveis.';
+          return;
+        }
+
+        this.currentUser = currentUser;
+        this.resolveInternalObservationsAccess(currentUser);
+
+        if (!this.assignedUserId) {
+          this.initializeAssignment(currentUser);
+          return;
+        }
+
+        const selectedUser =
+          state.users.find((user) => user.id === this.assignedUserId) ?? null;
+
+        if (!selectedUser) {
+          this.assignmentErrorMessage =
+            'O responsável selecionado deixou de estar disponível. Foi reposto o utilizador atual.';
+          this.initializeAssignment(currentUser);
+          return;
+        }
+
+        this.refreshAssignmentFromCache(selectedUser);
       });
   }
 
-  private resolveAssignableUsers(currentUser: ProfileUser, users: ProfileUser[]): ProfileUser[] {
-    const activeUsers = users.filter((user) => user.active);
+  private refreshAssignmentFromCache(user: ProfileUser): void {
+    const previousSelectedTeamIds = [...this.selectedTeamIds];
+    const previousRegistrationTeamId = this.selectedRegistrationTeamId;
 
-    if (this.isSuperAdmin()) {
-      return activeUsers;
-    }
+    this.availableTeams = this.resolveAssignableTeams(user);
 
-    const managedTeamIds = this.getManagedTeamIds(currentUser);
-
-    if (!managedTeamIds.length) {
-      return activeUsers.filter((user) => user.id === currentUser.id);
-    }
-
-    const managedTeamIdSet = new Set(managedTeamIds);
-
-    return activeUsers.filter((user) => {
-      if (user.id === currentUser.id) {
-        return true;
-      }
-
-      return this.getUserTeamIds(user).some((teamId) => managedTeamIdSet.has(teamId));
-    });
-  }
-
-  private getManagedTeamIds(user: ProfileUser | null = this.currentUser): string[] {
-    if (!user) {
-      return [];
-    }
-
-    const teams = (user as ProfileUserWithTeamPositions).teams ?? [];
-
-    return [
-      ...new Set(
-        teams
-          .filter((team) => this.isAssignmentManagerPosition(team.position))
-          .map((team) => team.id)
-          .filter(Boolean),
-      ),
-    ];
-  }
-
-  private getUserTeamIds(user: ProfileUser): string[] {
-    const typedUser = user as ProfileUserWithTeamPositions;
-
-    const teamIds = typedUser.teams?.map((team) => team.id).filter(Boolean) ?? [];
-
-    const defaultTeamId = typedUser.defaultTeam?.id;
-
-    return [...new Set([...teamIds, ...(defaultTeamId ? [defaultTeamId] : [])])];
-  }
-
-  private isAssignmentManagerPosition(position: string | null | undefined): boolean {
-    const normalizedPosition = (position ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '');
-
-    return (
-      normalizedPosition.includes('admin') ||
-      normalizedPosition.includes('backoffice') ||
-      normalizedPosition.includes('coordenador')
+    const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
+    this.selectedTeamIds = previousSelectedTeamIds.filter((teamId) =>
+      availableTeamIds.has(teamId),
     );
+
+    if (!this.selectedTeamIds.length) {
+      this.selectedTeamIds = this.resolveInitialTeamIds(user);
+    }
+
+    if (
+      previousRegistrationTeamId &&
+      availableTeamIds.has(previousRegistrationTeamId)
+    ) {
+      this.onRegistrationTeamChange(previousRegistrationTeamId);
+    } else {
+      this.syncRegistrationFields(user);
+    }
+
+    if (this.teamToAddId && !availableTeamIds.has(this.teamToAddId)) {
+      this.teamToAddId = '';
+    }
   }
 
   private resolveInternalObservationsAccess(user: ProfileUser): void {
@@ -687,38 +651,25 @@ export class GalpSolarContractCreate implements OnInit {
       this.contractForm.observacoesInternas = '';
     }
   }
-
   private loadAssignedUserTeams(userId: string): void {
-    this.isLoadingAssignment = true;
-
     this.assignmentErrorMessage = '';
-
     this.availableTeams = [];
-
     this.selectedTeamIds = [];
-
     this.teamToAddId = '';
     this.selectedRegistrationTeamId = '';
     this.clearRegistrationFields();
 
-    this.userService
-      .getUserById(userId)
-      .pipe(
-        finalize(() => {
-          this.isLoadingAssignment = false;
-        }),
-      )
-      .subscribe({
-        next: (selectedUser) => {
-          this.initializeAssignment(selectedUser, false);
-        },
+    const selectedUser = this.assignableUsers.find((user) => user.id === userId) ?? null;
 
-        error: () => {
-          this.assignmentErrorMessage =
-            'Não foi possível carregar as equipas e posições do utilizador selecionado.';
-        },
-      });
+    if (!selectedUser) {
+      this.assignmentErrorMessage =
+        'O utilizador selecionado já não está disponível para atribuição.';
+      return;
+    }
+
+    this.initializeAssignment(selectedUser, false);
   }
+
 
   private initializeAssignment(user: ProfileUser, updateAssignedUser = true): void {
     if (updateAssignedUser) {

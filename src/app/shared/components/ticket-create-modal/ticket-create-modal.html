@@ -38,7 +38,7 @@
         <label>
           Tipo *
 
-          <select formControlName="tipo" [disabled]="isFormLocked">
+          <select formControlName="tipo">
             <option *ngFor="let option of ticketTypeOptions" [value]="option">
               {{ option }}
             </option>
@@ -48,7 +48,7 @@
         <label>
           Prioridade
 
-          <select formControlName="prioridade" [disabled]="isFormLocked">
+          <select formControlName="prioridade">
             <option *ngFor="let option of priorityOptions" [value]="option">
               {{ option }}
             </option>
@@ -60,7 +60,6 @@
 
           <select
             formControlName="assignedUserId"
-            [disabled]="isFormLocked || !canAssignOtherUsers()"
             (change)="onAssignedUserChange()"
           >
             <option value="" disabled>Selecionar utilizador</option>
@@ -74,7 +73,7 @@
         <label>
           Agendamento
 
-          <input type="datetime-local" formControlName="agendamento" [disabled]="isFormLocked" />
+          <input type="datetime-local" formControlName="agendamento" />
         </label>
       </div>
 
@@ -131,7 +130,6 @@
         <textarea
           rows="4"
           formControlName="descricao"
-          [disabled]="isFormLocked"
           placeholder="Descreva o pedido ou a pendência..."
         ></textarea>
       </label>
@@ -142,7 +140,6 @@
         <textarea
           rows="3"
           formControlName="observacoes"
-          [disabled]="isFormLocked"
           placeholder="Informação inicial para a conversa do Ticket..."
         ></textarea>
       </label>
@@ -244,7 +241,6 @@
           <textarea
             rows="5"
             formControlName="reason"
-            [disabled]="isCreatingTicket"
             placeholder="Explique o motivo..."
           ></textarea>
         </label>
