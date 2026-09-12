@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "outDir": "./.angular-ticket-check",
+    "noEmit": true
+  },
+  "files": [
+    "src/app/features/tickets/ticket-detail/ticket-detail.ts",
+    "src/app/shared/components/ticket-create-modal/ticket-create-modal.ts"
+  ],
+  "angularCompilerOptions": {
+    "strictTemplates": true
+  }
+}

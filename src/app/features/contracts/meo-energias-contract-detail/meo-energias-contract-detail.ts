@@ -255,7 +255,7 @@ export class MeoEnergiasContractDetail implements OnInit {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
-        this.loadContract(this.contractId);
+        this.loadContract(this.contractId, true);
       }
     });
 
@@ -351,7 +351,7 @@ export class MeoEnergiasContractDetail implements OnInit {
       });
   }
 
-  loadContract(contractId: string): void {
+  loadContract(contractId: string, loadCampaignOptions = false): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -382,13 +382,19 @@ export class MeoEnergiasContractDetail implements OnInit {
 
           this.initializeEditForm(normalizedContract);
 
-          this.loadCampaigns(normalizedContract.companyId);
+          if (loadCampaignOptions) {
+            this.loadCampaigns(normalizedContract.companyId);
+          }
         },
 
         error: () => {
           this.showError('Não foi possível carregar o contrato Meo Energias.');
         },
       });
+  }
+
+  get canSubmitObservation(): boolean {
+    return !!this.contract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -403,8 +409,9 @@ export class MeoEnergiasContractDetail implements OnInit {
     if (
       !this.contract ||
       !this.contractId ||
-      !this.isSuperAdmin ||
-      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
@@ -629,30 +636,23 @@ export class MeoEnergiasContractDetail implements OnInit {
 
     updateRequest
       .pipe(
-        switchMap((): Observable<SaveContractResult> => {
+        switchMap((updatedContract): Observable<SaveContractResult> => {
           if (!hasFiles) {
-            return this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
-              map((contract): SaveContractResult => ({
-                contract,
-                uploadFailed: false,
-                uploadError: null,
-              })),
-            );
+            return of<SaveContractResult>({
+              contract: updatedContract,
+              uploadFailed: false,
+              uploadError: null,
+            });
           }
 
           return this.meoEnergiasContractService
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
-              switchMap(() =>
-                this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
-                  map((contract): SaveContractResult => ({
-                    contract,
-                    uploadFailed: false,
-                    uploadError: null,
-                  })),
-                ),
-              ),
-
+              map((contract): SaveContractResult => ({
+                contract,
+                uploadFailed: false,
+                uploadError: null,
+              })),
               catchError((uploadError: unknown) =>
                 this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId).pipe(
                   map((contract): SaveContractResult => ({
@@ -660,10 +660,9 @@ export class MeoEnergiasContractDetail implements OnInit {
                     uploadFailed: true,
                     uploadError,
                   })),
-
                   catchError(() =>
                     of<SaveContractResult>({
-                      contract: this.contract!,
+                      contract: updatedContract,
                       uploadFailed: true,
                       uploadError,
                     }),
@@ -672,7 +671,6 @@ export class MeoEnergiasContractDetail implements OnInit {
               ),
             );
         }),
-
         finalize(() => {
           this.isSaving = false;
         }),
@@ -804,9 +802,6 @@ export class MeoEnergiasContractDetail implements OnInit {
     this.meoEnergiasContractService
       .deleteAttachment(this.contractId, document.fileName)
       .pipe(
-        switchMap(() =>
-          this.meoEnergiasContractService.getMeoEnergiasContractById(this.contractId),
-        ),
 
         finalize(() => {
           this.deletingAttachmentFileNames.delete(document.fileName);
@@ -986,7 +981,7 @@ export class MeoEnergiasContractDetail implements OnInit {
 
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
-    this.isSuperAdmin = role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin') || role.includes('du');
 
     if (!this.currentUserId) {
       return;

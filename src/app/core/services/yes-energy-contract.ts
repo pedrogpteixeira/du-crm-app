@@ -112,6 +112,9 @@ export interface YesEnergyContract {
 
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface YesEnergyContractUser {

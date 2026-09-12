@@ -76,6 +76,9 @@ export interface WallboxContract {
 
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface WallboxContractUser {

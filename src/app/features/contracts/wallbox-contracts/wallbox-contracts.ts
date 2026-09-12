@@ -23,6 +23,7 @@ import {
 import { Auth } from '../../../core/services/auth';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 @Component({
   selector: 'app-wallbox-contracts',
@@ -124,8 +125,7 @@ export class WallboxContracts implements OnInit {
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
 
         error: (error) => {

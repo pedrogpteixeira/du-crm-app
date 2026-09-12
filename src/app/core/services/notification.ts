@@ -57,6 +57,9 @@ export class NotificationService {
   private readonly pendingReadIds =
     new Set<string>();
 
+  private readonly pendingReadSnapshots =
+    new Map<string, Notification>();
+
   private flushInFlight$: Observable<MarkNotificationsAsReadResponse | null> | null = null;
 
   readonly notifications$ =
@@ -135,7 +138,8 @@ export class NotificationService {
               (notification) =>
                 !notification.readBy?.includes(
                   currentUser.id,
-                ),
+                ) &&
+                !this.pendingReadIds.has(notification.id),
             );
 
           this.notificationsSubject.next(
@@ -175,9 +179,12 @@ export class NotificationService {
     }
 
     this.pendingReadIds.add(notificationId);
-    this.applyOptimisticReadState(
+    this.pendingReadSnapshots.set(
+      notificationId,
+      notification,
+    );
+    this.hideOptimisticReadNotifications(
       new Set([notificationId]),
-      currentUser.id,
     );
   }
 
@@ -206,13 +213,23 @@ export class NotificationService {
       return 0;
     }
 
-    ids.forEach((id) =>
-      this.pendingReadIds.add(id),
+    const notificationsById = new Map(
+      this.notificationsSubject.value.map(
+        (notification) => [notification.id, notification] as const,
+      ),
     );
 
-    this.applyOptimisticReadState(
+    ids.forEach((id) => {
+      this.pendingReadIds.add(id);
+
+      const notification = notificationsById.get(id);
+      if (notification) {
+        this.pendingReadSnapshots.set(id, notification);
+      }
+    });
+
+    this.hideOptimisticReadNotifications(
       new Set(ids),
-      currentUser.id,
     );
 
     return ids.length;
@@ -343,7 +360,8 @@ export class NotificationService {
     if (
       notification.readBy?.includes(
         currentUser.id,
-      )
+      ) ||
+      this.pendingReadIds.has(notification.id)
     ) {
       return;
     }
@@ -375,36 +393,18 @@ export class NotificationService {
 
   clearNotifications(): void {
     this.pendingReadIds.clear();
+    this.pendingReadSnapshots.clear();
     this.notificationsSubject.next([]);
   }
 
-  private applyOptimisticReadState(
+  private hideOptimisticReadNotifications(
     notificationIds: Set<string>,
-    currentUserId: string,
   ): void {
-    const notifications =
-      this.notificationsSubject.value.map(
-        (notification) => {
-          if (
-            !notificationIds.has(notification.id)
-          ) {
-            return notification;
-          }
-
-          return {
-            ...notification,
-            readBy: Array.from(
-              new Set([
-                ...(notification.readBy ?? []),
-                currentUserId,
-              ]),
-            ),
-          };
-        },
-      );
-
     this.notificationsSubject.next(
-      notifications,
+      this.notificationsSubject.value.filter(
+        (notification) =>
+          !notificationIds.has(notification.id),
+      ),
     );
   }
 
@@ -414,9 +414,10 @@ export class NotificationService {
     const committedIds =
       new Set(notificationIds);
 
-    notificationIds.forEach((id) =>
-      this.pendingReadIds.delete(id),
-    );
+    notificationIds.forEach((id) => {
+      this.pendingReadIds.delete(id);
+      this.pendingReadSnapshots.delete(id);
+    });
 
     this.notificationsSubject.next(
       this.notificationsSubject.value.filter(
@@ -429,35 +430,35 @@ export class NotificationService {
   private rollbackPendingReads(
     notificationIds: string[],
   ): void {
-    const currentUser =
-      this.auth.getCurrentUser();
+    const notificationsToRestore = notificationIds
+      .map((id) => this.pendingReadSnapshots.get(id))
+      .filter((notification): notification is Notification => Boolean(notification));
 
-    const rolledBackIds =
-      new Set(notificationIds);
+    notificationIds.forEach((id) => {
+      this.pendingReadIds.delete(id);
+      this.pendingReadSnapshots.delete(id);
+    });
 
-    notificationIds.forEach((id) =>
-      this.pendingReadIds.delete(id),
-    );
-
-    if (!currentUser?.id) {
+    if (!notificationsToRestore.length) {
       return;
     }
 
-    this.notificationsSubject.next(
-      this.notificationsSubject.value.map(
-        (notification) => {
-          if (!rolledBackIds.has(notification.id)) {
-            return notification;
-          }
+    const currentNotifications =
+      this.notificationsSubject.value;
 
-          return {
-            ...notification,
-            readBy: (notification.readBy ?? []).filter(
-              (userId) => userId !== currentUser.id,
-            ),
-          };
-        },
-      ),
+    const currentIds = new Set(
+      currentNotifications.map((notification) => notification.id),
+    );
+
+    const restored = notificationsToRestore.filter(
+      (notification) => !currentIds.has(notification.id),
+    );
+
+    this.notificationsSubject.next(
+      this.sortNotifications([
+        ...restored,
+        ...currentNotifications,
+      ]),
     );
   }
 

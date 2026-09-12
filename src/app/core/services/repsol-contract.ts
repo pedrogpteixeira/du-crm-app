@@ -51,6 +51,9 @@ export interface RepsolContract {
 
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface RepsolContractUser {
@@ -293,9 +296,7 @@ export class RepsolContractService {
     payload:
       UpdateRepsolContractRequest,
   ): Observable<RepsolContractDetail> {
-    return this.http.patch<
-      RepsolContractDetail
-    >(
+    return this.http.patch<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}`,
       payload,
     );
@@ -316,9 +317,7 @@ export class RepsolContractService {
       );
     });
 
-    return this.http.post<
-      RepsolContractDetail
-    >(
+    return this.http.post<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments`,
       formData,
     );
@@ -328,9 +327,7 @@ export class RepsolContractService {
     contractId: string,
     fileName: string,
   ): Observable<RepsolContractDetail> {
-    return this.http.delete<
-      RepsolContractDetail
-    >(
+    return this.http.delete<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
         fileName,
       )}`,

@@ -185,7 +185,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
-        this.loadContract(this.contractId);
+        this.loadContract(this.contractId, true, true);
       }
     });
 
@@ -280,7 +280,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
       });
   }
 
-  loadContract(contractId: string, showLoading = true): void {
+  loadContract(
+    contractId: string,
+    showLoading = true,
+    loadCampaignOptions = false,
+  ): void {
     if (!contractId) {
       this.showError('Contrato inválido.');
       return;
@@ -322,12 +326,18 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
           this.initializeEditForm(normalizedContract);
 
-          this.loadCampaigns(normalizedContract.companyId);
+          if (loadCampaignOptions) {
+            this.loadCampaigns(normalizedContract.companyId);
+          }
         },
         error: () => {
           this.showError('Não foi possível carregar o contrato Iberdrola Solar.');
         },
       });
+  }
+
+  get canSubmitObservation(): boolean {
+    return !!this.contract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -342,8 +352,9 @@ export class IberdrolaSolarContractDetail implements OnInit {
     if (
       !this.contract ||
       !this.contractId ||
-      !this.isSuperAdmin ||
-      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
@@ -805,7 +816,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
-    this.isSuperAdmin = role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin') || role.includes('du');
 
     if (!this.currentUserId) {
       return;

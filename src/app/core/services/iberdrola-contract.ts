@@ -116,6 +116,9 @@ export interface IberdrolaContract {
   user: IberdrolaContractListUser | null;
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IberdrolaContractUser {

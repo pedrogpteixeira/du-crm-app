@@ -19,6 +19,7 @@ import {
   YesEnergyContractService,
   YesEnergyContractStatus,
 } from '../../../core/services/yes-energy-contract';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 interface AuthenticatedUserLike {
   id?: string;
@@ -130,8 +131,7 @@ export class YesEnergyContracts implements OnInit {
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
         error: (error) => {
           this.errorMessage =

@@ -98,6 +98,9 @@ export interface MeoEnergiasContract {
   user: MeoEnergiasContractListUser | null;
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MeoEnergiasContractUser {

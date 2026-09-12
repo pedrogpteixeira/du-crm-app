@@ -33,6 +33,7 @@ import {
 import {
   Auth,
 } from '../../../core/services/auth';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 @Component({
   selector:
@@ -143,8 +144,7 @@ export class GalpPowerGasContracts
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
 
         error: (error) => {

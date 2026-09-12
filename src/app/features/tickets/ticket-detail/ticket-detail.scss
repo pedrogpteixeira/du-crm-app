@@ -42,25 +42,17 @@
   gap: 20px;
 
   h1 {
-    margin: 2px 0 6px;
     color: #243646;
     font-size: 32px;
+    margin: 0 0 6px;
   }
 
   p {
-    margin: 0;
     color: #64748b;
     font-size: 15px;
     font-weight: 600;
+    margin: 0;
   }
-}
-
-.eyebrow {
-  color: #008db1;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .header-actions {
@@ -88,7 +80,7 @@
   color: #ffffff;
 }
 
-.primary-button:hover:not(:disabled) {
+.primary-button:hover {
   background: #243646;
 }
 
@@ -97,7 +89,7 @@
   color: #243646;
 }
 
-.secondary-button:hover:not(:disabled) {
+.secondary-button:hover {
   background: #cbd5e1;
 }
 
@@ -331,124 +323,15 @@ strong {
   color: #b91c1c;
 }
 
-.assignment-grid {
+
+.management-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
-  gap: 24px 42px;
-  align-items: start;
-}
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
 
-.team-selection-field {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.selected-team-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.team-tag {
-  max-width: 100%;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 7px 6px 10px;
-  border: 1px solid rgba(0, 141, 177, 0.18);
-  border-radius: 999px;
-  background: rgba(0, 141, 177, 0.1);
-  color: #006f8c;
-  font-size: 12px;
-  font-weight: 800;
-
-  > span {
+  label {
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
   }
-
-  small {
-    color: #64748b;
-    font-size: 10px;
-    font-weight: 700;
-  }
-}
-
-.remove-team {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #006f8c;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.remove-team:hover {
-  background: rgba(0, 141, 177, 0.16);
-}
-
-.team-add-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-}
-
-.team-view-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  small {
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 700;
-  }
-}
-
-.followers-block {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.followers-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.follower-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #334155;
-  font-size: 12px;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.follower-chip:hover {
-  background: #e2e8f0;
-  color: #008db1;
 }
 
 .side-list {
@@ -725,7 +608,48 @@ strong {
   color: #008db1;
 }
 
+.editing-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.editing-label::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  content: '';
+}
+
+/* =========================
+   TICKET HEADER STICKY
+========================= */
+.page-header {
+  position: sticky;
+  top: 90px;
+  z-index: 30;
+  width: calc(100% - 338px);
+  box-sizing: border-box;
+  align-self: flex-start;
+  margin: -4px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 16px;
+  background: rgba(248, 250, 252, 0.94);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+  backdrop-filter: blur(12px);
+}
+
 @media (max-width: 980px) {
+  .page-header {
+    width: 100%;
+  }
+
   .detail-grid {
     grid-template-columns: 1fr;
   }
@@ -735,21 +659,41 @@ strong {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 700px) {
   .page-header {
-    flex-direction: column;
-  }
-
-  .header-actions {
-    width: 100%;
-
-    button {
-      flex: 1;
-    }
+    top: 84px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
   }
 
   .page-header h1 {
-    font-size: 27px;
+    margin-bottom: 2px;
+    font-size: 19px;
+    line-height: 1.2;
+  }
+
+  .page-header p {
+    display: none;
+  }
+
+  .header-actions {
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
+  .header-actions button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .editing-label {
+    display: none;
   }
 
   .card {
@@ -811,4 +755,62 @@ strong {
   color: #64748b;
   font-size: 11px;
   font-weight: 500;
+}
+
+/* Fluxo mantém a estética original dos cards do Ticket Detail. */
+.ticket-flow-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-flow-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ticket-flow-item:first-child {
+  padding-top: 0;
+}
+
+.ticket-flow-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.ticket-flow-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ticket-flow-content > span {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ticket-flow-item time {
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .ticket-flow-item {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.management-meta {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }

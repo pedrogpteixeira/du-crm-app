@@ -13,7 +13,6 @@ describe('Ticket request rules', () => {
     companyId: 'cmp_test',
     tipo: 'Novo Pedido de Chamada',
     userId: 'usr_test',
-    teams: [],
   };
 
   const ticket = (tipo: TicketDetail['tipo']): TicketDetail =>

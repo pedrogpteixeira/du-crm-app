@@ -6,7 +6,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, finalize, map, Observable, of, switchMap } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import {
   getContractCompanyName,
   getContractDetailRoute,
@@ -14,9 +13,7 @@ import {
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
 import { SocketService, TicketSocketEvent } from '../../../core/services/socket';
-import { Team, TeamService } from '../../../core/services/team';
 import {
-  getEffectiveTicketType,
   hasRequiredDocuments,
   isDocumentConfirmationApiError,
   prepareTicketUpdatePayload,
@@ -29,24 +26,12 @@ import {
   TicketEstado,
   TicketPrioridade,
   TicketService,
-  TicketTeam,
-  TicketTeamDetail,
   UpdateTicketRequest,
 } from '../../../core/services/ticket';
-import { ProfileUser, UserService } from '../../../core/services/user';
-
-interface AssignableTicketTeam {
-  id: string;
-  name: string;
-  positionIndex: number;
-  position: string;
-  active?: boolean;
-}
-
-interface ProfileUserWithTeamPositions extends ProfileUser {
-  teams: AssignableTicketTeam[];
-  defaultTeam: AssignableTicketTeam | null;
-}
+import { appendObservationHistory } from '../../../core/utils/observation-history';
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
+import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
 
 interface AuthenticatedUserLike {
   id?: string;
@@ -61,8 +46,6 @@ interface TicketEditSnapshot {
   prioridade: TicketPrioridade;
   agendamento: string | null;
   descricao: string;
-  userId: string;
-  teams: TicketTeam[];
 }
 
 interface SaveTicketResult {
@@ -70,11 +53,6 @@ interface SaveTicketResult {
   uploadFailed: boolean;
   uploadError: unknown;
 }
-
-import { appendObservationHistory } from '../../../core/utils/observation-history';
-import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
-import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
-import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 @Component({
   selector: 'app-ticket-detail',
@@ -97,13 +75,9 @@ export class TicketDetail implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly socketService = inject(SocketService);
-  private readonly teamService = inject(TeamService);
   private readonly ticketService = inject(TicketService);
-  private readonly userService = inject(UserService);
 
   private currentUserId = '';
-  private currentUserProfile: ProfileUser | null = null;
-  private supportingDataLoaded = false;
   private suppressNextOwnSocketUpdate = false;
   private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
   private originalEditSnapshot: TicketEditSnapshot | null = null;
@@ -111,19 +85,12 @@ export class TicketDetail implements OnInit {
   ticket: TicketDetailModel | null = null;
   ticketId = '';
 
-  allUsers: ProfileUser[] = [];
-  assignableUsers: ProfileUser[] = [];
-  teamCatalog: Team[] = [];
-  availableTeams: AssignableTicketTeam[] = [];
-  teamToAddId = '';
-
   selectedFiles: File[] = [];
   deletingAttachmentFileNames = new Set<string>();
 
   isLoading = false;
   isSaving = false;
   isEditing = false;
-  isLoadingAssignment = false;
   isUploadingAttachments = false;
   isSuperAdmin = false;
   canEditTicket = false;
@@ -144,8 +111,6 @@ export class TicketDetail implements OnInit {
     prioridade: this.fb.nonNullable.control<TicketPrioridade>('Normal', Validators.required),
     agendamento: this.fb.nonNullable.control<string>(''),
     descricao: this.fb.nonNullable.control<string>(''),
-    userId: this.fb.nonNullable.control<string>('', Validators.required),
-    teams: this.fb.nonNullable.control<string[]>([], Validators.required),
   });
 
   ngOnInit(): void {
@@ -169,14 +134,7 @@ export class TicketDetail implements OnInit {
   }
 
   get currentUserName(): string {
-    const profileName = this.currentUserProfile?.name?.trim();
-
-    if (profileName) {
-      return profileName;
-    }
-
     const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
-
     return (currentUser?.name ?? currentUser?.username ?? 'Utilizador').trim();
   }
 
@@ -192,24 +150,6 @@ export class TicketDetail implements OnInit {
     return this.ticket ? getContractCompanyName(this.ticket.companyId) : '—';
   }
 
-  get selectedTeamIds(): string[] {
-    return this.ticketForm.controls.teams.value;
-  }
-
-  get selectedTeams(): AssignableTicketTeam[] {
-    return this.selectedTeamIds
-      .map(
-        (teamId) =>
-          this.availableTeams.find((team) => team.id === teamId) ??
-          this.createFallbackAssignableTeam(teamId),
-      )
-      .filter((team): team is AssignableTicketTeam => Boolean(team));
-  }
-
-  get teamsAvailableToAdd(): AssignableTicketTeam[] {
-    return this.availableTeams.filter((team) => !this.selectedTeamIds.includes(team.id));
-  }
-
   get isTreatmentEditType(): boolean {
     return this.ticket?.tipo === TREATMENT_TICKET_TYPE;
   }
@@ -221,11 +161,7 @@ export class TicketDetail implements OnInit {
 
     this.ticketService
       .getTicketById(ticketId)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-        }),
-      )
+      .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (ticket) => {
           this.ticket = ticket;
@@ -234,11 +170,7 @@ export class TicketDetail implements OnInit {
             this.initializeEditForm(ticket);
           }
 
-          if (!this.supportingDataLoaded) {
-            this.loadSupportingData();
-          } else {
-            this.updateCanEditTicket();
-          }
+          this.updateCanEditTicket();
         },
         error: (error: HttpErrorResponse) => {
           this.ticket = null;
@@ -284,11 +216,7 @@ export class TicketDetail implements OnInit {
 
     this.ticketService
       .updateTicket(this.ticket.id, payload)
-      .pipe(
-        finalize(() => {
-          this.isSubmittingObservation = false;
-        }),
-      )
+      .pipe(finalize(() => (this.isSubmittingObservation = false)))
       .subscribe({
         next: (updatedTicket) => {
           if (!this.ticket) {
@@ -298,6 +226,7 @@ export class TicketDetail implements OnInit {
           this.ticket = {
             ...this.ticket,
             observacoes: updatedTicket.observacoes || nextHistory,
+            fluxo: updatedTicket.fluxo,
             updatedAt: updatedTicket.updatedAt || this.ticket.updatedAt,
           };
           this.observationDraft = '';
@@ -321,11 +250,6 @@ export class TicketDetail implements OnInit {
     this.successMessage = '';
     this.socketMessage = '';
     this.isEditing = true;
-
-    this.prepareAssignmentForUser(
-      this.ticket.userId,
-      this.ticket.teams.map((team) => team.teamId),
-    );
   }
 
   cancelEditing(): void {
@@ -334,7 +258,6 @@ export class TicketDetail implements OnInit {
     }
 
     this.selectedFiles = [];
-    this.teamToAddId = '';
     this.isEditing = false;
     this.errorMessage = '';
     this.successMessage = '';
@@ -352,7 +275,7 @@ export class TicketDetail implements OnInit {
     }
 
     const changes = this.buildPatchPayload();
-    const effectiveType = getEffectiveTicketType(this.ticket, changes);
+    const effectiveType = this.ticket.tipo;
     const hasChanges = Object.keys(changes).length > 0;
     const hasFiles = this.selectedFiles.length > 0;
 
@@ -391,36 +314,19 @@ export class TicketDetail implements OnInit {
       .pipe(
         switchMap((updatedTicket): Observable<SaveTicketResult> => {
           if (!hasFiles) {
-            return of({
-              ticket: updatedTicket,
-              uploadFailed: false,
-              uploadError: null,
-            });
+            return of({ ticket: updatedTicket, uploadFailed: false, uploadError: null });
           }
 
           this.isUploadingAttachments = true;
-
           return this.ticketService.uploadAttachments(updatedTicket.id, this.selectedFiles).pipe(
-            map((ticket) => ({
-              ticket,
-              uploadFailed: false,
-              uploadError: null,
-            })),
+            map((ticket) => ({ ticket, uploadFailed: false, uploadError: null })),
             catchError((uploadError: unknown) =>
-              of({
-                ticket: updatedTicket,
-                uploadFailed: true,
-                uploadError,
-              }),
+              of({ ticket: updatedTicket, uploadFailed: true, uploadError }),
             ),
-            finalize(() => {
-              this.isUploadingAttachments = false;
-            }),
+            finalize(() => (this.isUploadingAttachments = false)),
           );
         }),
-        finalize(() => {
-          this.isSaving = false;
-        }),
+        finalize(() => (this.isSaving = false)),
       )
       .subscribe({
         next: ({ ticket, uploadFailed, uploadError }) => {
@@ -442,7 +348,6 @@ export class TicketDetail implements OnInit {
           const uploadedFiles = this.selectedFiles.length;
           this.selectedFiles = [];
           this.isEditing = false;
-
           this.showSuccess(
             uploadedFiles
               ? 'Ticket e documentos atualizados com sucesso.'
@@ -464,22 +369,13 @@ export class TicketDetail implements OnInit {
 
     const currentTicket = this.ticket;
     const filesToUpload = [...this.selectedFiles];
-
     this.isUploadingAttachments = true;
 
     this.ticketService
       .uploadAttachments(currentTicket.id, filesToUpload)
       .pipe(
-        map((uploadedTicket) => ({
-          uploadedTicket,
-          uploadError: null as unknown,
-        })),
-        catchError((uploadError: unknown) =>
-          of({
-            uploadedTicket: null,
-            uploadError,
-          }),
-        ),
+        map((uploadedTicket) => ({ uploadedTicket, uploadError: null as unknown })),
+        catchError((uploadError: unknown) => of({ uploadedTicket: null, uploadError })),
         switchMap(({ uploadedTicket, uploadError }) => {
           if (!uploadedTicket) {
             return of({
@@ -489,23 +385,14 @@ export class TicketDetail implements OnInit {
             } satisfies SaveTicketResult);
           }
 
-          /*
-           * Os anexos já foram persistidos. A seleção local é limpa antes
-           * do PATCH para impedir que um retry volte a enviar os ficheiros.
-           */
           this.ticket = uploadedTicket;
           this.selectedFiles = [];
-
           const payload = prepareTicketUpdatePayload(uploadedTicket, changes);
 
           return this.ticketService.updateTicket(uploadedTicket.id, payload).pipe(
             map(
               (ticket) =>
-                ({
-                  ticket,
-                  uploadFailed: false,
-                  uploadError: null,
-                }) satisfies SaveTicketResult,
+                ({ ticket, uploadFailed: false, uploadError: null }) satisfies SaveTicketResult,
             ),
           );
         }),
@@ -544,79 +431,6 @@ export class TicketDetail implements OnInit {
           );
         },
       });
-  }
-
-  onResponsibleChange(): void {
-    const userId = this.ticketForm.controls.userId.value;
-
-    if (!userId) {
-      this.availableTeams = [];
-      this.ticketForm.controls.teams.setValue([]);
-      return;
-    }
-
-    this.prepareAssignmentForUser(userId, [], true);
-  }
-
-  onTeamToAddChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.teamToAddId = select.value;
-  }
-
-  addSelectedTeam(): void {
-    if (!this.teamToAddId) {
-      return;
-    }
-
-    this.ticketForm.controls.teams.setValue([
-      ...new Set([...this.selectedTeamIds, this.teamToAddId]),
-    ]);
-
-    this.ticketForm.controls.teams.markAsDirty();
-    this.teamToAddId = '';
-  }
-
-  removeSelectedTeam(teamId: string): void {
-    if (this.isRequiredTeam(teamId)) {
-      return;
-    }
-
-    this.ticketForm.controls.teams.setValue(this.selectedTeamIds.filter((id) => id !== teamId));
-    this.ticketForm.controls.teams.markAsDirty();
-  }
-
-  isRequiredTeam(teamId: string): boolean {
-    return this.getRequiredTeamIds().includes(teamId);
-  }
-  canAssignOtherUsers(): boolean {
-    return this.assignableUsers.length > 1;
-  }
-
-
-  onFilesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-
-    if (!files.length) {
-      return;
-    }
-
-    const existingKeys = new Set(this.selectedFiles.map((file) => this.getFileKey(file)));
-
-    this.selectedFiles = [
-      ...this.selectedFiles,
-      ...files.filter((file) => !existingKeys.has(this.getFileKey(file))),
-    ];
-
-    input.value = '';
-  }
-
-  removeSelectedFile(index: number): void {
-    this.selectedFiles = this.selectedFiles.filter((_, currentIndex) => currentIndex !== index);
-  }
-
-  clearSelectedFiles(): void {
-    this.selectedFiles = [];
   }
 
   deleteAttachment(document: TicketDocument): void {
@@ -694,18 +508,14 @@ export class TicketDetail implements OnInit {
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = window.document.createElement('a');
-
         link.href = url;
         link.download = document.originalName || document.fileName;
-
         window.document.body.appendChild(link);
         link.click();
         window.document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       },
-      error: () => {
-        this.showError('Não foi possível descarregar o documento.');
-      },
+      error: () => this.showError('Não foi possível descarregar o documento.'),
     });
   }
 
@@ -726,55 +536,12 @@ export class TicketDetail implements OnInit {
     }[priority];
   }
 
-  getResponsibleName(): string {
-    if (!this.ticket) {
-      return 'Utilizador desconhecido';
-    }
-
-    return (
-      this.ticket.user?.name?.trim() ||
-      this.findUserById(this.ticket.userId)?.name?.trim() ||
-      this.ticket.user?.username?.trim() ||
-      'Utilizador desconhecido'
-    );
-  }
-
-  getFollowerName(followerId: string, fallbackName: string | null): string {
-    return (
-      fallbackName?.trim() ||
-      this.findUserById(followerId)?.name?.trim() ||
-      this.findUserById(followerId)?.username?.trim() ||
-      'Utilizador desconhecido'
-    );
-  }
-
-  getTeamName(team: TicketTeamDetail): string {
-    return (
-      team.name?.trim() ||
-      this.teamCatalog.find((entry) => entry.id === team.teamId)?.name ||
-      team.teamId
-    );
-  }
-
-  getTeamPosition(team: TicketTeamDetail): string {
-    if (team.position?.trim()) {
-      return team.position.trim();
-    }
-
-    const catalogTeam = this.teamCatalog.find((entry) => entry.id === team.teamId);
-
-    return (
-      catalogTeam?.positionList?.[team.minimumPositionIndex] ?? `Nível ${team.minimumPositionIndex}`
-    );
-  }
-
   formatDateTime(value: string | null | undefined): string {
     if (!value) {
       return '-';
     }
 
     const date = new Date(value);
-
     if (Number.isNaN(date.getTime())) {
       return '-';
     }
@@ -796,99 +563,23 @@ export class TicketDetail implements OnInit {
     const units = ['B', 'KB', 'MB', 'GB'];
     const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     const value = bytes / 1024 ** unitIndex;
-
     return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
   }
 
   getFileIcon(mimetype: string | null | undefined): string {
     const type = (mimetype ?? '').toLowerCase();
-
-    if (type.includes('pdf')) {
-      return 'PDF';
-    }
-
-    if (type.includes('image')) {
-      return 'IMG';
-    }
-
-    if (type.includes('word')) {
-      return 'DOC';
-    }
-
-    if (type.includes('sheet') || type.includes('excel')) {
-      return 'XLS';
-    }
-
+    if (type.includes('pdf')) return 'PDF';
+    if (type.includes('image')) return 'IMG';
+    if (type.includes('word')) return 'DOC';
+    if (type.includes('sheet') || type.includes('excel')) return 'XLS';
     return 'FILE';
   }
 
   private resolveAuthenticatedUser(): void {
     const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
     const role = currentUser?.role?.toLowerCase() ?? '';
-
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.isSuperAdmin = role.includes('super admin');
-  }
-  private loadSupportingData(): void {
-    this.supportingDataLoaded = true;
-
-    this.userService.assignableUsersState$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((state) => {
-        this.isLoadingAssignment = state.loading && !state.loaded;
-
-        if (state.loading || !state.loaded) {
-          return;
-        }
-
-        this.currentUserProfile =
-          state.users.find((user) => user.id === this.currentUserId) ?? null;
-        this.allUsers = state.users;
-        this.assignableUsers = state.users;
-
-        if (this.isEditing) {
-          const selectedUserId = this.ticketForm.controls.userId.value;
-          const selectedTeamIds = this.ticketForm.controls.teams.value;
-
-          if (
-            selectedUserId &&
-            state.users.some((user) => user.id === selectedUserId)
-          ) {
-            this.prepareAssignmentForUser(
-              selectedUserId,
-              selectedTeamIds,
-              false,
-            );
-          }
-        }
-
-        this.updateCanEditTicket();
-      });
-
-    this.teamService
-      .getTeams()
-      .pipe(
-        catchError(() => of<Team[]>([])),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((teams) => {
-        this.teamCatalog = teams;
-
-        if (this.isEditing) {
-          const selectedUserId = this.ticketForm.controls.userId.value;
-          const selectedTeamIds = this.ticketForm.controls.teams.value;
-
-          if (selectedUserId) {
-            this.prepareAssignmentForUser(
-              selectedUserId,
-              selectedTeamIds,
-              false,
-            );
-          }
-        }
-
-        this.updateCanEditTicket();
-      });
   }
 
   private updateCanEditTicket(): void {
@@ -907,23 +598,9 @@ export class TicketDetail implements OnInit {
       return;
     }
 
-    if (this.ticket.userId === this.currentUserId) {
-      this.canEditTicket = true;
-      return;
-    }
-
-    if (this.ticket.followers.some((follower) => follower.id === this.currentUserId)) {
-      this.canEditTicket = true;
-      return;
-    }
-
-    const currentUserTeams = this.resolveAssignableTeams(this.currentUserProfile);
-
-    this.canEditTicket = this.ticket.teams.some((ticketTeam) => {
-      const currentTeam = currentUserTeams.find((team) => team.id === ticketTeam.teamId);
-
-      return Boolean(currentTeam && currentTeam.positionIndex <= ticketTeam.minimumPositionIndex);
-    });
+    this.canEditTicket =
+      this.ticket.userId === this.currentUserId ||
+      this.ticket.followers.some((follower) => follower.id === this.currentUserId);
   }
 
   private initializeEditForm(ticket: TicketDetailModel): void {
@@ -932,10 +609,8 @@ export class TicketDetail implements OnInit {
     this.ticketForm.setValue({
       estado: snapshot.estado,
       prioridade: snapshot.prioridade,
-      agendamento: this.toDateTimeLocal(ticket.agendamento),
+      agendamento: this.toDateTimeLocal(snapshot.agendamento),
       descricao: snapshot.descricao,
-      userId: snapshot.userId,
-      teams: snapshot.teams.map((team) => team.teamId),
     });
 
     this.ticketForm.markAsPristine();
@@ -949,21 +624,16 @@ export class TicketDetail implements OnInit {
       prioridade: ticket.prioridade,
       agendamento: ticket.agendamento,
       descricao: ticket.descricao ?? '',
-      userId: ticket.userId,
-      teams: this.normalizeTicketTeams(ticket.teams),
     };
   }
 
   private buildSnapshotFromForm(): TicketEditSnapshot {
     const value = this.ticketForm.getRawValue();
-
     return {
       estado: value.estado,
       prioridade: value.prioridade,
       agendamento: value.agendamento ? new Date(value.agendamento).toISOString() : null,
       descricao: value.descricao,
-      userId: value.userId,
-      teams: this.resolveTicketTeams(value.teams),
     };
   }
 
@@ -976,256 +646,16 @@ export class TicketDetail implements OnInit {
     const original = this.originalEditSnapshot;
     const payload: UpdateTicketRequest = {};
 
-    if (current.estado !== original.estado) {
-      payload.estado = current.estado;
-    }
-
-    if (current.prioridade !== original.prioridade) {
-      payload.prioridade = current.prioridade;
-    }
-
-    if (current.agendamento !== original.agendamento) {
-      payload.agendamento = current.agendamento;
-    }
-
-    if (current.descricao !== original.descricao) {
-      payload.descricao = current.descricao;
-    }
-
-    if (current.userId !== original.userId) {
-      payload.userId = current.userId;
-    }
-
-    if (!this.areTeamsEqual(current.teams, original.teams)) {
-      payload.teams = current.teams;
-    }
+    if (current.estado !== original.estado) payload.estado = current.estado;
+    if (current.prioridade !== original.prioridade) payload.prioridade = current.prioridade;
+    if (current.agendamento !== original.agendamento) payload.agendamento = current.agendamento;
+    if (current.descricao !== original.descricao) payload.descricao = current.descricao;
 
     return payload;
-  }
-  private prepareAssignmentForUser(
-    userId: string,
-    preferredTeamIds: string[],
-    resetToDefault = false,
-  ): void {
-    if (!userId) {
-      this.availableTeams = [];
-      return;
-    }
-
-    this.teamToAddId = '';
-
-    const user = this.assignableUsers.find((entry) => entry.id === userId) ?? null;
-
-    if (!user) {
-      this.showError(
-        'O responsável selecionado já não está disponível para atribuição.',
-      );
-      return;
-    }
-
-    this.availableTeams = this.mergeTicketTeamsIntoAssignableTeams(
-      this.resolveAssignableTeams(user),
-    );
-
-    const preferred = preferredTeamIds.filter((teamId) =>
-      this.availableTeams.some((team) => team.id === teamId),
-    );
-
-    if (!resetToDefault && preferred.length) {
-      const preferredWithRequired = [
-        ...new Set([
-          ...preferred,
-          ...this.getRequiredTeamIds().filter((teamId) =>
-            this.availableTeams.some((team) => team.id === teamId),
-          ),
-        ]),
-      ];
-
-      this.ticketForm.controls.teams.setValue(preferredWithRequired);
-      return;
-    }
-
-    const initialIds = this.resolveInitialTeamIds(user);
-    this.ticketForm.controls.teams.setValue(initialIds);
-    this.ticketForm.controls.teams.markAsDirty();
-  }
-
-  private resolveAssignableTeams(user: ProfileUser | null): AssignableTicketTeam[] {
-    if (!user) {
-      return [];
-    }
-
-    const rawTeams = (user as ProfileUserWithTeamPositions).teams ?? [];
-
-    return rawTeams
-      .filter(
-        (team) =>
-          Boolean(team?.id) &&
-          Number.isInteger(team.positionIndex) &&
-          team.positionIndex >= 0 &&
-          team.active !== false,
-      )
-      .map((team) => ({
-        id: team.id,
-        name: team.name,
-        positionIndex: team.positionIndex,
-        position:
-          team.position?.trim() ||
-          this.teamCatalog.find((entry) => entry.id === team.id)?.positionList?.[
-            team.positionIndex
-          ] ||
-          `Posição ${team.positionIndex}`,
-        active: team.active,
-      }));
-  }
-
-  private mergeTicketTeamsIntoAssignableTeams(
-    teams: AssignableTicketTeam[],
-  ): AssignableTicketTeam[] {
-    if (!this.ticket) {
-      return teams;
-    }
-
-    const result = [...teams];
-    const knownIds = new Set(result.map((team) => team.id));
-
-    this.ticket.teams.forEach((ticketTeam) => {
-      if (knownIds.has(ticketTeam.teamId)) {
-        return;
-      }
-
-      result.push({
-        id: ticketTeam.teamId,
-        name: this.getTeamName(ticketTeam),
-        positionIndex: ticketTeam.minimumPositionIndex,
-        position: this.getTeamPosition(ticketTeam),
-        active: true,
-      });
-      knownIds.add(ticketTeam.teamId);
-    });
-
-    this.getRequiredTeamIds().forEach((teamId) => {
-      if (knownIds.has(teamId)) {
-        return;
-      }
-
-      const catalogTeam = this.teamCatalog.find((team) => team.id === teamId);
-
-      result.push({
-        id: teamId,
-        name: catalogTeam?.name ?? 'Equipa obrigatória',
-        positionIndex: 0,
-        position: catalogTeam?.positionList?.[0] ?? 'Posição 0',
-        active: true,
-      });
-      knownIds.add(teamId);
-    });
-
-    return result;
-  }
-
-  private resolveInitialTeamIds(user: ProfileUser): string[] {
-    const typedUser = user as ProfileUserWithTeamPositions;
-    const defaultTeamId = typedUser.defaultTeam?.id;
-    const initialTeamId =
-      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
-        ? defaultTeamId
-        : this.availableTeams[0]?.id;
-
-    const ids = initialTeamId ? [initialTeamId] : [];
-
-    return [
-      ...new Set([
-        ...ids,
-        ...this.getRequiredTeamIds().filter((teamId) =>
-          this.availableTeams.some((team) => team.id === teamId),
-        ),
-      ]),
-    ];
-  }
-
-  private resolveTicketTeams(teamIds: string[]): TicketTeam[] {
-    const currentTeams = new Map((this.ticket?.teams ?? []).map((team) => [team.teamId, team]));
-
-    const selected = teamIds
-      .map((teamId) => {
-        const available = this.availableTeams.find((team) => team.id === teamId);
-
-        if (available) {
-          return {
-            teamId,
-            minimumPositionIndex: available.positionIndex,
-          };
-        }
-
-        const current = currentTeams.get(teamId);
-
-        return current
-          ? {
-              teamId,
-              minimumPositionIndex: current.minimumPositionIndex,
-            }
-          : null;
-      })
-      .filter((team): team is TicketTeam => Boolean(team));
-
-    const existingIds = new Set(selected.map((team) => team.teamId));
-
-    const required = this.getRequiredTeamIds()
-      .filter((teamId) => !existingIds.has(teamId))
-      .map((teamId) => ({
-        teamId,
-        minimumPositionIndex: 0,
-      }));
-
-    return this.normalizeTicketTeams([...selected, ...required]);
-  }
-
-  private getRequiredTeamIds(): string[] {
-    return [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
-      (teamId): teamId is string => Boolean(teamId),
-    );
-  }
-
-  private createFallbackAssignableTeam(teamId: string): AssignableTicketTeam | null {
-    const ticketTeam = this.ticket?.teams.find((team) => team.teamId === teamId);
-
-    if (!ticketTeam) {
-      return null;
-    }
-
-    return {
-      id: teamId,
-      name: this.getTeamName(ticketTeam),
-      positionIndex: ticketTeam.minimumPositionIndex,
-      position: this.getTeamPosition(ticketTeam),
-      active: true,
-    };
-  }
-
-  private findUserById(userId: string): ProfileUser | null {
-    return this.allUsers.find((user) => user.id === userId) ?? null;
-  }
-
-  private normalizeTicketTeams(teams: TicketTeam[]): TicketTeam[] {
-    return [...teams]
-      .map((team) => ({
-        teamId: team.teamId,
-        minimumPositionIndex: team.minimumPositionIndex,
-      }))
-      .sort((first, second) => first.teamId.localeCompare(second.teamId));
-  }
-
-  private areTeamsEqual(first: TicketTeam[], second: TicketTeam[]): boolean {
-    return (
-      JSON.stringify(this.normalizeTicketTeams(first)) ===
-      JSON.stringify(this.normalizeTicketTeams(second))
-    );
   }
 
   private handleTicketUpdated(event: TicketSocketEvent): void {
     const eventTicketId = this.getSocketTicketId(event);
-
     if (!eventTicketId || eventTicketId !== this.ticketId) {
       return;
     }
@@ -1234,9 +664,7 @@ export class TicketDetail implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
-
     this.lastSocketUpdate = currentTime;
-
     const payload = event.ticket ?? event;
 
     if (this.ticket && payload.observacoes !== undefined) {
@@ -1281,22 +709,17 @@ export class TicketDetail implements OnInit {
         const latestSnapshot = this.buildSnapshotFromTicket(latestTicket);
         let updated = 0;
         let conflicts = 0;
-
-        const primitiveKeys: Array<keyof Omit<TicketEditSnapshot, 'teams'>> = [
+        const keys: Array<keyof TicketEditSnapshot> = [
           'estado',
           'prioridade',
           'agendamento',
           'descricao',
-          'userId',
         ];
 
-        primitiveKeys.forEach((key) => {
+        keys.forEach((key) => {
           const userChanged = currentSnapshot[key] !== originalSnapshot[key];
           const serverChanged = latestSnapshot[key] !== originalSnapshot[key];
-
-          if (!serverChanged) {
-            return;
-          }
+          if (!serverChanged) return;
 
           if (!userChanged) {
             this.setFormSnapshotValue(key, latestSnapshot[key]);
@@ -1306,39 +729,9 @@ export class TicketDetail implements OnInit {
           }
         });
 
-        const userChangedTeams = !this.areTeamsEqual(currentSnapshot.teams, originalSnapshot.teams);
-        const serverChangedTeams = !this.areTeamsEqual(
-          latestSnapshot.teams,
-          originalSnapshot.teams,
-        );
-
-        if (serverChangedTeams) {
-          if (!userChangedTeams) {
-            this.ticketForm.controls.teams.setValue(
-              latestSnapshot.teams.map((team) => team.teamId),
-            );
-            updated += 1;
-          } else if (!this.areTeamsEqual(currentSnapshot.teams, latestSnapshot.teams)) {
-            conflicts += 1;
-          }
-        }
-
-        const userChangedResponsible = currentSnapshot.userId !== originalSnapshot.userId;
-        const serverChangedResponsible = latestSnapshot.userId !== originalSnapshot.userId;
-
         this.ticket = latestTicket;
         this.originalEditSnapshot = latestSnapshot;
         this.updateCanEditTicket();
-
-        if (serverChangedResponsible && !userChangedResponsible) {
-          this.prepareAssignmentForUser(
-            latestSnapshot.userId,
-            latestSnapshot.teams.map((team) => team.teamId),
-          );
-        } else {
-          this.availableTeams = this.mergeTicketTeamsIntoAssignableTeams(this.availableTeams);
-        }
-
         this.socketMessage = conflicts
           ? `Este Ticket foi atualizado por outro utilizador às ${currentTime}. ${updated} campo(s) foram sincronizados automaticamente e ${conflicts} alteração(ões) em conflito foram preservadas com os seus valores locais.`
           : `Este Ticket foi atualizado por outro utilizador às ${currentTime}. ${updated} campo(s) foram sincronizados automaticamente sem perder as suas alterações locais.`;
@@ -1385,20 +778,19 @@ export class TicketDetail implements OnInit {
 
     return Boolean(
       hasId &&
-      payload.contractId &&
-      payload.companyId &&
-      payload.tipo &&
-      payload.estado &&
-      payload.prioridade &&
-      hasUser &&
-      Array.isArray(payload.teams) &&
-      Array.isArray(payload.followers) &&
-      Array.isArray(payload.anexos ?? payload.documentos),
+        payload.contractId &&
+        payload.companyId &&
+        payload.tipo &&
+        payload.estado &&
+        payload.prioridade &&
+        hasUser &&
+        Array.isArray(payload.followers) &&
+        Array.isArray(payload.anexos ?? payload.documentos),
     );
   }
 
   private setFormSnapshotValue(
-    key: keyof Omit<TicketEditSnapshot, 'teams'>,
+    key: keyof TicketEditSnapshot,
     value: TicketEditSnapshot[typeof key],
   ): void {
     switch (key) {
@@ -1414,23 +806,17 @@ export class TicketDetail implements OnInit {
       case 'descricao':
         this.ticketForm.controls.descricao.setValue(value as string);
         break;
-      case 'userId':
-        this.ticketForm.controls.userId.setValue(value as string);
-        break;
     }
   }
 
   private prepareOwnSocketSuppression(): void {
     this.clearOwnSocketSuppression();
     this.suppressNextOwnSocketUpdate = true;
-    this.ownSocketSuppressionTimer = setTimeout(() => {
-      this.clearOwnSocketSuppression();
-    }, 10000);
+    this.ownSocketSuppressionTimer = setTimeout(() => this.clearOwnSocketSuppression(), 10000);
   }
 
   private clearOwnSocketSuppression(): void {
     this.suppressNextOwnSocketUpdate = false;
-
     if (this.ownSocketSuppressionTimer) {
       clearTimeout(this.ownSocketSuppressionTimer);
       this.ownSocketSuppressionTimer = null;
@@ -1438,26 +824,14 @@ export class TicketDetail implements OnInit {
   }
 
   private toDateTimeLocal(value: string | null | undefined): string {
-    if (!value) {
-      return '';
-    }
-
+    if (!value) return '';
     const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
+    if (Number.isNaN(date.getTime())) return '';
     const pad = (part: number): string => String(part).padStart(2, '0');
-
     return (
       `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
       `T${pad(date.getHours())}:${pad(date.getMinutes())}`
     );
-  }
-
-  private getFileKey(file: File): string {
-    return `${file.name}:${file.size}:${file.lastModified}`;
   }
 
   private getApiErrorMessage(error: unknown, fallback: string): string {
@@ -1481,7 +855,6 @@ export class TicketDetail implements OnInit {
       if (isDocumentConfirmationApiError(error.message)) {
         return 'É necessário confirmar a existência de documentação para um Tratamento de Pendência.';
       }
-
       return error.message;
     }
 

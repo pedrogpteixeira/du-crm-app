@@ -65,6 +65,9 @@ export interface GalpPowerGasContract {
 
   observacoes?: string;
   observacoesInternas?: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface GalpPowerGasContractUser {
@@ -329,9 +332,7 @@ export class GalpPowerGasContractService {
     payload:
       UpdateGalpPowerGasContractRequest,
   ): Observable<GalpPowerGasContractDetail> {
-    return this.http.patch<
-      GalpPowerGasContractDetail
-    >(
+    return this.http.patch<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}`,
       payload,
     );
@@ -358,9 +359,7 @@ export class GalpPowerGasContractService {
       );
     });
 
-    return this.http.post<
-      GalpPowerGasContractDetail
-    >(
+    return this.http.post<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}/attachments`,
       formData,
     );
@@ -370,9 +369,7 @@ export class GalpPowerGasContractService {
     contractId: string,
     fileName: string,
   ): Observable<GalpPowerGasContractDetail> {
-    return this.http.delete<
-      GalpPowerGasContractDetail
-    >(
+    return this.http.delete<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}/attachments/${encodeURIComponent(
         fileName,
       )}`,

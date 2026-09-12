@@ -312,6 +312,10 @@ export class GalpSolarContractDetail implements OnInit {
       });
   }
 
+  get canSubmitObservation(): boolean {
+    return !!this.contract && this.hasContractAccess(this.contract);
+  }
+
   submitObservation(message: string): void {
     this.submitObservationValue(message, false);
   }
@@ -324,8 +328,9 @@ export class GalpSolarContractDetail implements OnInit {
     if (
       !this.contract ||
       !this.contractId ||
-      !this.isSuperAdmin ||
-      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
@@ -765,7 +770,7 @@ export class GalpSolarContractDetail implements OnInit {
 
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
-    this.isSuperAdmin = role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin') || role.includes('du');
 
     if (!this.currentUserId) {
       return;

@@ -18,20 +18,26 @@
 
     <header class="page-header">
       <div>
-        <span class="eyebrow">Ticket</span>
         <h1>{{ ticket.id }}</h1>
         <p>{{ ticket.tipo }}</p>
       </div>
 
       <div class="header-actions" *ngIf="canEditTicket">
-        <button *ngIf="!isEditing" type="button" class="primary-button" (click)="startEditing()">
+        <button
+          *ngIf="!isEditing"
+          type="button"
+          class="primary-button edit-action-button"
+          (click)="startEditing()"
+        >
           Editar
         </button>
 
         <ng-container *ngIf="isEditing">
+          <span class="editing-label">A editar ticket</span>
+
           <button
             type="button"
-            class="secondary-button"
+            class="secondary-button cancel-action-button"
             [disabled]="isSaving"
             (click)="cancelEditing()"
           >
@@ -40,7 +46,7 @@
 
           <button
             type="button"
-            class="primary-button"
+            class="primary-button save-action-button"
             [disabled]="isSaving || isUploadingAttachments"
             (click)="saveChanges()"
           >
@@ -49,7 +55,7 @@
                 ? 'A carregar documentos...'
                 : isSaving
                   ? 'A guardar...'
-                  : 'Guardar alterações'
+                  : 'Guardar'
             }}
           </button>
         </ng-container>
@@ -64,11 +70,7 @@
           <div class="info-grid">
             <label>
               Tipo
-
               <strong>{{ ticket.tipo }}</strong>
-              <small class="readonly-hint" *ngIf="isEditing">
-                O tipo do Ticket não pode ser alterado após a criação.
-              </small>
             </label>
 
             <label>
@@ -155,34 +157,6 @@
         </article>
 
         <article class="card">
-          <div class="section-title">Contrato associado</div>
-
-          <div class="info-grid contract-info-grid">
-            <label>
-              Comercializadora
-              <strong>{{ companyName }}</strong>
-            </label>
-
-            <label>
-              Contrato
-
-              <a
-                *ngIf="contractRoute as route; else contractIdView"
-                class="linked-item"
-                [routerLink]="route"
-              >
-                {{ ticket.contractId }}
-                <span aria-hidden="true">→</span>
-              </a>
-
-              <ng-template #contractIdView>
-                <strong>{{ ticket.contractId || '-' }}</strong>
-              </ng-template>
-            </label>
-          </div>
-        </article>
-
-        <article class="card">
           <div class="section-title-row">
             <div class="section-title">Documentos</div>
             <span class="treatment-document-hint" *ngIf="isEditing && isTreatmentEditType">
@@ -255,13 +229,39 @@
             de Pendência.
           </p>
         </article>
+
+        <article class="card" *ngIf="ticket.fluxo.length">
+          <div class="section-title">Fluxo</div>
+
+          <div class="ticket-flow-list">
+            <div class="ticket-flow-item" *ngFor="let entry of ticket.fluxo">
+              <div class="ticket-flow-content">
+                <a
+                  *ngIf="entry.userId; else flowUserFallback"
+                  class="linked-item"
+                  [routerLink]="['/home/users', entry.userId]"
+                >
+                  {{ entry.userName || 'Utilizador' }}
+                </a>
+                <ng-template #flowUserFallback>
+                  <strong>{{ entry.userName || 'Utilizador' }}</strong>
+                </ng-template>
+                <span>{{ entry.acao }}</span>
+              </div>
+
+              <time [attr.datetime]="entry.dataHora">
+                {{ formatDateTime(entry.dataHora) }}
+              </time>
+            </div>
+          </div>
+        </article>
       </div>
 
       <aside class="side-column">
         <article class="card">
           <div class="section-title">Gestão</div>
 
-          <div class="side-list">
+          <div class="management-grid">
             <label>
               Estado
               <span class="ticket-status" [ngClass]="getTicketStatusClass(ticket.estado)">
@@ -274,6 +274,23 @@
               <span class="ticket-priority" [ngClass]="getTicketPriorityClass(ticket.prioridade)">
                 {{ ticket.prioridade }}
               </span>
+            </label>
+          </div>
+
+          <div class="side-list management-meta">
+            <label>
+              Criado por
+              <a
+                *ngIf="ticket.user?.id; else noCreator"
+                class="linked-item"
+                [routerLink]="['/home/users', ticket.user!.id]"
+              >
+                {{ ticket.user!.name || ticket.user!.username || ticket.user!.id }}
+              </a>
+
+              <ng-template #noCreator>
+                <strong>Sem utilizador associado</strong>
+              </ng-template>
             </label>
 
             <label>
@@ -312,6 +329,24 @@
               </ng-template>
             </label>
           </div>
+        </article>
+
+        <article class="card">
+          <div class="section-title">Seguidores</div>
+
+          <div class="stack-list" *ngIf="ticket.followers.length; else noFollowers">
+            <a
+              class="linked-item"
+              *ngFor="let follower of ticket.followers"
+              [routerLink]="['/home/users', follower.id]"
+            >
+              {{ follower.name || follower.username || follower.id }}
+            </a>
+          </div>
+
+          <ng-template #noFollowers>
+            <p class="empty-state">Sem seguidores associados.</p>
+          </ng-template>
         </article>
       </aside>
     </form>

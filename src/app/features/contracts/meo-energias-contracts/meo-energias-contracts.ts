@@ -19,6 +19,7 @@ import {
   MeoEnergiasContractService,
   MeoEnergiasContractStatus,
 } from '../../../core/services/meo-energias-contract';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 interface AuthenticatedUserLike {
   id?: string;
@@ -130,8 +131,7 @@ export class MeoEnergiasContracts implements OnInit {
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
         error: (error) => {
           this.errorMessage =

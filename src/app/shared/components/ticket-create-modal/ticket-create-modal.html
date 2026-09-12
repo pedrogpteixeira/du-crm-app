@@ -10,7 +10,7 @@
     <header class="ticket-modal-header">
       <div>
         <h2 id="ticket-create-title">Novo Ticket</h2>
-        <p>O Ticket será associado automaticamente ao contrato atual.</p>
+        <p>Associado automaticamente ao contrato atual.</p>
       </div>
 
       <button
@@ -26,7 +26,7 @@
 
     <div class="ticket-modal-body">
       <p class="loading-message" *ngIf="isLoadingAssignment">
-        A carregar utilizadores e equipas...
+        A carregar utilizadores...
       </p>
 
       <p class="warning-message" *ngIf="hasPendingAttachmentRetry">
@@ -34,138 +34,88 @@
         abaixo e tentar novamente o envio sem criar outro Ticket.
       </p>
 
-      <div class="ticket-form-grid two-columns" *ngIf="!isLoadingAssignment">
-        <label>
-          Tipo *
+      <ng-container *ngIf="!isLoadingAssignment">
+        <div class="ticket-form-grid primary-fields">
+          <label>
+            Tipo *
+            <select formControlName="tipo" required>
+              <option value="" disabled>Selecionar tipo</option>
+              <option *ngFor="let option of ticketTypeOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+          </label>
 
-          <select formControlName="tipo">
-            <option *ngFor="let option of ticketTypeOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
-        </label>
+          <label>
+            Prioridade
+            <select formControlName="prioridade">
+              <option *ngFor="let option of priorityOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+          </label>
 
-        <label>
-          Prioridade
+          <label>
+            Responsável *
+            <select formControlName="assignedUserId" (change)="onAssignedUserChange()">
+              <option value="" disabled>Selecionar utilizador</option>
+              <option *ngFor="let user of assignableUsers" [value]="user.id">
+                {{ user.name }} — {{ user.username }}
+              </option>
+            </select>
+          </label>
 
-          <select formControlName="prioridade">
-            <option *ngFor="let option of priorityOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Responsável *
-
-          <select
-            formControlName="assignedUserId"
-            (change)="onAssignedUserChange()"
-          >
-            <option value="" disabled>Selecionar utilizador</option>
-
-            <option *ngFor="let user of assignableUsers" [value]="user.id">
-              {{ user.name }} — {{ user.username }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Agendamento
-
-          <input type="datetime-local" formControlName="agendamento" />
-        </label>
-      </div>
-
-      <div class="team-selection" *ngIf="!isLoadingAssignment">
-        <span class="field-label">Equipas *</span>
-
-        <div class="selected-team-tags" *ngIf="selectedTeams.length">
-          <span class="team-tag" *ngFor="let team of selectedTeams">
-            {{ team.name }} — {{ team.position }}
-
-            <button
-              type="button"
-              class="remove-team-button"
-              [disabled]="isFormLocked || isRequiredTeam(team.id)"
-              [attr.aria-label]="'Remover equipa ' + team.name"
-              (click)="removeSelectedTeam(team.id)"
-            >
-              ×
-            </button>
-          </span>
+          <label>
+            Agendamento
+            <input type="datetime-local" formControlName="agendamento" />
+          </label>
         </div>
 
-        <div class="team-add-row">
-          <select
-            [value]="teamToAddId"
-            [disabled]="isFormLocked || !teamsAvailableToAdd.length"
-            (change)="onTeamToAddChange($event)"
-          >
-            <option value="">
-              {{
-                teamsAvailableToAdd.length ? 'Adicionar equipa...' : 'Sem mais equipas disponíveis'
-              }}
-            </option>
-
-            <option *ngFor="let team of teamsAvailableToAdd" [value]="team.id">
-              {{ team.name }} — {{ team.position }}
-            </option>
-          </select>
-
-          <button
-            type="button"
-            class="secondary-button"
-            [disabled]="isFormLocked || !teamToAddId"
-            (click)="addSelectedTeam()"
-          >
-            Adicionar
-          </button>
-        </div>
-      </div>
-
-      <label class="description-field">
-        Descrição
-
-        <textarea
-          rows="4"
-          formControlName="descricao"
-          placeholder="Descreva o pedido ou a pendência..."
-        ></textarea>
-      </label>
-
-      <label class="description-field">
-        Observações iniciais
-
-        <textarea
-          rows="3"
-          formControlName="observacoes"
-          placeholder="Informação inicial para a conversa do Ticket..."
-        ></textarea>
-      </label>
-
-      <div class="attachments-field" [class.required-documents]="isTreatmentSelected">
-        <div class="field-heading">
-          <span class="field-label"> Documentos<span *ngIf="isTreatmentSelected"> *</span> </span>
-
-          <span class="field-hint" *ngIf="isTreatmentSelected">
-            Obrigatório para Tratamento de Pendência
-          </span>
-        </div>
-
-        <app-file-dropzone
-          [(files)]="selectedFiles"
-          [disabled]="isCreatingTicket || isUploadingAttachments"
-        />
-
-        <p
-          class="document-requirement-message"
-          *ngIf="isTreatmentSelected && selectedFiles.length === 0"
+        <div
+          class="ticket-text-grid"
+          [class.single-column]="isCancellationSelected"
         >
-          Para criar um ticket de Tratamento de Pendência é obrigatório adicionar pelo menos um
-          documento.
-        </p>
-      </div>
+          <label class="description-field" *ngIf="!isCancellationSelected">
+            Descrição *
+            <textarea
+              rows="3"
+              formControlName="descricao"
+              placeholder="Descreva o pedido ou a pendência..."
+            ></textarea>
+          </label>
+
+          <label class="description-field">
+            Observações iniciais
+            <textarea
+              rows="3"
+              formControlName="observacoes"
+              placeholder="Informação inicial para a conversa do Ticket..."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="attachments-field" [class.required-documents]="isTreatmentSelected">
+          <div class="field-heading">
+            <span class="field-label">Documentos<span *ngIf="isTreatmentSelected"> *</span></span>
+            <span class="field-hint" *ngIf="isTreatmentSelected">
+              Obrigatório para Tratamento de Pendência
+            </span>
+          </div>
+
+          <app-file-dropzone
+            [(files)]="selectedFiles"
+            [disabled]="isCreatingTicket || isUploadingAttachments"
+          />
+
+          <p
+            class="document-requirement-message"
+            *ngIf="isTreatmentSelected && selectedFiles.length === 0"
+          >
+            Para criar um ticket de Tratamento de Pendência é obrigatório adicionar pelo menos um
+            documento.
+          </p>
+        </div>
+      </ng-container>
 
       <p class="error-message" *ngIf="errorMessage">
         {{ errorMessage }}
@@ -190,7 +140,8 @@
           isCreatingTicket ||
           isUploadingAttachments ||
           !contractId ||
-          !companyId
+          !companyId ||
+          !tipo
         "
         (click)="submit()"
       >
@@ -237,12 +188,7 @@
       <div class="cancellation-modal-body">
         <label>
           Motivo da anulação *
-
-          <textarea
-            rows="5"
-            formControlName="reason"
-            placeholder="Explique o motivo..."
-          ></textarea>
+          <textarea rows="4" formControlName="reason" placeholder="Explique o motivo..."></textarea>
         </label>
 
         <p class="error-message" *ngIf="cancellationErrorMessage">

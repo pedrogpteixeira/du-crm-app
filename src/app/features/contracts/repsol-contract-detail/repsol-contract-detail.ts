@@ -217,7 +217,7 @@ export class RepsolContractDetail implements OnInit {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
-        this.loadContract(this.contractId);
+        this.loadContract(this.contractId, true);
       }
     });
 
@@ -305,7 +305,7 @@ export class RepsolContractDetail implements OnInit {
     });
   }
 
-  loadContract(contractId: string): void {
+  loadContract(contractId: string, loadCampaignOptions = false): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -333,12 +333,18 @@ export class RepsolContractDetail implements OnInit {
 
           this.contract = contract;
           this.initializeEditForm(contract);
-          this.loadCampaigns(contract.companyId);
+          if (loadCampaignOptions) {
+            this.loadCampaigns(contract.companyId);
+          }
         },
         error: () => {
           this.showError('Não foi possível carregar o contrato Repsol.');
         },
       });
+  }
+
+  get canSubmitObservation(): boolean {
+    return !!this.contract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -353,8 +359,9 @@ export class RepsolContractDetail implements OnInit {
     if (
       !this.contract ||
       !this.contractId ||
-      !this.isSuperAdmin ||
-      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
@@ -726,7 +733,7 @@ export class RepsolContractDetail implements OnInit {
 
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
-    this.isSuperAdmin = role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin') || role.includes('du');
 
     if (!this.currentUserId) {
       return;

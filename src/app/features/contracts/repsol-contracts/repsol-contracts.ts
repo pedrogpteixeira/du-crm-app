@@ -23,6 +23,7 @@ import {
 import { SocketService } from '../../../core/services/socket';
 import { PreferencesService } from '../../../core/services/preferences';
 import { Auth } from '../../../core/services/auth';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 @Component({
   selector: 'app-repsol-contracts',
@@ -116,8 +117,7 @@ export class RepsolContracts
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
         error: (error) => {
           this.contracts = [];

@@ -228,7 +228,7 @@ export class WallboxContractDetail implements OnInit {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
-        this.loadContract(this.contractId);
+        this.loadContract(this.contractId, true);
       }
     });
 
@@ -317,7 +317,7 @@ export class WallboxContractDetail implements OnInit {
     });
   }
 
-  loadContract(contractId: string): void {
+  loadContract(contractId: string, loadCampaignOptions = false): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -349,13 +349,19 @@ export class WallboxContractDetail implements OnInit {
 
           this.initializeEditForm(normalizedContract);
 
-          this.loadCampaigns(normalizedContract.companyId);
+          if (loadCampaignOptions) {
+            this.loadCampaigns(normalizedContract.companyId);
+          }
         },
 
         error: () => {
           this.showError('Não foi possível carregar o contrato Wallbox.');
         },
       });
+  }
+
+  get canSubmitObservation(): boolean {
+    return !!this.contract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -370,8 +376,9 @@ export class WallboxContractDetail implements OnInit {
     if (
       !this.contract ||
       !this.contractId ||
-      !this.isSuperAdmin ||
-      (internal && !this.canAccessInternalObservations) ||
+      (internal
+        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
       return;
@@ -545,29 +552,23 @@ export class WallboxContractDetail implements OnInit {
 
     updateRequest
       .pipe(
-        switchMap((): Observable<SaveContractResult> => {
+        switchMap((updatedContract): Observable<SaveContractResult> => {
           if (!hasFiles) {
-            return this.wallboxContractService.getWallboxContractById(this.contractId).pipe(
-              map((contract): SaveContractResult => ({
-                contract,
-                uploadFailed: false,
-                uploadError: null,
-              })),
-            );
+            return of<SaveContractResult>({
+              contract: updatedContract,
+              uploadFailed: false,
+              uploadError: null,
+            });
           }
 
           return this.wallboxContractService
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
-              switchMap(() =>
-                this.wallboxContractService.getWallboxContractById(this.contractId).pipe(
-                  map((contract): SaveContractResult => ({
-                    contract,
-                    uploadFailed: false,
-                    uploadError: null,
-                  })),
-                ),
-              ),
+              map((contract): SaveContractResult => ({
+                contract,
+                uploadFailed: false,
+                uploadError: null,
+              })),
               catchError((uploadError: unknown) =>
                 this.wallboxContractService.getWallboxContractById(this.contractId).pipe(
                   map((contract): SaveContractResult => ({
@@ -577,7 +578,7 @@ export class WallboxContractDetail implements OnInit {
                   })),
                   catchError(() =>
                     of<SaveContractResult>({
-                      contract: this.contract!,
+                      contract: updatedContract,
                       uploadFailed: true,
                       uploadError,
                     }),
@@ -717,7 +718,6 @@ export class WallboxContractDetail implements OnInit {
     this.wallboxContractService
       .deleteAttachment(this.contractId, document.fileName)
       .pipe(
-        switchMap(() => this.wallboxContractService.getWallboxContractById(this.contractId)),
         finalize(() => {
           this.deletingAttachmentFileNames.delete(document.fileName);
 
@@ -761,7 +761,7 @@ export class WallboxContractDetail implements OnInit {
 
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
-    this.isSuperAdmin = role.includes('super admin');
+    this.isSuperAdmin = role.includes('super admin') || role.includes('du');
 
     if (!this.currentUserId) {
       return;

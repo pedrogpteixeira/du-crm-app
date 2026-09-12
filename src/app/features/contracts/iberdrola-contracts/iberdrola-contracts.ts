@@ -19,6 +19,7 @@ import {
   IberdrolaContractService,
   IberdrolaContractStatus,
 } from '../../../core/services/iberdrola-contract';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 interface AuthenticatedUserLike {
   id?: string;
@@ -130,8 +131,7 @@ export class IberdrolaContracts implements OnInit {
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
         error: (error) => {
           this.errorMessage =

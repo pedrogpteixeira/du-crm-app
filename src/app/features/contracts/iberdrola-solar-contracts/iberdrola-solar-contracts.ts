@@ -22,6 +22,7 @@ import {
 } from '../../../core/services/iberdrola-solar-contract';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
+import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 
 @Component({
   selector: 'app-iberdrola-solar-contracts',
@@ -127,8 +128,7 @@ export class IberdrolaSolarContracts
       )
       .subscribe({
         next: (contracts) => {
-          this.contracts =
-            contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
         },
 
         error: (error) => {

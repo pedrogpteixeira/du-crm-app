@@ -776,13 +776,22 @@ strong {
   position: sticky;
   top: 90px;
   z-index: 30;
-  margin: -4px -6px 0;
+  width: calc(100% - 338px);
+  box-sizing: border-box;
+  align-self: flex-start;
+  margin: -4px 0 0;
   padding: 12px 14px;
   border: 1px solid rgba(203, 213, 225, 0.72);
   border-radius: 16px;
   background: rgba(248, 250, 252, 0.94);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
   backdrop-filter: blur(12px);
+}
+
+@media (max-width: 980px) {
+  .page-header {
+    width: 100%;
+  }
 }
 
 .observations-card {

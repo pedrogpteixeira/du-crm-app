@@ -497,15 +497,18 @@
     <div class="cropper-card">
       <h3>Cortar foto</h3>
 
-      <image-cropper
-        [imageChangedEvent]="selectedImageEvent"
-        [maintainAspectRatio]="true"
-        [aspectRatio]="1 / 1"
-        [resizeToWidth]="512"
-        format="png"
-        (imageCropped)="onImageCropped($event)"
-      >
-      </image-cropper>
+      <div class="cropper-stage">
+        <image-cropper
+          [imageChangedEvent]="selectedImageEvent"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="1 / 1"
+          [resizeToWidth]="512"
+          [onlyScaleDown]="true"
+          format="png"
+          (imageCropped)="onImageCropped($event)"
+        >
+        </image-cropper>
+      </div>
 
       <div class="cropper-actions">
         <button

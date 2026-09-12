@@ -15,7 +15,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
-import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
 import {
   buildCancellationDescription,
@@ -30,26 +29,12 @@ import {
   TREATMENT_TICKET_TYPE,
   TicketPrioridade,
   TicketService,
-  TicketTeam,
   TicketTipo,
 } from '../../../core/services/ticket';
 import {
   ProfileUser,
   UserService,
 } from '../../../core/services/user';
-
-interface AssignableTicketTeam {
-  id: string;
-  name: string;
-  positionIndex: number;
-  position: string;
-  active?: boolean;
-}
-
-interface ProfileUserWithTeamPositions extends ProfileUser {
-  teams: AssignableTicketTeam[];
-  defaultTeam: AssignableTicketTeam | null;
-}
 
 export interface TicketCreateModalResult {
   ticket: CreatedTicket;
@@ -85,10 +70,6 @@ export class TicketCreateModal implements OnInit {
 
   currentUser: ProfileUser | null = null;
   assignableUsers: ProfileUser[] = [];
-  availableTeams: AssignableTicketTeam[] = [];
-
-  selectedTeamIds: string[] = [];
-  teamToAddId = '';
   selectedFiles: File[] = [];
 
   isLoadingAssignment = false;
@@ -104,8 +85,8 @@ export class TicketCreateModal implements OnInit {
   readonly priorityOptions = TICKET_PRIORITY_OPTIONS;
 
   readonly ticketForm = this.fb.group({
-    tipo: this.fb.nonNullable.control<TicketTipo>(
-      TREATMENT_TICKET_TYPE,
+    tipo: this.fb.nonNullable.control<TicketTipo | ''>(
+      '',
       Validators.required,
     ),
     prioridade: this.fb.nonNullable.control<TicketPrioridade>('Normal'),
@@ -122,7 +103,7 @@ export class TicketCreateModal implements OnInit {
     reason: this.fb.nonNullable.control('', Validators.required),
   });
 
-  get tipo(): TicketTipo {
+  get tipo(): TicketTipo | '' {
     return this.ticketForm.controls.tipo.value;
   }
 
@@ -150,6 +131,17 @@ export class TicketCreateModal implements OnInit {
     return this.tipo === TREATMENT_TICKET_TYPE;
   }
 
+  get isCancellationSelected(): boolean {
+    return this.tipo === CANCELLATION_TICKET_TYPE;
+  }
+
+  get isDescriptionRequired(): boolean {
+    return (
+      this.tipo === 'Novo Pedido de Chamada' ||
+      this.tipo === TREATMENT_TICKET_TYPE
+    );
+  }
+
   get hasValidCancellationReason(): boolean {
     return this.cancellationForm.controls.reason.value.trim().length > 0;
   }
@@ -163,28 +155,18 @@ export class TicketCreateModal implements OnInit {
   }
 
   ngOnInit(): void {
+    this.syncDescriptionValidation();
+
+    this.ticketForm.controls.tipo.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.syncDescriptionValidation();
+        this.errorMessage = '';
+      });
+
     this.loadAssignmentData();
   }
 
-  get selectedTeams(): AssignableTicketTeam[] {
-    return this.selectedTeamIds
-      .map((teamId) =>
-        this.availableTeams.find(
-          (team) => team.id === teamId,
-        ),
-      )
-      .filter(
-        (
-          team,
-        ): team is AssignableTicketTeam => Boolean(team),
-      );
-  }
-
-  get teamsAvailableToAdd(): AssignableTicketTeam[] {
-    return this.availableTeams.filter(
-      (team) => !this.selectedTeamIds.includes(team.id),
-    );
-  }
   canAssignOtherUsers(): boolean {
     return this.assignableUsers.length > 1;
   }
@@ -195,36 +177,14 @@ export class TicketCreateModal implements OnInit {
       return;
     }
 
-    this.loadAssignedUserTeams(this.assignedUserId);
-  }
-
-  onTeamToAddChange(event: Event): void {
-    this.teamToAddId = (event.target as HTMLSelectElement).value;
-  }
-
-  addSelectedTeam(): void {
-    if (!this.teamToAddId) {
-      return;
-    }
-
-    this.selectedTeamIds = [
-      ...new Set([
-        ...this.selectedTeamIds,
-        this.teamToAddId,
-      ]),
-    ];
-
-    this.teamToAddId = '';
-  }
-
-  removeSelectedTeam(teamId: string): void {
-    this.selectedTeamIds = this.selectedTeamIds.filter(
-      (selectedTeamId) => selectedTeamId !== teamId,
+    const selectedUser = this.assignableUsers.find(
+      (user) => user.id === this.assignedUserId,
     );
-  }
 
-  isRequiredTeam(teamId: string): boolean {
-    return this.getRequiredTeamIds().includes(teamId);
+    if (!selectedUser) {
+      this.errorMessage =
+        'O responsável selecionado já não está disponível para atribuição.';
+    }
   }
 
   onFilesSelected(event: Event): void {
@@ -556,7 +516,7 @@ export class TicketCreateModal implements OnInit {
         if (!state.loaded) {
           if (state.error) {
             this.errorMessage =
-              'Não foi possível carregar os utilizadores e equipas disponíveis.';
+              'Não foi possível carregar os utilizadores disponíveis.';
           }
           return;
         }
@@ -596,43 +556,10 @@ export class TicketCreateModal implements OnInit {
   }
 
   private refreshAssignmentFromCache(user: ProfileUser): void {
-    const previousSelectedTeamIds = [...this.selectedTeamIds];
-
-    this.availableTeams = this.resolveAssignableTeams(user);
-
-    const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
-    this.selectedTeamIds = previousSelectedTeamIds.filter((teamId) =>
-      availableTeamIds.has(teamId),
-    );
-
-    if (!this.selectedTeamIds.length) {
-      this.selectedTeamIds = this.resolveInitialTeamIds(user);
-    }
-
-    if (this.teamToAddId && !availableTeamIds.has(this.teamToAddId)) {
-      this.teamToAddId = '';
+    if (this.assignedUserId !== user.id) {
+      this.ticketForm.controls.assignedUserId.setValue(user.id);
     }
   }
-
-  private loadAssignedUserTeams(userId: string): void {
-    this.errorMessage = '';
-    this.availableTeams = [];
-    this.selectedTeamIds = [];
-    this.teamToAddId = '';
-
-    const selectedUser = this.assignableUsers.find(
-      (user) => user.id === userId,
-    ) ?? null;
-
-    if (!selectedUser) {
-      this.errorMessage =
-        'O responsável selecionado já não está disponível para atribuição.';
-      return;
-    }
-
-    this.initializeAssignment(selectedUser, false);
-  }
-
 
   private initializeAssignment(
     user: ProfileUser,
@@ -641,98 +568,18 @@ export class TicketCreateModal implements OnInit {
     if (updateAssignedUser) {
       this.ticketForm.controls.assignedUserId.setValue(user.id);
     }
-
-    this.availableTeams = this.resolveAssignableTeams(user);
-    this.selectedTeamIds = this.resolveInitialTeamIds(user);
-    this.teamToAddId = '';
   }
 
-  private resolveAssignableTeams(
-    user: ProfileUser,
-  ): AssignableTicketTeam[] {
-    const rawTeams =
-      (user as ProfileUserWithTeamPositions).teams ?? [];
+  private syncDescriptionValidation(): void {
+    const control = this.ticketForm.controls.descricao;
 
-    return rawTeams
-      .filter(
-        (team) =>
-          Boolean(team?.id) &&
-          Number.isInteger(team.positionIndex) &&
-          team.positionIndex >= 0 &&
-          team.active !== false,
-      )
-      .map((team) => ({
-        id: team.id,
-        name: team.name,
-        positionIndex: team.positionIndex,
-        position:
-          team.position?.trim() ||
-          `Posição ${team.positionIndex}`,
-        active: team.active,
-      }));
-  }
+    if (this.isDescriptionRequired) {
+      control.setValidators([Validators.required]);
+    } else {
+      control.clearValidators();
+    }
 
-  private resolveInitialTeamIds(user: ProfileUser): string[] {
-    const typedUser = user as ProfileUserWithTeamPositions;
-    const defaultTeamId = typedUser.defaultTeam?.id;
-
-    const initialTeamId =
-      defaultTeamId &&
-      this.availableTeams.some((team) => team.id === defaultTeamId)
-        ? defaultTeamId
-        : this.availableTeams[0]?.id;
-
-    return initialTeamId ? [initialTeamId] : [];
-  }
-
-  private getRequiredTeamIds(): string[] {
-    return [
-      environment.EQUIPA_CRM_ID,
-      environment.EQUIPA_DU_ID,
-    ].filter(
-      (teamId): teamId is string => Boolean(teamId),
-    );
-  }
-
-  private resolveTicketTeams(): TicketTeam[] {
-    const userTeams = this.selectedTeamIds
-      .map((teamId) =>
-        this.availableTeams.find((team) => team.id === teamId),
-      )
-      .filter(
-        (
-          team,
-        ): team is AssignableTicketTeam => {
-          if (!team) {
-            return false;
-          }
-
-          return (
-            Number.isInteger(team.positionIndex) &&
-            team.positionIndex >= 0
-          );
-        },
-      )
-      .map((team) => ({
-        teamId: team.id,
-        minimumPositionIndex: team.positionIndex,
-      }));
-
-    const existingTeamIds = new Set(
-      userTeams.map((team) => team.teamId),
-    );
-
-    const requiredTeams = this.getRequiredTeamIds()
-      .filter((teamId) => !existingTeamIds.has(teamId))
-      .map((teamId) => ({
-        teamId,
-        minimumPositionIndex: 0,
-      }));
-
-    return [
-      ...userTeams,
-      ...requiredTeams,
-    ];
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   private validateForm(): string | null {
@@ -748,24 +595,12 @@ export class TicketCreateModal implements OnInit {
       return 'Selecione o responsável pelo Ticket.';
     }
 
-    const invalidTeam = this.selectedTeamIds.some((teamId) => {
-      const team = this.availableTeams.find(
-        (availableTeam) => availableTeam.id === teamId,
-      );
-
-      return (
-        !team ||
-        !Number.isInteger(team.positionIndex) ||
-        team.positionIndex < 0
-      );
-    });
-
-    if (invalidTeam) {
-      return 'Uma das equipas selecionadas não possui uma posição hierárquica válida.';
+    if (!this.assignableUsers.some((user) => user.id === this.assignedUserId)) {
+      return 'O responsável selecionado já não está disponível para atribuição.';
     }
 
-    if (!this.resolveTicketTeams().length) {
-      return 'Selecione pelo menos uma equipa.';
+    if (this.isDescriptionRequired && !this.descricao.trim()) {
+      return 'A descrição é obrigatória para este tipo de Ticket.';
     }
 
     return null;
@@ -776,13 +611,13 @@ export class TicketCreateModal implements OnInit {
     const observations = this.observacoes.trim();
     const finalDescription =
       cancellationReason !== undefined
-        ? buildCancellationDescription(description, cancellationReason)
+        ? buildCancellationDescription(undefined, cancellationReason)
         : description;
 
     const payload: CreateTicketRequest = {
       contractId: this.contractId,
       companyId: this.companyId,
-      tipo: this.tipo,
+      tipo: this.tipo as TicketTipo,
       ...(this.prioridade !== 'Normal'
         ? { prioridade: this.prioridade }
         : {}),
@@ -796,7 +631,6 @@ export class TicketCreateModal implements OnInit {
         ? { observacoes: observations }
         : {}),
       userId: this.assignedUserId,
-      teams: this.resolveTicketTeams(),
     };
 
     return prepareTicketCreatePayload(

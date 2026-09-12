@@ -957,21 +957,13 @@
              OBSERVAÇÕES
         ========================== -->
 
-        <app-contract-activity-panel
-          [fluxo]="contract.fluxo ?? []"
-          [tickets]="contract.tickets ?? []"
-          [contractId]="contract.id"
-          [companyId]="contract.companyId"
-          [statusOptions]="estadoOptions"
-        ></app-contract-activity-panel>
-
         <article class="card observations-card">
           <app-observations-thread
             title="Observações"
             [value]="contract.observacoes"
             [(draft)]="observationDraft"
             [currentUserName]="currentUserName"
-            [canSubmit]="isSuperAdmin && !isSaving"
+            [canSubmit]="canSubmitObservation && !isSaving"
             [isSubmitting]="isSubmittingObservation || isSaving"
             (submitObservation)="submitObservation($event)"
           />
@@ -993,6 +985,14 @@
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>
+
+        <app-contract-activity-panel
+          [fluxo]="contract.fluxo ?? []"
+          [tickets]="contract.tickets ?? []"
+          [contractId]="contract.id"
+          [companyId]="contract.companyId"
+          [statusOptions]="estadoOptions"
+        ></app-contract-activity-panel>
       </div>
 
       <!-- =========================

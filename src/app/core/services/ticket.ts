@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -19,16 +19,6 @@ export type TicketPrioridade =
   | 'Normal'
   | 'Alto'
   | 'Urgente';
-
-export interface TicketTeam {
-  teamId: string;
-  minimumPositionIndex: number;
-}
-
-export interface TicketTeamDetail extends TicketTeam {
-  name: string | null;
-  position: string | null;
-}
 
 export interface TicketFollower {
   id: string;
@@ -50,6 +40,13 @@ export interface TicketDocument {
   storageProvider: string | null;
 }
 
+export interface TicketFlowEntry {
+  userId: string | null;
+  userName: string | null;
+  acao: string;
+  dataHora: string;
+}
+
 export interface CreateTicketRequest {
   contractId: string;
   companyId: string;
@@ -60,7 +57,6 @@ export interface CreateTicketRequest {
   descricao?: string;
   observacoes?: string;
   userId: string;
-  teams: TicketTeam[];
   documentosConfirmados?: boolean;
 }
 
@@ -72,7 +68,6 @@ export interface UpdateTicketRequest {
   descricao?: string;
   observacoes?: string;
   userId?: string;
-  teams?: TicketTeam[];
   documentosConfirmados?: boolean;
 }
 
@@ -119,8 +114,8 @@ export interface TicketDetail {
   anexos: TicketDocument[];
   userId: string;
   user: TicketUserSummary | null;
-  teams: TicketTeamDetail[];
   followers: TicketFollower[];
+  fluxo: TicketFlowEntry[];
   createdAt: string;
   updatedAt: string;
 }
@@ -134,21 +129,6 @@ interface TicketApiUser {
   username?: string | null;
 }
 
-interface TicketApiTeam {
-  id?: string;
-  teamId?: string;
-  name?: string | null;
-  teamName?: string | null;
-  position?: string | null;
-  minimumPosition?: string | null;
-  minimumPositionIndex?: number;
-  positionIndex?: number;
-  team?: {
-    id?: string;
-    name?: string | null;
-  } | null;
-}
-
 interface TicketApiFollower extends TicketApiUser {}
 
 interface TicketApiDocument {
@@ -159,6 +139,16 @@ interface TicketApiDocument {
   mimetype?: string | null;
   size?: number | null;
   storageProvider?: string | null;
+}
+
+interface TicketApiFlowEntry {
+  userId?: string | null;
+  userName?: string | null;
+  name?: string | null;
+  acao?: string | null;
+  action?: string | null;
+  dataHora?: string | null;
+  createdAt?: string | null;
 }
 
 export interface TicketApiModel {
@@ -176,8 +166,8 @@ export interface TicketApiModel {
   userId?: string;
   userName?: string | null;
   user?: TicketApiUser | null;
-  teams?: TicketApiTeam[];
   followers?: Array<TicketApiFollower | string>;
+  fluxo?: TicketApiFlowEntry[];
   anexos?: TicketApiDocument[];
   documentos?: TicketApiDocument[];
   createdAt?: string;
@@ -378,10 +368,11 @@ export class TicketService {
         payload,
       )
       .pipe(
-        switchMap((response) =>
-          this.isCompleteTicketResponse(response)
-            ? of(this.normalizeTicketDetail(response, ticketId))
-            : this.getTicketById(ticketId),
+        map((response) =>
+          this.normalizeTicketDetail(
+            response,
+            ticketId,
+          ),
         ),
       );
   }
@@ -402,10 +393,11 @@ export class TicketService {
         formData,
       )
       .pipe(
-        switchMap((response) =>
-          this.isCompleteTicketResponse(response)
-            ? of(this.normalizeTicketDetail(response, ticketId))
-            : this.getTicketById(ticketId),
+        map((response) =>
+          this.normalizeTicketDetail(
+            response,
+            ticketId,
+          ),
         ),
       );
   }
@@ -421,10 +413,11 @@ export class TicketService {
         )}`,
       )
       .pipe(
-        switchMap((response) =>
-          this.isCompleteTicketResponse(response)
-            ? of(this.normalizeTicketDetail(response, ticketId))
-            : this.getTicketById(ticketId),
+        map((response) =>
+          this.normalizeTicketDetail(
+            response,
+            ticketId,
+          ),
         ),
       );
   }
@@ -560,28 +553,6 @@ export class TicketService {
     };
   }
 
-  private isCompleteTicketResponse(
-    response: TicketApiModel | TicketApiEnvelope,
-  ): boolean {
-    const ticket = this.unwrapTicket(response);
-    const hasId = Boolean(ticket.id ?? ticket._id ?? ticket.ticketId);
-    const hasUser = Boolean(
-      ticket.userId ?? ticket.user?.id ?? ticket.user?._id ?? ticket.user?.userId,
-    );
-
-    return Boolean(
-      hasId &&
-        ticket.contractId &&
-        ticket.companyId &&
-        ticket.tipo &&
-        ticket.estado &&
-        ticket.prioridade &&
-        hasUser &&
-        Array.isArray(ticket.teams) &&
-        Array.isArray(ticket.followers) &&
-        Array.isArray(ticket.anexos ?? ticket.documentos),
-    );
-  }
 
   private unwrapTicketList(
     response: TicketFollowerListResponse,
@@ -727,32 +698,11 @@ export class TicketService {
             username,
           }
         : null,
-      teams: this.normalizeTeams(ticket.teams ?? []),
       followers: this.normalizeFollowers(ticket.followers ?? []),
+      fluxo: this.normalizeFlow(ticket.fluxo ?? []),
       createdAt: ticket.createdAt ?? '',
       updatedAt: ticket.updatedAt ?? '',
     };
-  }
-
-  private normalizeTeams(teams: TicketApiTeam[]): TicketTeamDetail[] {
-    return teams
-      .map((team) => {
-        const teamId = team.teamId ?? team.id ?? team.team?.id ?? '';
-        const minimumPositionIndex =
-          typeof team.minimumPositionIndex === 'number'
-            ? team.minimumPositionIndex
-            : typeof team.positionIndex === 'number'
-              ? team.positionIndex
-              : 0;
-
-        return {
-          teamId,
-          minimumPositionIndex,
-          name: team.name ?? team.teamName ?? team.team?.name ?? null,
-          position: team.position ?? team.minimumPosition ?? null,
-        };
-      })
-      .filter((team) => Boolean(team.teamId));
   }
 
   private normalizeFollowers(
@@ -779,6 +729,17 @@ export class TicketService {
         };
       })
       .filter((follower) => Boolean(follower.id));
+  }
+
+  private normalizeFlow(entries: TicketApiFlowEntry[]): TicketFlowEntry[] {
+    return entries
+      .map((entry) => ({
+        userId: entry.userId ?? null,
+        userName: entry.userName ?? entry.name ?? null,
+        acao: entry.acao ?? entry.action ?? '',
+        dataHora: entry.dataHora ?? entry.createdAt ?? '',
+      }))
+      .filter((entry) => Boolean(entry.acao || entry.dataHora));
   }
 
   private normalizeDocuments(

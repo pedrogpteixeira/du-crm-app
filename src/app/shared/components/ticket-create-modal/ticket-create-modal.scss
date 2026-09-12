@@ -9,57 +9,56 @@
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: 18px;
   background: rgba(15, 23, 42, 0.48);
   overflow-y: auto;
 }
 
 .ticket-modal {
-  width: min(760px, 100%);
-  max-height: calc(100vh - 40px);
+  width: min(700px, 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 22px;
+  border-radius: 18px;
   background: #ffffff;
-  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.26);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
 }
 
 .ticket-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 22px 24px 18px;
+  gap: 16px;
+  padding: 16px 18px 14px;
   border-bottom: 1px solid #e2e8f0;
 
   h2 {
-    margin: 0 0 5px;
+    margin: 0 0 3px;
     color: #243646;
-    font-size: 20px;
+    font-size: 18px;
   }
 
   p {
     margin: 0;
     color: #64748b;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
   }
 }
 
 .icon-button {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   color: #64748b;
   font-family: inherit;
-  font-size: 24px;
+  font-size: 22px;
   cursor: pointer;
 
   &:hover:not(:disabled) {
@@ -71,35 +70,40 @@
 .ticket-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 22px 24px;
-  overflow-y: auto;
+  gap: 12px;
+  padding: 14px 18px;
+  overflow: visible;
 }
 
-.ticket-form-grid {
+.ticket-form-grid,
+.ticket-text-grid {
   display: grid;
-  gap: 16px;
+  gap: 12px;
 }
 
-.two-columns {
+.primary-fields,
+.ticket-text-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.ticket-text-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
 label,
-.team-selection,
 .attachments-field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   min-width: 0;
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .field-label {
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -109,23 +113,23 @@ textarea {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #cbd5e1;
-  border-radius: 12px;
+  border-radius: 10px;
   outline: none;
   background: #ffffff;
   color: #243646;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 input,
 select {
-  height: 42px;
-  padding: 0 12px;
+  height: 38px;
+  padding: 0 10px;
 }
 
 textarea {
-  min-height: 104px;
-  padding: 12px;
+  min-height: 72px;
+  padding: 10px;
   resize: vertical;
 }
 
@@ -133,7 +137,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: #008db1;
-  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 141, 177, 0.1);
 }
 
 input:disabled,
@@ -143,64 +147,15 @@ textarea:disabled {
   color: #64748b;
 }
 
-.selected-team-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 42px;
-  padding: 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.team-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  max-width: 100%;
-  padding: 6px 8px 6px 10px;
-  border: 1px solid rgba(0, 141, 177, 0.18);
-  border-radius: 999px;
-  background: rgba(0, 141, 177, 0.1);
-  color: #006f8c;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.remove-team-button {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: #006f8c;
-  font-size: 18px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: rgba(0, 141, 177, 0.16);
-  }
-}
-
-.team-add-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-}
-
 .primary-button,
-.secondary-button {
-  min-height: 40px;
-  padding: 9px 16px;
+.secondary-button,
+.danger-button {
+  min-height: 38px;
+  padding: 8px 14px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -223,90 +178,30 @@ textarea:disabled {
   }
 }
 
-.file-upload-button {
-  width: fit-content;
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 15px;
-  border-radius: 11px;
-  background: #2f4050;
+.danger-button {
+  background: #dc2626;
   color: #ffffff;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
 
-  input {
-    display: none;
+  &:hover:not(:disabled) {
+    background: #b91c1c;
   }
-
-  &.disabled {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-}
-
-.selected-files {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.selected-file {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-
-  div {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-
-  strong {
-    color: #243646;
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  small {
-    color: #64748b;
-    font-size: 11px;
-  }
-}
-
-.remove-file-button,
-.clear-files-button {
-  border: 0;
-  background: transparent;
-  color: #dc2626;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.clear-files-button {
-  width: fit-content;
-  padding: 3px 0;
 }
 
 .loading-message,
-.error-message {
+.error-message,
+.warning-message,
+.document-requirement-message {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 11px;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.loading-message,
+.error-message,
+.warning-message {
+  padding: 8px 10px;
+  border-radius: 9px;
 }
 
 .loading-message {
@@ -319,11 +214,17 @@ textarea:disabled {
   color: #b91c1c;
 }
 
+.warning-message {
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
 .ticket-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px 22px;
+  gap: 8px;
+  padding: 12px 18px 16px;
   border-top: 1px solid #e2e8f0;
 }
 
@@ -332,79 +233,29 @@ button:disabled {
   cursor: not-allowed;
 }
 
-@media (max-width: 720px) {
-  .ticket-modal-backdrop {
-    padding: 10px;
-  }
-
-  .ticket-modal {
-    max-height: calc(100vh - 20px);
-  }
-
-  .ticket-modal-header,
-  .ticket-modal-body,
-  .ticket-modal-actions {
-    padding-right: 18px;
-    padding-left: 18px;
-  }
-
-  .two-columns,
-  .team-add-row {
-    grid-template-columns: 1fr;
-  }
-
-  .ticket-modal-actions {
-    flex-direction: column-reverse;
-  }
-
-  .ticket-modal-actions button,
-  .team-add-row button,
-  .file-upload-button {
-    width: 100%;
-  }
-}
-
-/* TICKET TYPE SPECIFIC UX */
-
 .field-heading {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .field-hint {
   color: #008db1;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
 .required-documents {
-  padding: 14px;
-  border: 1px solid rgba(0, 141, 177, 0.2);
-  border-radius: 14px;
-  background: rgba(0, 141, 177, 0.04);
+  padding: 10px;
+  border: 1px solid rgba(0, 141, 177, 0.18);
+  border-radius: 12px;
+  background: rgba(0, 141, 177, 0.035);
 }
 
 .document-requirement-message {
-  margin: 0;
   color: #b45309;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.warning-message {
-  margin: 0;
-  padding: 12px 14px;
-  border: 1px solid #fde68a;
-  border-radius: 12px;
-  background: #fffbeb;
-  color: #92400e;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
 }
 
 /* CANCELLATION CONFIRMATION */
@@ -415,102 +266,108 @@ button:disabled {
   z-index: 1210;
   display: grid;
   place-items: center;
-  padding: 20px;
+  padding: 18px;
   background: rgba(15, 23, 42, 0.58);
 }
 
 .cancellation-modal {
-  width: min(520px, 100%);
+  width: min(500px, 100%);
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 18px;
   background: #ffffff;
-  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.3);
+  box-shadow: 0 26px 75px rgba(15, 23, 42, 0.3);
 }
 
 .cancellation-modal-header {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 22px 22px 16px;
+  gap: 12px;
+  padding: 18px 18px 14px;
 
   h3 {
-    margin: 0 0 7px;
+    margin: 0 0 5px;
     color: #243646;
-    font-size: 18px;
+    font-size: 17px;
   }
 
   p {
     margin: 0;
     color: #64748b;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    line-height: 1.55;
+    line-height: 1.5;
   }
 }
 
 .cancellation-icon {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 11px;
   background: #fef2f2;
   color: #dc2626;
 
   .material-symbols-rounded {
-    font-size: 23px;
+    font-size: 21px;
   }
 }
 
 .cancellation-modal-body {
-  padding: 0 22px 20px;
+  padding: 0 18px 16px;
 
   label {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 5px;
   }
 }
 
 .cancellation-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 22px 20px;
+  gap: 8px;
+  padding: 12px 18px 16px;
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
 }
 
-.danger-button {
-  min-height: 40px;
-  padding: 9px 16px;
-  border: 0;
-  border-radius: 11px;
-  background: #dc2626;
-  color: #ffffff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: #b91c1c;
-  }
-}
-
 @media (max-width: 720px) {
-  .field-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 3px;
+  .ticket-modal-backdrop {
+    place-items: start center;
+    padding: 10px;
   }
 
+  .ticket-modal {
+    width: 100%;
+  }
+
+  .ticket-modal-header,
+  .ticket-modal-body,
+  .ticket-modal-actions {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .primary-fields,
+  .ticket-text-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-modal-actions,
   .cancellation-modal-actions {
     flex-direction: column-reverse;
   }
 
+  .ticket-modal-actions button,
   .cancellation-modal-actions button {
     width: 100%;
+  }
+
+  .field-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
   }
 }
