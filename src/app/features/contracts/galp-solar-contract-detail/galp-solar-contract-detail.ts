@@ -18,6 +18,7 @@ import {
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import {
   GALP_SOLAR_PANEL_SUGGESTIONS,
   GALP_SOLAR_PAYMENT_METHOD_SUGGESTIONS,
@@ -112,6 +113,7 @@ export class GalpSolarContractDetail implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   private readonly galpSolarContractService = inject(GalpSolarContractService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
@@ -649,6 +651,22 @@ export class GalpSolarContractDetail implements OnInit {
 
   isDeletingAttachment(document: GalpSolarContractDocument): boolean {
     return this.deletingAttachmentFileNames.has(document.fileName);
+  }
+
+  canPreviewDocument(document: GalpSolarContractDocument): boolean {
+    return this.documentPreview.canPreview(document);
+  }
+
+  previewDocument(document: GalpSolarContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(document, () => this.galpSolarContractService.downloadAttachment(this.contract!.id, document.fileName))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
+      });
   }
 
   downloadDocument(document: GalpSolarContractDocument): void {

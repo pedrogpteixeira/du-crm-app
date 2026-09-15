@@ -944,6 +944,18 @@
                 </button>
 
                 <button
+                  *ngIf="canPreviewDocument(document)"
+                  type="button"
+                  class="attachment-preview-button"
+                  [disabled]="isDeletingAttachment(document)"
+                  [attr.aria-label]="'Pré-visualizar ' + document.originalName"
+                  [attr.title]="'Pré-visualizar ' + document.originalName"
+                  (click)="previewDocument(document)"
+                >
+                  <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                </button>
+
+                <button
                   *ngIf="isEditing && isSuperAdmin"
                   type="button"
                   class="delete-attachment-button"

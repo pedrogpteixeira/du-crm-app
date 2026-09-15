@@ -18,6 +18,7 @@ import {
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
   IBERDROLA_SOLAR_CONTRACT_STATUSES,
@@ -118,6 +119,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   private readonly campaignService = inject(CampaignService);
   private readonly iberdrolaSolarContractService = inject(IberdrolaSolarContractService);
   private readonly preferencesService = inject(PreferencesService);
@@ -680,6 +682,22 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
   isDeletingAttachment(document: IberdrolaSolarContractDocument): boolean {
     return this.deletingAttachmentFileNames.has(document.fileName);
+  }
+
+  canPreviewDocument(document: IberdrolaSolarContractDocument): boolean {
+    return this.documentPreview.canPreview(document);
+  }
+
+  previewDocument(document: IberdrolaSolarContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(document, () => this.iberdrolaSolarContractService.downloadAttachment(this.contract!.id, document.fileName))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
+      });
   }
 
   downloadDocument(document: IberdrolaSolarContractDocument): void {

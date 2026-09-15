@@ -23,6 +23,7 @@ import {
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
   GALP_POWER_GAS_STATUSES,
@@ -130,6 +131,7 @@ export class GalpPowerGasContractDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   private readonly campaignService = inject(CampaignService);
   private readonly galpPowerGasContractService = inject(GalpPowerGasContractService);
   private readonly preferencesService = inject(PreferencesService);
@@ -1524,6 +1526,22 @@ export class GalpPowerGasContractDetail implements OnInit {
     };
 
     return classes[status];
+  }
+
+  canPreviewDocument(file: GalpPowerGasContractDocument): boolean {
+    return this.documentPreview.canPreview(file);
+  }
+
+  previewDocument(file: GalpPowerGasContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(file, () => this.galpPowerGasContractService.downloadDocument(this.contract!.id, file))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
+      });
   }
 
   downloadDocument(file: GalpPowerGasContractDocument): void {

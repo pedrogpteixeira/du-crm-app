@@ -154,6 +154,17 @@
               </button>
 
               <button
+                *ngIf="canPreviewAttachment(attachment)"
+                type="button"
+                class="attachment-preview-button"
+                [attr.aria-label]="'Pré-visualizar ' + attachment.originalName"
+                [attr.title]="'Pré-visualizar ' + attachment.originalName"
+                (click)="previewAttachment(attachment)"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+              </button>
+
+              <button
                 *ngIf="isEditing"
                 type="button"
                 class="delete-attachment-btn"

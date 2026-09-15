@@ -1,0 +1,195 @@
+<section class="client-detail-page">
+  <header class="page-header">
+    <div class="header-copy">
+      <a class="breadcrumb" routerLink="/home/dashboard">CRM › Cliente</a>
+
+      <div class="title-row">
+        <div class="client-mark" aria-hidden="true">
+          {{ client?.name?.charAt(0)?.toUpperCase() || 'C' }}
+        </div>
+
+        <div>
+          <h1>{{ client?.name || 'Cliente' }}</h1>
+          <p *ngIf="client">{{ client.id }} · NIF {{ client.nif }}</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="state-card" *ngIf="isLoading">
+    <span class="material-symbols-rounded">progress_activity</span>
+    <div>
+      <strong>A carregar cliente</strong>
+      <p>A obter informação e contratos associados.</p>
+    </div>
+  </div>
+
+  <div class="state-card error" *ngIf="!isLoading && errorMessage">
+    <span class="material-symbols-rounded">error</span>
+    <div>
+      <strong>Não foi possível carregar</strong>
+      <p>{{ errorMessage }}</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="client && !isLoading">
+    <section class="summary-grid" aria-label="Resumo de contratos">
+      <article class="summary-card">
+        <span class="summary-icon material-symbols-rounded">description</span>
+        <div>
+          <span>Total de contratos</span>
+          <strong>{{ totalContracts }}</strong>
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-icon material-symbols-rounded">check_circle</span>
+        <div>
+          <span>Ativos</span>
+          <strong>{{ activeContracts }}</strong>
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-icon material-symbols-rounded">pending_actions</span>
+        <div>
+          <span>Em tratamento</span>
+          <strong>{{ inProgressContracts }}</strong>
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <span class="summary-icon material-symbols-rounded">block</span>
+        <div>
+          <span>Cancelados / baixa</span>
+          <strong>{{ closedContracts }}</strong>
+        </div>
+      </article>
+    </section>
+
+    <article class="card client-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Cliente</span>
+          <h2>Informação geral</h2>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span>Nome</span>
+          <strong>{{ client.name }}</strong>
+        </div>
+
+        <div class="info-item">
+          <span>NIF</span>
+          <strong>{{ client.nif }}</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Telefone</span>
+          <strong>{{ clientPhone }}</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Email</span>
+          <strong>{{ clientEmail }}</strong>
+        </div>
+
+        <div class="info-item wide">
+          <span>Morada</span>
+          <strong>{{ clientAddress }}</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Criado em</span>
+          <strong>{{ client.createdAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+
+        <div class="info-item">
+          <span>Atualizado em</span>
+          <strong>{{ client.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="card contracts-card">
+      <div class="section-heading contracts-heading">
+        <div>
+          <span class="eyebrow">Histórico comercial</span>
+          <h2>Contratos</h2>
+        </div>
+
+        <span class="count-badge">
+          {{ totalContracts }} {{ totalContracts === 1 ? 'contrato' : 'contratos' }}
+        </span>
+      </div>
+
+      <div class="empty-contracts" *ngIf="!contracts.length">
+        <span class="material-symbols-rounded">folder_off</span>
+        <strong>Sem contratos associados</strong>
+        <p>Este cliente ainda não possui contratos registados.</p>
+      </div>
+
+      <div class="contracts-grid" *ngIf="contracts.length">
+        <a
+          *ngFor="let contract of contracts; trackBy: trackContract"
+          class="contract-card"
+          [routerLink]="getContractDetailRoute(contract)"
+        >
+          <div class="contract-card-top">
+            <span class="provider-badge">{{ getProviderName(contract) }}</span>
+
+            <span
+              class="status-badge"
+              [style.--status-color]="getStatusColor(contract.estado)"
+            >
+              {{ getValue(contract.estado) }}
+            </span>
+          </div>
+
+          <div class="contract-main">
+            <div>
+              <span class="contract-label">Produto</span>
+              <strong>{{ getValue(contract.tipoProduto) }}</strong>
+            </div>
+
+            <div>
+              <span class="contract-label">Segmento</span>
+              <strong>{{ getValue(contract.tipoSegmento) }}</strong>
+            </div>
+          </div>
+
+          <div class="contract-meta">
+            <div>
+              <span>Responsável</span>
+              <strong>{{ getResponsibleName(contract) }}</strong>
+            </div>
+
+            <div>
+              <span>Criado</span>
+              <strong>
+                {{ contract.createdAt ? (contract.createdAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+              </strong>
+            </div>
+
+            <div>
+              <span>Atualizado</span>
+              <strong>
+                {{ contract.updatedAt ? (contract.updatedAt | date: 'dd/MM/yyyy HH:mm') : '—' }}
+              </strong>
+            </div>
+          </div>
+
+          <div class="contract-footer">
+            <span>{{ contract.id }}</span>
+            <span class="open-link">
+              Abrir contrato
+              <span class="material-symbols-rounded">arrow_forward</span>
+            </span>
+          </div>
+        </a>
+      </div>
+    </article>
+  </ng-container>
+</section>

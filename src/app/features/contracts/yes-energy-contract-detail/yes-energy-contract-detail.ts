@@ -23,6 +23,7 @@ import {
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
@@ -147,6 +148,7 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
 })
 export class YesEnergyContractDetail implements OnInit {
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly destroyRef = inject(DestroyRef);
 
@@ -836,6 +838,22 @@ export class YesEnergyContractDetail implements OnInit {
 
   isDeletingAttachment(document: YesEnergyContractDocument): boolean {
     return this.deletingAttachmentFileNames.has(document.fileName);
+  }
+
+  canPreviewDocument(file: YesEnergyContractDocument): boolean {
+    return this.documentPreview.canPreview(file);
+  }
+
+  previewDocument(file: YesEnergyContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(file, () => this.yesEnergyContractService.downloadDocument(this.contract!.id, file))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
+      });
   }
 
   downloadDocument(file: YesEnergyContractDocument): void {

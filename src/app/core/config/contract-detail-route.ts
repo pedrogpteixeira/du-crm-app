@@ -1,3 +1,4 @@
+import type { ClientContractProvider } from '../services/client';
 import { environment } from '../../../environments/environment';
 import { IBERDROLA_COMPANY_ID } from '../services/iberdrola-contract';
 import { IBERDROLA_SOLAR_COMPANY_ID } from '../services/iberdrola-solar-contract';
@@ -7,7 +8,7 @@ import { YES_ENERGY_COMPANY_ID } from '../services/yes-energy-contract';
 interface ContractRouteConfig {
   companyId: string;
   companyName: string;
-  segment: string;
+  segment: ClientContractProvider;
 }
 
 const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
@@ -70,6 +71,29 @@ export function getContractDetailRoute(
     config.segment,
     contractId,
   ];
+}
+
+export function getContractDetailRouteByProvider(
+  provider: ClientContractProvider,
+  contractId: string,
+): string[] | null {
+  const config = CONTRACT_ROUTE_CONFIGS.find(
+    (entry) => entry.segment === provider,
+  );
+
+  if (!config || !contractId) {
+    return null;
+  }
+
+  return ['/home/contracts', config.segment, contractId];
+}
+
+export function getContractProviderName(provider: ClientContractProvider): string {
+  const config = CONTRACT_ROUTE_CONFIGS.find(
+    (entry) => entry.segment === provider,
+  );
+
+  return config?.companyName ?? 'Comercializadora desconhecida';
 }
 
 export function getContractCompanyName(companyId: string): string {

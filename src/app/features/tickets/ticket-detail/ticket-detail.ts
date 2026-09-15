@@ -12,6 +12,7 @@ import {
 } from '../../../core/config/contract-detail-route';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { SocketService, TicketSocketEvent } from '../../../core/services/socket';
 import {
   hasRequiredDocuments,
@@ -72,6 +73,7 @@ export class TicketDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly socketService = inject(SocketService);
@@ -87,12 +89,15 @@ export class TicketDetail implements OnInit {
 
   selectedFiles: File[] = [];
   deletingAttachmentFileNames = new Set<string>();
+  transferAttachmentFileNames = new Set<string>();
 
   isLoading = false;
   isSaving = false;
   isEditing = false;
   isUploadingAttachments = false;
+  isTransferringAttachments = false;
   isSuperAdmin = false;
+  canTransferAttachments = false;
   canEditTicket = false;
 
   loadError = '';
@@ -154,6 +159,18 @@ export class TicketDetail implements OnInit {
     return this.ticket?.tipo === TREATMENT_TICKET_TYPE;
   }
 
+  get canTransferTreatmentAttachments(): boolean {
+    return (
+      this.canTransferAttachments &&
+      this.ticket?.tipo === TREATMENT_TICKET_TYPE &&
+      this.ticket.anexos.length > 0
+    );
+  }
+
+  get selectedTransferAttachmentCount(): number {
+    return this.transferAttachmentFileNames.size;
+  }
+
   loadTicket(ticketId: string): void {
     this.isLoading = true;
     this.loadError = '';
@@ -165,6 +182,7 @@ export class TicketDetail implements OnInit {
       .subscribe({
         next: (ticket) => {
           this.ticket = ticket;
+          this.pruneTransferAttachmentSelection(ticket);
 
           if (!this.isEditing) {
             this.initializeEditForm(ticket);
@@ -475,6 +493,7 @@ export class TicketDetail implements OnInit {
       .subscribe({
         next: (updatedTicket) => {
           this.ticket = updatedTicket;
+          this.pruneTransferAttachmentSelection(updatedTicket);
           this.updateCanEditTicket();
           this.showSuccess(`O documento "${document.originalName}" foi removido com sucesso.`);
         },
@@ -492,6 +511,119 @@ export class TicketDetail implements OnInit {
 
   isDeletingAttachment(document: TicketDocument): boolean {
     return this.deletingAttachmentFileNames.has(document.fileName);
+  }
+
+  isAttachmentSelectedForTransfer(document: TicketDocument): boolean {
+    return this.transferAttachmentFileNames.has(document.fileName);
+  }
+
+  onTransferAttachmentSelectionChange(document: TicketDocument, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const checked = Boolean(input?.checked);
+
+    if (!this.canTransferTreatmentAttachments || this.isTransferringAttachments) {
+      return;
+    }
+
+    const nextSelection = new Set(this.transferAttachmentFileNames);
+
+    if (checked) {
+      if (nextSelection.size >= 20 && !nextSelection.has(document.fileName)) {
+        if (input) {
+          input.checked = false;
+        }
+        this.showError('Pode transferir no máximo 20 documentos de cada vez.');
+        return;
+      }
+
+      nextSelection.add(document.fileName);
+    } else {
+      nextSelection.delete(document.fileName);
+    }
+
+    this.transferAttachmentFileNames = nextSelection;
+    this.errorMessage = '';
+  }
+
+  clearTransferAttachmentSelection(): void {
+    if (this.isTransferringAttachments) {
+      return;
+    }
+
+    this.transferAttachmentFileNames = new Set<string>();
+  }
+
+  transferSelectedAttachmentsToContract(): void {
+    if (
+      !this.ticket ||
+      !this.canTransferTreatmentAttachments ||
+      this.isTransferringAttachments
+    ) {
+      return;
+    }
+
+    const fileNames = Array.from(this.transferAttachmentFileNames);
+
+    if (fileNames.length === 0) {
+      this.showError('Selecione pelo menos um documento para transferir para o contrato.');
+      return;
+    }
+
+    if (fileNames.length > 20) {
+      this.showError('Pode transferir no máximo 20 documentos de cada vez.');
+      return;
+    }
+
+    this.isTransferringAttachments = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.prepareOwnSocketSuppression();
+
+    this.ticketService
+      .transferAttachmentsToContract(this.ticket.id, fileNames)
+      .pipe(finalize(() => (this.isTransferringAttachments = false)))
+      .subscribe({
+        next: ({ transferred, ticket }) => {
+          this.ticket = ticket;
+          this.transferAttachmentFileNames = new Set<string>();
+          this.updateCanEditTicket();
+
+          if (!this.isEditing) {
+            this.initializeEditForm(ticket);
+          }
+
+          this.showSuccess(
+            transferred === 1
+              ? '1 documento foi transferido para o contrato com sucesso.'
+              : `${transferred} documentos foram transferidos para o contrato com sucesso.`,
+          );
+        },
+        error: (error: unknown) => {
+          this.clearOwnSocketSuppression();
+          this.showError(
+            this.getApiErrorMessage(
+              error,
+              'Não foi possível transferir os documentos selecionados para o contrato.',
+            ),
+          );
+        },
+      });
+  }
+
+  canPreviewDocument(document: TicketDocument): boolean {
+    return this.documentPreview.canPreview(document);
+  }
+
+  previewDocument(document: TicketDocument): void {
+    if (!this.ticket) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(document, () => this.ticketService.downloadDocument(this.ticket!.id, document.fileName))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o documento.'),
+      });
   }
 
   downloadDocument(document: TicketDocument): void {
@@ -580,6 +712,8 @@ export class TicketDetail implements OnInit {
     const role = currentUser?.role?.toLowerCase() ?? '';
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.isSuperAdmin = role.includes('super admin');
+    this.canTransferAttachments =
+      role.includes('super admin') || role.includes('du');
   }
 
   private updateCanEditTicket(): void {
@@ -601,6 +735,22 @@ export class TicketDetail implements OnInit {
     this.canEditTicket =
       this.ticket.userId === this.currentUserId ||
       this.ticket.followers.some((follower) => follower.id === this.currentUserId);
+  }
+
+  private pruneTransferAttachmentSelection(ticket: TicketDetailModel): void {
+    if (this.transferAttachmentFileNames.size === 0) {
+      return;
+    }
+
+    const availableFileNames = new Set(
+      ticket.anexos.map((document) => document.fileName),
+    );
+
+    this.transferAttachmentFileNames = new Set(
+      Array.from(this.transferAttachmentFileNames).filter((fileName) =>
+        availableFileNames.has(fileName),
+      ),
+    );
   }
 
   private initializeEditForm(ticket: TicketDetailModel): void {
@@ -687,6 +837,7 @@ export class TicketDetail implements OnInit {
 
     if (this.isCompleteSocketTicketPayload(payload)) {
       this.ticket = this.ticketService.normalizeSocketTicket(payload, this.ticketId);
+      this.pruneTransferAttachmentSelection(this.ticket);
       this.updateCanEditTicket();
       this.initializeEditForm(this.ticket);
       this.socketMessage = `Este Ticket foi atualizado às ${currentTime}.`;
@@ -730,6 +881,7 @@ export class TicketDetail implements OnInit {
         });
 
         this.ticket = latestTicket;
+        this.pruneTransferAttachmentSelection(latestTicket);
         this.originalEditSnapshot = latestSnapshot;
         this.updateCanEditTicket();
         this.socketMessage = conflicts
@@ -748,6 +900,7 @@ export class TicketDetail implements OnInit {
     this.ticketService.getTicketById(this.ticketId).subscribe({
       next: (ticket) => {
         this.ticket = ticket;
+        this.pruneTransferAttachmentSelection(ticket);
         this.updateCanEditTicket();
         this.initializeEditForm(ticket);
         this.socketMessage = `Este Ticket foi atualizado às ${currentTime}.`;

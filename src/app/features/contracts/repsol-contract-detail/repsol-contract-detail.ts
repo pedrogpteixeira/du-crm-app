@@ -23,6 +23,7 @@ import {
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
   REPSOL_CONTRACT_STATUSES,
@@ -130,6 +131,7 @@ export class RepsolContractDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
   private readonly campaignService = inject(CampaignService);
   private readonly repsolContractService = inject(RepsolContractService);
   private readonly preferencesService = inject(PreferencesService);
@@ -1520,6 +1522,22 @@ export class RepsolContractDetail implements OnInit {
       Atribuído: 'status-assigned',
       Cancelado: 'status-cancelled',
     }[status];
+  }
+
+  canPreviewDocument(file: RepsolContractDocument): boolean {
+    return this.documentPreview.canPreview(file);
+  }
+
+  previewDocument(file: RepsolContractDocument): void {
+    if (!this.contract?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(file, () => this.repsolContractService.downloadDocument(this.contract!.id, file))
+      .subscribe({
+        error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
+      });
   }
 
   downloadDocument(file: RepsolContractDocument): void {

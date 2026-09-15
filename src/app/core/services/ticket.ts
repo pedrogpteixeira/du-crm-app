@@ -120,6 +120,11 @@ export interface TicketDetail {
   updatedAt: string;
 }
 
+export interface TransferTicketAttachmentsResult {
+  transferred: number;
+  ticket: TicketDetail;
+}
+
 interface TicketApiUser {
   id?: string;
   _id?: string;
@@ -172,6 +177,12 @@ export interface TicketApiModel {
   documentos?: TicketApiDocument[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+interface TransferTicketAttachmentsApiResponse {
+  transferred?: number;
+  ticket?: TicketApiModel;
+  contract?: unknown;
 }
 
 interface TicketApiEnvelope {
@@ -419,6 +430,39 @@ export class TicketService {
             ticketId,
           ),
         ),
+      );
+  }
+
+  transferAttachmentsToContract(
+    ticketId: string,
+    fileNames: readonly string[],
+  ): Observable<TransferTicketAttachmentsResult> {
+    const uniqueFileNames = Array.from(
+      new Set(
+        fileNames
+          .map((fileName) => fileName.trim())
+          .filter(Boolean),
+      ),
+    );
+
+    return this.http
+      .post<TransferTicketAttachmentsApiResponse>(
+        `${this.baseUrl}/${encodeURIComponent(ticketId)}/attachments/transfer-to-contract`,
+        { fileNames: uniqueFileNames },
+      )
+      .pipe(
+        map((response) => {
+          if (!response.ticket) {
+            throw new Error(
+              'A transferência foi concluída, mas a API não devolveu o Ticket atualizado.',
+            );
+          }
+
+          return {
+            transferred: Math.max(0, Number(response.transferred ?? 0)),
+            ticket: this.normalizeTicketDetail(response.ticket, ticketId),
+          };
+        }),
       );
   }
 

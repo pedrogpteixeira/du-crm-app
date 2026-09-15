@@ -352,6 +352,78 @@ strong {
   margin-bottom: 18px;
 }
 
+.attachment-transfer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #bae6fd;
+  border-radius: 14px;
+  background: #f0f9ff;
+}
+
+.attachment-transfer-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  strong {
+    color: #243646;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+.attachment-transfer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  > span {
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}
+
+.clear-transfer-selection-button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.clear-transfer-selection-button:hover:not(:disabled) {
+  color: #243646;
+  text-decoration: underline;
+}
+
+.clear-transfer-selection-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.transfer-attachments-button {
+  min-height: 38px;
+  padding: 8px 13px;
+  font-size: 11px;
+}
+
 .upload-dropzone {
   display: flex;
   flex-direction: row;
@@ -503,6 +575,61 @@ strong {
 .attachment-item.deleting {
   opacity: 0.6;
   pointer-events: none;
+}
+
+.attachment-transfer-select {
+  width: 48px;
+  min-width: 48px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover,
+  &.selected {
+    background: #e0f2fe;
+  }
+}
+
+.transfer-checkbox-indicator {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #94a3b8;
+  border-radius: 5px;
+  background: #ffffff;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.attachment-transfer-select.selected .transfer-checkbox-indicator {
+  border-color: #008db1;
+  background: #008db1;
+}
+
+.attachment-transfer-select.selected .transfer-checkbox-indicator::after {
+  content: '✓';
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.attachment-transfer-select:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .attachment-download {
@@ -711,6 +838,20 @@ strong {
   .compact-button,
   .clear-datetime-button {
     width: 100%;
+  }
+
+  .attachment-transfer-bar,
+  .attachment-transfer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .attachment-transfer-actions {
+    justify-content: flex-start;
+  }
+
+  .attachment-transfer-actions > span {
+    align-self: flex-start;
   }
 
   .attachment-info strong {

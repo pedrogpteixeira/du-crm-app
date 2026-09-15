@@ -352,3 +352,37 @@ select:disabled {
 .contract-detail-page .status-cancelled {
   background: #b91c1c !important;
 }
+
+/* =========================================================
+   ATTACHMENT PREVIEW ACTION
+   Shared by contract, ticket and knowledge-base attachments.
+========================================================= */
+.attachment-preview-button {
+  width: 52px;
+  min-width: 52px;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid #e2e8f0;
+  background: transparent;
+  color: #2f4050;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.attachment-preview-button .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.attachment-preview-button:hover:not(:disabled) {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.attachment-preview-button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}

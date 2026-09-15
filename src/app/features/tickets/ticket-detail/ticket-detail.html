@@ -171,6 +171,36 @@
             />
           </div>
 
+          <div class="attachment-transfer-bar" *ngIf="canTransferTreatmentAttachments">
+            <div class="attachment-transfer-copy">
+              <strong>Transferir para contrato</strong>
+              <small>Selecione até 20 documentos associados a este Ticket.</small>
+            </div>
+
+            <div class="attachment-transfer-actions">
+              <span>{{ selectedTransferAttachmentCount }} selecionado(s)</span>
+
+              <button
+                *ngIf="selectedTransferAttachmentCount > 0"
+                type="button"
+                class="clear-transfer-selection-button"
+                [disabled]="isTransferringAttachments"
+                (click)="clearTransferAttachmentSelection()"
+              >
+                Limpar
+              </button>
+
+              <button
+                type="button"
+                class="primary-button compact-button transfer-attachments-button"
+                [disabled]="selectedTransferAttachmentCount === 0 || isTransferringAttachments"
+                (click)="transferSelectedAttachmentsToContract()"
+              >
+                {{ isTransferringAttachments ? 'A transferir...' : 'Transferir para contrato' }}
+              </button>
+            </div>
+          </div>
+
           <div
             class="attachments-list"
             *ngIf="(ticket.anexos | visibleAttachments).length; else noDocuments"
@@ -180,6 +210,21 @@
               *ngFor="let document of ticket.anexos | visibleAttachments"
               [class.deleting]="isDeletingAttachment(document)"
             >
+              <label
+                *ngIf="canTransferTreatmentAttachments"
+                class="attachment-transfer-select"
+                [class.selected]="isAttachmentSelectedForTransfer(document)"
+                [attr.aria-label]="'Selecionar ' + document.originalName + ' para transferir'"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="isAttachmentSelectedForTransfer(document)"
+                  [disabled]="isTransferringAttachments || isDeletingAttachment(document)"
+                  (change)="onTransferAttachmentSelectionChange(document, $event)"
+                />
+                <span class="transfer-checkbox-indicator" aria-hidden="true"></span>
+              </label>
+
               <button
                 type="button"
                 class="attachment-download"
@@ -197,6 +242,18 @@
                     </ng-container>
                   </span>
                 </div>
+              </button>
+
+              <button
+                *ngIf="canPreviewDocument(document)"
+                type="button"
+                class="attachment-preview-button"
+                [disabled]="isDeletingAttachment(document) || isTransferringAttachments"
+                [attr.aria-label]="'Pré-visualizar ' + document.originalName"
+                [attr.title]="'Pré-visualizar ' + document.originalName"
+                (click)="previewDocument(document)"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
               </button>
 
               <button

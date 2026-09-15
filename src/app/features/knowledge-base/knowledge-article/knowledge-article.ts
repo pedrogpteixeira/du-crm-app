@@ -14,6 +14,7 @@ import { Company, CompanyService } from '../../../core/services/company';
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
+import { DocumentPreviewService } from '../../../core/services/document-preview';
 
 import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
 @Component({
@@ -30,6 +31,7 @@ export class KnowledgeArticle implements OnInit {
   private readonly companyService = inject(CompanyService);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
+  private readonly documentPreview = inject(DocumentPreviewService);
 
   readonly apiUrl = environment.apiUrl;
 
@@ -281,6 +283,24 @@ export class KnowledgeArticle implements OnInit {
         this.deletingAttachmentFileName = null;
       },
     });
+  }
+
+  canPreviewAttachment(attachment: KnowledgeAttachment): boolean {
+    return this.documentPreview.canPreview(attachment);
+  }
+
+  previewAttachment(attachment: KnowledgeAttachment): void {
+    if (!this.article?.id) {
+      return;
+    }
+
+    this.documentPreview
+      .preview(attachment, () => this.knowledgeBaseService.downloadAttachment(attachment, this.article!.id))
+      .subscribe({
+        error: () => {
+          this.errorMessage = 'Não foi possível pré-visualizar o anexo.';
+        },
+      });
   }
 
   downloadAttachment(attachment: KnowledgeAttachment): void {
