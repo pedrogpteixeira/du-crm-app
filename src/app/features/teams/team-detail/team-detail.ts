@@ -546,17 +546,6 @@ export class TeamDetail implements OnInit {
 
     this.powerCommissions.clear();
 
-    commission
-      .electricityPowerCommissions
-      ?.forEach((powerCommission) => {
-        this.powerCommissions.push(
-          this.createPowerCommissionGroup(
-            powerCommission.powerKva,
-            powerCommission.commission,
-          ),
-        );
-      });
-
     this.commissionForm.reset(
       {
         companyId:
@@ -599,6 +588,21 @@ export class TeamDetail implements OnInit {
         emitEvent: false,
       },
     );
+
+    (
+      commission
+        .electricityPowerCommissions ?? []
+    ).forEach((powerCommission) => {
+      this.powerCommissions.push(
+        this.createPowerCommissionGroup(
+          Number(powerCommission.powerKva),
+          Number(powerCommission.commission),
+        ),
+      );
+    });
+
+    this.commissionForm.markAsPristine();
+    this.commissionForm.markAsUntouched();
 
     this.showCommissionModal = true;
   }
@@ -782,13 +786,15 @@ export class TeamDetail implements OnInit {
           }),
         )
         .subscribe({
-          next: () => {
-            this.closeCommissionModal();
+          next: (updatedCommission) => {
+            this.finishCommissionSave();
 
             this.successMessage =
               'Configuração de comissões atualizada com sucesso.';
 
-            this.loadTeamCommissions();
+            this.upsertTeamCommission(
+              updatedCommission,
+            );
 
             this.clearSuccessMessageLater();
           },
@@ -864,13 +870,15 @@ export class TeamDetail implements OnInit {
         }),
       )
       .subscribe({
-        next: () => {
-          this.closeCommissionModal();
+        next: (createdCommission) => {
+          this.finishCommissionSave();
 
           this.successMessage =
             'Configuração de comissões criada com sucesso.';
 
-          this.loadTeamCommissions();
+          this.upsertTeamCommission(
+            createdCommission,
+          );
 
           this.clearSuccessMessageLater();
         },
@@ -1155,6 +1163,40 @@ export class TeamDetail implements OnInit {
         );
       },
     );
+  }
+
+  private upsertTeamCommission(
+    commission: TeamCommission,
+  ): void {
+    const existingIndex =
+      this.teamCommissions.findIndex(
+        (item) =>
+          item.id === commission.id,
+      );
+
+    if (existingIndex === -1) {
+      this.teamCommissions = [
+        ...this.teamCommissions,
+        commission,
+      ];
+    } else {
+      this.teamCommissions =
+        this.teamCommissions.map(
+          (item, index) =>
+            index === existingIndex
+              ? commission
+              : item,
+        );
+    }
+
+    this.sortTeamCommissions();
+  }
+
+  private finishCommissionSave(): void {
+    this.showCommissionModal = false;
+    this.editingCommission = null;
+    this.commissionFormError = '';
+    this.resetCommissionForm();
   }
 
   private handleCommissionSaveError(

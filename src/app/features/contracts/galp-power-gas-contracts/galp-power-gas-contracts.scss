@@ -1,3 +1,5 @@
+@use '../../../../styles/contract-list-filters' as contractListFilters;
+
 .contracts-page {
   display: flex;
   flex-direction: column;
@@ -535,3 +537,5 @@
   }
 }
 
+
+@include contractListFilters.styles;

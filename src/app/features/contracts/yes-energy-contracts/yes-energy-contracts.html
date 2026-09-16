@@ -1,42 +1,23 @@
 <section class="contracts-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">
-        Contratos › Yes Energy
-      </span>
+      <span class="breadcrumb"> Contratos › Yes Energy </span>
 
-      <h1>
-        Contratos Yes Energy
-      </h1>
+      <h1>Contratos Yes Energy</h1>
 
-      <p>
-        Consulta e acompanha os contratos
-        Yes Energy registados no CRM.
-      </p>
+      <p>Consulta e acompanha os contratos Yes Energy registados no CRM.</p>
     </div>
 
     <div class="header-actions">
       <div class="view-toggle">
-        <button
-          type="button"
-          [class.active]="
-            viewMode === 'table'
-          "
-          (click)="
-            setViewMode('table')
-          "
-        >
+        <button type="button" [class.active]="viewMode === 'table'" (click)="setViewMode('table')">
           Tabela
         </button>
 
         <button
           type="button"
-          [class.active]="
-            viewMode === 'kanban'
-          "
-          (click)="
-            setViewMode('kanban')
-          "
+          [class.active]="viewMode === 'kanban'"
+          (click)="setViewMode('kanban')"
         >
           Estados
         </button>
@@ -44,22 +25,146 @@
 
       <button
         type="button"
-        class="create-btn"
-        routerLink="/home/contracts/yes-energy/create"
+        class="filters-toggle-button"
+        [class.is-active]="showFilters || hasActiveFilters()"
+        (click)="toggleFilters()"
       >
+        <span class="material-symbols-rounded">filter_alt</span>
+        Filtros
+
+        <span class="filter-count" *ngIf="hasActiveFilters()">
+          {{ activeFilterCount }}
+        </span>
+      </button>
+
+      <button type="button" class="create-btn" routerLink="/home/contracts/yes-energy/create">
         + Novo contrato
       </button>
     </div>
   </header>
+  <section class="filters-card" *ngIf="showFilters">
+    <div class="filter-field">
+      <label for="yes-energy-contract-id-filter">ID Contrato</label>
+      <input
+        id="yes-energy-contract-id-filter"
+        type="search"
+        placeholder="Pesquisar ID..."
+        [(ngModel)]="filters.contractId"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-client-filter">Cliente / Empresa</label>
+      <input
+        id="yes-energy-client-filter"
+        type="search"
+        placeholder="Pesquisar cliente..."
+        [(ngModel)]="filters.client"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-nif-filter">NIF</label>
+      <input
+        id="yes-energy-nif-filter"
+        type="search"
+        inputmode="numeric"
+        placeholder="Pesquisar NIF..."
+        [(ngModel)]="filters.nif"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-registration-name-filter">Nome Registo C.E.</label>
+      <input
+        id="yes-energy-registration-name-filter"
+        type="search"
+        placeholder="Pesquisar registo..."
+        [(ngModel)]="filters.registrationName"
+        (ngModelChange)="applyFilters()"
+      />
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-segment-filter">Segmento</label>
+      <select
+        id="yes-energy-segment-filter"
+        [(ngModel)]="filters.segment"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os segmentos</option>
+        <option *ngFor="let segment of availableSegments" [value]="segment">
+          {{ segment }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-product-filter">Produto</label>
+      <select
+        id="yes-energy-product-filter"
+        [(ngModel)]="filters.product"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os produtos</option>
+        <option *ngFor="let product of availableProducts" [value]="product">
+          {{ product }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-status-filter">Estado</label>
+      <select
+        id="yes-energy-status-filter"
+        [(ngModel)]="filters.status"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os estados</option>
+        <option *ngFor="let status of statuses" [value]="status">
+          {{ status }}
+        </option>
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="yes-energy-user-filter">Criado por</label>
+      <select
+        id="yes-energy-user-filter"
+        [(ngModel)]="filters.userId"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos os utilizadores</option>
+        <option *ngFor="let user of availableUsers" [value]="user.id">
+          {{ user.name }}
+        </option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      class="clear-filters-button"
+      [disabled]="!hasActiveFilters()"
+      (click)="clearFilters()"
+    >
+      Limpar filtros
+    </button>
+
+    <p class="filters-result-count" *ngIf="!isLoading">
+      A mostrar <strong>{{ filteredContracts.length }}</strong> de
+      <strong>{{ contracts.length }}</strong> contratos.
+    </p>
+  </section>
+
 
   <!-- =========================
        TABLE
   ========================== -->
 
-  <div
-    class="card"
-    *ngIf="viewMode === 'table'"
-  >
+  <div class="card" *ngIf="viewMode === 'table'">
     <div class="table-header">
       <span>ID Contrato</span>
       <span>Cliente / Empresa</span>
@@ -71,38 +176,23 @@
       <span>Nome Registo C.E.</span>
     </div>
 
-    <p
-      class="loading"
-      *ngIf="isLoading"
-    >
-      A carregar contratos...
-    </p>
+    <p class="loading" *ngIf="isLoading">A carregar contratos...</p>
 
-    <p
-      class="error-message"
-      *ngIf="errorMessage"
-    >
+    <p class="error-message" *ngIf="errorMessage">
       {{ errorMessage }}
     </p>
 
     <a
       class="contract-row"
-      *ngFor="let contract of contracts"
-      [routerLink]="[
-        '/home/contracts/yes-energy',
-        contract.id
-      ]"
+      *ngFor="let contract of filteredContracts"
+      [routerLink]="['/home/contracts/yes-energy', contract.id]"
     >
       <span>
         {{ contract.id }}
       </span>
 
       <strong>
-        {{
-          getValue(
-            contract.nomeClienteEmpresa
-          )
-        }}
+        {{ getValue(contract.nomeClienteEmpresa) }}
       </strong>
 
       <span>
@@ -110,59 +200,43 @@
       </span>
 
       <span>
-        {{
-          getValue(
-            contract.tipoSegmento
-          )
-        }}
+        {{ getValue(contract.tipoSegmento) }}
       </span>
 
       <span>
-        {{
-          getValue(
-            contract.tipoProduto
-          )
-        }}
+        {{ getValue(contract.tipoProduto) }}
       </span>
 
       <span>
-        {{
-          getContractUserName(
-            contract
-          )
-        }}
+        {{ getContractUserName(contract) }}
       </span>
 
-      <span
-        class="status-badge"
-        [ngClass]="
-          getStatusClass(
-            contract.estado
-          )
-        "
-      >
+      <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
         {{ contract.estado }}
       </span>
 
       <span>
-        {{
-          getValue(
-            contract.nomeRegistoCE
-          )
-        }}
+        {{ getValue(contract.nomeRegistoCE) }}
       </span>
     </a>
 
-    <p
-      class="empty-state"
+    <div
+      class="filtered-empty-state"
       *ngIf="
         !isLoading &&
         !errorMessage &&
-        !contracts.length
+        contracts.length &&
+        !filteredContracts.length &&
+        hasActiveFilters()
       "
     >
-      Ainda não existem contratos
-      Yes Energy.
+      <strong>Nenhum contrato encontrado</strong>
+      <span>Não existem contratos que correspondam aos filtros selecionados.</span>
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <p class="empty-state" *ngIf="!isLoading && !errorMessage && !contracts.length">
+      Ainda não existem contratos Yes Energy.
     </p>
   </div>
 
@@ -170,58 +244,31 @@
        KANBAN
   ========================== -->
 
-  <div
-    class="kanban-wrapper"
-    *ngIf="viewMode === 'kanban'"
-  >
+  <div class="kanban-wrapper" *ngIf="viewMode === 'kanban'">
     <div class="kanban-board">
-      <section
-        class="kanban-column"
-        *ngFor="let status of statuses"
-      >
-        <header
-          class="kanban-column-header"
-          [ngClass]="
-            getStatusClass(status)
-          "
-        >
+      <section class="kanban-column" *ngFor="let status of visibleStatuses">
+        <header class="kanban-column-header" [ngClass]="getStatusClass(status)">
           <span>
             {{ status }}
           </span>
 
           <small>
-            {{
-              getContractsByStatus(
-                status
-              ).length
-            }}
+            {{ getContractsByStatus(status).length }}
           </small>
         </header>
 
         <div class="kanban-list">
           <a
             class="kanban-card"
-            *ngFor="
-              let contract of
-                getContractsByStatus(
-                  status
-                )
-            "
-            [routerLink]="[
-              '/home/contracts/yes-energy',
-              contract.id
-            ]"
+            *ngFor="let contract of getContractsByStatus(status)"
+            [routerLink]="['/home/contracts/yes-energy', contract.id]"
           >
             <span class="contract-id">
               {{ contract.id }}
             </span>
 
             <strong>
-              {{
-                getValue(
-                  contract.nomeClienteEmpresa
-                )
-              }}
+              {{ getValue(contract.nomeClienteEmpresa) }}
             </strong>
 
             <span>
@@ -231,51 +278,26 @@
 
             <span>
               Segmento:
-              {{
-                getValue(
-                  contract.tipoSegmento
-                )
-              }}
+              {{ getValue(contract.tipoSegmento) }}
             </span>
 
             <span>
               Produto:
-              {{
-                getValue(
-                  contract.tipoProduto
-                )
-              }}
+              {{ getValue(contract.tipoProduto) }}
             </span>
 
             <span>
               Criado por:
-              {{
-                getContractUserName(
-                  contract
-                )
-              }}
+              {{ getContractUserName(contract) }}
             </span>
 
             <span>
               Registo C.E.:
-              {{
-                getValue(
-                  contract.nomeRegistoCE
-                )
-              }}
+              {{ getValue(contract.nomeRegistoCE) }}
             </span>
           </a>
 
-          <p
-            class="empty-column"
-            *ngIf="
-              !getContractsByStatus(
-                status
-              ).length
-            "
-          >
-            Sem contratos.
-          </p>
+          <p class="empty-column" *ngIf="!getContractsByStatus(status).length">Sem contratos.</p>
         </div>
       </section>
     </div>

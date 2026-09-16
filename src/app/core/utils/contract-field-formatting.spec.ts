@@ -29,13 +29,17 @@ describe('contract field formatting', () => {
     expect(isValidPortugueseIban('PT50 0033 0000 1234 5678 9012 3')).toBeTrue();
   });
 
-  it('forces the CPE prefix and expected shape', () => {
+  it('forces the CPE prefix and accepts complete or suffix-only pasted values', () => {
     expect(formatCpe('pt0002123456789012aa')).toBe('PT 0002 123456789012 AA');
+    expect(formatCpe('PT 0002 123456789012 AA')).toBe('PT 0002 123456789012 AA');
+    expect(formatCpe('123456789012AA')).toBe('PT 0002 123456789012 AA');
     expect(isValidCpe('PT 0002 123456789012 AA')).toBeTrue();
   });
 
   it('formats CUI, postal code and phone', () => {
     expect(formatCui('pt160112345678aa')).toBe('PT 1601 12345678 AA');
+    expect(formatCui('PT 1601 12345678 AA')).toBe('PT 1601 12345678 AA');
+    expect(formatCui('160112345678AA')).toBe('PT 1601 12345678 AA');
     expect(formatPostalCode('4510507')).toBe('4510-507');
     expect(formatPhone('912345678999')).toBe('912345678');
 

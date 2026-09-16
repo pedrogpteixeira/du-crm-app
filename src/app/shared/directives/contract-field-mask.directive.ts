@@ -90,12 +90,37 @@ export class ContractFieldMaskDirective implements AfterViewInit {
     this.applyMask();
   }
 
-  private applyMask(): void {
+  @HostListener('paste', ['$event'])
+  onPaste(event: ClipboardEvent): void {
+    if (this.appContractMask !== 'cpe' && this.appContractMask !== 'cui') {
+      return;
+    }
+
+    const pastedValue = event.clipboardData?.getData('text');
+
+    if (pastedValue === undefined) {
+      return;
+    }
+
+    // Impede o browser de concatenar o valor colado ao prefixo que já está
+    // visível no input. Isto é especialmente importante com maxlength: o
+    // valor podia ser truncado antes de a máscara conseguir normalizá-lo.
+    event.preventDefault();
+    this.applyMask(pastedValue);
+
+    queueMicrotask(() => {
+      const input = this.elementRef.nativeElement;
+      const cursorPosition = input.value.length;
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    });
+  }
+
+  private applyMask(sourceValue?: string): void {
     const input = this.elementRef.nativeElement;
-    const currentValue = input.value;
+    const currentValue = sourceValue ?? input.value;
     const formattedValue = formatContractField(this.appContractMask, currentValue);
 
-    if (formattedValue !== currentValue) {
+    if (input.value !== formattedValue) {
       input.value = formattedValue;
     }
 
