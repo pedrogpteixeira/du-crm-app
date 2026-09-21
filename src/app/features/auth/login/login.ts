@@ -54,7 +54,11 @@ export class Login {
 
     this.auth.login(username, password).subscribe({
       next: () => {
-        this.router.navigate(['/home/dashboard']);
+        const target = this.auth.roleIncludes(['Super Admin', 'DU'])
+          ? ['/home/dashboard']
+          : ['/home/tickets'];
+
+        this.router.navigate(target);
       },
 
       error: (error) => {

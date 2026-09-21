@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.kpi-card {
+  min-height: 126px;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #dbe5eb;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.055);
+}
+
+.kpi-card--emphasis {
+  border-color: rgba(0, 141, 177, 0.28);
+  box-shadow: 0 10px 28px rgba(0, 141, 177, 0.1);
+}
+
+.kpi-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #edf8fb;
+  color: #008db1;
+}
+
+.kpi-icon .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.kpi-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.kpi-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.kpi-value-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.kpi-value {
+  color: #243646;
+  font-size: clamp(26px, 2vw, 34px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.kpi-support {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .kpi-card {
+    min-height: 108px;
+    padding: 15px;
+  }
+}

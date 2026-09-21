@@ -1,0 +1,95 @@
+<article class="chart-card">
+  <header class="chart-header">
+    <div>
+      <h2>{{ title }}</h2>
+      <p *ngIf="description">{{ description }}</p>
+    </div>
+  </header>
+
+  <div class="donut-content" *ngIf="items.length; else emptyState">
+    <div class="donut-wrap">
+      <svg
+        class="donut"
+        viewBox="0 0 42 42"
+        role="img"
+        [attr.aria-label]="title"
+      >
+        <circle
+          class="donut-track"
+          cx="21"
+          cy="21"
+          r="15.9155"
+          fill="transparent"
+          stroke-width="5.5"
+        ></circle>
+
+        <circle
+          *ngFor="let segment of segments; let index = index"
+          class="donut-segment"
+          [class.is-active]="activeSegmentIndex() === index"
+          cx="21"
+          cy="21"
+          r="15.9155"
+          fill="transparent"
+          stroke-width="5.5"
+          pathLength="100"
+          [attr.stroke]="segment.color"
+          [attr.stroke-dasharray]="segment.percentage + ' ' + (100 - segment.percentage)"
+          [attr.stroke-dashoffset]="segment.dashOffset"
+        ></circle>
+      </svg>
+
+      <div class="donut-center" [class.has-active-segment]="activeSegment">
+        <ng-container *ngIf="activeSegment as active; else defaultCenter">
+          <strong>{{ formatCount(active.count) }}</strong>
+          <span class="active-label" [title]="active.label">{{ active.label }}</span>
+          <small>{{ formatPercentage(active.percentage) }}%</small>
+        </ng-container>
+
+        <ng-template #defaultCenter>
+          <strong>{{ centerValue }}</strong>
+          <span>{{ centerLabel }}</span>
+        </ng-template>
+      </div>
+    </div>
+
+    <div
+      class="legend"
+      role="list"
+      (pointerleave)="clearActiveSegment()"
+      (pointercancel)="clearActiveSegment()"
+    >
+      <div
+        class="legend-item"
+        [class.is-active]="activeSegmentIndex() === index"
+        role="listitem"
+        *ngFor="let segment of segments; let index = index"
+        [title]="segment.label + ' — ' + formatCount(segment.count) + ' ' + unitLabel + ' — ' + formatPercentage(segment.percentage) + '%'"
+        (pointerenter)="setActiveSegment(index)"
+        (pointerleave)="clearActiveSegment()"
+        (pointercancel)="clearActiveSegment()"
+      >
+        <span
+          class="legend-dot"
+          [style.background]="segment.color"
+          aria-hidden="true"
+        ></span>
+
+        <span class="legend-label">{{ segment.label }}</span>
+
+        <span class="legend-value">
+          <strong>{{ formatCount(segment.count) }}</strong>
+          <small>{{ formatPercentage(segment.percentage) }}%</small>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="chart-empty">
+      <span class="material-symbols-rounded" aria-hidden="true">donut_large</span>
+      <strong>Sem dados para o período selecionado</strong>
+      <span>Não existem registos agregados nesta dimensão para este período.</span>
+    </div>
+  </ng-template>
+</article>

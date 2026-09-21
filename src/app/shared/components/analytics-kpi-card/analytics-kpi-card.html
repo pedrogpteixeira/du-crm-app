@@ -1,0 +1,17 @@
+<article class="kpi-card" [class.kpi-card--emphasis]="emphasis">
+  <div class="kpi-icon" aria-hidden="true">
+    <span class="material-symbols-rounded">{{ icon }}</span>
+  </div>
+
+  <div class="kpi-content">
+    <span class="kpi-label">{{ label }}</span>
+
+    <div class="kpi-value-row">
+      <strong class="kpi-value">{{ value }}</strong>
+
+      <span class="kpi-support" *ngIf="supportingValue">
+        {{ supportingValue }}
+      </span>
+    </div>
+  </div>
+</article>

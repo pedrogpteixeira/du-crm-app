@@ -2,7 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { Campaign, CampaignService } from '../../../core/services/campaign';
+import {
+  Campaign,
+  CampaignService,
+  CreateCampaignRequest,
+} from '../../../core/services/campaign';
 import { FormsModule } from '@angular/forms';
 
 import { Auth } from '../../../core/services/auth';
@@ -25,7 +29,9 @@ export class KnowledgeCampaigns implements OnInit {
   campaigns: Campaign[] = [];
 
   showCreateCampaignModal = false;
+  showEditCampaignModal = false;
   isCreatingCampaign = false;
+  isEditingCampaign = false;
   isLoading = false;
   errorMessage = '';
   successMessage = '';
@@ -41,8 +47,16 @@ export class KnowledgeCampaigns implements OnInit {
   newCampaign = {
     name: '',
     active: true,
+    loyalty: false,
     startDate: '',
     endDate: '',
+  };
+
+  editingCampaign: Campaign | null = null;
+
+  editCampaign = {
+    active: true,
+    loyalty: false,
   };
 
   ngOnInit(): void {
@@ -130,6 +144,7 @@ export class KnowledgeCampaigns implements OnInit {
     this.newCampaign = {
       name: '',
       active: true,
+      loyalty: false,
       startDate: '',
       endDate: '',
     };
@@ -149,10 +164,11 @@ export class KnowledgeCampaigns implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const payload: any = {
+    const payload: CreateCampaignRequest = {
       companyId: this.companyId,
       name: this.newCampaign.name.trim(),
       active: this.newCampaign.active,
+      loyalty: this.newCampaign.loyalty,
     };
 
     if (this.newCampaign.startDate) {
@@ -179,6 +195,70 @@ export class KnowledgeCampaigns implements OnInit {
         this.isCreatingCampaign = false;
       },
     });
+  }
+
+  openEditCampaignModal(campaign: Campaign): void {
+    if (!this.canManageCampaigns) {
+      return;
+    }
+
+    this.editingCampaign = campaign;
+    this.editCampaign = {
+      active: campaign.active,
+      loyalty: campaign.loyalty,
+    };
+
+    this.showEditCampaignModal = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  closeEditCampaignModal(): void {
+    if (this.isEditingCampaign) {
+      return;
+    }
+
+    this.showEditCampaignModal = false;
+    this.editingCampaign = null;
+    this.editCampaign = {
+      active: true,
+      loyalty: false,
+    };
+  }
+
+  saveCampaignChanges(): void {
+    if (!this.canManageCampaigns || !this.editingCampaign) {
+      return;
+    }
+
+    this.isEditingCampaign = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.campaignService
+      .updateCampaign(this.editingCampaign.id, {
+        active: this.editCampaign.active,
+        loyalty: this.editCampaign.loyalty,
+      })
+      .subscribe({
+        next: (updatedCampaign) => {
+          this.campaigns = this.campaigns.map((item) =>
+            item.id === updatedCampaign.id ? updatedCampaign : item,
+          );
+
+          this.showEditCampaignModal = false;
+          this.editingCampaign = null;
+          this.successMessage = 'Campanha atualizada com sucesso.';
+          this.clearSuccessMessage();
+        },
+        error: (error) => {
+          this.errorMessage =
+            error.error?.message || 'Não foi possível atualizar a campanha.';
+        },
+        complete: () => {
+          this.isEditingCampaign = false;
+        },
+      });
   }
 
   formatDate(date?: string | null): string {

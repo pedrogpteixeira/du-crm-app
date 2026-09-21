@@ -8,6 +8,7 @@ export interface Campaign {
   id: string;
   companyId: string;
   name: string;
+  loyalty: boolean;
   startDate: string;
   endDate: string;
   active: boolean;
@@ -19,12 +20,14 @@ export interface CreateCampaignRequest {
   companyId: string;
   name: string;
   active: boolean;
-  startDate: string;
-  endDate: string;
+  loyalty: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface UpdateCampaignRequest {
   active?: boolean;
+  loyalty?: boolean;
 }
 
 @Injectable({

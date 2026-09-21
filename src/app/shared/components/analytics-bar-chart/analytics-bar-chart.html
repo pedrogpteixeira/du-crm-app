@@ -1,0 +1,78 @@
+<article class="chart-card">
+  <header class="chart-header">
+    <div class="chart-header-copy">
+      <h2>{{ title }}</h2>
+      <p *ngIf="description">{{ description }}</p>
+    </div>
+
+    <div
+      class="chart-view-switcher"
+      *ngIf="viewOptions.length"
+      role="group"
+      [attr.aria-label]="'Perspetiva de ' + title"
+    >
+      <button
+        *ngFor="let option of viewOptions"
+        type="button"
+        class="chart-view-option"
+        [class.is-active]="selectedView === option.id"
+        [attr.aria-pressed]="selectedView === option.id"
+        (click)="selectView(option.id)"
+      >
+        {{ option.label }}
+      </button>
+    </div>
+  </header>
+
+  <div class="chart-summary" *ngIf="summaryValue">
+    <div class="chart-summary-copy">
+      <span class="chart-summary-label">{{ summaryLabel }}</span>
+      <span class="chart-summary-meta" *ngIf="summaryMeta">{{ summaryMeta }}</span>
+    </div>
+    <strong class="chart-summary-value">{{ summaryValue }}</strong>
+  </div>
+
+  <div class="bar-list" *ngIf="items.length; else emptyState">
+    <div class="bar-row" *ngFor="let item of items">
+      <div class="bar-meta">
+        <span class="bar-label" [title]="item.label">{{ item.label }}</span>
+        <span class="bar-stats">
+          <strong>{{ formatCount(item.count) }}</strong>
+          <span>{{ formatPercentage(barPercentage(item)) }}%</span>
+        </span>
+      </div>
+
+      <div
+        class="bar-track"
+        tabindex="0"
+        [attr.aria-label]="item.label + ': ' + formatCount(item.count) + ' ' + unitLabel + ', ' + formatPercentage(barPercentage(item)) + '%'"
+      >
+        <span
+          class="bar-fill"
+          [style.width.%]="barPercentage(item)"
+        ></span>
+
+        <span class="chart-tooltip" role="tooltip">
+          <strong>{{ item.label }}</strong>
+
+          <ng-container *ngIf="item.tooltipLines?.length; else defaultTooltip">
+            <span *ngFor="let line of item.tooltipLines">{{ line }}</span>
+          </ng-container>
+
+          <ng-template #defaultTooltip>
+            <span>{{ formatCount(item.count) }} {{ unitLabel }}</span>
+            <span>{{ formatPercentage(barPercentage(item)) }}%</span>
+          </ng-template>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="chart-empty">
+      <span class="material-symbols-rounded" aria-hidden="true">bar_chart</span>
+      <strong>Sem dados para o período selecionado</strong>
+      <span>Não existem registos agregados nesta dimensão para este período.</span>
+    </div>
+  </ng-template>
+</article>

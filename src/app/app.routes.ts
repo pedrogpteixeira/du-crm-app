@@ -22,6 +22,10 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU'],
+        },
         loadComponent: () =>
           import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
       },

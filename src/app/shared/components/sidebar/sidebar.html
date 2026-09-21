@@ -14,9 +14,9 @@
   <!-- BRAND / DASHBOARD -->
   <a
     class="brand"
-    routerLink="/home/dashboard"
-    title="Dashboard"
-    aria-label="Ir para o Dashboard"
+    [routerLink]="brandRoute"
+    title="Início"
+    aria-label="Ir para o início"
   >
     <div class="brand-icon">
       Certo
@@ -202,6 +202,16 @@
     <!-- GERAL -->
     <div class="nav-section">
       <span class="section-title">Geral</span>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin', 'DU')"
+        routerLink="/home/dashboard"
+        routerLinkActive="active"
+        title="Dashboard"
+      >
+        <span class="icon material-symbols-rounded">dashboard</span>
+        <span class="label">Dashboard</span>
+      </a>
 
       <a
         routerLink="/home/tickets"

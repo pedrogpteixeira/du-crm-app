@@ -48,6 +48,7 @@
       <span>Nome</span>
       <span>Início</span>
       <span>Fim</span>
+      <span>Fidelização</span>
       <span>Estado</span>
       <span *ngIf="canManageCampaigns">Ações</span>
     </div>
@@ -63,6 +64,14 @@
       <span>{{ formatDate(campaign.endDate) }}</span>
 
       <span
+        class="loyalty-badge"
+        [class.enabled]="campaign.loyalty"
+        [class.disabled]="!campaign.loyalty"
+      >
+        {{ campaign.loyalty ? 'Com fidelização' : 'Sem fidelização' }}
+      </span>
+
+      <span
         class="status-badge"
         [class.active]="campaign.active"
         [class.inactive]="!campaign.active"
@@ -71,6 +80,18 @@
       </span>
 
       <div class="row-actions" *ngIf="canManageCampaigns">
+        <button
+          type="button"
+          class="edit-btn"
+          [disabled]="
+            updatingCampaignId === campaign.id ||
+            deletingCampaignId === campaign.id
+          "
+          (click)="openEditCampaignModal(campaign)"
+        >
+          Editar
+        </button>
+
         <button
           type="button"
           class="toggle-btn"
@@ -163,6 +184,19 @@
       </select>
     </label>
 
+    <label>
+      Fidelização do cliente
+      <select [(ngModel)]="newCampaign.loyalty">
+        <option [ngValue]="true">
+          Com fidelização
+        </option>
+
+        <option [ngValue]="false">
+          Sem fidelização
+        </option>
+      </select>
+    </label>
+
     <div class="modal-actions">
       <button
         type="button"
@@ -178,6 +212,68 @@
         (click)="createCampaign()"
       >
         {{ isCreatingCampaign ? 'A criar...' : 'Criar campanha' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal-backdrop"
+  *ngIf="
+    showEditCampaignModal &&
+    editingCampaign &&
+    canManageCampaigns
+  "
+>
+  <div class="modal">
+    <h2>Editar campanha</h2>
+
+    <p>
+      Atualizar {{ editingCampaign.name }}.
+    </p>
+
+    <label>
+      Estado
+      <select [(ngModel)]="editCampaign.active">
+        <option [ngValue]="true">
+          Ativa
+        </option>
+
+        <option [ngValue]="false">
+          Inativa
+        </option>
+      </select>
+    </label>
+
+    <label>
+      Fidelização do cliente
+      <select [(ngModel)]="editCampaign.loyalty">
+        <option [ngValue]="true">
+          Com fidelização
+        </option>
+
+        <option [ngValue]="false">
+          Sem fidelização
+        </option>
+      </select>
+    </label>
+
+    <div class="modal-actions">
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="isEditingCampaign"
+        (click)="closeEditCampaignModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        [disabled]="isEditingCampaign"
+        (click)="saveCampaignChanges()"
+      >
+        {{ isEditingCampaign ? 'A guardar...' : 'Guardar alterações' }}
       </button>
     </div>
   </div>

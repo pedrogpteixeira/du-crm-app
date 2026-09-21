@@ -1,4 +1,376 @@
-<section class="dashboard">
-  <h1>Dashboard</h1>
-  <p>Welcome to DU CRM.</p>
+<section class="dashboard-page" *ngIf="hasAnalyticsAccess">
+  <header class="dashboard-header">
+    <div class="header-copy">
+      <span class="eyebrow">Analytics · {{ providerLabel() }}</span>
+      <h1>Dashboard administrativa</h1>
+      <p>
+        Visão agregada dos contratos {{ providerLabel() }}, distribuição comercial e adesão a serviços.
+      </p>
+    </div>
+
+    <button
+      class="refresh-button"
+      type="button"
+      (click)="loadAnalytics(true)"
+      [disabled]="isLoadingAny()"
+      [attr.aria-label]="'Atualizar analytics de ' + providerLabel()"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+      <span>{{ isLoadingAny() ? 'A atualizar…' : 'Atualizar' }}</span>
+    </button>
+  </header>
+
+  <div class="analytics-switchers">
+    <div class="provider-switcher" role="tablist" aria-label="Comercializadora dos analytics">
+      <button
+        *ngFor="let provider of providers"
+        type="button"
+        class="provider-tab"
+        role="tab"
+        [class.is-active]="selectedProvider() === provider.id"
+        [attr.aria-selected]="selectedProvider() === provider.id"
+        (click)="selectProvider(provider.id)"
+      >
+        {{ provider.label }}
+      </button>
+    </div>
+
+    <div class="period-switcher" role="tablist" aria-label="Período dos analytics">
+      <button
+        *ngFor="let period of periods"
+        type="button"
+        class="period-tab"
+        role="tab"
+        [class.is-active]="selectedPeriod() === period.id"
+        [attr.aria-selected]="selectedPeriod() === period.id"
+        [attr.aria-label]="period.fullLabel"
+        (click)="selectPeriod(period.id)"
+      >
+        {{ period.label }}
+      </button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <app-analytics-kpi-card
+      *ngIf="totalContracts() !== null; else totalKpiLoading"
+      [label]="'Total contratos ' + providerLabel()"
+      [value]="formatNumber(totalContracts() ?? 0)"
+      icon="description"
+      [emphasis]="true"
+    />
+
+    <ng-template #totalKpiLoading>
+      <div class="skeleton-card" *ngIf="isLoadingAny(); else totalKpiError">
+        <span class="skeleton skeleton-icon"></span>
+        <div class="skeleton-copy">
+          <span class="skeleton skeleton-label"></span>
+          <span class="skeleton skeleton-value"></span>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #totalKpiError>
+      <div class="kpi-error-card">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <div>
+          <strong>Total indisponível</strong>
+          <button type="button" (click)="loadStates(true)">Tentar novamente</button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-container *ngIf="directDebit() as directDebitData; else directDebitKpisState">
+      <app-analytics-kpi-card
+        label="Contratos com Débito Direto"
+        [value]="formatNumber(totalWithDirectDebit())"
+        icon="account_balance"
+      />
+
+      <app-analytics-kpi-card
+        label="% com Débito Direto"
+        [value]="formatPercentage(percentageWithDirectDebit())"
+        icon="percent"
+      />
+    </ng-container>
+
+    <ng-template #directDebitKpisState>
+      <ng-container *ngIf="directDebitLoading(); else directDebitKpisError">
+        <div class="skeleton-card" *ngFor="let item of [1, 2]">
+          <span class="skeleton skeleton-icon"></span>
+          <div class="skeleton-copy">
+            <span class="skeleton skeleton-label"></span>
+            <span class="skeleton skeleton-value"></span>
+          </div>
+        </div>
+      </ng-container>
+    </ng-template>
+
+    <ng-template #directDebitKpisError>
+      <div class="kpi-error-card kpi-error-wide">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <div>
+          <strong>Débito Direto indisponível</strong>
+          <button type="button" (click)="loadDirectDebit(true)">Tentar novamente</button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-container *ngIf="sva() as svaData; else svaKpisState">
+      <app-analytics-kpi-card
+        label="Contratos com SVA"
+        [value]="formatNumber(totalWithSva())"
+        icon="verified"
+      />
+
+      <app-analytics-kpi-card
+        label="% com SVA"
+        [value]="formatPercentage(percentageWithSva())"
+        icon="percent"
+      />
+    </ng-container>
+
+    <ng-template #svaKpisState>
+      <ng-container *ngIf="svaLoading(); else svaKpisError">
+        <div class="skeleton-card" *ngFor="let item of [1, 2]">
+          <span class="skeleton skeleton-icon"></span>
+          <div class="skeleton-copy">
+            <span class="skeleton skeleton-label"></span>
+            <span class="skeleton skeleton-value"></span>
+          </div>
+        </div>
+      </ng-container>
+    </ng-template>
+
+    <ng-template #svaKpisError>
+      <div class="kpi-error-card kpi-error-wide">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <div>
+          <strong>SVA indisponível</strong>
+          <button type="button" (click)="loadSva(true)">Tentar novamente</button>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="empty-dashboard" *ngIf="totalContracts() === 0">
+    <span class="material-symbols-rounded" aria-hidden="true">query_stats</span>
+    <div>
+      <strong>Sem dados para o período selecionado</strong>
+      <p>Não existem contratos {{ providerLabel() }} em {{ periodLabel() | lowercase }}.</p>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="states() as statesData; else statesState">
+        <app-analytics-donut-chart
+          *ngIf="stateUsesDonut(); else stateBarChart"
+          [title]="'Clientes ' + providerLabel() + ' por Estado'"
+          description="Distribuição atual dos contratos por estado."
+          [items]="byState()"
+          [centerValue]="formatNumber(totalContracts() ?? 0)"
+          centerLabel="contratos"
+        />
+
+        <ng-template #stateBarChart>
+          <app-analytics-bar-chart
+            [title]="'Clientes ' + providerLabel() + ' por Estado'"
+            description="Distribuição atual dos contratos por estado."
+            [items]="byState()"
+            [totalCount]="totalContracts() ?? 0"
+          />
+        </ng-template>
+
+        <div class="block-refresh-warning" *ngIf="statesError()">
+          <span>{{ statesError() }}</span>
+          <button type="button" (click)="loadStates(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #statesState>
+        <div class="skeleton-chart" *ngIf="statesLoading(); else statesErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #statesErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ statesError() }}</span>
+          <button type="button" class="retry-button" (click)="loadStates(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="registrationNames() as registrationData; else registrationState">
+        <app-analytics-bar-chart
+          [title]="'Clientes ' + providerLabel() + ' por Nome Registo C.U.'"
+          description="Quantidade e peso relativo por Nome Registo C.U."
+          [items]="byNomeRegistoCE()"
+          [totalCount]="totalContracts() ?? 0"
+        />
+
+        <div class="block-refresh-warning" *ngIf="registrationNamesError()">
+          <span>{{ registrationNamesError() }}</span>
+          <button type="button" (click)="loadRegistrationNames(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #registrationState>
+        <div class="skeleton-chart" *ngIf="registrationNamesLoading(); else registrationErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #registrationErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ registrationNamesError() }}</span>
+          <button type="button" class="retry-button" (click)="loadRegistrationNames(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="products() as productsData; else productsState">
+        <app-analytics-donut-chart
+          [title]="'Clientes ' + providerLabel() + ' por Tipo de Produto'"
+          description="Distribuição dos contratos por produto contratado."
+          [items]="byTipoProduto()"
+          [centerValue]="formatNumber(totalContracts() ?? 0)"
+          centerLabel="contratos"
+        />
+
+        <div class="block-refresh-warning" *ngIf="productsError()">
+          <span>{{ productsError() }}</span>
+          <button type="button" (click)="loadProducts(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #productsState>
+        <div class="skeleton-chart" *ngIf="productsLoading(); else productsErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #productsErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ productsError() }}</span>
+          <button type="button" class="retry-button" (click)="loadProducts(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="segments() as segmentsData; else segmentsState">
+        <app-analytics-bar-chart
+          [title]="'Clientes ' + providerLabel() + ' por Segmento'"
+          description="Os labels de fidelização empresarial são devolvidos diretamente pelo backend."
+          [items]="byTipoSegmento()"
+          [totalCount]="totalContracts() ?? 0"
+        />
+
+        <div class="block-refresh-warning" *ngIf="segmentsError()">
+          <span>{{ segmentsError() }}</span>
+          <button type="button" (click)="loadSegments(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #segmentsState>
+        <div class="skeleton-chart" *ngIf="segmentsLoading(); else segmentsErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #segmentsErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ segmentsError() }}</span>
+          <button type="button" class="retry-button" (click)="loadSegments(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="directDebit() as directDebitData; else directDebitState">
+        <app-analytics-bar-chart
+          [title]="'Débito Direto ' + providerLabel() + ' por Nome Registo C.U.'"
+          [description]="directDebitDescription()"
+          [items]="directDebitByNomeRegistoCE()"
+          [totalCount]="directDebitTotalContracts()"
+          [viewOptions]="directDebitViewOptions"
+          [selectedView]="directDebitView()"
+          [summaryLabel]="'Total ' + providerLabel() + ' com Débito Direto'"
+          [summaryValue]="formatPercentage(percentageWithDirectDebit())"
+          [summaryMeta]="formatNumber(totalWithDirectDebit()) + ' de ' + formatNumber(directDebitTotalContracts()) + ' contratos'"
+          (selectedViewChange)="selectDirectDebitView($event)"
+        />
+
+        <div class="block-refresh-warning" *ngIf="directDebitError()">
+          <span>{{ directDebitError() }}</span>
+          <button type="button" (click)="loadDirectDebit(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #directDebitState>
+        <div class="skeleton-chart" *ngIf="directDebitLoading(); else directDebitErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #directDebitErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ directDebitError() }}</span>
+          <button type="button" class="retry-button" (click)="loadDirectDebit(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="analytics-block-shell">
+      <ng-container *ngIf="sva() as svaData; else svaState">
+        <app-analytics-donut-chart
+          [title]="'SVA · ' + providerLabel()"
+          description="Distribuição dos contratos com e sem SVA."
+          [items]="svaDistribution()"
+          [centerValue]="formatNumber(svaTotalContracts())"
+          centerLabel="contratos"
+        />
+
+        <div class="block-refresh-warning" *ngIf="svaError()">
+          <span>{{ svaError() }}</span>
+          <button type="button" (click)="loadSva(true)">Repetir</button>
+        </div>
+      </ng-container>
+
+      <ng-template #svaState>
+        <div class="skeleton-chart" *ngIf="svaLoading(); else svaErrorState">
+          <span class="skeleton skeleton-chart-title"></span>
+          <span class="skeleton skeleton-chart-body"></span>
+        </div>
+      </ng-template>
+
+      <ng-template #svaErrorState>
+        <div class="analytics-block-error">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <strong>Não foi possível carregar estes dados</strong>
+          <span>{{ svaError() }}</span>
+          <button type="button" class="retry-button" (click)="loadSva(true)">Tentar novamente</button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
 </section>

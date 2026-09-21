@@ -78,7 +78,13 @@
 .table-header,
 .campaign-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) 150px 150px 120px 220px;
+  grid-template-columns:
+    minmax(240px, 1.5fr)
+    130px
+    130px
+    150px
+    110px
+    300px;
   gap: 18px;
   align-items: center;
 }
@@ -133,6 +139,29 @@
 .status-badge.inactive {
   color: #dc2626 !important;
   background: #fee2e2;
+}
+
+.loyalty-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  padding: 6px 12px;
+
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+.loyalty-badge.enabled {
+  color: #7c3aed !important;
+  background: #ede9fe;
+}
+
+.loyalty-badge.disabled {
+  color: #64748b !important;
+  background: #f1f5f9;
 }
 
 .toggle-btn {
@@ -310,6 +339,26 @@
   gap: 8px;
 }
 
+.edit-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background: #bae6fd;
+}
+
+.edit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .delete-btn {
   border: 0;
   border-radius: 10px;
@@ -334,9 +383,10 @@
   .table-header,
   .campaign-row {
     grid-template-columns:
-      minmax(260px, 1.5fr)
+      minmax(240px, 1.5fr)
+      130px
+      130px
       150px
-      150px
-      120px;
+      110px;
   }
 }
