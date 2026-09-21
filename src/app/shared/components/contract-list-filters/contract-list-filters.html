@@ -1,0 +1,182 @@
+<section class="advanced-filters">
+  <header class="filters-toolbar">
+    <div class="filters-toolbar-copy">
+      <div class="filters-title-row">
+        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+        <strong>Filtrar contratos</strong>
+        <span class="draft-count" *ngIf="draftFilterCount">
+          {{ draftFilterCount }} {{ draftFilterCount === 1 ? 'filtro' : 'filtros' }}
+        </span>
+      </div>
+      <span>Seleciona uma categoria e combina apenas os critérios de que precisas.</span>
+    </div>
+
+    <span class="pending-filter-changes" *ngIf="hasPendingChanges">
+      <span class="material-symbols-rounded">edit</span>
+      Alterações por aplicar
+    </span>
+  </header>
+
+  <nav class="filter-groups" aria-label="Categorias de filtros">
+    <button
+      type="button"
+      class="filter-group-button"
+      *ngFor="let group of filterGroups; trackBy: trackGroup"
+      [class.active]="activeGroup === group.name"
+      (click)="selectGroup(group.name)"
+    >
+      <span>{{ group.name }}</span>
+      <small *ngIf="getGroupFilterCount(group.name)">
+        {{ getGroupFilterCount(group.name) }}
+      </small>
+    </button>
+  </nav>
+
+  <section class="filter-workspace" *ngIf="activeGroup">
+    <header class="filter-workspace-header">
+      <div>
+        <strong>{{ activeGroup }}</strong>
+        <span>{{ visibleFields.length }} {{ visibleFields.length === 1 ? 'campo' : 'campos' }}</span>
+      </div>
+
+      <span class="group-active-count" *ngIf="activeGroupFilterCount">
+        {{ activeGroupFilterCount }} {{ activeGroupFilterCount === 1 ? 'selecionado' : 'selecionados' }}
+      </span>
+    </header>
+
+    <div class="filters-grid">
+      <ng-container *ngFor="let field of visibleFields; trackBy: trackField">
+        <div class="filter-field" *ngIf="field.type !== 'status'">
+          <label [for]="'contract-filter-' + field.key">{{ field.label }}</label>
+
+          <select
+            *ngIf="field.type === 'select'"
+            [id]="'contract-filter-' + field.key"
+            [ngModel]="value[field.key] ?? ''"
+            (ngModelChange)="updateValue(field.key, $event)"
+          >
+            <option value="">Todos</option>
+            <option *ngFor="let option of field.options ?? []" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+
+          <select
+            *ngIf="field.type === 'boolean'"
+            [id]="'contract-filter-' + field.key"
+            [ngModel]="value[field.key] ?? ''"
+            (ngModelChange)="updateValue(field.key, $event)"
+          >
+            <option value="">Todos</option>
+            <option value="true">Sim</option>
+            <option value="false">Não</option>
+          </select>
+
+          <input
+            *ngIf="field.type !== 'select' && field.type !== 'boolean'"
+            [id]="'contract-filter-' + field.key"
+            [type]="field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'search'"
+            [attr.inputmode]="field.inputMode ?? null"
+            [attr.step]="field.type === 'number' ? 'any' : null"
+            [placeholder]="field.placeholder ?? ''"
+            [ngModel]="value[field.key] ?? ''"
+            (ngModelChange)="updateValue(field.key, $event)"
+          />
+        </div>
+
+        <div class="filter-field status-field" *ngIf="field.type === 'status'">
+          <label>Estado</label>
+
+          <div class="status-select" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="status-select-trigger"
+              [class.has-selection]="selectedStatuses.length"
+              (click)="toggleStatusMenu($event)"
+            >
+              <span class="status-select-copy">
+                <span>{{ statusSummary }}</span>
+                <small *ngIf="selectedStatuses.length">Seleção múltipla</small>
+              </span>
+              <span class="material-symbols-rounded">expand_more</span>
+            </button>
+
+            <div class="status-select-menu" *ngIf="statusMenuOpen">
+              <div class="status-select-menu-header">
+                <span>Selecionar estados</span>
+                <button
+                  type="button"
+                  class="status-clear-action"
+                  [disabled]="!selectedStatuses.length"
+                  (click)="clearStatuses($event)"
+                >
+                  Todos
+                </button>
+              </div>
+
+              <div class="status-option-list">
+                <button
+                  type="button"
+                  class="status-option"
+                  *ngFor="let status of statuses"
+                  [class.selected]="isStatusSelected(status)"
+                  (click)="toggleStatus(status, $event)"
+                >
+                  <span class="status-check material-symbols-rounded">
+                    {{ isStatusSelected(status) ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                  <span>{{ status }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </section>
+
+  <section class="active-filters-summary" *ngIf="activeFields.length">
+    <span class="active-filters-label">Selecionados</span>
+
+    <div class="active-filter-chips">
+      <button
+        type="button"
+        class="active-filter-chip"
+        *ngFor="let field of activeFields; trackBy: trackField"
+        (click)="removeFilter(field, $event)"
+        [attr.aria-label]="'Remover filtro ' + field.label"
+      >
+        <span class="active-filter-chip-label">{{ field.label }}</span>
+        <span class="active-filter-chip-value">{{ getFilterValueLabel(field) }}</span>
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+  </section>
+
+  <footer class="filters-footer">
+    <div class="filters-feedback">
+      <span>
+        <strong>{{ loadedCount }}</strong> contratos carregados
+        <span *ngIf="hasMore"> · existem mais resultados</span>
+      </span>
+    </div>
+
+    <div class="filters-actions">
+      <button
+        type="button"
+        class="reset-filters-button"
+        [disabled]="isLoading || (!draftFilterCount && !hasAppliedFilters)"
+        (click)="reset()"
+      >
+        <span class="material-symbols-rounded">restart_alt</span>
+        Limpar
+      </button>
+
+      <button type="button" class="apply-filters-button" [disabled]="isLoading" (click)="apply()">
+        <span class="material-symbols-rounded">filter_alt</span>
+        {{ isLoading ? 'A aplicar...' : 'Aplicar filtros' }}
+        <span class="apply-count" *ngIf="draftFilterCount && !isLoading">{{ draftFilterCount }}</span>
+      </button>
+    </div>
+  </footer>
+</section>

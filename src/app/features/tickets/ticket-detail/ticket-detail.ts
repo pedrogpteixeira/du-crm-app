@@ -4,13 +4,14 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, finalize, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, finalize, map, merge, Observable, of, switchMap } from 'rxjs';
 
 import {
   getContractCompanyName,
   getContractDetailRoute,
 } from '../../../core/config/contract-detail-route';
 import { Auth } from '../../../core/services/auth';
+import { ContractAccessService } from '../../../core/services/contract-access';
 import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { SocketService, TicketSocketEvent } from '../../../core/services/socket';
@@ -30,6 +31,10 @@ import {
   UpdateTicketRequest,
 } from '../../../core/services/ticket';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
+import {
+  canMutateContractByBusinessRule,
+  isRequiredContractTeamMember,
+} from '../../../core/utils/contract-mutation-access';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
@@ -40,6 +45,8 @@ interface AuthenticatedUserLike {
   role?: string;
   name?: string;
   username?: string;
+  defaultTeam?: { id?: string | null } | null;
+  teams?: Array<{ id?: string | null }>;
 }
 
 interface TicketEditSnapshot {
@@ -72,6 +79,7 @@ interface SaveTicketResult {
 export class TicketDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
+  private readonly contractAccessService = inject(ContractAccessService);
   private readonly fileAccess = inject(FileAccessService);
   private readonly documentPreview = inject(DocumentPreviewService);
   private readonly destroyRef = inject(DestroyRef);
@@ -99,6 +107,10 @@ export class TicketDetail implements OnInit {
   isSuperAdmin = false;
   canTransferAttachments = false;
   canEditTicket = false;
+  isRequiredTeamMember = false;
+  contractStatus: string | null = null;
+  contractAccessValidated = false;
+  contractAccessWarning = '';
 
   loadError = '';
   errorMessage = '';
@@ -136,6 +148,8 @@ export class TicketDetail implements OnInit {
       .listenTicketUpdated()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.handleTicketUpdated(event));
+
+    this.observeAssociatedContractUpdates();
   }
 
   get currentUserName(): string {
@@ -162,8 +176,19 @@ export class TicketDetail implements OnInit {
   get canTransferTreatmentAttachments(): boolean {
     return (
       this.canTransferAttachments &&
+      this.canEditTicket &&
       this.ticket?.tipo === TREATMENT_TICKET_TYPE &&
       this.ticket.anexos.length > 0
+    );
+  }
+
+  get isReadOnlyByContractState(): boolean {
+    return (
+      this.contractAccessValidated &&
+      !canMutateContractByBusinessRule(
+        this.contractStatus,
+        this.isRequiredTeamMember,
+      )
     );
   }
 
@@ -175,6 +200,10 @@ export class TicketDetail implements OnInit {
     this.isLoading = true;
     this.loadError = '';
     this.errorMessage = '';
+    this.contractAccessWarning = '';
+    this.contractAccessValidated = false;
+    this.contractStatus = null;
+    this.canEditTicket = false;
 
     this.ticketService
       .getTicketById(ticketId)
@@ -189,6 +218,7 @@ export class TicketDetail implements OnInit {
           }
 
           this.updateCanEditTicket();
+          this.loadAssociatedContractAccess(ticket.companyId, ticket.contractId);
         },
         error: (error: HttpErrorResponse) => {
           this.ticket = null;
@@ -353,7 +383,7 @@ export class TicketDetail implements OnInit {
           this.initializeEditForm(ticket);
 
           if (uploadFailed) {
-            this.isEditing = true;
+            this.isEditing = this.canEditTicket;
             this.showError(
               this.getApiErrorMessage(
                 uploadError,
@@ -440,7 +470,7 @@ export class TicketDetail implements OnInit {
         },
         error: (error: unknown) => {
           this.clearOwnSocketSuppression();
-          this.isEditing = true;
+          this.isEditing = this.canEditTicket;
           this.showError(
             this.getApiErrorMessage(
               error,
@@ -714,10 +744,22 @@ export class TicketDetail implements OnInit {
     this.isSuperAdmin = role.includes('super admin');
     this.canTransferAttachments =
       role.includes('super admin') || role.includes('du');
+    this.isRequiredTeamMember = isRequiredContractTeamMember(currentUser);
   }
 
   private updateCanEditTicket(): void {
     if (!this.ticket) {
+      this.canEditTicket = false;
+      return;
+    }
+
+    if (
+      !this.contractAccessValidated ||
+      !canMutateContractByBusinessRule(
+        this.contractStatus,
+        this.isRequiredTeamMember,
+      )
+    ) {
       this.canEditTicket = false;
       return;
     }
@@ -735,6 +777,69 @@ export class TicketDetail implements OnInit {
     this.canEditTicket =
       this.ticket.userId === this.currentUserId ||
       this.ticket.followers.some((follower) => follower.id === this.currentUserId);
+  }
+
+  private loadAssociatedContractAccess(companyId: string, contractId: string): void {
+    this.contractAccessValidated = false;
+    this.contractStatus = null;
+    this.contractAccessWarning = '';
+    this.updateCanEditTicket();
+
+    this.contractAccessService
+      .getContractStatus(companyId, contractId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (status) => {
+          if (!status) {
+            this.contractAccessWarning =
+              'Não foi possível validar o estado do contrato associado. O Ticket permanece apenas em modo de leitura.';
+            this.updateCanEditTicket();
+            return;
+          }
+
+          this.contractStatus = status;
+          this.contractAccessValidated = true;
+          this.contractAccessWarning = '';
+          this.updateCanEditTicket();
+        },
+        error: () => {
+          this.contractAccessWarning =
+            'Não foi possível validar o estado do contrato associado. O Ticket permanece apenas em modo de leitura.';
+          this.updateCanEditTicket();
+        },
+      });
+  }
+
+  private observeAssociatedContractUpdates(): void {
+    merge(
+      this.socketService.listenRepsolContractUpdated(),
+      this.socketService.listenWallboxContractUpdated(),
+      this.socketService.listenYesEnergyContractUpdated(),
+      this.socketService.listenGalpPowerGasContractUpdated(),
+      this.socketService.listenGalpSolarContractUpdated(),
+      this.socketService.listenIberdrolaContractUpdated(),
+      this.socketService.listenIberdrolaSolarContractUpdated(),
+      this.socketService.listenMeoEnergiasContractUpdated(),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (!this.ticket || event.contractId !== this.ticket.contractId || !event.estado) {
+          return;
+        }
+
+        this.contractStatus = event.estado;
+        this.contractAccessValidated = true;
+        this.contractAccessWarning = '';
+        this.updateCanEditTicket();
+
+        if (!this.canEditTicket && this.isEditing) {
+          this.isEditing = false;
+          this.selectedFiles = [];
+          this.showError(
+            'O contrato associado passou para um estado bloqueado. O Ticket ficou disponível apenas para consulta.',
+          );
+        }
+      });
   }
 
   private pruneTransferAttachmentSelection(ticket: TicketDetailModel): void {

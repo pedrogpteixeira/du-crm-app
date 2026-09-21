@@ -6,31 +6,26 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
-export const IBERDROLA_SOLAR_COMPANY_ID =
-  'cmp_FKsS04kTr7' as const;
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
+export const IBERDROLA_SOLAR_COMPANY_ID = 'cmp_FKsS04kTr7' as const;
 
-export type IberdrolaSolarTipoSegmento =
-  | 'Residencial'
-  | 'Empresarial';
+export type IberdrolaSolarTipoSegmento = 'Residencial' | 'Empresarial';
 
-export type IberdrolaSolarTipoProduto =
-  'Painéis Solares';
+export type IberdrolaSolarTipoProduto = 'Painéis Solares';
 
-export type IberdrolaSolarContratacao =
-  | 'Contratação Digital'
-  | 'Contratação Papel';
+export type IberdrolaSolarContratacao = 'Contratação Digital' | 'Contratação Papel';
 
-export type IberdrolaSolarMetodoPagamento =
-  | 'Pronto Pagamento'
-  | '12 Meses'
-  | '36 Meses';
+export type IberdrolaSolarMetodoPagamento = 'Pronto Pagamento' | '12 Meses' | '36 Meses';
 
-export const IBERDROLA_SOLAR_PAYMENT_METHODS:
-  readonly IberdrolaSolarMetodoPagamento[] = [
-    'Pronto Pagamento',
-    '12 Meses',
-    '36 Meses',
-  ];
+export const IBERDROLA_SOLAR_PAYMENT_METHODS: readonly IberdrolaSolarMetodoPagamento[] = [
+  'Pronto Pagamento',
+  '12 Meses',
+  '36 Meses',
+];
 
 export type IberdrolaSolarContractStatus =
   | 'Pedido de Proposta'
@@ -41,16 +36,15 @@ export type IberdrolaSolarContractStatus =
   | 'Cancelado'
   | 'Ativo';
 
-export const IBERDROLA_SOLAR_CONTRACT_STATUSES:
-  readonly IberdrolaSolarContractStatus[] = [
-    'Pedido de Proposta',
-    'Proposta Enviada',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Em instalação',
-    'Cancelado',
-    'Ativo',
-  ];
+export const IBERDROLA_SOLAR_CONTRACT_STATUSES: readonly IberdrolaSolarContractStatus[] = [
+  'Pedido de Proposta',
+  'Proposta Enviada',
+  'Pendente Docs',
+  'Documentos Enviados',
+  'Em instalação',
+  'Cancelado',
+  'Ativo',
+];
 
 export interface IberdrolaSolarContractListUser {
   id: string;
@@ -155,8 +149,7 @@ export interface IberdrolaSolarContract {
   tickets?: ContractTicketSummary[];
 }
 
-export type IberdrolaSolarContractDetail =
-  IberdrolaSolarContract;
+export type IberdrolaSolarContractDetail = IberdrolaSolarContract;
 
 export interface CreateIberdrolaSolarContractRequest {
   companyId: typeof IBERDROLA_SOLAR_COMPANY_ID;
@@ -208,11 +201,28 @@ export interface CreateIberdrolaSolarContractRequest {
   observacoesInternas?: string;
 }
 
-export type UpdateIberdrolaSolarContractRequest =
-  Partial<
+export type UpdateIberdrolaSolarContractRequest = Partial<
+  Omit<CreateIberdrolaSolarContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+>;
+
+export type IberdrolaSolarContractList = Pick<
+  IberdrolaSolarContract,
+  'id' | 'estado' | 'nomeClienteEmpresa' | 'nif'
+> & { campanha?: string } & Partial<
     Omit<
-      CreateIberdrolaSolarContractRequest,
-      'companyId' | 'clientId' | 'userId' | 'teams'
+      IberdrolaSolarContract,
+      | 'id'
+      | 'estado'
+      | 'nomeClienteEmpresa'
+      | 'nif'
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'followers'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
     >
   >;
 
@@ -220,114 +230,72 @@ export type UpdateIberdrolaSolarContractRequest =
 export class IberdrolaSolarContractService {
   private readonly http = inject(HttpClient);
 
-  private readonly baseUrl =
-    `${environment.apiUrl}/api/contracts/iberdrola-solar`;
+  private readonly baseUrl = `${environment.apiUrl}/api/contracts/iberdrola-solar`;
 
   getAll(): Observable<IberdrolaSolarContract[]> {
-    return this.http.get<IberdrolaSolarContract[]>(
-      this.baseUrl,
-    );
+    return this.http.get<IberdrolaSolarContract[]>(this.baseUrl);
   }
 
-  getById(
-    id: string,
-  ): Observable<IberdrolaSolarContract> {
-    return this.http.get<IberdrolaSolarContract>(
-      `${this.baseUrl}/${id}`,
-    );
+  getById(id: string): Observable<IberdrolaSolarContract> {
+    return this.http.get<IberdrolaSolarContract>(`${this.baseUrl}/${id}`);
   }
 
-  getByCompanyId(
-    companyId: string,
-  ): Observable<IberdrolaSolarContract[]> {
-    return this.http.get<IberdrolaSolarContract[]>(
-      `${this.baseUrl}/company/${companyId}`,
-    );
+  getByCompanyId(companyId: string): Observable<IberdrolaSolarContract[]> {
+    return this.http.get<IberdrolaSolarContract[]>(`${this.baseUrl}/company/${companyId}`);
   }
 
-  getByUserId(
-    userId: string,
-  ): Observable<IberdrolaSolarContract[]> {
-    return this.http.get<IberdrolaSolarContract[]>(
-      `${this.baseUrl}/user/${userId}`,
-    );
+  getByUserId(userId: string): Observable<IberdrolaSolarContract[]> {
+    return this.http.get<IberdrolaSolarContract[]>(`${this.baseUrl}/user/${userId}`);
   }
 
   getByFollowerId(
     userId: string,
-  ): Observable<IberdrolaSolarContract[]> {
-    return this.http.get<IberdrolaSolarContract[]>(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<IberdrolaSolarContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<IberdrolaSolarContractList>>(
       `${this.baseUrl}/followers/${userId}`,
+      { params },
     );
   }
 
-  create(
-    payload: CreateIberdrolaSolarContractRequest,
-  ): Observable<IberdrolaSolarContract> {
-    return this.http.post<IberdrolaSolarContract>(
-      this.baseUrl,
-      payload,
-    );
+  create(payload: CreateIberdrolaSolarContractRequest): Observable<IberdrolaSolarContract> {
+    return this.http.post<IberdrolaSolarContract>(this.baseUrl, payload);
   }
 
   update(
     id: string,
     payload: UpdateIberdrolaSolarContractRequest,
   ): Observable<IberdrolaSolarContract> {
-    return this.http.patch<IberdrolaSolarContract>(
-      `${this.baseUrl}/${id}`,
-      payload,
-    );
+    return this.http.patch<IberdrolaSolarContract>(`${this.baseUrl}/${id}`, payload);
   }
 
-  delete(
-    id: string,
-  ): Observable<{ message: string }> {
-    return this.http.delete<{ message: string }>(
-      `${this.baseUrl}/${id}`,
-    );
+  delete(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 
-  uploadAttachment(
-    id: string,
-    file: File,
-  ): Observable<IberdrolaSolarContract> {
+  uploadAttachment(id: string, file: File): Observable<IberdrolaSolarContract> {
     return this.uploadAttachments(id, [file]);
   }
 
-  uploadAttachments(
-    id: string,
-    files: File[],
-  ): Observable<IberdrolaSolarContract> {
+  uploadAttachments(id: string, files: File[]): Observable<IberdrolaSolarContract> {
     const formData = new FormData();
 
     files.forEach((file) => {
-      formData.append(
-        'files',
-        file,
-        file.name,
-      );
+      formData.append('files', file, file.name);
     });
 
-    return this.http.post<IberdrolaSolarContract>(
-      `${this.baseUrl}/${id}/attachments`,
-      formData,
-    );
+    return this.http.post<IberdrolaSolarContract>(`${this.baseUrl}/${id}/attachments`, formData);
   }
 
-  deleteAttachment(
-    id: string,
-    fileName: string,
-  ): Observable<IberdrolaSolarContract> {
+  deleteAttachment(id: string, fileName: string): Observable<IberdrolaSolarContract> {
     return this.http.delete<IberdrolaSolarContract>(
       `${this.baseUrl}/${id}/attachments/${encodeURIComponent(fileName)}`,
     );
   }
 
-  downloadAttachment(
-    id: string,
-    fileName: string,
-  ): Observable<Blob> {
+  downloadAttachment(id: string, fileName: string): Observable<Blob> {
     return this.http.get(
       `${this.baseUrl}/${id}/attachments/${encodeURIComponent(fileName)}/download`,
       {

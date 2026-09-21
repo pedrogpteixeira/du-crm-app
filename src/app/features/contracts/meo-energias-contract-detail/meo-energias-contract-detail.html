@@ -42,7 +42,7 @@
         </p>
       </div>
 
-      <div class="header-actions" *ngIf="isSuperAdmin">
+      <div class="header-actions" *ngIf="canEditContract">
         <button
           *ngIf="!isEditing"
           type="button"
@@ -74,6 +74,11 @@
         </ng-container>
       </div>
     </header>
+
+
+    <p class="socket-message" *ngIf="!canMutateContract">
+      Este contrato está em modo de consulta devido ao estado {{ contract.estado }}.
+    </p>
 
     <div class="detail-grid">
       <div class="main-column">
@@ -899,7 +904,7 @@
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.attachments">
-            <div class="attachment-upload" *ngIf="isEditing && isSuperAdmin">
+            <div class="attachment-upload" *ngIf="isEditing && canEditContract">
               <app-file-dropzone [(files)]="selectedFiles" [disabled]="isSaving" />
             </div>
 
@@ -948,7 +953,7 @@
                 </button>
 
                 <button
-                  *ngIf="isEditing && isSuperAdmin"
+                  *ngIf="isEditing && canEditContract"
                   type="button"
                   class="delete-attachment-button"
                   [disabled]="isDeletingAttachment(document)"
@@ -991,7 +996,7 @@
             [(draft)]="internalObservationDraft"
             [currentUserName]="currentUserName"
             [internal]="true"
-            [canSubmit]="isSuperAdmin && canAccessInternalObservations && !isSaving"
+            [canSubmit]="canEditContract && canAccessInternalObservations && !isSaving"
             [isSubmitting]="isSubmittingInternalObservation || isSaving"
             placeholder="Escrever uma observação interna..."
             (submitObservation)="submitInternalObservation($event)"
@@ -1004,6 +1009,7 @@
           [contractId]="contract.id"
           [companyId]="contract.companyId"
           [statusOptions]="estadoOptions"
+          [canCreateTicket]="canMutateContract"
         ></app-contract-activity-panel>
       </div>
 

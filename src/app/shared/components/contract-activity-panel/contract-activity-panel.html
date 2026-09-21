@@ -34,7 +34,8 @@
       *ngIf="activeTab === 'tickets'"
       type="button"
       class="create-ticket-button"
-      [disabled]="!contractId || !companyId"
+      [disabled]="!canCreateTicket || !contractId || !companyId"
+      [attr.title]="canCreateTicket ? 'Criar novo Ticket' : 'Este contrato está bloqueado para criação de Tickets.'"
       (click)="openCreateTicketModal()"
     >
       + Novo Ticket
@@ -165,7 +166,7 @@
 </section>
 
 <app-ticket-create-modal
-  *ngIf="isCreateTicketModalOpen"
+  *ngIf="isCreateTicketModalOpen && canCreateTicket"
   [contractId]="contractId"
   [companyId]="companyId"
   (closed)="closeCreateTicketModal()"

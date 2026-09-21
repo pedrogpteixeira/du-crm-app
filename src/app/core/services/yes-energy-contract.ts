@@ -6,27 +6,21 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
-export const YES_ENERGY_COMPANY_ID =
-  'cmp_1GdwakqCnA' as const;
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
+export const YES_ENERGY_COMPANY_ID = 'cmp_1GdwakqCnA' as const;
 
-export type YesEnergyTipoSegmento =
-  | 'Residencial'
-  | 'Empresarial'
-  | 'Condomínios';
+export type YesEnergyTipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 
-export type YesEnergyTipoProduto =
-  | 'Luz'
-  | 'Luz + Gás'
-  | 'Gás';
+export type YesEnergyTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
 
-export type YesEnergyContratacao =
-  | 'Contratação Digital'
-  | 'Contratação Papel';
+export type YesEnergyContratacao = 'Contratação Digital' | 'Contratação Papel';
 
 export type YesEnergyTipoContratacao =
-  | 'Mudança de Comercializadora'
-  | 'Mudança de Comercializadora & AT'
-  | 'Entrada Direta';
+  'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
 
 export type YesEnergyContractStatus =
   | 'Pedido de Contratação'
@@ -42,21 +36,20 @@ export type YesEnergyContractStatus =
   | 'Baixa'
   | 'Anulado';
 
-export const YES_ENERGY_CONTRACT_STATUSES:
-  readonly YesEnergyContractStatus[] = [
-    'Pedido de Contratação',
-    'Pendente Assinatura Digital',
-    'Pendente (ATR)',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Desistência/Recuperar',
-    'Em Ativação',
-    'Ativo',
-    'Parcialmente Baixa',
-    'Anulado',
-    'Baixa'
-  ];
+export const YES_ENERGY_CONTRACT_STATUSES: readonly YesEnergyContractStatus[] = [
+  'Pedido de Contratação',
+  'Pendente Assinatura Digital',
+  'Pendente (ATR)',
+  'Não Conformidade',
+  'Pendente Docs',
+  'Documentos Enviados',
+  'Desistência/Recuperar',
+  'Em Ativação',
+  'Ativo',
+  'Parcialmente Baixa',
+  'Anulado',
+  'Baixa',
+];
 
 export type YesEnergyCicloHorario =
   | 'Simples'
@@ -66,29 +59,25 @@ export type YesEnergyCicloHorario =
   | 'Tri-Horário Semanal'
   | 'Tetra-Horário';
 
-export type YesEnergyNivelTensao =
-  | 'Monofásico'
-  | 'Trifásico';
+export type YesEnergyNivelTensao = 'Monofásico' | 'Trifásico';
 
-export const YES_ENERGY_POWER_SUGGESTIONS =
-  [
-    '1.15',
-    '2.30',
-    '3.45',
-    '4.60',
-    '5.75',
-    '6.90',
-    '10.35',
-    '13.80',
-    '17.25',
-    '20.70',
-    '27.60',
-    '34.50',
-    '41.40',
-  ] as const;
+export const YES_ENERGY_POWER_SUGGESTIONS = [
+  '1.15',
+  '2.30',
+  '3.45',
+  '4.60',
+  '5.75',
+  '6.90',
+  '10.35',
+  '13.80',
+  '17.25',
+  '20.70',
+  '27.60',
+  '34.50',
+  '41.40',
+] as const;
 
-export const YES_ENERGY_GAS_LEVEL_SUGGESTIONS =
-  ['1', '2', '3', '4'] as const;
+export const YES_ENERGY_GAS_LEVEL_SUGGESTIONS = ['1', '2', '3', '4'] as const;
 
 export interface YesEnergyContractListUser {
   id: string;
@@ -298,60 +287,64 @@ export interface CreateYesEnergyContractRequest {
   teams?: YesEnergyContractTeamVisibility[];
 }
 
-export type UpdateYesEnergyContractRequest =
-  Partial<
-    Omit<
-      CreateYesEnergyContractRequest,
-      | 'companyId'
-      | 'clientId'
-      | 'userId'
-      | 'teams'
-    >
-  > & {
-    nif?: number | null;
-    telefone?: number | null;
+export type UpdateYesEnergyContractRequest = Partial<
+  Omit<CreateYesEnergyContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+> & {
+  nif?: number | null;
+  telefone?: number | null;
 
-    observacoes?: string;
-    observacoesInternas?: string;
-  };
+  observacoes?: string;
+  observacoesInternas?: string;
+};
+
+export type YesEnergyContractList = Omit<
+  YesEnergyContract,
+  'observacoes' | 'observacoesInternas'
+> & { userId?: string; campanha?: string } & Partial<
+    Omit<
+      YesEnergyContractDetail,
+      | keyof Omit<YesEnergyContract, 'observacoes' | 'observacoesInternas'>
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+      | 'followers'
+    >
+  >;
 
 @Injectable({
   providedIn: 'root',
 })
 export class YesEnergyContractService {
-  private readonly http =
-    inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private readonly apiUrl =
-    environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
 
   getYesEnergyContracts(
     userId: string,
-  ): Observable<YesEnergyContract[]> {
-    return this.http.get<
-      YesEnergyContract[]
-    >(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<YesEnergyContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<YesEnergyContractList>>(
       `${this.apiUrl}/api/contracts/yes-energy/followers/${userId}`,
+      { params },
     );
   }
 
-  getYesEnergyContractById(
-    contractId: string,
-  ): Observable<YesEnergyContractDetail> {
-    return this.http.get<
-      YesEnergyContractDetail
-    >(
+  getYesEnergyContractById(contractId: string): Observable<YesEnergyContractDetail> {
+    return this.http.get<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}`,
     );
   }
 
   createYesEnergyContract(
-    payload:
-      CreateYesEnergyContractRequest,
+    payload: CreateYesEnergyContractRequest,
   ): Observable<YesEnergyContractDetail> {
-    return this.http.post<
-      YesEnergyContractDetail
-    >(
+    return this.http.post<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy`,
       payload,
     );
@@ -359,58 +352,36 @@ export class YesEnergyContractService {
 
   updateYesEnergyContract(
     contractId: string,
-    payload:
-      UpdateYesEnergyContractRequest,
+    payload: UpdateYesEnergyContractRequest,
   ): Observable<YesEnergyContractDetail> {
-    return this.http.patch<
-      YesEnergyContractDetail
-    >(
+    return this.http.patch<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}`,
       payload,
     );
   }
 
-  uploadAttachments(
-    contractId: string,
-    files: File[],
-  ): Observable<YesEnergyContractDetail> {
-    const formData =
-      new FormData();
+  uploadAttachments(contractId: string, files: File[]): Observable<YesEnergyContractDetail> {
+    const formData = new FormData();
 
     files.forEach((file) => {
-      formData.append(
-        'files',
-        file,
-        file.name,
-      );
+      formData.append('files', file, file.name);
     });
 
-    return this.http.post<
-      YesEnergyContractDetail
-    >(
+    return this.http.post<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}/attachments`,
       formData,
     );
   }
 
-  deleteAttachment(
-    contractId: string,
-    fileName: string,
-  ): Observable<YesEnergyContractDetail> {
-    return this.http.delete<
-      YesEnergyContractDetail
-    >(
+  deleteAttachment(contractId: string, fileName: string): Observable<YesEnergyContractDetail> {
+    return this.http.delete<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}/attachments/${encodeURIComponent(
         fileName,
       )}`,
     );
   }
 
-  downloadDocument(
-    contractId: string,
-    document:
-      YesEnergyContractDocument,
-  ): Observable<Blob> {
+  downloadDocument(contractId: string, document: YesEnergyContractDocument): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}/attachments/${encodeURIComponent(
         document.fileName,

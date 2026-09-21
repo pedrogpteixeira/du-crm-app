@@ -89,6 +89,10 @@ interface AuthenticatedUserLike {
   username?: string;
 }
 import { appendObservationHistory } from '../../../core/utils/observation-history';
+import {
+  canMutateContractByBusinessRule,
+  isRequiredContractTeamMember,
+} from '../../../core/utils/contract-mutation-access';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
@@ -152,6 +156,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   isSaving = false;
   isEditing = false;
   isSuperAdmin = false;
+  isRequiredTeamMember = false;
   canAccessInternalObservations = false;
 
   errorMessage = '';
@@ -174,6 +179,20 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
   readonly paymentMethodOptions: readonly IberdrolaSolarMetodoPagamento[] =
     IBERDROLA_SOLAR_PAYMENT_METHODS;
+
+  get canMutateContract(): boolean {
+    return (
+      !!this.contract &&
+      canMutateContractByBusinessRule(
+        this.contract.estado,
+        this.isRequiredTeamMember,
+      )
+    );
+  }
+
+  get canEditContract(): boolean {
+    return this.isSuperAdmin && this.canMutateContract;
+  }
 
   ngOnInit(): void {
     this.resolvePermissions();
@@ -244,7 +263,12 @@ export class IberdrolaSolarContractDetail implements OnInit {
           }
         }
 
-        const currentTime = new Date().toLocaleTimeString('pt-PT');
+        if (!this.canEditContract && this.isEditing) {
+        this.isEditing = false;
+        this.selectedFiles = [];
+      }
+
+      const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
@@ -339,7 +363,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return !!this.contract && this.hasContractAccess(this.contract);
+    return (
+      !!this.contract &&
+      this.canMutateContract &&
+      this.hasContractAccess(this.contract)
+    );
   }
 
   submitObservation(message: string): void {
@@ -355,7 +383,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       !this.contract ||
       !this.contractId ||
       (internal
-        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        ? !this.canEditContract || !this.canAccessInternalObservations
         : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
@@ -426,7 +454,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   startEditing(): void {
-    if (!this.isSuperAdmin || !this.contract) {
+    if (!this.canEditContract || !this.contract) {
       return;
     }
 
@@ -459,7 +487,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   saveChanges(): void {
-    if (!this.isSuperAdmin || !this.contract || !this.contractId) {
+    if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
     }
 
@@ -560,7 +588,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
           this.internalObservationDraft = '';
 
           if (uploadFailed) {
-            this.isEditing = true;
+            this.isEditing = this.canEditContract;
             this.showError(
               (
                 uploadError as {
@@ -619,7 +647,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
   deleteAttachment(document: IberdrolaSolarContractDocument): void {
     if (
-      !this.isSuperAdmin ||
+      !this.canEditContract ||
       !this.isEditing ||
       !this.contract ||
       !this.contractId ||
@@ -835,6 +863,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
     this.isSuperAdmin = role.includes('super admin') || role.includes('du');
+    this.isRequiredTeamMember = isRequiredContractTeamMember(currentUser);
 
     if (!this.currentUserId) {
       return;
@@ -842,6 +871,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
     this.userService.getUserById(this.currentUserId).subscribe({
       next: (user) => {
+        this.isRequiredTeamMember = isRequiredContractTeamMember(user);
         const teamIds =
           (
             user as ProfileUser & {

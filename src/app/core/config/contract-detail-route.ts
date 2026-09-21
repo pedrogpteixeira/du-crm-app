@@ -54,6 +54,17 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
   },
 ];
 
+
+export function getContractProviderByCompanyId(
+  companyId: string,
+): ClientContractProvider | null {
+  const config = CONTRACT_ROUTE_CONFIGS.find(
+    (entry) => entry.companyId === companyId,
+  );
+
+  return config?.segment ?? null;
+}
+
 export function getContractDetailRoute(
   companyId: string,
   contractId: string,

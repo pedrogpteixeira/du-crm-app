@@ -6,26 +6,21 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
-export const MEO_ENERGIAS_COMPANY_ID =
-  'cmp_KCnjrA0i-U' as const;
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
+export const MEO_ENERGIAS_COMPANY_ID = 'cmp_KCnjrA0i-U' as const;
 
-export type MeoEnergiasTipoSegmento =
-  | 'Residencial'
-  | 'Empresarial';
+export type MeoEnergiasTipoSegmento = 'Residencial' | 'Empresarial';
 
-export type MeoEnergiasTipoProduto =
-  | 'Luz'
-  | 'Luz + Gás'
-  | 'Gás';
+export type MeoEnergiasTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
 
-export type MeoEnergiasContratacao =
-  | 'Contratação Digital'
-  | 'Contratação Papel';
+export type MeoEnergiasContratacao = 'Contratação Digital' | 'Contratação Papel';
 
 export type MeoEnergiasTipoContratacao =
-  | 'Mudança de Comercializadora'
-  | 'Mudança de Comercializadora & AT'
-  | 'Entrada Direta';
+  'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
 
 export type MeoEnergiasContractStatus =
   | 'Pedido de Chamada'
@@ -38,18 +33,17 @@ export type MeoEnergiasContractStatus =
   | 'Ativo'
   | 'Baixa';
 
-export const MEO_ENERGIAS_CONTRACT_STATUSES:
-  readonly MeoEnergiasContractStatus[] = [
-    'Pedido de Chamada',
-    'Em validação',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Registo MEO',
-    'Ativo',
-    'Anulado',
-    'Baixa',
-  ];
+export const MEO_ENERGIAS_CONTRACT_STATUSES: readonly MeoEnergiasContractStatus[] = [
+  'Pedido de Chamada',
+  'Em validação',
+  'Não Conformidade',
+  'Pendente Docs',
+  'Documentos Enviados',
+  'Registo MEO',
+  'Ativo',
+  'Anulado',
+  'Baixa',
+];
 
 export type MeoEnergiasCicloHorario =
   | 'Simples'
@@ -59,9 +53,7 @@ export type MeoEnergiasCicloHorario =
   | 'Tri-Horário Semanal'
   | 'Tetra-Horário';
 
-export type MeoEnergiasNivelTensao =
-  | 'Monofásico'
-  | 'Trifásico';
+export type MeoEnergiasNivelTensao = 'Monofásico' | 'Trifásico';
 
 export const MEO_ENERGIAS_POWER_SUGGESTIONS = [
   '1.15',
@@ -79,8 +71,7 @@ export const MEO_ENERGIAS_POWER_SUGGESTIONS = [
   '41.40',
 ] as const;
 
-export const MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS =
-  ['1', '2', '3', '4'] as const;
+export const MEO_ENERGIAS_GAS_LEVEL_SUGGESTIONS = ['1', '2', '3', '4'] as const;
 
 export interface MeoEnergiasContractListUser {
   id: string;
@@ -264,21 +255,32 @@ export interface CreateMeoEnergiasContractRequest {
   teams?: MeoEnergiasContractTeamVisibility[];
 }
 
-export type UpdateMeoEnergiasContractRequest =
-  Partial<
+export type UpdateMeoEnergiasContractRequest = Partial<
+  Omit<CreateMeoEnergiasContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+> & {
+  nif?: number | null;
+  telefone?: number | null;
+  observacoes?: string;
+  observacoesInternas?: string;
+};
+
+export type MeoEnergiasContractList = Omit<
+  MeoEnergiasContract,
+  'observacoes' | 'observacoesInternas'
+> & { userId?: string; campanha?: string } & Partial<
     Omit<
-      CreateMeoEnergiasContractRequest,
-      | 'companyId'
-      | 'clientId'
-      | 'userId'
-      | 'teams'
+      MeoEnergiasContractDetail,
+      | keyof Omit<MeoEnergiasContract, 'observacoes' | 'observacoesInternas'>
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+      | 'followers'
     >
-  > & {
-    nif?: number | null;
-    telefone?: number | null;
-    observacoes?: string;
-    observacoesInternas?: string;
-  };
+  >;
 
 @Injectable({
   providedIn: 'root',
@@ -289,15 +291,17 @@ export class MeoEnergiasContractService {
 
   getMeoEnergiasContracts(
     userId: string,
-  ): Observable<MeoEnergiasContract[]> {
-    return this.http.get<MeoEnergiasContract[]>(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<MeoEnergiasContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<MeoEnergiasContractList>>(
       `${this.apiUrl}/api/contracts/meo-energias/followers/${userId}`,
+      { params },
     );
   }
 
-  getMeoEnergiasContractById(
-    contractId: string,
-  ): Observable<MeoEnergiasContractDetail> {
+  getMeoEnergiasContractById(contractId: string): Observable<MeoEnergiasContractDetail> {
     return this.http.get<MeoEnergiasContractDetail>(
       `${this.apiUrl}/api/contracts/meo-energias/${contractId}`,
     );
@@ -322,10 +326,7 @@ export class MeoEnergiasContractService {
     );
   }
 
-  uploadAttachments(
-    contractId: string,
-    files: File[],
-  ): Observable<MeoEnergiasContractDetail> {
+  uploadAttachments(contractId: string, files: File[]): Observable<MeoEnergiasContractDetail> {
     const formData = new FormData();
 
     files.forEach((file) => {
@@ -338,10 +339,7 @@ export class MeoEnergiasContractService {
     );
   }
 
-  deleteAttachment(
-    contractId: string,
-    fileName: string,
-  ): Observable<MeoEnergiasContractDetail> {
+  deleteAttachment(contractId: string, fileName: string): Observable<MeoEnergiasContractDetail> {
     return this.http.delete<MeoEnergiasContractDetail>(
       `${this.apiUrl}/api/contracts/meo-energias/${contractId}/attachments/${encodeURIComponent(
         fileName,
@@ -349,10 +347,7 @@ export class MeoEnergiasContractService {
     );
   }
 
-  downloadDocument(
-    contractId: string,
-    document: MeoEnergiasContractDocument,
-  ): Observable<Blob> {
+  downloadDocument(contractId: string, document: MeoEnergiasContractDocument): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/meo-energias/${contractId}/attachments/${encodeURIComponent(
         document.fileName,

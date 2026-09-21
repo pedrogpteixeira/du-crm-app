@@ -6,6 +6,11 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
 export type RepsolContractStatus =
   | 'Pedido de Chamada'
   | 'Em validação'
@@ -223,14 +228,7 @@ export interface CreateRepsolContractRequest {
 export type UpdateRepsolContractRequest = Partial<
   Omit<
     CreateRepsolContractRequest,
-    | 'clientId'
-    | 'companyId'
-    | 'userId'
-    | 'teams'
-    | 'nif'
-    | 'telefone'
-    | 'potencia'
-    | 'escalao'
+    'clientId' | 'companyId' | 'userId' | 'teams' | 'nif' | 'telefone' | 'potencia' | 'escalao'
   >
 > & {
   nif?: number | null;
@@ -250,51 +248,55 @@ export type UpdateRepsolContractRequest = Partial<
   observacoesInternas?: string;
 };
 
+export type RepsolContractList = Omit<RepsolContract, 'observacoes' | 'observacoesInternas'> & {
+  userId?: string;
+  campanha?: string;
+} & Partial<
+    Omit<
+      RepsolContractDetail,
+      | keyof Omit<RepsolContract, 'observacoes' | 'observacoesInternas'>
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+      | 'followers'
+    >
+  >;
+
 @Injectable({
   providedIn: 'root',
 })
 export class RepsolContractService {
-  private readonly http =
-    inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private readonly apiUrl =
-    environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
 
   getRepsolContracts(
     userId: string,
-  ): Observable<RepsolContract[]> {
-    return this.http.get<
-      RepsolContract[]
-    >(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<RepsolContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<RepsolContractList>>(
       `${this.apiUrl}/api/contracts/repsol/followers/${userId}`,
+      { params },
     );
   }
 
-  getRepsolContractById(
-    contractId: string,
-  ): Observable<RepsolContractDetail> {
-    return this.http.get<
-      RepsolContractDetail
-    >(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}`,
-    );
+  getRepsolContractById(contractId: string): Observable<RepsolContractDetail> {
+    return this.http.get<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol/${contractId}`);
   }
 
-  createRepsolContract(
-    payload: CreateRepsolContractRequest,
-  ): Observable<RepsolContractDetail> {
-    return this.http.post<
-      RepsolContractDetail
-    >(
-      `${this.apiUrl}/api/contracts/repsol`,
-      payload,
-    );
+  createRepsolContract(payload: CreateRepsolContractRequest): Observable<RepsolContractDetail> {
+    return this.http.post<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol`, payload);
   }
 
   updateRepsolContract(
     contractId: string,
-    payload:
-      UpdateRepsolContractRequest,
+    payload: UpdateRepsolContractRequest,
   ): Observable<RepsolContractDetail> {
     return this.http.patch<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}`,
@@ -302,19 +304,11 @@ export class RepsolContractService {
     );
   }
 
-  uploadAttachments(
-    contractId: string,
-    files: File[],
-  ): Observable<RepsolContractDetail> {
-    const formData =
-      new FormData();
+  uploadAttachments(contractId: string, files: File[]): Observable<RepsolContractDetail> {
+    const formData = new FormData();
 
     files.forEach((file) => {
-      formData.append(
-        'files',
-        file,
-        file.name,
-      );
+      formData.append('files', file, file.name);
     });
 
     return this.http.post<RepsolContractDetail>(
@@ -323,10 +317,7 @@ export class RepsolContractService {
     );
   }
 
-  deleteAttachment(
-    contractId: string,
-    fileName: string,
-  ): Observable<RepsolContractDetail> {
+  deleteAttachment(contractId: string, fileName: string): Observable<RepsolContractDetail> {
     return this.http.delete<RepsolContractDetail>(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
         fileName,
@@ -334,11 +325,7 @@ export class RepsolContractService {
     );
   }
 
-  downloadDocument(
-    contractId: string,
-    document:
-      RepsolContractDocument,
-  ): Observable<Blob> {
+  downloadDocument(contractId: string, document: RepsolContractDocument): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
         document.fileName,

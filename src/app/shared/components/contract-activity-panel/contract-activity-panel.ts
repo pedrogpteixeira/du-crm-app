@@ -3,6 +3,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   Input,
+  OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -35,17 +37,25 @@ interface FlowStatePresentation {
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './contract-activity-panel.scss',
 })
-export class ContractActivityPanel {
+export class ContractActivityPanel implements OnChanges {
   @Input() fluxo: ContractFlowEntry[] | null | undefined = [];
   @Input() tickets: ContractTicketSummary[] | null | undefined = [];
   @Input() contractId = '';
   @Input() companyId = '';
   @Input() statusOptions: readonly string[] | null | undefined = [];
+  @Input() canCreateTicket = true;
 
   activeTab: ContractActivityTab = 'flow';
   isCreateTicketModalOpen = false;
   ticketCreateFeedback = '';
   ticketCreateFeedbackType: 'success' | 'warning' = 'success';
+
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['canCreateTicket'] && !this.canCreateTicket) {
+      this.isCreateTicketModalOpen = false;
+    }
+  }
 
   get flowEntries(): ContractFlowEntry[] {
     const entries = [...(this.fluxo ?? [])];
@@ -167,7 +177,7 @@ export class ContractActivityPanel {
   }
 
   openCreateTicketModal(): void {
-    if (!this.contractId || !this.companyId) {
+    if (!this.canCreateTicket || !this.contractId || !this.companyId) {
       return;
     }
 

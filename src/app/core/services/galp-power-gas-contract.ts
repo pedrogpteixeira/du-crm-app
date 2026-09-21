@@ -6,6 +6,11 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
 export type GalpPowerGasContractStatus =
   | 'Pedido de chamada'
   | 'Em validação'
@@ -237,14 +242,7 @@ export interface CreateGalpPowerGasContractRequest {
 export type UpdateGalpPowerGasContractRequest = Partial<
   Omit<
     CreateGalpPowerGasContractRequest,
-    | 'clientId'
-    | 'companyId'
-    | 'userId'
-    | 'teams'
-    | 'nif'
-    | 'telefone'
-    | 'potencia'
-    | 'escalao'
+    'clientId' | 'companyId' | 'userId' | 'teams' | 'nif' | 'telefone' | 'potencia' | 'escalao'
   >
 > & {
   nif?: number | null;
@@ -264,20 +262,34 @@ export type UpdateGalpPowerGasContractRequest = Partial<
   observacoesInternas?: string;
 };
 
+export type GalpPowerGasContractList = Omit<
+  GalpPowerGasContract,
+  'observacoes' | 'observacoesInternas'
+> & { userId?: string } & Partial<
+    Omit<
+      GalpPowerGasContractDetail,
+      | keyof Omit<GalpPowerGasContract, 'observacoes' | 'observacoesInternas'>
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+      | 'followers'
+    >
+  >;
+
 @Injectable({
   providedIn: 'root',
 })
 export class GalpPowerGasContractService {
-  private readonly http =
-    inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private readonly apiUrl =
-    environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
 
   getAll(): Observable<GalpPowerGasContract[]> {
-    return this.http.get<GalpPowerGasContract[]>(
-      `${this.apiUrl}/api/contracts/galp-power-gas`,
-    );
+    return this.http.get<GalpPowerGasContract[]>(`${this.apiUrl}/api/contracts/galp-power-gas`);
   }
 
   getByCompanyId(companyId: string): Observable<GalpPowerGasContract[]> {
@@ -292,26 +304,27 @@ export class GalpPowerGasContractService {
     );
   }
 
-  getByFollowerId(userId: string): Observable<GalpPowerGasContract[]> {
-    return this.getGalpPowerGasContracts(userId);
+  getByFollowerId(
+    userId: string,
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<GalpPowerGasContractList>> {
+    return this.getGalpPowerGasContracts(userId, query);
   }
 
   getGalpPowerGasContracts(
     userId: string,
-  ): Observable<GalpPowerGasContract[]> {
-    return this.http.get<
-      GalpPowerGasContract[]
-    >(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<GalpPowerGasContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<GalpPowerGasContractList>>(
       `${this.apiUrl}/api/contracts/galp-power-gas/followers/${userId}`,
+      { params },
     );
   }
 
-  getGalpPowerGasContractById(
-    contractId: string,
-  ): Observable<GalpPowerGasContractDetail> {
-    return this.http.get<
-      GalpPowerGasContractDetail
-    >(
+  getGalpPowerGasContractById(contractId: string): Observable<GalpPowerGasContractDetail> {
+    return this.http.get<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}`,
     );
   }
@@ -319,9 +332,7 @@ export class GalpPowerGasContractService {
   createGalpPowerGasContract(
     payload: CreateGalpPowerGasContractRequest,
   ): Observable<GalpPowerGasContractDetail> {
-    return this.http.post<
-      GalpPowerGasContractDetail
-    >(
+    return this.http.post<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas`,
       payload,
     );
@@ -329,8 +340,7 @@ export class GalpPowerGasContractService {
 
   updateGalpPowerGasContract(
     contractId: string,
-    payload:
-      UpdateGalpPowerGasContractRequest,
+    payload: UpdateGalpPowerGasContractRequest,
   ): Observable<GalpPowerGasContractDetail> {
     return this.http.patch<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}`,
@@ -344,19 +354,11 @@ export class GalpPowerGasContractService {
     );
   }
 
-  uploadAttachments(
-    contractId: string,
-    files: File[],
-  ): Observable<GalpPowerGasContractDetail> {
-    const formData =
-      new FormData();
+  uploadAttachments(contractId: string, files: File[]): Observable<GalpPowerGasContractDetail> {
+    const formData = new FormData();
 
     files.forEach((file) => {
-      formData.append(
-        'files',
-        file,
-        file.name,
-      );
+      formData.append('files', file, file.name);
     });
 
     return this.http.post<GalpPowerGasContractDetail>(
@@ -365,10 +367,7 @@ export class GalpPowerGasContractService {
     );
   }
 
-  deleteAttachment(
-    contractId: string,
-    fileName: string,
-  ): Observable<GalpPowerGasContractDetail> {
+  deleteAttachment(contractId: string, fileName: string): Observable<GalpPowerGasContractDetail> {
     return this.http.delete<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}/attachments/${encodeURIComponent(
         fileName,
@@ -384,7 +383,10 @@ export class GalpPowerGasContractService {
     return this.createGalpPowerGasContract(payload);
   }
 
-  update(id: string, payload: UpdateGalpPowerGasContractRequest): Observable<GalpPowerGasContractDetail> {
+  update(
+    id: string,
+    payload: UpdateGalpPowerGasContractRequest,
+  ): Observable<GalpPowerGasContractDetail> {
     return this.updateGalpPowerGasContract(id, payload);
   }
 
@@ -403,11 +405,7 @@ export class GalpPowerGasContractService {
     );
   }
 
-  downloadDocument(
-    contractId: string,
-    document:
-      GalpPowerGasContractDocument,
-  ): Observable<Blob> {
+  downloadDocument(contractId: string, document: GalpPowerGasContractDocument): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}/attachments/${encodeURIComponent(
         document.fileName,

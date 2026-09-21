@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
@@ -10,94 +10,99 @@ import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import {
   MEO_ENERGIAS_CONTRACT_STATUSES,
-  MeoEnergiasContract,
+  MeoEnergiasContractList,
   MeoEnergiasContractService,
   MeoEnergiasContractStatus,
 } from '../../../core/services/meo-energias-contract';
-import { sortContractsByUpdatedAtDesc } from '../../../core/utils/contract-sorting';
 import {
-  BaseContractFilters,
+  BaseContractFilterOptions,
+  ContractFilterFieldDefinition,
   ContractFilterUserOption,
+  EnergyContractFilters,
   buildBaseContractFilterOptions,
+  buildContractApiFiltersFromDefinitions,
+  cloneContractFilters,
   countActiveContractFilters,
-  createBaseContractFilters,
   getVisibleContractStatuses,
-  matchesBaseContractFilters,
+  mergeBaseContractFilterOptions,
+  buildEnergyContractFilterFields,
+  createEnergyContractFilters,
 } from '../../../core/utils/contract-list-filters';
-
-interface AuthenticatedUserLike {
-  id?: string;
-  _id?: string;
-}
+import {
+  ContractApiFilters,
+  ContractKanbanColumnState,
+  ContractKanbanResponse,
+  hasAnyMoreContracts,
+  mergeContractsById,
+  prependContractById,
+} from '../../../core/utils/contract-kanban';
+import { ContractListFiltersComponent } from '../../../shared/components/contract-list-filters/contract-list-filters';
 
 @Component({
   selector: 'app-meo-energias-contracts',
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ContractListFiltersComponent],
   templateUrl: './meo-energias-contracts.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './meo-energias-contracts.scss',
 })
 export class MeoEnergiasContracts implements OnInit {
-  private readonly destroyRef = inject(DestroyRef);
-
-  private readonly auth = inject(Auth);
-
-  private readonly preferencesService = inject(PreferencesService);
-
-  private readonly socketService = inject(SocketService);
-
   private readonly meoEnergiasContractService = inject(MeoEnergiasContractService);
+  private readonly socketService = inject(SocketService);
+  private readonly preferencesService = inject(PreferencesService);
+  private readonly auth = inject(Auth);
+  private readonly destroyRef = inject(DestroyRef);
+  private loadRequestId = 0;
 
-  contracts: MeoEnergiasContract[] = [];
+  contracts: MeoEnergiasContractList[] = [];
+  filteredContracts: MeoEnergiasContractList[] = [];
+  contractsByStatus: Record<string, MeoEnergiasContractList[]> = {};
+  paginationByStatus: Record<string, ContractKanbanColumnState> = {};
 
-  filteredContracts: MeoEnergiasContract[] = [];
-
-  filters: BaseContractFilters = {
-    ...createBaseContractFilters(),
-  };
+  filters: EnergyContractFilters = createEnergyContractFilters();
+  appliedFilters: EnergyContractFilters = cloneContractFilters(this.filters);
 
   availableSegments: string[] = [];
   availableProducts: string[] = [];
   availableUsers: ContractFilterUserOption[] = [];
+  private filterOptions: BaseContractFilterOptions = { segments: [], products: [], users: [] };
+  filterFields: ContractFilterFieldDefinition[] = [];
+
+  totalContracts = 0;
 
   showFilters = false;
-
   isLoading = false;
   errorMessage = '';
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-
   readonly statuses: MeoEnergiasContractStatus[] = [...MEO_ENERGIAS_CONTRACT_STATUSES];
 
   ngOnInit(): void {
+    this.refreshFilterFields();
     this.loadContracts();
 
     this.socketService
       .listenMeoEnergiasContractCreated()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.loadContracts(false);
-      });
+      .subscribe((event) => this.handleSocketContract(event, true));
 
     this.socketService
       .listenMeoEnergiasContractUpdated()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.loadContracts(false);
-      });
+      .subscribe((event) => this.handleSocketContract(event, false));
   }
 
   loadContracts(showLoading = true): void {
-    const currentUser = this.auth.getCurrentUser() as AuthenticatedUserLike | null;
-
-    const userId = currentUser?.id ?? currentUser?._id ?? '';
+    const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
+    const userId = currentUser?.id ?? currentUser?._id;
 
     if (!userId) {
-      this.contracts = [];
-      this.applyFilters();
-      this.errorMessage = 'Não foi possível identificar o utilizador atual.';
+      this.resetLoadedContracts();
+      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
       return;
     }
+
+    const requestId = ++this.loadRequestId;
+    this.resetLoadedContracts();
 
     if (showLoading) {
       this.isLoading = true;
@@ -106,74 +111,117 @@ export class MeoEnergiasContracts implements OnInit {
     this.errorMessage = '';
 
     this.meoEnergiasContractService
-      .getMeoEnergiasContracts(userId)
+      .getMeoEnergiasContracts(userId, {
+        offset: 5,
+        estado: this.appliedFilters.status,
+        filters: this.buildApiFilters(),
+      })
       .pipe(
         finalize(() => {
-          if (showLoading) {
+          if (showLoading && requestId === this.loadRequestId) {
             this.isLoading = false;
           }
         }),
       )
       .subscribe({
-        next: (contracts) => {
-          this.contracts = sortContractsByUpdatedAtDesc(contracts ?? []);
-          this.buildFilterOptions();
-          this.applyFilters();
+        next: (response) => {
+          if (requestId !== this.loadRequestId) {
+            return;
+          }
+
+          this.replaceWithResponse(response);
         },
         error: (error) => {
-          this.contracts = [];
-          this.applyFilters();
+          if (requestId !== this.loadRequestId) {
+            return;
+          }
+
+          this.resetLoadedContracts();
           this.errorMessage =
-            error?.error?.message || 'Não foi possível carregar os contratos Meo Energias.';
+            error?.error?.message || 'Não foi possível carregar os contratos MEO Energias.';
         },
       });
   }
 
-  setViewMode(mode: 'table' | 'kanban'): void {
-    this.viewMode = mode;
-  }
+  loadMore(status: MeoEnergiasContractStatus): void {
+    const user = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
+    const userId = user?.id ?? user?._id;
+    const column = this.paginationByStatus[status];
+    const requestId = this.loadRequestId;
 
-  applyFilters(): void {
-    this.filteredContracts = this.contracts.filter((contract) =>
-      matchesBaseContractFilters(contract, this.filters),
-    );
-  }
+    if (!userId || !column?.hasMore || !column.nextOffset || column.isLoading) {
+      return;
+    }
 
-  clearFilters(): void {
-    this.filters = {
-      ...createBaseContractFilters(),
+    this.paginationByStatus = {
+      ...this.paginationByStatus,
+      [status]: { ...column, isLoading: true },
     };
 
-    this.applyFilters();
-    this.showFilters = false;
-  }
+    this.meoEnergiasContractService
+      .getMeoEnergiasContracts(userId, {
+        offset: column.nextOffset,
+        estado: status,
+        filters: this.buildApiFilters(),
+      })
+      .pipe(
+        finalize(() => {
+          if (requestId !== this.loadRequestId) {
+            return;
+          }
 
-  hasActiveFilters(): boolean {
-    return this.activeFilterCount > 0;
-  }
+          const latest = this.paginationByStatus[status];
+          if (latest) {
+            this.paginationByStatus = {
+              ...this.paginationByStatus,
+              [status]: { ...latest, isLoading: false },
+            };
+          }
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          if (requestId !== this.loadRequestId) {
+            return;
+          }
 
-  get activeFilterCount(): number {
-    return countActiveContractFilters(this.filters);
-  }
+          const state = response.states.find((item) => item.estado === status);
 
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
-  }
+          if (!state) {
+            this.paginationByStatus = {
+              ...this.paginationByStatus,
+              [status]: { hasMore: false, nextOffset: null, isLoading: false },
+            };
+            return;
+          }
 
-  private buildFilterOptions(): void {
-    const options = buildBaseContractFilterOptions(this.contracts);
+          this.contractsByStatus = {
+            ...this.contractsByStatus,
+            [status]: mergeContractsById(
+              this.contractsByStatus[status] ?? [],
+              state.contracts ?? [],
+            ),
+          };
+          this.paginationByStatus = {
+            ...this.paginationByStatus,
+            [status]: {
+              hasMore: state.hasMore,
+              nextOffset: state.nextOffset,
+              isLoading: false,
+            },
+          };
 
-    this.availableSegments = options.segments;
-    this.availableProducts = options.products;
-    this.availableUsers = options.users;
-  }
+          this.syncFlatContracts();
+          this.buildFilterOptions();
+        },
+        error: (error) => {
+          if (requestId !== this.loadRequestId) {
+            return;
+          }
 
-  get visibleStatuses(): readonly MeoEnergiasContractStatus[] {
-    return getVisibleContractStatuses(this.statuses, this.filters.status);
-  }
-
-  getContractsByStatus(status: MeoEnergiasContractStatus): MeoEnergiasContract[] {
-    return this.filteredContracts.filter((contract) => contract.estado === status);
+          this.errorMessage = error?.error?.message || 'Não foi possível carregar mais contratos.';
+        },
+      });
   }
 
   getStatusClass(status: MeoEnergiasContractStatus): string {
@@ -192,7 +240,176 @@ export class MeoEnergiasContracts implements OnInit {
     return classes[status];
   }
 
-  getContractUserName(contract: MeoEnergiasContract): string {
+  setViewMode(mode: 'table' | 'kanban'): void {
+    this.viewMode = mode;
+  }
+
+  applyFilters(): void {
+    this.appliedFilters = cloneContractFilters(this.filters);
+    this.loadContracts();
+  }
+
+  clearFilters(): void {
+    this.filters = createEnergyContractFilters();
+    this.appliedFilters = cloneContractFilters(this.filters);
+    this.loadContracts();
+  }
+
+  hasActiveFilters(): boolean {
+    return this.activeFilterCount > 0;
+  }
+
+  get activeFilterCount(): number {
+    return countActiveContractFilters(this.appliedFilters);
+  }
+
+  get hasMoreInAnyState(): boolean {
+    return hasAnyMoreContracts(this.paginationByStatus);
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  hasMoreForStatus(status: MeoEnergiasContractStatus): boolean {
+    return this.paginationByStatus[status]?.hasMore ?? false;
+  }
+
+  isLoadingStatus(status: MeoEnergiasContractStatus): boolean {
+    return this.paginationByStatus[status]?.isLoading ?? false;
+  }
+
+  get visibleStatuses(): readonly MeoEnergiasContractStatus[] {
+    return getVisibleContractStatuses(this.statuses, this.appliedFilters.status);
+  }
+
+  getContractsByStatus(status: MeoEnergiasContractStatus): MeoEnergiasContractList[] {
+    return this.contractsByStatus[status] ?? [];
+  }
+
+  private buildApiFilters(): ContractApiFilters {
+    return buildContractApiFiltersFromDefinitions(this.appliedFilters, this.filterFields);
+  }
+
+  private replaceWithResponse(response: ContractKanbanResponse<MeoEnergiasContractList>): void {
+    this.totalContracts = Number.isFinite(response.total) ? Math.max(0, response.total) : 0;
+
+    const contractsByStatus: Record<string, MeoEnergiasContractList[]> = {};
+    const paginationByStatus: Record<string, ContractKanbanColumnState> = {};
+
+    this.statuses.forEach((status) => {
+      contractsByStatus[status] = [];
+      paginationByStatus[status] = { hasMore: false, nextOffset: null, isLoading: false };
+    });
+
+    (response.states ?? []).forEach((state) => {
+      contractsByStatus[state.estado] = mergeContractsById([], state.contracts ?? []);
+      paginationByStatus[state.estado] = {
+        hasMore: state.hasMore,
+        nextOffset: state.nextOffset,
+        isLoading: false,
+      };
+    });
+
+    this.contractsByStatus = contractsByStatus;
+    this.paginationByStatus = paginationByStatus;
+    this.syncFlatContracts();
+    this.buildFilterOptions();
+  }
+
+  private syncFlatContracts(): void {
+    const knownStatuses = new Set<string>(this.statuses);
+    const ordered = this.statuses.flatMap((status) => this.contractsByStatus[status] ?? []);
+    const additional = Object.entries(this.contractsByStatus)
+      .filter(([status]) => !knownStatuses.has(status))
+      .flatMap(([, contracts]) => contracts);
+
+    this.contracts = mergeContractsById([], [...ordered, ...additional]);
+    this.filteredContracts = this.contracts;
+  }
+
+  private resetLoadedContracts(): void {
+    this.totalContracts = 0;
+    this.contracts = [];
+    this.filteredContracts = [];
+    this.contractsByStatus = {};
+    this.paginationByStatus = {};
+  }
+
+  private buildFilterOptions(): void {
+    this.filterOptions = mergeBaseContractFilterOptions(
+      this.filterOptions,
+      buildBaseContractFilterOptions(this.contracts),
+    );
+
+    this.availableSegments = this.filterOptions.segments;
+    this.availableProducts = this.filterOptions.products;
+    this.availableUsers = this.filterOptions.users;
+    this.refreshFilterFields();
+  }
+
+  private refreshFilterFields(): void {
+    const context = {
+      segments: this.availableSegments,
+      products: this.availableProducts,
+      users: this.availableUsers,
+    };
+
+    this.filterFields = buildEnergyContractFilterFields(context, { includeSocialTariff: true });
+  }
+
+  private handleSocketContract(
+    event: { contractId?: string; estado?: string },
+    isCreated: boolean,
+  ): void {
+    const contractId = event.contractId;
+
+    if (!contractId) {
+      return;
+    }
+
+    let existing: MeoEnergiasContractList | undefined;
+
+    Object.values(this.contractsByStatus).some((contracts) => {
+      existing = contracts.find((contract) => contract.id === contractId);
+      return Boolean(existing);
+    });
+
+    if (!existing && (!isCreated || this.hasActiveFilters())) {
+      return;
+    }
+
+    const nextStatus = String(event.estado ?? existing?.estado ?? '') as MeoEnergiasContractStatus;
+
+    if (!nextStatus || !this.statuses.includes(nextStatus)) {
+      return;
+    }
+
+    const updatedContract = {
+      ...(existing ?? {}),
+      ...event,
+      id: contractId,
+      estado: nextStatus,
+    } as MeoEnergiasContractList;
+
+    const nextColumns: Record<string, MeoEnergiasContractList[]> = {};
+    Object.entries(this.contractsByStatus).forEach(([status, contracts]) => {
+      nextColumns[status] = contracts.filter((contract) => contract.id !== contractId);
+    });
+
+    const stateFilterAllowsContract =
+      !this.appliedFilters.status.length || this.appliedFilters.status.includes(nextStatus);
+
+    if (stateFilterAllowsContract) {
+      nextColumns[nextStatus] = prependContractById(nextColumns[nextStatus] ?? [], updatedContract);
+    }
+
+    this.contractsByStatus = nextColumns;
+    this.syncFlatContracts();
+    this.buildFilterOptions();
+  }
+
+  getContractUserName(contract: MeoEnergiasContractList): string {
     return contract.user?.name?.trim() || '—';
   }
 

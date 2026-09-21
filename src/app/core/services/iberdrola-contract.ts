@@ -6,27 +6,21 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
-export const IBERDROLA_COMPANY_ID =
-  'cmp_JHtuvY63fm' as const;
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
+export const IBERDROLA_COMPANY_ID = 'cmp_JHtuvY63fm' as const;
 
-export type IberdrolaTipoSegmento =
-  | 'Residencial'
-  | 'Empresarial'
-  | 'Condomínios';
+export type IberdrolaTipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 
-export type IberdrolaTipoProduto =
-  | 'Luz'
-  | 'Luz + Gás'
-  | 'Gás';
+export type IberdrolaTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
 
-export type IberdrolaContratacao =
-  | 'Contratação Digital'
-  | 'Contratação Papel';
+export type IberdrolaContratacao = 'Contratação Digital' | 'Contratação Papel';
 
 export type IberdrolaTipoContratacao =
-  | 'Mudança de Comercializadora'
-  | 'Mudança de Comercializadora & AT'
-  | 'Entrada Direta';
+  'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
 
 export type IberdrolaContractStatus =
   | 'Pedido de Contratação'
@@ -47,26 +41,25 @@ export type IberdrolaContractStatus =
   | 'Cancelada'
   | 'Baixa';
 
-export const IBERDROLA_CONTRACT_STATUSES:
-  readonly IberdrolaContractStatus[] = [
-    'Pedido de Contratação',
-    'Pedido de Simulação',
-    'Pendente Validação Comercial',
-    'Pedido SMS (RGPD)',
-    'Pedido VTV',
-    'Pendente SMS "Cond Contratuais"',
-    'Não Conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'BackOffice',
-    'Controle',
-    'Pedido de Fornecimento',
-    'Em fornecimento',
-    'Ativo',
-    'Parcialmente Baixa',
-    'Cancelada',
-    'Baixa',
-  ];
+export const IBERDROLA_CONTRACT_STATUSES: readonly IberdrolaContractStatus[] = [
+  'Pedido de Contratação',
+  'Pedido de Simulação',
+  'Pendente Validação Comercial',
+  'Pedido SMS (RGPD)',
+  'Pedido VTV',
+  'Pendente SMS "Cond Contratuais"',
+  'Não Conformidade',
+  'Pendente Docs',
+  'Documentos Enviados',
+  'BackOffice',
+  'Controle',
+  'Pedido de Fornecimento',
+  'Em fornecimento',
+  'Ativo',
+  'Parcialmente Baixa',
+  'Cancelada',
+  'Baixa',
+];
 
 export type IberdrolaCicloHorario =
   | 'Simples'
@@ -76,9 +69,7 @@ export type IberdrolaCicloHorario =
   | 'Tri-Horário Semanal'
   | 'Tetra-Horário';
 
-export type IberdrolaNivelTensao =
-  | 'Monofásico'
-  | 'Trifásico';
+export type IberdrolaNivelTensao = 'Monofásico' | 'Trifásico';
 
 export const IBERDROLA_POWER_SUGGESTIONS = [
   '1.15',
@@ -96,8 +87,7 @@ export const IBERDROLA_POWER_SUGGESTIONS = [
   '41.40',
 ] as const;
 
-export const IBERDROLA_GAS_LEVEL_SUGGESTIONS =
-  ['1', '2', '3', '4'] as const;
+export const IBERDROLA_GAS_LEVEL_SUGGESTIONS = ['1', '2', '3', '4'] as const;
 
 export interface IberdrolaContractListUser {
   id: string;
@@ -286,21 +276,32 @@ export interface CreateIberdrolaContractRequest {
   teams?: IberdrolaContractTeamVisibility[];
 }
 
-export type UpdateIberdrolaContractRequest =
-  Partial<
+export type UpdateIberdrolaContractRequest = Partial<
+  Omit<CreateIberdrolaContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+> & {
+  nif?: number | null;
+  telefone?: number | null;
+  observacoes?: string;
+  observacoesInternas?: string;
+};
+
+export type IberdrolaContractList = Omit<
+  IberdrolaContract,
+  'observacoes' | 'observacoesInternas'
+> & { userId?: string; campanha?: string } & Partial<
     Omit<
-      CreateIberdrolaContractRequest,
-      | 'companyId'
-      | 'clientId'
-      | 'userId'
-      | 'teams'
+      IberdrolaContractDetail,
+      | keyof Omit<IberdrolaContract, 'observacoes' | 'observacoesInternas'>
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+      | 'followers'
     >
-  > & {
-    nif?: number | null;
-    telefone?: number | null;
-    observacoes?: string;
-    observacoesInternas?: string;
-  };
+  >;
 
 @Injectable({
   providedIn: 'root',
@@ -311,15 +312,17 @@ export class IberdrolaContractService {
 
   getIberdrolaContracts(
     userId: string,
-  ): Observable<IberdrolaContract[]> {
-    return this.http.get<IberdrolaContract[]>(
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<IberdrolaContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<IberdrolaContractList>>(
       `${this.apiUrl}/api/contracts/iberdrola/followers/${userId}`,
+      { params },
     );
   }
 
-  getIberdrolaContractById(
-    contractId: string,
-  ): Observable<IberdrolaContractDetail> {
+  getIberdrolaContractById(contractId: string): Observable<IberdrolaContractDetail> {
     return this.http.get<IberdrolaContractDetail>(
       `${this.apiUrl}/api/contracts/iberdrola/${contractId}`,
     );
@@ -344,10 +347,7 @@ export class IberdrolaContractService {
     );
   }
 
-  uploadAttachments(
-    contractId: string,
-    files: File[],
-  ): Observable<IberdrolaContractDetail> {
+  uploadAttachments(contractId: string, files: File[]): Observable<IberdrolaContractDetail> {
     const formData = new FormData();
 
     files.forEach((file) => {
@@ -360,10 +360,7 @@ export class IberdrolaContractService {
     );
   }
 
-  deleteAttachment(
-    contractId: string,
-    fileName: string,
-  ): Observable<IberdrolaContractDetail> {
+  deleteAttachment(contractId: string, fileName: string): Observable<IberdrolaContractDetail> {
     return this.http.delete<IberdrolaContractDetail>(
       `${this.apiUrl}/api/contracts/iberdrola/${contractId}/attachments/${encodeURIComponent(
         fileName,
@@ -371,10 +368,7 @@ export class IberdrolaContractService {
     );
   }
 
-  downloadDocument(
-    contractId: string,
-    document: IberdrolaContractDocument,
-  ): Observable<Blob> {
+  downloadDocument(contractId: string, document: IberdrolaContractDocument): Observable<Blob> {
     return this.http.get(
       `${this.apiUrl}/api/contracts/iberdrola/${contractId}/attachments/${encodeURIComponent(
         document.fileName,

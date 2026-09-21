@@ -83,6 +83,10 @@ interface AuthenticatedUserLike {
   username?: string;
 }
 import { appendObservationHistory } from '../../../core/utils/observation-history';
+import {
+  canMutateContractByBusinessRule,
+  isRequiredContractTeamMember,
+} from '../../../core/utils/contract-mutation-access';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
@@ -143,6 +147,7 @@ export class GalpSolarContractDetail implements OnInit {
   isSaving = false;
   isEditing = false;
   isSuperAdmin = false;
+  isRequiredTeamMember = false;
   canAccessInternalObservations = false;
 
   errorMessage = '';
@@ -161,6 +166,20 @@ export class GalpSolarContractDetail implements OnInit {
   readonly estadoOptions = GALP_SOLAR_STATUSES;
   readonly panelSuggestions = GALP_SOLAR_PANEL_SUGGESTIONS;
   readonly paymentMethodSuggestions = GALP_SOLAR_PAYMENT_METHOD_SUGGESTIONS;
+
+  get canMutateContract(): boolean {
+    return (
+      !!this.contract &&
+      canMutateContractByBusinessRule(
+        this.contract.estado,
+        this.isRequiredTeamMember,
+      )
+    );
+  }
+
+  get canEditContract(): boolean {
+    return this.isSuperAdmin && this.canMutateContract;
+  }
 
   ngOnInit(): void {
     this.resolvePermissions();
@@ -231,7 +250,12 @@ export class GalpSolarContractDetail implements OnInit {
           }
         }
 
-        const currentTime = new Date().toLocaleTimeString('pt-PT');
+        if (!this.canEditContract && this.isEditing) {
+        this.isEditing = false;
+        this.selectedFiles = [];
+      }
+
+      const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
@@ -315,7 +339,11 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return !!this.contract && this.hasContractAccess(this.contract);
+    return (
+      !!this.contract &&
+      this.canMutateContract &&
+      this.hasContractAccess(this.contract)
+    );
   }
 
   submitObservation(message: string): void {
@@ -331,7 +359,7 @@ export class GalpSolarContractDetail implements OnInit {
       !this.contract ||
       !this.contractId ||
       (internal
-        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        ? !this.canEditContract || !this.canAccessInternalObservations
         : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
@@ -402,7 +430,7 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   startEditing(): void {
-    if (!this.isSuperAdmin || !this.contract) {
+    if (!this.canEditContract || !this.contract) {
       return;
     }
 
@@ -435,7 +463,7 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   saveChanges(): void {
-    if (!this.isSuperAdmin || !this.contract || !this.contractId) {
+    if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
     }
 
@@ -529,7 +557,7 @@ export class GalpSolarContractDetail implements OnInit {
           this.internalObservationDraft = '';
 
           if (uploadFailed) {
-            this.isEditing = true;
+            this.isEditing = this.canEditContract;
             this.showError(
               (
                 uploadError as {
@@ -588,7 +616,7 @@ export class GalpSolarContractDetail implements OnInit {
 
   deleteAttachment(document: GalpSolarContractDocument): void {
     if (
-      !this.isSuperAdmin ||
+      !this.canEditContract ||
       !this.isEditing ||
       !this.contract ||
       !this.contractId ||
@@ -789,6 +817,7 @@ export class GalpSolarContractDetail implements OnInit {
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
     this.isSuperAdmin = role.includes('super admin') || role.includes('du');
+    this.isRequiredTeamMember = isRequiredContractTeamMember(currentUser);
 
     if (!this.currentUserId) {
       return;
@@ -796,6 +825,7 @@ export class GalpSolarContractDetail implements OnInit {
 
     this.userService.getUserById(this.currentUserId).subscribe({
       next: (user) => {
+        this.isRequiredTeamMember = isRequiredContractTeamMember(user);
         const teamIds =
           (
             user as ProfileUser & {

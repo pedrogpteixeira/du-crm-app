@@ -6,6 +6,11 @@ import type { ContractFlowEntry, ContractTicketSummary } from '../models/contrac
 
 import { environment } from '../../../environments/environment';
 
+import {
+  ContractKanbanQuery,
+  ContractKanbanResponse,
+  buildContractFiltersParams,
+} from '../utils/contract-kanban';
 export type GalpSolarContractStatus =
   | 'Pedido de Proposta'
   | 'Proposta enviada'
@@ -175,6 +180,28 @@ export type UpdateGalpSolarContractRequest = Partial<
   Omit<CreateGalpSolarContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
 >;
 
+export type GalpSolarContractList = Pick<
+  GalpSolarContract,
+  'id' | 'estado' | 'nomeClienteEmpresa' | 'nif'
+> &
+  Partial<
+    Omit<
+      GalpSolarContract,
+      | 'id'
+      | 'estado'
+      | 'nomeClienteEmpresa'
+      | 'nif'
+      | 'documentos'
+      | 'observacoes'
+      | 'observacoesInternas'
+      | 'followers'
+      | 'fluxo'
+      | 'tickets'
+      | 'moradaInstalacao'
+      | 'moradaFaturacao'
+    >
+  >;
+
 @Injectable({ providedIn: 'root' })
 export class GalpSolarContractService {
   private readonly http = inject(HttpClient);
@@ -196,8 +223,16 @@ export class GalpSolarContractService {
     return this.http.get<GalpSolarContract[]>(`${this.baseUrl}/user/${userId}`);
   }
 
-  getByFollowerId(userId: string): Observable<GalpSolarContract[]> {
-    return this.http.get<GalpSolarContract[]>(`${this.baseUrl}/followers/${userId}`);
+  getByFollowerId(
+    userId: string,
+    query: ContractKanbanQuery = {},
+  ): Observable<ContractKanbanResponse<GalpSolarContractList>> {
+    const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
+
+    return this.http.get<ContractKanbanResponse<GalpSolarContractList>>(
+      `${this.baseUrl}/followers/${userId}`,
+      { params },
+    );
   }
 
   create(payload: CreateGalpSolarContractRequest): Observable<GalpSolarContract> {

@@ -14,6 +14,10 @@ import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
+import {
+  canMutateContractByBusinessRule,
+  isRequiredContractTeamMember,
+} from '../../../core/utils/contract-mutation-access';
 
 import {
   mergeContractActivitySocketPayload,
@@ -167,6 +171,7 @@ export class RepsolContractDetail implements OnInit {
   isSaving = false;
   isEditing = false;
   isSuperAdmin = false;
+  isRequiredTeamMember = false;
   canAccessInternalObservations = false;
 
   errorMessage = '';
@@ -206,6 +211,20 @@ export class RepsolContractDetail implements OnInit {
   readonly gasLevelSuggestions = GAS_LEVELS;
 
   readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
+  get canMutateContract(): boolean {
+    return (
+      !!this.contract &&
+      canMutateContractByBusinessRule(
+        this.contract.estado,
+        this.isRequiredTeamMember,
+      )
+    );
+  }
+
+  get canEditContract(): boolean {
+    return this.isSuperAdmin && this.canMutateContract;
+  }
 
   ngOnInit(): void {
     this.resolvePermissions();
@@ -267,6 +286,11 @@ export class RepsolContractDetail implements OnInit {
             estado: stateUpdate.estado,
           };
         }
+      }
+
+      if (!this.canEditContract && this.isEditing) {
+        this.isEditing = false;
+        this.selectedFiles = [];
       }
 
       const currentTime = new Date().toLocaleTimeString('pt-PT');
@@ -346,7 +370,11 @@ export class RepsolContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return !!this.contract && this.hasContractAccess(this.contract);
+    return (
+      !!this.contract &&
+      this.canMutateContract &&
+      this.hasContractAccess(this.contract)
+    );
   }
 
   submitObservation(message: string): void {
@@ -362,7 +390,7 @@ export class RepsolContractDetail implements OnInit {
       !this.contract ||
       !this.contractId ||
       (internal
-        ? !this.isSuperAdmin || !this.canAccessInternalObservations
+        ? !this.canEditContract || !this.canAccessInternalObservations
         : !this.canSubmitObservation) ||
       (internal ? this.isSubmittingInternalObservation : this.isSubmittingObservation)
     ) {
@@ -433,7 +461,7 @@ export class RepsolContractDetail implements OnInit {
   }
 
   startEditing(): void {
-    if (!this.isSuperAdmin || !this.contract) {
+    if (!this.canEditContract || !this.contract) {
       return;
     }
 
@@ -476,7 +504,7 @@ export class RepsolContractDetail implements OnInit {
   }
 
   saveChanges(): void {
-    if (!this.isSuperAdmin || !this.contract || !this.contractId) {
+    if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
     }
 
@@ -588,7 +616,7 @@ export class RepsolContractDetail implements OnInit {
           this.internalObservationDraft = '';
 
           if (uploadFailed) {
-            this.isEditing = true;
+            this.isEditing = this.canEditContract;
             this.showError(
               (
                 uploadError as {
@@ -657,7 +685,7 @@ export class RepsolContractDetail implements OnInit {
 
   deleteAttachment(document: RepsolContractDocument): void {
     if (
-      !this.isSuperAdmin ||
+      !this.canEditContract ||
       !this.isEditing ||
       !this.contract ||
       !this.contractId ||
@@ -736,6 +764,7 @@ export class RepsolContractDetail implements OnInit {
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
 
     this.isSuperAdmin = role.includes('super admin') || role.includes('du');
+    this.isRequiredTeamMember = isRequiredContractTeamMember(currentUser);
 
     if (!this.currentUserId) {
       return;
@@ -743,6 +772,7 @@ export class RepsolContractDetail implements OnInit {
 
     this.userService.getUserById(this.currentUserId).subscribe({
       next: (user) => {
+        this.isRequiredTeamMember = isRequiredContractTeamMember(user);
         const teamIds =
           (
             user as ProfileUser & {

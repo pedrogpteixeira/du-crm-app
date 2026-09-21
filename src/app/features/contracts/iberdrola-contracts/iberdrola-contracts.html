@@ -1,8 +1,6 @@
 <section class="contracts-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb"> Contratos › Iberdrola </span>
-
       <h1>Contratos Iberdrola</h1>
 
       <p>Consulta e acompanha os contratos Iberdrola registados no CRM.</p>
@@ -43,132 +41,27 @@
     </div>
   </header>
   <section class="filters-card" *ngIf="showFilters">
-    <div class="filter-field">
-      <label for="iberdrola-contract-id-filter">ID Contrato</label>
-      <input
-        id="iberdrola-contract-id-filter"
-        type="search"
-        placeholder="Pesquisar ID..."
-        [(ngModel)]="filters.contractId"
-        (ngModelChange)="applyFilters()"
-      />
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-client-filter">Cliente / Empresa</label>
-      <input
-        id="iberdrola-client-filter"
-        type="search"
-        placeholder="Pesquisar cliente..."
-        [(ngModel)]="filters.client"
-        (ngModelChange)="applyFilters()"
-      />
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-nif-filter">NIF</label>
-      <input
-        id="iberdrola-nif-filter"
-        type="search"
-        inputmode="numeric"
-        placeholder="Pesquisar NIF..."
-        [(ngModel)]="filters.nif"
-        (ngModelChange)="applyFilters()"
-      />
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-registration-name-filter">Nome Registo C.E.</label>
-      <input
-        id="iberdrola-registration-name-filter"
-        type="search"
-        placeholder="Pesquisar registo..."
-        [(ngModel)]="filters.registrationName"
-        (ngModelChange)="applyFilters()"
-      />
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-segment-filter">Segmento</label>
-      <select
-        id="iberdrola-segment-filter"
-        [(ngModel)]="filters.segment"
-        (ngModelChange)="applyFilters()"
-      >
-        <option value="">Todos os segmentos</option>
-        <option *ngFor="let segment of availableSegments" [value]="segment">
-          {{ segment }}
-        </option>
-      </select>
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-product-filter">Produto</label>
-      <select
-        id="iberdrola-product-filter"
-        [(ngModel)]="filters.product"
-        (ngModelChange)="applyFilters()"
-      >
-        <option value="">Todos os produtos</option>
-        <option *ngFor="let product of availableProducts" [value]="product">
-          {{ product }}
-        </option>
-      </select>
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-status-filter">Estado</label>
-      <select
-        id="iberdrola-status-filter"
-        [(ngModel)]="filters.status"
-        (ngModelChange)="applyFilters()"
-      >
-        <option value="">Todos os estados</option>
-        <option *ngFor="let status of statuses" [value]="status">
-          {{ status }}
-        </option>
-      </select>
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-user-filter">Criado por</label>
-      <select
-        id="iberdrola-user-filter"
-        [(ngModel)]="filters.userId"
-        (ngModelChange)="applyFilters()"
-      >
-        <option value="">Todos os utilizadores</option>
-        <option *ngFor="let user of availableUsers" [value]="user.id">
-          {{ user.name }}
-        </option>
-      </select>
-    </div>
-
-    <div class="filter-field">
-      <label for="iberdrola-id-venda-filter">ID Venda</label>
-      <input
-        id="iberdrola-id-venda-filter"
-        type="search"
-        placeholder="Pesquisar ID Venda..."
-        [(ngModel)]="filters.idVenda"
-        (ngModelChange)="applyFilters()"
-      />
-    </div>
-    <button
-      type="button"
-      class="clear-filters-button"
-      [disabled]="!hasActiveFilters()"
-      (click)="clearFilters()"
-    >
-      Limpar filtros
-    </button>
-
-    <p class="filters-result-count" *ngIf="!isLoading">
-      A mostrar <strong>{{ filteredContracts.length }}</strong> de
-      <strong>{{ contracts.length }}</strong> contratos.
-    </p>
+    <app-contract-list-filters
+      [fields]="filterFields"
+      [statuses]="statuses"
+      [(value)]="filters"
+      [appliedValue]="appliedFilters"
+      [loadedCount]="contracts.length"
+      [hasMore]="hasMoreInAnyState"
+      [isLoading]="isLoading"
+      (applyFilters)="applyFilters()"
+      (resetFilters)="clearFilters()"
+    ></app-contract-list-filters>
   </section>
 
+  <div class="contracts-total-summary" *ngIf="!isLoading && !errorMessage">
+    <span class="material-symbols-rounded" aria-hidden="true">description</span>
+    <span>
+      <strong>{{ totalContracts }}</strong>
+      {{ totalContracts === 1 ? 'contrato encontrado' : 'contratos encontrados' }}
+      <small *ngIf="hasActiveFilters()">para os filtros aplicados</small>
+    </span>
+  </div>
 
   <!-- =========================
        TABLE
@@ -237,20 +130,17 @@
 
     <div
       class="filtered-empty-state"
-      *ngIf="
-        !isLoading &&
-        !errorMessage &&
-        contracts.length &&
-        !filteredContracts.length &&
-        hasActiveFilters()
-      "
+      *ngIf="!isLoading && !errorMessage && !contracts.length && hasActiveFilters()"
     >
       <strong>Nenhum contrato encontrado</strong>
       <span>Não existem contratos que correspondam aos filtros selecionados.</span>
       <button type="button" (click)="clearFilters()">Limpar filtros</button>
     </div>
 
-    <p class="empty-state" *ngIf="!isLoading && !errorMessage && !contracts.length">
+    <p
+      class="empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length && !hasActiveFilters()"
+    >
       Ainda não existem contratos Iberdrola.
     </p>
   </div>
@@ -267,9 +157,7 @@
             {{ status }}
           </span>
 
-          <small>
-            {{ getContractsByStatus(status).length }}
-          </small>
+          <small> {{ getContractsByStatus(status).length }} </small>
         </header>
 
         <div class="kanban-list">
@@ -317,7 +205,21 @@
             </span>
           </a>
 
-          <p class="empty-column" *ngIf="!getContractsByStatus(status).length">Sem contratos.</p>
+          <p class="empty-column" *ngIf="!getContractsByStatus(status).length">
+            {{ hasActiveFilters() ? 'Sem contratos com os filtros atuais.' : 'Sem contratos.' }}
+          </p>
+
+          <p class="column-loading" *ngIf="isLoadingStatus(status)">A carregar mais contratos...</p>
+
+          <button
+            type="button"
+            class="kanban-load-more"
+            *ngIf="hasMoreForStatus(status)"
+            [disabled]="isLoadingStatus(status)"
+            (click)="loadMore(status)"
+          >
+            {{ isLoadingStatus(status) ? 'A carregar...' : 'Carregar mais' }}
+          </button>
         </div>
       </section>
     </div>

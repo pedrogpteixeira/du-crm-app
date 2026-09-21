@@ -4,6 +4,7 @@
   <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
   <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
   <p class="socket-message" *ngIf="socketMessage">{{ socketMessage }}</p>
+  <p class="error-message" *ngIf="contractAccessWarning">{{ contractAccessWarning }}</p>
 
   <span class="last-sync" *ngIf="lastSocketUpdate">
     Atualizado automaticamente às {{ lastSocketUpdate }}
@@ -61,6 +62,11 @@
         </ng-container>
       </div>
     </header>
+
+
+    <p class="socket-message" *ngIf="isReadOnlyByContractState">
+      O contrato associado encontra-se no estado {{ contractStatus }}. Este Ticket está apenas disponível para visualização e não pode ser editado.
+    </p>
 
     <form [formGroup]="ticketForm" class="detail-grid" novalidate>
       <div class="main-column">

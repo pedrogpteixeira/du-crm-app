@@ -1,6 +1,6 @@
 @mixin styles {
   .filters-toggle-button {
-    min-height: 42px;
+    min-height: 38px;
 
     display: inline-flex;
     align-items: center;
@@ -13,7 +13,7 @@
     background: #ffffff !important;
     color: #243646 !important;
 
-    padding: 10px 16px !important;
+    padding: 8px 13px !important;
 
     font-family: inherit;
     font-size: 13px;
@@ -38,7 +38,7 @@
     }
 
     .material-symbols-rounded {
-      font-size: 19px;
+      font-size: 17px;
       line-height: 1;
     }
   }
@@ -171,6 +171,154 @@
     }
   }
 
+  .contracts-total-summary {
+    min-height: 26px;
+    width: fit-content;
+    max-width: 100%;
+    align-self: flex-start;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 0 2px;
+
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+
+    > .material-symbols-rounded {
+      flex-shrink: 0;
+      color: #008db1;
+      font-size: 17px;
+    }
+
+    > span:last-child {
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    strong {
+      color: #243646;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    small {
+      color: #008db1;
+      font-size: 11px;
+      font-weight: 800;
+    }
+  }
+
+  /* =========================
+     COMPACT CONTRACT LIST VIEWPORT
+     Keeps the list scrollbar inside the visible viewport on desktop.
+  ========================= */
+
+  .contracts-page {
+    gap: 12px;
+  }
+
+  .page-header {
+    min-height: 0;
+    align-items: center;
+    gap: 16px;
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+      line-height: 1.12;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.35;
+    }
+  }
+
+  .header-actions {
+    gap: 9px;
+  }
+
+  .view-toggle {
+    padding: 4px;
+    border-radius: 11px;
+
+    button {
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 13px;
+    }
+  }
+
+  .create-btn {
+    border-radius: 11px !important;
+    padding: 10px 16px !important;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 721px) {
+    .contracts-page {
+      /* 50px utility bar + 20/24px content padding = 94px. */
+      height: calc(100dvh - 94px);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .page-header,
+    .filters-card,
+    .contracts-total-summary {
+      flex: 0 0 auto;
+    }
+
+    .card,
+    .kanban-wrapper {
+      flex: 1 1 0;
+      min-height: 0;
+      max-height: none;
+    }
+
+    .card {
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+
+    .kanban-wrapper {
+      padding-bottom: 6px;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+    }
+  }
+
+  @media (min-width: 721px) and (max-width: 900px) {
+    .contracts-page {
+      /* 50px utility bar + 18px vertical content padding. */
+      height: calc(100dvh - 86px);
+    }
+  }
+
+  @media (max-height: 760px) and (min-width: 721px) {
+    .page-header p {
+      display: none;
+    }
+
+    .page-header h1 {
+      margin-bottom: 0;
+    }
+  }
+
   .filtered-empty-state {
     margin: 18px 0 0;
     padding: 28px 18px;
@@ -210,7 +358,95 @@
     }
   }
 
+  .filter-hint {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+
+  .filter-field-statuses {
+    align-self: stretch;
+  }
+
+  .status-filter-options {
+    min-height: 44px;
+    max-height: 142px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 7px;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+
+  .status-filter-option {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 6px !important;
+    padding: 6px 8px;
+    border-radius: 9px;
+    background: #f8fafc;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 750 !important;
+    cursor: pointer;
+
+    input {
+      width: 15px !important;
+      height: 15px !important;
+      margin: 0;
+      padding: 0 !important;
+      accent-color: #008db1;
+      box-shadow: none !important;
+    }
+  }
+
+  .column-loading {
+    margin: 10px 0 0;
+    padding: 8px 10px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .kanban-load-more {
+    width: 100%;
+    min-height: 38px;
+    margin-top: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #008db1;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #f0f9fc;
+      border-color: #7dc7da;
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+  }
   @media (max-width: 900px) {
+    .page-header {
+      align-items: stretch;
+    }
+
     .header-actions {
       flex-wrap: wrap;
       justify-content: flex-end;
@@ -218,6 +454,11 @@
   }
 
   @media (max-width: 720px) {
+    .contracts-page {
+      height: auto;
+      overflow: visible;
+    }
+
     .filters-card {
       grid-template-columns: 1fr;
     }
