@@ -27,6 +27,7 @@ import {
   AnalyticsSvaAnalytics,
 } from '../../../core/models/analytics.model';
 import { AnalyticsService } from '../../../core/services/analytics';
+import { AnalyticsExcelExportService } from '../../../core/services/analytics-excel-export';
 import { Auth } from '../../../core/services/auth';
 import {
   AnalyticsBarChart,
@@ -95,6 +96,7 @@ interface ProviderDashboardState {
 })
 export class Dashboard {
   private readonly analyticsService = inject(AnalyticsService);
+  private readonly analyticsExcelExportService = inject(AnalyticsExcelExportService);
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -114,6 +116,7 @@ export class Dashboard {
   readonly selectedProvider = signal<AnalyticsProviderId>('repsol');
   readonly selectedPeriod = signal<AnalyticsPeriod>('all');
   readonly directDebitView = signal<DirectDebitView>('crm-total');
+  readonly isExporting = signal(false);
 
   readonly directDebitViewOptions: readonly AnalyticsBarChartViewOption[] = [
     { id: 'crm-total', label: 'CRM Total' },
@@ -185,6 +188,16 @@ export class Dashboard {
       this.segmentsLoading() ||
       this.directDebitLoading() ||
       this.svaLoading(),
+  );
+
+  readonly canExport = computed(
+    () =>
+      this.states() !== null &&
+      this.registrationNames() !== null &&
+      this.products() !== null &&
+      this.segments() !== null &&
+      this.directDebit() !== null &&
+      this.sva() !== null,
   );
 
   /**
@@ -349,6 +362,55 @@ export class Dashboard {
   selectDirectDebitView(viewId: string): void {
     if (viewId === 'crm-total' || viewId === 'team-rate') {
       this.directDebitView.set(viewId);
+    }
+  }
+
+  async exportAnalytics(): Promise<void> {
+    const states = this.states();
+    const registrationNames = this.registrationNames();
+    const products = this.products();
+    const segments = this.segments();
+    const directDebit = this.directDebit();
+    const sva = this.sva();
+
+    if (
+      this.isExporting() ||
+      !states ||
+      !registrationNames ||
+      !products ||
+      !segments ||
+      !directDebit ||
+      !sva
+    ) {
+      return;
+    }
+
+    this.isExporting.set(true);
+
+    // Deixa o browser pintar o overlay antes da geração síncrona do XLSX.
+    // Com os gráficos OpenXML a exportação pode demorar mais alguns ms.
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 0);
+    });
+
+    try {
+      this.analyticsExcelExportService.exportAnalytics({
+        providerId: this.selectedProvider(),
+        providerLabel: this.providerLabel(),
+        period: this.selectedPeriod(),
+        periodLabel: this.periodLabel(),
+        totalContracts: this.totalContracts() ?? 0,
+        states,
+        registrationNames,
+        products,
+        segments,
+        directDebit,
+        sva,
+      });
+    } catch (error) {
+      console.error('Erro ao exportar analytics para Excel:', error);
+    } finally {
+      this.isExporting.set(false);
     }
   }
 

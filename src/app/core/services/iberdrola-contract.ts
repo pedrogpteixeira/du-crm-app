@@ -17,7 +17,7 @@ export type IberdrolaTipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínio
 
 export type IberdrolaTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
 
-export type IberdrolaContratacao = 'Contratação Digital' | 'Contratação Papel';
+export type IberdrolaContratacao = 'Contratação Digital' | 'Contratação Papel' | 'Contratação Tablet';
 
 export type IberdrolaTipoContratacao =
   'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';

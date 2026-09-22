@@ -8,16 +8,35 @@
       </p>
     </div>
 
-    <button
-      class="refresh-button"
-      type="button"
-      (click)="loadAnalytics(true)"
-      [disabled]="isLoadingAny()"
-      [attr.aria-label]="'Atualizar analytics de ' + providerLabel()"
-    >
-      <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
-      <span>{{ isLoadingAny() ? 'A atualizar…' : 'Atualizar' }}</span>
-    </button>
+    <div class="header-actions">
+      <button
+        class="export-button"
+        type="button"
+        (click)="exportAnalytics()"
+        [disabled]="!canExport() || isExporting()"
+        [attr.aria-label]="'Exportar analytics de ' + providerLabel() + ' para Excel'"
+        [title]="canExport() ? 'Exportar o período selecionado para Excel' : 'A aguardar os dados da dashboard'"
+      >
+        <span
+          class="material-symbols-rounded"
+          aria-hidden="true"
+          *ngIf="!isExporting()"
+        >download</span>
+        <span class="export-button-spinner" *ngIf="isExporting()"></span>
+        <span>{{ isExporting() ? 'A gerar Excel…' : 'Exportar Excel' }}</span>
+      </button>
+
+      <button
+        class="refresh-button"
+        type="button"
+        (click)="loadAnalytics(true)"
+        [disabled]="isLoadingAny()"
+        [attr.aria-label]="'Atualizar analytics de ' + providerLabel()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+        <span>{{ isLoadingAny() ? 'A atualizar…' : 'Atualizar' }}</span>
+      </button>
+    </div>
   </header>
 
   <div class="analytics-switchers">
@@ -371,6 +390,19 @@
           <button type="button" class="retry-button" (click)="loadSva(true)">Tentar novamente</button>
         </div>
       </ng-template>
+    </div>
+  </div>
+
+  <div class="excel-loading-overlay" *ngIf="isExporting()">
+    <div class="excel-loading-card">
+      <span class="excel-loading-spinner"></span>
+
+      <strong>A gerar o ficheiro Excel</strong>
+
+      <p>
+        Estamos a preparar os dados e as visualizações gráficas.
+        Este processo poderá demorar alguns segundos.
+      </p>
     </div>
   </div>
 </section>

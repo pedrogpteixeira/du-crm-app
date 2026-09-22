@@ -22,6 +22,14 @@
   min-width: 0;
 }
 
+.header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -120,6 +128,7 @@
   white-space: nowrap;
 }
 
+.export-button,
 .refresh-button,
 .retry-button {
   flex: 0 0 auto;
@@ -145,6 +154,7 @@
     transform 0.16s ease;
 }
 
+.export-button:hover:not(:disabled),
 .refresh-button:hover:not(:disabled),
 .retry-button:hover:not(:disabled) {
   border-color: #8fc7d5;
@@ -153,11 +163,23 @@
   transform: translateY(-1px);
 }
 
+.export-button:disabled,
 .refresh-button:disabled {
-  cursor: wait;
-  opacity: 0.65;
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
+.refresh-button:disabled {
+  cursor: wait;
+}
+
+.export-button {
+  border-color: #a8d5df;
+  background: #f5fbfc;
+  color: #007d9c;
+}
+
+.export-button .material-symbols-rounded,
 .refresh-button .material-symbols-rounded {
   font-size: 18px;
 }
@@ -425,8 +447,13 @@
     min-width: max-content;
   }
 
-  .refresh-button {
+  .header-actions {
     width: 100%;
+  }
+
+  .export-button,
+  .refresh-button {
+    flex: 1;
   }
 
   .kpi-grid {
@@ -607,5 +634,75 @@
   .analytics-block-shell > app-analytics-bar-chart,
   .analytics-block-shell > app-analytics-donut-chart {
     height: auto;
+  }
+}
+
+/* Excel export loading — consistente com o loading do proposal-preview. */
+.export-button:disabled {
+  cursor: wait;
+}
+
+.export-button-spinner {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 2px solid rgba(0, 125, 156, 0.22);
+  border-top-color: #008db1;
+  border-radius: 50%;
+  animation: excel-spinner-rotation 0.8s linear infinite;
+}
+
+.excel-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.excel-loading-card {
+  width: min(390px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 34px 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
+
+  strong {
+    color: #243646;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+}
+
+.excel-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #dbeafe;
+  border-top-color: #008db1;
+  border-radius: 50%;
+  animation: excel-spinner-rotation 0.85s linear infinite;
+}
+
+@keyframes excel-spinner-rotation {
+  to {
+    transform: rotate(360deg);
   }
 }

@@ -214,6 +214,7 @@ export class IberdrolaContractCreate implements OnInit {
   readonly contratacaoOptions: IberdrolaContratacao[] = [
     'Contratação Digital',
     'Contratação Papel',
+    'Contratação Tablet'
   ];
 
   readonly tipoContratacaoOptions: IberdrolaTipoContratacao[] = [

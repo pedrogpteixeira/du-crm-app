@@ -49,6 +49,11 @@ export const environment = {
       active: true,
     },
     {
+      id: 'cmp_FKsS04kTr7',
+      name: 'Iberdrola Solar',
+      active: true,
+    },
+    {
       id: 'cmp_s4mjPGw-gJ',
       name: 'Nossa Energia',
       active: true,

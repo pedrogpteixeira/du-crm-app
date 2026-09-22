@@ -61,7 +61,7 @@
 }
 
 .company-logo {
-  height: 78px;
+  height: 90px;
 
   display: flex;
   align-items: center;
@@ -70,8 +70,14 @@
   margin-bottom: 8px;
 
   img {
-    max-width: 155px;
-    max-height: 66px;
+    display: block;
+
+    width: auto;
+    height: auto;
+
+    max-width: 190px;
+    max-height: 78px;
+
     object-fit: contain;
   }
 }
@@ -186,5 +192,14 @@
 @media (max-width: 760px) {
   .companies-grid {
     grid-template-columns: 1fr;
+  }
+
+  .company-logo {
+    height: 84px;
+
+    img {
+      max-width: 180px;
+      max-height: 74px;
+    }
   }
 }
