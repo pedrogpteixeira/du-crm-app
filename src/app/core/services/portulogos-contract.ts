@@ -11,7 +11,7 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
-export type RepsolContractStatus =
+export type PortulogosContractStatus =
   | 'Pedido de Chamada'
   | 'Em validação'
   | 'Chamada Efetuada'
@@ -28,7 +28,7 @@ export type RepsolContractStatus =
   | 'Cancelado'
   | 'Baixa';
 
-export const REPSOL_CONTRACT_STATUSES: readonly RepsolContractStatus[] = [
+export const PORTULOGOS_CONTRACT_STATUSES: readonly PortulogosContractStatus[] = [
   'Pedido de Chamada',
   'Em validação',
   'Chamada Efetuada',
@@ -46,23 +46,23 @@ export const REPSOL_CONTRACT_STATUSES: readonly RepsolContractStatus[] = [
   'Baixa',
 ];
 
-export interface RepsolContractListUser {
+export interface PortulogosContractListUser {
   id: string;
   name: string;
 }
 
-export interface RepsolContract {
+export interface PortulogosContract {
   id: string;
 
   nomeClienteEmpresa: string;
   nif: number;
 
-  estado: RepsolContractStatus;
+  estado: PortulogosContractStatus;
 
   tipoSegmento?: string;
   tipoProduto?: string;
 
-  user: RepsolContractListUser | null;
+  user: PortulogosContractListUser | null;
 
   nomeRegistoCE?: string;
 
@@ -73,12 +73,12 @@ export interface RepsolContract {
   updatedAt?: string;
 }
 
-export interface RepsolContractUser {
+export interface PortulogosContractUser {
   id: string;
   name: string;
 }
 
-export interface RepsolContractDocument {
+export interface PortulogosContractDocument {
   originalName: string;
   fileName: string;
   path: string;
@@ -89,12 +89,12 @@ export interface RepsolContractDocument {
   _id: string;
 }
 
-export interface RepsolContractTeamVisibility {
+export interface PortulogosContractTeamVisibility {
   teamId: string;
   minimumPositionIndex: number;
 }
 
-export interface RepsolContractTeam {
+export interface PortulogosContractTeam {
   id: string;
   name: string;
   registrationNumber: number;
@@ -103,17 +103,17 @@ export interface RepsolContractTeam {
   teamId?: string;
 }
 
-export interface RepsolContractFollower {
+export interface PortulogosContractFollower {
   id: string;
   name: string;
 }
 
-export interface RepsolContractCampaign {
+export interface PortulogosContractCampaign {
   id: string | null;
   name: string;
 }
 
-export interface RepsolContractDetail {
+export interface PortulogosContractDetail {
   id: string;
   companyId: string;
   clientId: string;
@@ -128,7 +128,7 @@ export interface RepsolContractDetail {
   codigoRegistoCE: string;
   nomeRegistoCE: string;
 
-  estado: RepsolContractStatus;
+  estado: PortulogosContractStatus;
 
   agendamento?: string;
   dataAssinatura?: string;
@@ -154,7 +154,7 @@ export interface RepsolContractDetail {
   debitoDireto: boolean;
   iban: string;
 
-  campaign: RepsolContractCampaign | null;
+  campaign: PortulogosContractCampaign | null;
   antigaComercializadora: string;
 
   cpe: string;
@@ -164,14 +164,14 @@ export interface RepsolContractDetail {
   cicloHorario: string;
   nivelTensao: string;
 
-  documentos: RepsolContractDocument[];
+  documentos: PortulogosContractDocument[];
 
   observacoes: string;
   observacoesInternas?: string;
 
-  user: RepsolContractUser | null;
-  teams: RepsolContractTeam[];
-  followers: RepsolContractFollower[];
+  user: PortulogosContractUser | null;
+  teams: PortulogosContractTeam[];
+  followers: PortulogosContractFollower[];
 
   createdAt: string;
   updatedAt: string;
@@ -180,7 +180,7 @@ export interface RepsolContractDetail {
   tickets?: ContractTicketSummary[];
 }
 
-export interface CreateRepsolContractRequest {
+export interface CreatePortulogosContractRequest {
   clientId: string;
   companyId: string;
 
@@ -194,7 +194,7 @@ export interface CreateRepsolContractRequest {
   codigoRegistoCE?: string;
   nomeRegistoCE?: string;
 
-  estado?: RepsolContractStatus;
+  estado?: PortulogosContractStatus;
 
   agendamento?: string;
   dataAssinatura?: string;
@@ -234,12 +234,12 @@ export interface CreateRepsolContractRequest {
   observacoesInternas?: string;
 
   userId: string;
-  teams?: RepsolContractTeamVisibility[];
+  teams?: PortulogosContractTeamVisibility[];
 }
 
-export type UpdateRepsolContractRequest = Partial<
+export type UpdatePortulogosContractRequest = Partial<
   Omit<
-    CreateRepsolContractRequest,
+    CreatePortulogosContractRequest,
     'clientId' | 'companyId' | 'userId' | 'teams' | 'nif' | 'telefone' | 'potencia' | 'escalao'
   >
 > & {
@@ -260,13 +260,13 @@ export type UpdateRepsolContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type RepsolContractList = Omit<RepsolContract, 'observacoes' | 'observacoesInternas'> & {
+export type PortulogosContractList = Omit<PortulogosContract, 'observacoes' | 'observacoesInternas'> & {
   userId?: string;
   campanha?: string;
 } & Partial<
     Omit<
-      RepsolContractDetail,
-      | keyof Omit<RepsolContract, 'observacoes' | 'observacoesInternas'>
+      PortulogosContractDetail,
+      | keyof Omit<PortulogosContract, 'observacoes' | 'observacoesInternas'>
       | 'documentos'
       | 'observacoes'
       | 'observacoesInternas'
@@ -281,65 +281,65 @@ export type RepsolContractList = Omit<RepsolContract, 'observacoes' | 'observaco
 @Injectable({
   providedIn: 'root',
 })
-export class RepsolContractService {
+export class PortulogosContractService {
   private readonly http = inject(HttpClient);
 
   private readonly apiUrl = environment.apiUrl;
 
-  getRepsolContracts(
+  getPortulogosContracts(
     userId: string,
     query: ContractKanbanQuery = {},
-  ): Observable<ContractKanbanResponse<RepsolContractList>> {
+  ): Observable<ContractKanbanResponse<PortulogosContractList>> {
     const params = buildContractFiltersParams(query.filters, query.offset ?? 5, query.estado);
 
-    return this.http.get<ContractKanbanResponse<RepsolContractList>>(
-      `${this.apiUrl}/api/contracts/repsol/followers/${userId}`,
+    return this.http.get<ContractKanbanResponse<PortulogosContractList>>(
+      `${this.apiUrl}/api/contracts/portulogos/followers/${userId}`,
       { params },
     );
   }
 
-  getRepsolContractById(contractId: string): Observable<RepsolContractDetail> {
-    return this.http.get<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol/${contractId}`);
+  getPortulogosContractById(contractId: string): Observable<PortulogosContractDetail> {
+    return this.http.get<PortulogosContractDetail>(`${this.apiUrl}/api/contracts/portulogos/${contractId}`);
   }
 
-  createRepsolContract(payload: CreateRepsolContractRequest): Observable<RepsolContractDetail> {
-    return this.http.post<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol`, payload);
+  createPortulogosContract(payload: CreatePortulogosContractRequest): Observable<PortulogosContractDetail> {
+    return this.http.post<PortulogosContractDetail>(`${this.apiUrl}/api/contracts/portulogos`, payload);
   }
 
-  updateRepsolContract(
+  updatePortulogosContract(
     contractId: string,
-    payload: UpdateRepsolContractRequest,
-  ): Observable<RepsolContractDetail> {
-    return this.http.patch<RepsolContractDetail>(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}`,
+    payload: UpdatePortulogosContractRequest,
+  ): Observable<PortulogosContractDetail> {
+    return this.http.patch<PortulogosContractDetail>(
+      `${this.apiUrl}/api/contracts/portulogos/${contractId}`,
       payload,
     );
   }
 
-  uploadAttachments(contractId: string, files: File[]): Observable<RepsolContractDetail> {
+  uploadAttachments(contractId: string, files: File[]): Observable<PortulogosContractDetail> {
     const formData = new FormData();
 
     files.forEach((file) => {
       formData.append('files', file, file.name);
     });
 
-    return this.http.post<RepsolContractDetail>(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments`,
+    return this.http.post<PortulogosContractDetail>(
+      `${this.apiUrl}/api/contracts/portulogos/${contractId}/attachments`,
       formData,
     );
   }
 
-  deleteAttachment(contractId: string, fileName: string): Observable<RepsolContractDetail> {
-    return this.http.delete<RepsolContractDetail>(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
+  deleteAttachment(contractId: string, fileName: string): Observable<PortulogosContractDetail> {
+    return this.http.delete<PortulogosContractDetail>(
+      `${this.apiUrl}/api/contracts/portulogos/${contractId}/attachments/${encodeURIComponent(
         fileName,
       )}`,
     );
   }
 
-  downloadDocument(contractId: string, document: RepsolContractDocument): Observable<Blob> {
+  downloadDocument(contractId: string, document: PortulogosContractDocument): Observable<Blob> {
     return this.http.get(
-      `${this.apiUrl}/api/contracts/repsol/${contractId}/attachments/${encodeURIComponent(
+      `${this.apiUrl}/api/contracts/portulogos/${contractId}/attachments/${encodeURIComponent(
         document.fileName,
       )}/download`,
       {

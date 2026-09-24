@@ -112,6 +112,39 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/portulogos',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU', 'Portulogos'],
+        },
+        loadComponent: () =>
+          import('./features/contracts/portulogos-contracts/portulogos-contracts').then(
+            (m) => m.PortulogosContracts,
+          ),
+      },
+      {
+        path: 'contracts/portulogos/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU', 'Portulogos'],
+        },
+        loadComponent: () =>
+          import('./features/contracts/portulogos-contract-create/portulogos-contract-create').then(
+            (m) => m.PortulogosContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/portulogos/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU', 'Portulogos'],
+        },
+        loadComponent: () =>
+          import('./features/contracts/portulogos-contract-detail/portulogos-contract-detail').then(
+            (m) => m.PortulogosContractDetail,
+          ),
+      },
+      {
         path: 'contracts/galp-power-gas',
         canActivate: [roleIncludesGuard],
         data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },

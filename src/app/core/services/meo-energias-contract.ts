@@ -40,8 +40,8 @@ export const MEO_ENERGIAS_CONTRACT_STATUSES: readonly MeoEnergiasContractStatus[
   'Pendente Docs',
   'Documentos Enviados',
   'Registo MEO',
-  'Ativo',
   'Anulado',
+  'Ativo',
   'Baixa',
 ];
 

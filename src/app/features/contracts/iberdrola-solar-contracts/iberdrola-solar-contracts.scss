@@ -236,6 +236,10 @@
   background: #f59e0b;
 }
 
+.status-docs-sent {
+  background: #16a34a;
+}
+
 .status-installation {
   background: #0284c7;
 }
@@ -395,6 +399,10 @@
 
 .kanban-column-header.status-docs {
   background: #f59e0b;
+}
+
+.kanban-column-header.status-docs-sent {
+  background: #16a34a;
 }
 
 .kanban-column-header.status-installation {

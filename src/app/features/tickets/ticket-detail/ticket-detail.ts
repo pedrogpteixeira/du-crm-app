@@ -813,6 +813,7 @@ export class TicketDetail implements OnInit {
   private observeAssociatedContractUpdates(): void {
     merge(
       this.socketService.listenRepsolContractUpdated(),
+      this.socketService.listenPortulogosContractUpdated(),
       this.socketService.listenWallboxContractUpdated(),
       this.socketService.listenYesEnergyContractUpdated(),
       this.socketService.listenGalpPowerGasContractUpdated(),

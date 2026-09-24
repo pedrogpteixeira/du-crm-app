@@ -9,11 +9,11 @@ import { Auth } from '../../../core/services/auth';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import {
-  REPSOL_CONTRACT_STATUSES,
-  RepsolContractList,
-  RepsolContractService,
-  RepsolContractStatus,
-} from '../../../core/services/repsol-contract';
+  PORTULOGOS_CONTRACT_STATUSES,
+  PortulogosContractList,
+  PortulogosContractService,
+  PortulogosContractStatus,
+} from '../../../core/services/portulogos-contract';
 import {
   BaseContractFilterOptions,
   ContractFilterFieldDefinition,
@@ -39,23 +39,23 @@ import {
 import { ContractListFiltersComponent } from '../../../shared/components/contract-list-filters/contract-list-filters';
 
 @Component({
-  selector: 'app-repsol-contracts',
+  selector: 'app-portulogos-contracts',
   imports: [CommonModule, RouterLink, FormsModule, ContractListFiltersComponent],
-  templateUrl: './repsol-contracts.html',
+  templateUrl: './portulogos-contracts.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './repsol-contracts.scss',
+  styleUrl: './portulogos-contracts.scss',
 })
-export class RepsolContracts implements OnInit {
-  private readonly repsolContractService = inject(RepsolContractService);
+export class PortulogosContracts implements OnInit {
+  private readonly portulogosContractService = inject(PortulogosContractService);
   private readonly socketService = inject(SocketService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
   private loadRequestId = 0;
 
-  contracts: RepsolContractList[] = [];
-  filteredContracts: RepsolContractList[] = [];
-  contractsByStatus: Record<string, RepsolContractList[]> = {};
+  contracts: PortulogosContractList[] = [];
+  filteredContracts: PortulogosContractList[] = [];
+  contractsByStatus: Record<string, PortulogosContractList[]> = {};
   paginationByStatus: Record<string, ContractKanbanColumnState> = {};
 
   filters: EnergyContractFilters = createEnergyContractFilters();
@@ -74,19 +74,19 @@ export class RepsolContracts implements OnInit {
   errorMessage = '';
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-  readonly statuses: RepsolContractStatus[] = [...REPSOL_CONTRACT_STATUSES];
+  readonly statuses: PortulogosContractStatus[] = [...PORTULOGOS_CONTRACT_STATUSES];
 
   ngOnInit(): void {
     this.refreshFilterFields();
     this.loadContracts();
 
     this.socketService
-      .listenRepsolContractCreated()
+      .listenPortulogosContractCreated()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.handleSocketContract(event, true));
 
     this.socketService
-      .listenRepsolContractUpdated()
+      .listenPortulogosContractUpdated()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.handleSocketContract(event, false));
   }
@@ -110,8 +110,8 @@ export class RepsolContracts implements OnInit {
 
     this.errorMessage = '';
 
-    this.repsolContractService
-      .getRepsolContracts(userId, {
+    this.portulogosContractService
+      .getPortulogosContracts(userId, {
         offset: 5,
         estado: this.appliedFilters.status,
         filters: this.buildApiFilters(),
@@ -138,12 +138,12 @@ export class RepsolContracts implements OnInit {
 
           this.resetLoadedContracts();
           this.errorMessage =
-            error?.error?.message || 'Não foi possível carregar os contratos Repsol.';
+            error?.error?.message || 'Não foi possível carregar os contratos Portulogos.';
         },
       });
   }
 
-  loadMore(status: RepsolContractStatus): void {
+  loadMore(status: PortulogosContractStatus): void {
     const user = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = user?.id ?? user?._id;
     const column = this.paginationByStatus[status];
@@ -158,8 +158,8 @@ export class RepsolContracts implements OnInit {
       [status]: { ...column, isLoading: true },
     };
 
-    this.repsolContractService
-      .getRepsolContracts(userId, {
+    this.portulogosContractService
+      .getPortulogosContracts(userId, {
         offset: column.nextOffset,
         estado: status,
         filters: this.buildApiFilters(),
@@ -224,8 +224,8 @@ export class RepsolContracts implements OnInit {
       });
   }
 
-  getStatusClass(status: RepsolContractStatus): string {
-    const classes: Record<RepsolContractStatus, string> = {
+  getStatusClass(status: PortulogosContractStatus): string {
+    const classes: Record<PortulogosContractStatus, string> = {
       'Pedido de Chamada': 'status-call-request',
       'Em validação': 'status-validation',
       'Chamada Efetuada': 'status-call-done',
@@ -277,19 +277,19 @@ export class RepsolContracts implements OnInit {
     this.showFilters = !this.showFilters;
   }
 
-  hasMoreForStatus(status: RepsolContractStatus): boolean {
+  hasMoreForStatus(status: PortulogosContractStatus): boolean {
     return this.paginationByStatus[status]?.hasMore ?? false;
   }
 
-  isLoadingStatus(status: RepsolContractStatus): boolean {
+  isLoadingStatus(status: PortulogosContractStatus): boolean {
     return this.paginationByStatus[status]?.isLoading ?? false;
   }
 
-  get visibleStatuses(): readonly RepsolContractStatus[] {
+  get visibleStatuses(): readonly PortulogosContractStatus[] {
     return getVisibleContractStatuses(this.statuses, this.appliedFilters.status);
   }
 
-  getContractsByStatus(status: RepsolContractStatus): RepsolContractList[] {
+  getContractsByStatus(status: PortulogosContractStatus): PortulogosContractList[] {
     return this.contractsByStatus[status] ?? [];
   }
 
@@ -297,10 +297,10 @@ export class RepsolContracts implements OnInit {
     return buildContractApiFiltersFromDefinitions(this.appliedFilters, this.filterFields);
   }
 
-  private replaceWithResponse(response: ContractKanbanResponse<RepsolContractList>): void {
+  private replaceWithResponse(response: ContractKanbanResponse<PortulogosContractList>): void {
     this.totalContracts = Number.isFinite(response.total) ? Math.max(0, response.total) : 0;
 
-    const contractsByStatus: Record<string, RepsolContractList[]> = {};
+    const contractsByStatus: Record<string, PortulogosContractList[]> = {};
     const paginationByStatus: Record<string, ContractKanbanColumnState> = {};
 
     this.statuses.forEach((status) => {
@@ -374,7 +374,7 @@ export class RepsolContracts implements OnInit {
       return;
     }
 
-    let existing: RepsolContractList | undefined;
+    let existing: PortulogosContractList | undefined;
 
     Object.values(this.contractsByStatus).some((contracts) => {
       existing = contracts.find((contract) => contract.id === contractId);
@@ -385,7 +385,7 @@ export class RepsolContracts implements OnInit {
       return;
     }
 
-    const nextStatus = String(event.estado ?? existing?.estado ?? '') as RepsolContractStatus;
+    const nextStatus = String(event.estado ?? existing?.estado ?? '') as PortulogosContractStatus;
 
     if (!nextStatus || !this.statuses.includes(nextStatus)) {
       return;
@@ -396,9 +396,9 @@ export class RepsolContracts implements OnInit {
       ...event,
       id: contractId,
       estado: nextStatus,
-    } as RepsolContractList;
+    } as PortulogosContractList;
 
-    const nextColumns: Record<string, RepsolContractList[]> = {};
+    const nextColumns: Record<string, PortulogosContractList[]> = {};
     Object.entries(this.contractsByStatus).forEach(([status, contracts]) => {
       nextColumns[status] = contracts.filter((contract) => contract.id !== contractId);
     });
@@ -415,7 +415,7 @@ export class RepsolContracts implements OnInit {
     this.buildFilterOptions();
   }
 
-  getContractUserName(contract: RepsolContractList): string {
+  getContractUserName(contract: PortulogosContractList): string {
     return contract.user?.name?.trim() || '—';
   }
 

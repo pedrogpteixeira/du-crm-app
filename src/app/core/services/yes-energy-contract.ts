@@ -47,8 +47,8 @@ export const YES_ENERGY_CONTRACT_STATUSES: readonly YesEnergyContractStatus[] = 
   'Em Ativação',
   'Ativo',
   'Parcialmente Baixa',
-  'Anulado',
   'Baixa',
+  'Anulado',
 ];
 
 export type YesEnergyCicloHorario =

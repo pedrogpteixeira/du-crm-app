@@ -339,6 +339,22 @@ strong {
   background: #16a34a;
 }
 
+.status-active {
+  background: #16a34a;
+}
+
+.status-partial-low {
+  background: #b45309;
+}
+
+.status-cancelled {
+  background: #dc2626;
+}
+
+.status-low {
+  background: #64748b;
+}
+
 .attachments-list {
   display: flex;
   flex-direction: column;

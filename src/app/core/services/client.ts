@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 
 export type ClientContractProvider =
   | 'repsol'
+  | 'portulogos'
   | 'wallbox'
   | 'yes-energy'
   | 'galp-power-gas'

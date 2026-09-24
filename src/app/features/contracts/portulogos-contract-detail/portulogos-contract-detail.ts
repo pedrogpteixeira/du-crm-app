@@ -3,7 +3,8 @@ import {
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
 } from '../../../core/config/quality-control';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, finalize, map, of, switchMap } from 'rxjs';
@@ -30,13 +31,13 @@ import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 import {
-  REPSOL_CONTRACT_STATUSES,
-  RepsolContractDetail as RepsolContractDetailModel,
-  RepsolContractDocument,
-  RepsolContractService,
-  RepsolContractStatus,
-  UpdateRepsolContractRequest,
-} from '../../../core/services/repsol-contract';
+  PORTULOGOS_CONTRACT_STATUSES,
+  PortulogosContractDetail as PortulogosContractDetailModel,
+  PortulogosContractDocument,
+  PortulogosContractService,
+  PortulogosContractStatus,
+  UpdatePortulogosContractRequest,
+} from '../../../core/services/portulogos-contract';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import { ProfileUser, UserService } from '../../../core/services/user';
@@ -60,7 +61,7 @@ interface EditableContractForm {
   controleQualidade: string;
   codigoRegistoCE: string;
   nomeRegistoCE: string;
-  estado: RepsolContractStatus;
+  estado: PortulogosContractStatus;
 
   agendamento: string;
   dataAssinatura: string;
@@ -99,7 +100,7 @@ interface AuthenticatedUserLike {
   username?: string;
 }
 
-interface RepsolContractApiShape extends RepsolContractDetailModel {
+interface PortulogosContractApiShape extends PortulogosContractDetailModel {
   campanha?: string | null;
 }
 import {
@@ -115,7 +116,7 @@ import { ContractFieldMaskDirective } from '../../../shared/directives/contract-
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
-  selector: 'app-repsol-contract-detail',
+  selector: 'app-portulogos-contract-detail',
   imports: [
     CommonModule,
     FormsModule,
@@ -126,18 +127,19 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
     ObservationsThread,
     FileDropzone,
   ],
-  templateUrl: './repsol-contract-detail.html',
+  templateUrl: './portulogos-contract-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './repsol-contract-detail.scss',
+  styleUrl: './portulogos-contract-detail.scss',
 })
-export class RepsolContractDetail implements OnInit {
+export class PortulogosContractDetail implements OnInit {
   readonly qualityControlBackofficeOptions = QUALITY_CONTROL_BACKOFFICE_OPTIONS;
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(Auth);
   private readonly fileAccess = inject(FileAccessService);
   private readonly documentPreview = inject(DocumentPreviewService);
   private readonly campaignService = inject(CampaignService);
-  private readonly repsolContractService = inject(RepsolContractService);
+  private readonly portulogosContractService = inject(PortulogosContractService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
   private readonly userService = inject(UserService);
@@ -149,7 +151,7 @@ export class RepsolContractDetail implements OnInit {
 
   private readonly router = inject(Router);
 
-  contract: RepsolContractDetailModel | null = null;
+  contract: PortulogosContractDetailModel | null = null;
   campaigns: Campaign[] = [];
 
   observationDraft = '';
@@ -193,7 +195,7 @@ export class RepsolContractDetail implements OnInit {
     'Entrada Direta',
   ];
 
-  readonly estadoOptions: readonly RepsolContractStatus[] = REPSOL_CONTRACT_STATUSES;
+  readonly estadoOptions: readonly PortulogosContractStatus[] = PORTULOGOS_CONTRACT_STATUSES;
 
   readonly cicloHorarioOptions = [
     'Simples',
@@ -234,7 +236,9 @@ export class RepsolContractDetail implements OnInit {
 
     this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
@@ -242,7 +246,10 @@ export class RepsolContractDetail implements OnInit {
       }
     });
 
-    this.socketService.listenRepsolContractUpdated().subscribe((event) => {
+    this.socketService
+      .listenPortulogosContractUpdated()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
       if (event.contractId !== this.contractId) {
         return;
       }
@@ -335,8 +342,8 @@ export class RepsolContractDetail implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.repsolContractService
-      .getRepsolContractById(contractId)
+    this.portulogosContractService
+      .getPortulogosContractById(contractId)
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -364,7 +371,7 @@ export class RepsolContractDetail implements OnInit {
           }
         },
         error: () => {
-          this.showError('Não foi possível carregar o contrato Repsol.');
+          this.showError('Não foi possível carregar o contrato Portulogos.');
         },
       });
   }
@@ -415,8 +422,8 @@ export class RepsolContractDetail implements OnInit {
 
     const payload = internal ? { observacoesInternas: nextHistory } : { observacoes: nextHistory };
 
-    this.repsolContractService
-      .updateRepsolContract(this.contractId, payload)
+    this.portulogosContractService
+      .updatePortulogosContract(this.contractId, payload)
       .pipe(
         finalize(() => {
           if (internal) {
@@ -568,7 +575,7 @@ export class RepsolContractDetail implements OnInit {
     this.prepareOwnSocketSuppression();
 
     const updateRequest = hasContractChanges
-      ? this.repsolContractService.updateRepsolContract(this.contractId, payload)
+      ? this.portulogosContractService.updatePortulogosContract(this.contractId, payload)
       : of(this.contract);
 
     updateRequest
@@ -582,7 +589,7 @@ export class RepsolContractDetail implements OnInit {
             });
           }
 
-          return this.repsolContractService
+          return this.portulogosContractService
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
@@ -643,7 +650,7 @@ export class RepsolContractDetail implements OnInit {
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
-              'Não foi possível atualizar o contrato Repsol.',
+              'Não foi possível atualizar o contrato Portulogos.',
           );
         },
       });
@@ -683,7 +690,7 @@ export class RepsolContractDetail implements OnInit {
     this.selectedFiles = [];
   }
 
-  deleteAttachment(document: RepsolContractDocument): void {
+  deleteAttachment(document: PortulogosContractDocument): void {
     if (
       !this.canEditContract ||
       !this.isEditing ||
@@ -716,7 +723,7 @@ export class RepsolContractDetail implements OnInit {
     this.successMessage = '';
     this.prepareOwnSocketSuppression();
 
-    this.repsolContractService
+    this.portulogosContractService
       .deleteAttachment(this.contractId, document.fileName)
       .pipe(
         finalize(() => {
@@ -746,7 +753,7 @@ export class RepsolContractDetail implements OnInit {
       });
   }
 
-  isDeletingAttachment(document: RepsolContractDocument): boolean {
+  isDeletingAttachment(document: PortulogosContractDocument): boolean {
     return this.deletingAttachmentFileNames.has(document.fileName);
   }
 
@@ -804,7 +811,7 @@ export class RepsolContractDetail implements OnInit {
       return;
     }
 
-    this.repsolContractService.getRepsolContractById(this.contractId).subscribe({
+    this.portulogosContractService.getPortulogosContractById(this.contractId).subscribe({
       next: (latestContract) => {
         if (!this.contract || latestContract.id !== this.contractId) {
           return;
@@ -846,7 +853,7 @@ export class RepsolContractDetail implements OnInit {
 
     const internalObservationDraft = this.internalObservationDraft;
 
-    this.repsolContractService.getRepsolContractById(this.contractId).subscribe({
+    this.portulogosContractService.getPortulogosContractById(this.contractId).subscribe({
       next: (latestContract) => {
         const normalizedContract = this.normalizeContractResponse(latestContract);
 
@@ -896,7 +903,7 @@ export class RepsolContractDetail implements OnInit {
     });
   }
 
-  private mergeExternalContract(latestContract: RepsolContractDetailModel): {
+  private mergeExternalContract(latestContract: PortulogosContractDetailModel): {
     updated: number;
     conflicts: number;
   } {
@@ -1047,7 +1054,7 @@ export class RepsolContractDetail implements OnInit {
       });
   }
 
-  private hasContractAccess(contract: RepsolContractDetailModel): boolean {
+  private hasContractAccess(contract: PortulogosContractDetailModel): boolean {
     if (this.isSuperAdmin) {
       return true;
     }
@@ -1063,11 +1070,11 @@ export class RepsolContractDetail implements OnInit {
   }
 
   private normalizeContractResponse(
-    contract: RepsolContractDetailModel,
-  ): RepsolContractDetailModel {
+    contract: PortulogosContractDetailModel,
+  ): PortulogosContractDetailModel {
     contract = preserveContractActivity(contract, this.contract);
 
-    const apiContract = contract as RepsolContractApiShape;
+    const apiContract = contract as PortulogosContractApiShape;
     const rawCampaign = apiContract.campanha?.trim() ?? '';
 
     if (!rawCampaign) {
@@ -1098,7 +1105,7 @@ export class RepsolContractDetail implements OnInit {
     };
   }
 
-  private initializeEditForm(contract: RepsolContractDetailModel): void {
+  private initializeEditForm(contract: PortulogosContractDetailModel): void {
     const state = this.buildEditableState(contract);
 
     this.editForm = structuredClone(state.form);
@@ -1107,7 +1114,7 @@ export class RepsolContractDetail implements OnInit {
     this.originalCampaignSelectionMode = state.campaignMode;
   }
 
-  private buildEditableState(contract: RepsolContractDetailModel): {
+  private buildEditableState(contract: PortulogosContractDetailModel): {
     form: EditableContractForm;
     campaignMode: CampaignSelectionMode;
   } {
@@ -1166,7 +1173,7 @@ export class RepsolContractDetail implements OnInit {
     };
   }
 
-  private resolveCampaignSelection(campaign: RepsolContractDetailModel['campaign']): {
+  private resolveCampaignSelection(campaign: PortulogosContractDetailModel['campaign']): {
     mode: CampaignSelectionMode;
     campaignId: string;
     customCampaign: string;
@@ -1226,8 +1233,8 @@ export class RepsolContractDetail implements OnInit {
       .replace(/[\u0300-\u036f]/g, '');
   }
 
-  private buildPatchPayload(): UpdateRepsolContractRequest {
-    const payload: UpdateRepsolContractRequest = {};
+  private buildPatchPayload(): UpdatePortulogosContractRequest {
+    const payload: UpdatePortulogosContractRequest = {};
 
     this.assignChangedValue(
       payload,
@@ -1412,17 +1419,17 @@ export class RepsolContractDetail implements OnInit {
     return payload;
   }
 
-  private assignChangedValue<Key extends keyof UpdateRepsolContractRequest>(
-    payload: UpdateRepsolContractRequest,
+  private assignChangedValue<Key extends keyof UpdatePortulogosContractRequest>(
+    payload: UpdatePortulogosContractRequest,
     key: Key,
-    currentValue: UpdateRepsolContractRequest[Key],
-    originalValue: UpdateRepsolContractRequest[Key],
+    currentValue: UpdatePortulogosContractRequest[Key],
+    originalValue: UpdatePortulogosContractRequest[Key],
   ): void {
     const normalizedCurrent = this.normalizeValue(currentValue);
     const normalizedOriginal = this.normalizeValue(originalValue);
 
     if (JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedOriginal)) {
-      payload[key] = normalizedCurrent as UpdateRepsolContractRequest[Key];
+      payload[key] = normalizedCurrent as UpdatePortulogosContractRequest[Key];
     }
   }
 
@@ -1540,8 +1547,8 @@ export class RepsolContractDetail implements OnInit {
     this.collapsedSections[section] = !this.collapsedSections[section];
   }
 
-  getStatusClass(status: RepsolContractStatus): string {
-    const classes: Record<RepsolContractStatus, string> = {
+  getStatusClass(status: PortulogosContractStatus): string {
+    const classes: Record<PortulogosContractStatus, string> = {
       'Pedido de Chamada': 'status-call-request',
       'Em validação': 'status-validation',
       'Chamada Efetuada': 'status-call-done',
@@ -1562,23 +1569,23 @@ export class RepsolContractDetail implements OnInit {
     return classes[status];
   }
 
-  canPreviewDocument(file: RepsolContractDocument): boolean {
+  canPreviewDocument(file: PortulogosContractDocument): boolean {
     return this.documentPreview.canPreview(file);
   }
 
-  previewDocument(file: RepsolContractDocument): void {
+  previewDocument(file: PortulogosContractDocument): void {
     if (!this.contract?.id) {
       return;
     }
 
     this.documentPreview
-      .preview(file, () => this.repsolContractService.downloadDocument(this.contract!.id, file))
+      .preview(file, () => this.portulogosContractService.downloadDocument(this.contract!.id, file))
       .subscribe({
         error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
       });
   }
 
-  downloadDocument(file: RepsolContractDocument): void {
+  downloadDocument(file: PortulogosContractDocument): void {
     if (!this.fileAccess.canViewFile(file)) {
       this.showError('Não tem permissão para visualizar ficheiros de áudio.');
       return;
@@ -1588,7 +1595,7 @@ export class RepsolContractDetail implements OnInit {
       return;
     }
 
-    this.repsolContractService.downloadDocument(this.contract.id, file).subscribe({
+    this.portulogosContractService.downloadDocument(this.contract.id, file).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = window.document.createElement('a');

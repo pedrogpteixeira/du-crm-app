@@ -19,8 +19,10 @@ import { Campaign, CampaignService } from '../../../core/services/campaign';
 
 import {
   CreateWallboxContractRequest,
+  WALLBOX_CONTRACT_STATUSES,
   WallboxContractCreateResponse,
   WallboxContractService,
+  WallboxContractStatus,
 } from '../../../core/services/wallbox-contract';
 
 import { Auth } from '../../../core/services/auth';
@@ -34,16 +36,6 @@ const WALLBOX_COMPANY_ID = 'cmp_StOnumtpT5' as const;
 type WallboxTipoSegmento = 'Residencial' | 'Empresarial';
 
 type WallboxTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
-
-type WallboxContractStatus =
-  | 'Pedido de Chamada'
-  | 'Registo Plataforma Galp'
-  | 'Não conformidade'
-  | 'Pendente Docs'
-  | 'Documentos Enviados'
-  | 'Em Ativação'
-  | 'Ativo'
-  | 'Anulado';
 
 type WallboxNivelTensao = 'Manter' | 'Monofásico' | 'Trifásico';
 
@@ -160,16 +152,7 @@ export class WallboxContractCreate implements OnInit {
 
   readonly tipoProdutoOptions: WallboxTipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
-  readonly estadoOptions: WallboxContractStatus[] = [
-    'Pedido de Chamada',
-    'Registo Plataforma Galp',
-    'Não conformidade',
-    'Pendente Docs',
-    'Documentos Enviados',
-    'Em Ativação',
-    'Ativo',
-    'Anulado',
-  ];
+  readonly estadoOptions: readonly WallboxContractStatus[] = WALLBOX_CONTRACT_STATUSES;
 
   readonly nivelTensaoOptions: WallboxNivelTensao[] = ['Manter', 'Monofásico', 'Trifásico'];
 

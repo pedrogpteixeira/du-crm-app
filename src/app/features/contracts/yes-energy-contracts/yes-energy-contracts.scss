@@ -218,6 +218,14 @@
   background: #f59e0b;
 }
 
+.status-docs {
+  background: #f59e0b;
+}
+
+.status-docs-sent {
+  background: #16a34a;
+}
+
 .status-contract-sent {
   background: #0f766e;
 }
@@ -411,6 +419,14 @@
 
 .kanban-column-header.status-non-compliance {
   background: #f59e0b;
+}
+
+.kanban-column-header.status-docs {
+  background: #f59e0b;
+}
+
+.kanban-column-header.status-docs-sent {
+  background: #16a34a;
 }
 
 .kanban-column-header.status-contract-sent {

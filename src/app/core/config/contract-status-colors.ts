@@ -11,6 +11,9 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Registo MEO': '#6d28d9',
   'Envio Quality Check': '#6d28d9',
   'Atribuído': '#6d28d9',
+  'Acesso RPE': '#0369a1',
+  'Eswich': '#0891b2',
+  'Em curso': '#2563eb',
 
   'Chamada Efetuada': '#1d4ed8',
   'Pendente (ATR)': '#1d4ed8',

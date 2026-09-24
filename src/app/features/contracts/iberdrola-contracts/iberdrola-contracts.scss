@@ -210,6 +210,8 @@
 .status-vtv { background: #0f766e; }
 .status-contractual-sms { background: #8b5cf6; }
 .status-non-compliance { background: #f59e0b; }
+.status-docs { background: #f59e0b; }
+.status-docs-sent { background: #16a34a; }
 .status-backoffice { background: #334155; }
 .status-control { background: #475569; }
 .status-supply-request { background: #0369a1; }
@@ -374,45 +376,23 @@
    KANBAN STATUS HEADERS
 ========================= */
 
-.kanban-column-header.status-contract-request {
-  background: #0097b2;
-}
-
-.kanban-column-header.status-signature {
-  background: #9b83c9;
-}
-
-.kanban-column-header.status-atr {
-  background: #2563eb;
-}
-
-.kanban-column-header.status-non-compliance {
-  background: #f59e0b;
-}
-
-.kanban-column-header.status-contract-sent {
-  background: #0f766e;
-}
-
-.kanban-column-header.status-activation {
-  background: #7c3aed;
-}
-
-.kanban-column-header.status-active {
-  background: #16a34a;
-}
-
-.kanban-column-header.status-partial-low {
-  background: #b45309;
-}
-
-.kanban-column-header.status-low {
-  background: #64748b;
-}
-
-.kanban-column-header.status-cancelled {
-  background: #dc2626;
-}
+.kanban-column-header.status-contract-request { background: #0097b2; }
+.kanban-column-header.status-simulation { background: #0284c7; }
+.kanban-column-header.status-commercial-validation { background: #7c3aed; }
+.kanban-column-header.status-rgpd { background: #6366f1; }
+.kanban-column-header.status-vtv { background: #0f766e; }
+.kanban-column-header.status-contractual-sms { background: #8b5cf6; }
+.kanban-column-header.status-non-compliance { background: #f59e0b; }
+.kanban-column-header.status-docs { background: #f59e0b; }
+.kanban-column-header.status-docs-sent { background: #16a34a; }
+.kanban-column-header.status-backoffice { background: #334155; }
+.kanban-column-header.status-control { background: #475569; }
+.kanban-column-header.status-supply-request { background: #0369a1; }
+.kanban-column-header.status-supply { background: #0891b2; }
+.kanban-column-header.status-active { background: #16a34a; }
+.kanban-column-header.status-partial-low { background: #b45309; }
+.kanban-column-header.status-cancelled { background: #dc2626; }
+.kanban-column-header.status-low { background: #64748b; }
 
 /* =========================
    FEEDBACK

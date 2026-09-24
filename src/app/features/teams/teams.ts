@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   inject,
   OnInit,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -48,6 +50,9 @@ export class Teams implements OnInit {
 
   private readonly cdr =
     inject(ChangeDetectorRef);
+
+  private readonly destroyRef =
+    inject(DestroyRef);
 
   teams: Team[] = [];
   filteredTeams: Team[] = [];
@@ -121,6 +126,8 @@ export class Teams implements OnInit {
 
   ngOnInit(): void {
     this.resolvePermissions();
+    this.observeTeamsCache();
+    this.observeTeamsInvalidation();
     this.loadTeams();
   }
 
@@ -129,30 +136,14 @@ export class Teams implements OnInit {
       this.auth.roleIncludes('Super Admin');
   }
 
-  loadTeams(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+  loadTeams(forceRefresh = false): void {
+    const request$ = forceRefresh
+      ? this.teamService.refreshTeams()
+      : this.teamService.ensureTeamsLoaded();
 
-    this.teamService
-      .getTeams()
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }),
-      )
-      .subscribe({
-        next: (teams) => {
-          this.teams = teams;
-
-          this.buildFilterOptions();
-          this.applyFilters();
-        },
-        error: () => {
-          this.errorMessage =
-            'Não foi possível carregar as equipas.';
-        },
-      });
+    request$.subscribe({
+      error: () => undefined,
+    });
   }
 
   applyFilters(): void {
@@ -320,15 +311,7 @@ export class Teams implements OnInit {
         }),
       )
       .subscribe({
-        next: (createdTeam) => {
-          this.teams = [
-            createdTeam,
-            ...this.teams,
-          ];
-
-          this.buildFilterOptions();
-          this.applyFilters();
-
+        next: () => {
           this.showCreateTeamModal = false;
           this.resetCreateTeamForm();
         },
@@ -377,6 +360,34 @@ export class Teams implements OnInit {
     index: number,
   ): number {
     return index;
+  }
+
+  private observeTeamsCache(): void {
+    this.teamService.teamsState$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state) => {
+        this.isLoading = state.loading && !state.teams.length;
+        this.errorMessage = state.error ?? '';
+
+        if (state.loaded || state.teams.length) {
+          this.teams = state.teams;
+          this.buildFilterOptions();
+          this.applyFilters();
+        }
+
+        this.cdr.detectChanges();
+      });
+  }
+
+  private observeTeamsInvalidation(): void {
+    this.teamService.teamsInvalidated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        // The socket listener itself is centralized in TeamService. Only the
+        // currently mounted Teams page opts into an immediate refresh so the
+        // list stays live without making every cache invalidation hit /teams.
+        this.loadTeams(true);
+      });
   }
 
   private resetCreateTeamForm(): void {

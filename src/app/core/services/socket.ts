@@ -47,6 +47,11 @@ export interface AssignableUsersInvalidationEvent {
   timestamp?: string;
 }
 
+export interface TeamsInvalidationEvent {
+  reason?: string;
+  timestamp: string;
+}
+
 export interface TicketSocketEvent extends TicketApiModel {
   ticketId?: string;
   id?: string;
@@ -63,6 +68,9 @@ export interface GalpPowerGasContractSocketEvent
   extends ContractSocketBaseEvent {}
 
 export interface RepsolContractSocketEvent
+  extends ContractSocketBaseEvent {}
+
+export interface PortulogosContractSocketEvent
   extends ContractSocketBaseEvent {}
 
 export interface WallboxContractSocketEvent
@@ -113,6 +121,10 @@ export class SocketService {
     this.registerConnectionListeners();
     this.registerPresenceListeners();
     this.observeAuthentication();
+  }
+
+  isConnected(): boolean {
+    return this.socket.connected;
   }
 
   connect(): void {
@@ -249,6 +261,20 @@ export class SocketService {
     >('repsol-contract:updated');
   }
 
+  listenPortulogosContractCreated():
+    Observable<PortulogosContractSocketEvent> {
+    return this.createEventObservable<
+      PortulogosContractSocketEvent
+    >('portulogos-contract:created');
+  }
+
+  listenPortulogosContractUpdated():
+    Observable<PortulogosContractSocketEvent> {
+    return this.createEventObservable<
+      PortulogosContractSocketEvent
+    >('portulogos-contract:updated');
+  }
+
   listenGalpSolarContractCreated(): Observable<GalpSolarContractSocketEvent> {
     return this.createEventObservable<GalpSolarContractSocketEvent>(
       'galp-solar-contract:created',
@@ -338,6 +364,16 @@ export class SocketService {
     return this.createEventObservable<AssignableUsersInvalidationEvent>(
       'users:assignable:invalidated',
     );
+  }
+
+  listenTeamsInvalidated(): Observable<TeamsInvalidationEvent> {
+    return this.createEventObservable<TeamsInvalidationEvent>(
+      'teams:invalidated',
+    );
+  }
+
+  listenConnected(): Observable<void> {
+    return this.createEventObservable<void>('connect');
   }
 
   listenTicketCreated(): Observable<TicketSocketEvent> {

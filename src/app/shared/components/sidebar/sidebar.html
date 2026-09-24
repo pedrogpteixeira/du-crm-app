@@ -29,6 +29,23 @@
 
   <nav class="sidebar-nav">
 
+    <!-- PORTULOGOS -->
+    <div
+      class="nav-section"
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Portulogos')"
+    >
+      <span class="section-title">CRM Portulogos</span>
+
+      <a
+        routerLink="/home/contracts/portulogos"
+        routerLinkActive="active"
+        title="Portulogos"
+      >
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Portulogos</span>
+      </a>
+    </div>
+
     <!-- REPSOL -->
     <div
       class="nav-section"

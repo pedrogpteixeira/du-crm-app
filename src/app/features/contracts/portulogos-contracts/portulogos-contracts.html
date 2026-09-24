@@ -1,0 +1,208 @@
+<section class="contracts-page">
+  <header class="page-header">
+    <div>
+      <h1>Contratos Portulogos</h1>
+
+      <p>Consulta e acompanha os contratos Portulogos registados no CRM.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button type="button" [class.active]="viewMode === 'table'" (click)="setViewMode('table')">
+          Tabela
+        </button>
+
+        <button
+          type="button"
+          [class.active]="viewMode === 'kanban'"
+          (click)="setViewMode('kanban')"
+        >
+          Estados
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="filters-toggle-button"
+        [class.is-active]="showFilters || hasActiveFilters()"
+        (click)="toggleFilters()"
+      >
+        <span class="material-symbols-rounded">filter_alt</span>
+        Filtros
+
+        <span class="filter-count" *ngIf="hasActiveFilters()">
+          {{ activeFilterCount }}
+        </span>
+      </button>
+
+      <button type="button" class="create-btn" routerLink="/home/contracts/portulogos/create">
+        + Novo contrato
+      </button>
+    </div>
+  </header>
+  <section class="filters-card" *ngIf="showFilters">
+    <app-contract-list-filters
+      [fields]="filterFields"
+      [statuses]="statuses"
+      [(value)]="filters"
+      [appliedValue]="appliedFilters"
+      [loadedCount]="contracts.length"
+      [hasMore]="hasMoreInAnyState"
+      [isLoading]="isLoading"
+      (applyFilters)="applyFilters()"
+      (resetFilters)="clearFilters()"
+    ></app-contract-list-filters>
+  </section>
+
+  <div class="contracts-total-summary" *ngIf="!isLoading && !errorMessage">
+    <span class="material-symbols-rounded" aria-hidden="true">description</span>
+    <span>
+      <strong>{{ totalContracts }}</strong>
+      {{ totalContracts === 1 ? 'contrato encontrado' : 'contratos encontrados' }}
+      <small *ngIf="hasActiveFilters()">para os filtros aplicados</small>
+    </span>
+  </div>
+
+  <div class="card" *ngIf="viewMode === 'table'">
+    <div class="table-header">
+      <span>ID Contrato</span>
+      <span>Cliente / Empresa</span>
+      <span>NIF</span>
+      <span>Segmento</span>
+      <span>Produto</span>
+      <span>Criado por</span>
+      <span>Estado</span>
+      <span>Nome de Registo C.E.</span>
+    </div>
+
+    <p class="loading" *ngIf="isLoading">A carregar contratos...</p>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <a
+      class="contract-row"
+      *ngFor="let contract of filteredContracts"
+      [routerLink]="['/home/contracts/portulogos', contract.id]"
+    >
+      <span>
+        {{ contract.id }}
+      </span>
+
+      <strong>
+        {{ getValue(contract.nomeClienteEmpresa) }}
+      </strong>
+
+      <span>
+        {{ getValue(contract.nif) }}
+      </span>
+
+      <span>
+        {{ getValue(contract.tipoSegmento) }}
+      </span>
+
+      <span>
+        {{ getValue(contract.tipoProduto) }}
+      </span>
+
+      <span>
+        {{ getContractUserName(contract) }}
+      </span>
+
+      <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
+        {{ contract.estado }}
+      </span>
+
+      <span>
+        {{ getValue(contract.nomeRegistoCE) }}
+      </span>
+    </a>
+
+    <div
+      class="filtered-empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length && hasActiveFilters()"
+    >
+      <strong>Nenhum contrato encontrado</strong>
+      <span>Não existem contratos que correspondam aos filtros selecionados.</span>
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <p
+      class="empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length && !hasActiveFilters()"
+    >
+      Ainda não existem contratos Portulogos.
+    </p>
+  </div>
+
+  <div class="kanban-wrapper" *ngIf="viewMode === 'kanban'">
+    <div class="kanban-board">
+      <section class="kanban-column" *ngFor="let status of visibleStatuses">
+        <header class="kanban-column-header" [ngClass]="getStatusClass(status)">
+          <span>
+            {{ status }}
+          </span>
+
+          <small> {{ getContractsByStatus(status).length }} </small>
+        </header>
+
+        <div class="kanban-list">
+          <a
+            class="kanban-card"
+            *ngFor="let contract of getContractsByStatus(status)"
+            [routerLink]="['/home/contracts/portulogos', contract.id]"
+          >
+            <span class="contract-id">
+              {{ contract.id }}
+            </span>
+
+            <strong>
+              {{ getValue(contract.nomeClienteEmpresa) }}
+            </strong>
+
+            <span>
+              NIF:
+              {{ getValue(contract.nif) }}
+            </span>
+
+            <span>
+              Segmento:
+              {{ getValue(contract.tipoSegmento) }}
+            </span>
+
+            <span>
+              Produto:
+              {{ getValue(contract.tipoProduto) }}
+            </span>
+
+            <span>
+              Criado por:
+              {{ getContractUserName(contract) }}
+            </span>
+
+            <span>
+              {{ getValue(contract.nomeRegistoCE) }}
+            </span>
+          </a>
+
+          <p class="empty-column" *ngIf="!getContractsByStatus(status).length">
+            {{ hasActiveFilters() ? 'Sem contratos com os filtros atuais.' : 'Sem contratos.' }}
+          </p>
+
+          <p class="column-loading" *ngIf="isLoadingStatus(status)">A carregar mais contratos...</p>
+
+          <button
+            type="button"
+            class="kanban-load-more"
+            *ngIf="hasMoreForStatus(status)"
+            [disabled]="isLoadingStatus(status)"
+            (click)="loadMore(status)"
+          >
+            {{ isLoadingStatus(status) ? 'A carregar...' : 'Carregar mais' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

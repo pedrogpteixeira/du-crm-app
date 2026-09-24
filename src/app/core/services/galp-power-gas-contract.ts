@@ -15,10 +15,10 @@ export type GalpPowerGasContractStatus =
   | 'Pedido de chamada'
   | 'Em validação'
   | 'Não Conformidade'
+  | 'Pendente Docs'
   | 'Documentos Enviados'
   | 'Sem Registo'
   | 'Registo Plataforma Galp'
-  | 'Pendente Docs'
   | 'Em ativação'
   | 'Ativo'
   | 'Parcialmente Baixa'
@@ -29,10 +29,10 @@ export const GALP_POWER_GAS_STATUSES: GalpPowerGasContractStatus[] = [
   'Pedido de chamada',
   'Em validação',
   'Não Conformidade',
+  'Pendente Docs',
   'Documentos Enviados',
   'Sem Registo',
   'Registo Plataforma Galp',
-  'Pendente Docs',
   'Em ativação',
   'Ativo',
   'Parcialmente Baixa',

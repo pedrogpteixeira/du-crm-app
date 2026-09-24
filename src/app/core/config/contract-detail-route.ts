@@ -18,6 +18,11 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
     segment: 'repsol',
   },
   {
+    companyId: environment.PORTULOGOS_COMPANY_ID,
+    companyName: 'Portulogos',
+    segment: 'portulogos',
+  },
+  {
     companyId: environment.WALLBOX_COMPANY_ID,
     companyName: 'Wallbox',
     segment: 'wallbox',

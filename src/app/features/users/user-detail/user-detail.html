@@ -4,7 +4,49 @@
       <a class="breadcrumb" routerLink="/home/users">Utilizadores ›</a>
       <h1>{{ user?.name || 'Utilizador' }}</h1>
     </div>
+
+    <div class="profile-actions" *ngIf="user && isSuperAdmin">
+      <button
+        type="button"
+        class="edit-user-button"
+        (click)="openEditUserModal()"
+      >
+        <span class="material-symbols-rounded">edit</span>
+        Editar utilizador
+      </button>
+
+      <button
+        type="button"
+        class="status-user-button"
+        [class.activate]="!user.active"
+        (click)="openStatusConfirmation()"
+      >
+        <span class="material-symbols-rounded">
+          {{ user.active ? 'person_off' : 'person_check' }}
+        </span>
+        {{ user.active ? 'Desativar' : 'Ativar' }}
+      </button>
+    </div>
   </header>
+
+  <div
+    class="feedback-banner"
+    *ngIf="feedbackMessage"
+    [class.is-success]="feedbackType === 'success'"
+    [class.is-error]="feedbackType === 'error'"
+  >
+    <span class="material-symbols-rounded">
+      {{ feedbackType === 'success' ? 'check_circle' : 'error' }}
+    </span>
+    <span>{{ feedbackMessage }}</span>
+    <button
+      type="button"
+      aria-label="Fechar mensagem"
+      (click)="dismissFeedback()"
+    >
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </div>
 
   <p class="loading" *ngIf="isLoading">A carregar utilizador...</p>
 
@@ -34,7 +76,7 @@
 
         <label>
           Telefone
-          <strong>{{ user.phone }}</strong>
+          <strong>{{ user.phone || 'Não definido' }}</strong>
         </label>
       </div>
     </article>
@@ -78,14 +120,19 @@
       <div class="info-grid">
         <label>
           Estado
-          <strong>{{ user.active ? 'Ativo' : 'Inativo' }}</strong>
+          <span
+            class="account-status-badge"
+            [class.is-active]="user.active"
+            [class.is-inactive]="!user.active"
+          >
+            <span></span>
+            {{ user.active ? 'Ativo' : 'Inativo' }}
+          </span>
         </label>
 
         <label>
-          Cargo
-            <strong>
-                {{ user.role || 'Sem cargo selecionado' }}
-            </strong>
+          Role
+          <strong>{{ user.role || 'Sem role definida' }}</strong>
         </label>
 
         <label>
@@ -98,6 +145,7 @@
               [routerLink]="['/home/teams', team.id]"
             >
               {{ team.name }}
+              <span *ngIf="team.position">· {{ team.position }}</span>
             </a>
           </div>
 
@@ -123,3 +171,189 @@
     </article>
   </div>
 </section>
+
+<!-- EDITAR UTILIZADOR -->
+<div
+  class="modal-backdrop"
+  *ngIf="showEditUserModal && user"
+  (click)="closeEditUserModal()"
+>
+  <section
+    class="user-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="edit-user-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">Gestão de utilizadores</span>
+        <h2 id="edit-user-title">Editar utilizador</h2>
+        <p>{{ user.name }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isEditingUser"
+        aria-label="Fechar modal"
+        (click)="closeEditUserModal()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <div class="modal-content">
+      <p class="modal-error-message" *ngIf="editUserErrorMessage">
+        {{ editUserErrorMessage }}
+      </p>
+
+      <div class="user-form-grid">
+        <label>
+          Nome *
+          <input
+            type="text"
+            maxlength="100"
+            [(ngModel)]="editUserForm.name"
+          />
+        </label>
+
+        <label>
+          Username *
+          <input
+            type="text"
+            maxlength="50"
+            [(ngModel)]="editUserForm.username"
+          />
+        </label>
+
+        <label>
+          Email *
+          <input
+            type="email"
+            [(ngModel)]="editUserForm.email"
+          />
+        </label>
+
+        <label>
+          Telefone
+          <input
+            type="tel"
+            inputmode="numeric"
+            maxlength="9"
+            [(ngModel)]="editUserForm.phone"
+          />
+        </label>
+
+        <label class="full-width-field">
+          Equipa principal
+          <select [(ngModel)]="editUserForm.defaultTeam">
+            <option value="">Sem equipa principal</option>
+            <option
+              *ngFor="let team of getEditableUserTeams(user); trackBy: trackUserTeamById"
+              [value]="team.id"
+            >
+              {{ team.name }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <section class="role-override-section">
+        <div class="role-section-heading">
+          <div>
+            <strong>Permissões / Role</strong>
+            <span>Alteração administrativa manual da role persistida.</span>
+          </div>
+          <span class="admin-badge">Super Admin</span>
+        </div>
+
+        <label>
+          Role atual
+          <textarea rows="3" [(ngModel)]="editUserForm.role"></textarea>
+        </label>
+
+        <p>
+          A alteração manual pode substituir a role derivada da equipa e do cargo.
+          O valor apresentado é exatamente o recebido do backend.
+        </p>
+      </section>
+    </div>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="isEditingUser"
+        (click)="closeEditUserModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="submit-user-button"
+        [disabled]="isEditingUser"
+        (click)="saveUserChanges()"
+      >
+        <span class="button-spinner" *ngIf="isEditingUser"></span>
+        <span class="material-symbols-rounded" *ngIf="!isEditingUser">save</span>
+        {{ isEditingUser ? 'A guardar...' : 'Guardar alterações' }}
+      </button>
+    </footer>
+  </section>
+</div>
+
+<!-- CONFIRMAÇÃO ATIVAR / DESATIVAR -->
+<div
+  class="modal-backdrop"
+  *ngIf="showStatusConfirmModal && user"
+  (click)="closeStatusConfirmation()"
+>
+  <section
+    class="confirm-modal"
+    role="alertdialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="confirm-icon" [class.activate]="!user.active">
+      <span class="material-symbols-rounded">
+        {{ user.active ? 'person_off' : 'person_check' }}
+      </span>
+    </div>
+
+    <h2>{{ pendingStatusActionLabel }} utilizador?</h2>
+
+    <p *ngIf="user.active; else activateDescription">
+      <strong>{{ user.name }}</strong> deixará de conseguir autenticar-se no CRM.
+    </p>
+
+    <ng-template #activateDescription>
+      <p>
+        <strong>{{ user.name }}</strong> passará a poder autenticar-se no CRM.
+      </p>
+    </ng-template>
+
+    <div class="confirm-actions">
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="isChangingStatus"
+        (click)="closeStatusConfirmation()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="status-confirm-button"
+        [class.activate]="!user.active"
+        [disabled]="isChangingStatus"
+        (click)="confirmStatusChange()"
+      >
+        <span class="button-spinner" *ngIf="isChangingStatus"></span>
+        {{ isChangingStatus ? 'A processar...' : pendingStatusActionLabel }}
+      </button>
+    </div>
+  </section>
+</div>

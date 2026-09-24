@@ -1,32 +1,37 @@
 <section class="users-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">CRM ›</span>
-
+      <span class="breadcrumb">Utilizadores</span>
       <h1>Utilizadores</h1>
-
-      <p>
-        Consulta os utilizadores registados no CRM.
-      </p>
+      <p>Consulta os utilizadores registados no CRM.</p>
     </div>
 
     <div class="header-actions">
+      <button
+        type="button"
+        class="create-user-button"
+        *ngIf="isSuperAdmin"
+        (click)="openCreateUserModal()"
+      >
+        <span class="material-symbols-rounded">person_add</span>
+        Novo Utilizador
+      </button>
+
       <button
         type="button"
         class="filters-toggle-button"
         [class.is-active]="showFilters || hasActiveFilters()"
         (click)="toggleFilters()"
       >
+        <span class="material-symbols-rounded">filter_alt</span>
         Filtros
 
-        <span
-          class="filter-count"
-          *ngIf="hasActiveFilters()"
-        >
+        <span class="filter-count" *ngIf="hasActiveFilters()">
           {{
-            (filters.name ? 1 : 0) +
+            (filters.search ? 1 : 0) +
             (filters.role ? 1 : 0) +
-            (filters.team ? 1 : 0)
+            (filters.team ? 1 : 0) +
+            (filters.status ? 1 : 0)
           }}
         </span>
       </button>
@@ -34,73 +39,63 @@
       <button
         type="button"
         class="refresh-button"
-        [disabled]="isLoading"
-        (click)="loadUsers()"
+        [disabled]="isLoading || isRefreshing"
+        (click)="loadUsers(true)"
       >
-        {{ isLoading ? 'A atualizar...' : 'Atualizar' }}
+        <span class="material-symbols-rounded">refresh</span>
+        {{ isRefreshing ? 'A atualizar...' : 'Atualizar' }}
       </button>
     </div>
   </header>
 
-  <section
-    class="filters-card"
-    *ngIf="showFilters"
-  >
+  <section class="filters-card" *ngIf="showFilters">
     <div class="filter-field search-field">
-      <label for="user-name-filter">
-        Nome
-      </label>
-
+      <label for="user-search-filter">Pesquisa</label>
       <input
-        id="user-name-filter"
+        id="user-search-filter"
         type="search"
-        placeholder="Pesquisar por nome..."
-        [(ngModel)]="filters.name"
+        placeholder="Nome, username, email, role ou equipa..."
+        [(ngModel)]="filters.search"
         (ngModelChange)="applyFilters()"
       />
     </div>
 
     <div class="filter-field">
-      <label for="user-role-filter">
-        Role
-      </label>
+      <label for="user-status-filter">Estado</label>
+      <select
+        id="user-status-filter"
+        [(ngModel)]="filters.status"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">Todos</option>
+        <option value="active">Ativos</option>
+        <option value="inactive">Inativos</option>
+      </select>
+    </div>
 
+    <div class="filter-field">
+      <label for="user-role-filter">Role</label>
       <select
         id="user-role-filter"
         [(ngModel)]="filters.role"
         (ngModelChange)="applyFilters()"
       >
-        <option value="">
-          Todas as roles
-        </option>
-
-        <option
-          *ngFor="let role of availableRoles"
-          [value]="role"
-        >
+        <option value="">Todas as roles</option>
+        <option *ngFor="let role of availableRoles" [value]="role">
           {{ role }}
         </option>
       </select>
     </div>
 
     <div class="filter-field">
-      <label for="user-team-filter">
-        Equipa
-      </label>
-
+      <label for="user-team-filter">Equipa</label>
       <select
         id="user-team-filter"
         [(ngModel)]="filters.team"
         (ngModelChange)="applyFilters()"
       >
-        <option value="">
-          Todas as equipas
-        </option>
-
-        <option
-          *ngFor="let teamId of availableTeams"
-          [value]="teamId"
-        >
+        <option value="">Todas as equipas</option>
+        <option *ngFor="let teamId of availableTeams" [value]="teamId">
           {{ getTeamName(teamId) }}
         </option>
       </select>
@@ -116,138 +111,340 @@
     </button>
   </section>
 
-  <p
-    class="error-message"
-    *ngIf="errorMessage"
+  <div
+    class="feedback-banner"
+    *ngIf="feedbackMessage"
+    [class.is-success]="feedbackType === 'success'"
+    [class.is-warning]="feedbackType === 'warning'"
+    [class.is-error]="feedbackType === 'error'"
   >
+    <span class="material-symbols-rounded">
+      {{
+        feedbackType === 'success'
+          ? 'check_circle'
+          : feedbackType === 'warning'
+            ? 'warning'
+            : 'error'
+      }}
+    </span>
+    <span>{{ feedbackMessage }}</span>
+    <button
+      type="button"
+      aria-label="Fechar mensagem"
+      (click)="dismissFeedback()"
+    >
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </div>
+
+  <p class="error-message page-error" *ngIf="errorMessage">
     {{ errorMessage }}
   </p>
 
   <div class="card">
-    <div class="table-header">
-      <span>Utilizador</span>
-      <span>Role</span>
-      <span>Equipa por defeito</span>
-      <span>Estado</span>
-    </div>
+    <div class="table-scroll">
+      <div class="table-header">
+        <span>Nome</span>
+        <span>Role</span>
+        <span>Equipa</span>
+        <span>Estado</span>
+      </div>
 
-    <p
-      class="loading"
-      *ngIf="isLoading"
-    >
-      A carregar utilizadores...
-    </p>
+      <p class="loading" *ngIf="isLoading">A carregar utilizadores...</p>
 
-    <ng-container *ngIf="!isLoading">
-      <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
-        <a
-          class="user-row"
-          *ngFor="let user of visibleUsers; trackBy: trackUserById"
-          [routerLink]="
-            user.id === currentUserId
-              ? '/home/profile'
-              : ['/home/users', user.id]
-          "
-        >
-          <div class="user-cell">
-            <div class="avatar">
-              <img
-                *ngIf="getProfilePictureUrl(user); else initials"
-                [src]="getProfilePictureUrl(user)"
-                [alt]="user.name"
-              />
-
-              <ng-template #initials>
-                {{ getInitial(user.name) }}
-              </ng-template>
-            </div>
-
-            <div>
+      <ng-container *ngIf="!isLoading">
+        <ng-container *ngIf="onlineUsers$ | async as onlineUsers">
+          <div
+            class="user-row"
+            *ngFor="let user of visibleUsers; trackBy: trackUserById"
+            [class.is-inactive-row]="!user.active"
+          >
+            <a class="user-cell user-link" [routerLink]="['/home/users', user.id]">
+              <div class="avatar-wrap">
+                <div class="avatar">
+                  <img
+                    *ngIf="getProfilePictureUrl(user); else initials"
+                    [src]="getProfilePictureUrl(user)"
+                    [alt]="user.name"
+                  />
+                  <ng-template #initials>
+                    {{ getInitial(user.name) }}
+                  </ng-template>
+                </div>
+                <span
+                  class="online-dot"
+                  [class.is-online]="isOnline(user.id, onlineUsers)"
+                  [title]="isOnline(user.id, onlineUsers) ? 'Online' : 'Offline'"
+                ></span>
+              </div>
               <strong>{{ user.name }}</strong>
-              <span>{{ user.email }}</span>
-            </div>
+            </a>
+
+            <span class="role-value" [title]="user.role">
+              {{ user.role || 'Sem role' }}
+            </span>
+
+            <span class="muted">
+              {{ getPrimaryTeamName(user) }}
+            </span>
+
+            <span
+              class="account-status-badge"
+              [class.is-active]="user.active"
+              [class.is-inactive]="!user.active"
+            >
+              <span></span>
+              {{ user.active ? 'Ativo' : 'Inativo' }}
+            </span>
           </div>
 
-          <span class="muted">
-            {{ user.role || 'Sem cargo selecionado' }}
-          </span>
-
-          <span class="muted">
-            {{ user.defaultTeam?.name || 'Sem equipa' }}
-          </span>
-
-          <span
-            class="status-badge"
-            [class.is-online]="isOnline(user.id, onlineUsers)"
-          >
-            <span></span>
-
-            {{ isOnline(user.id, onlineUsers) ? 'Online' : 'Offline' }}
-          </span>
-        </a>
-
-        <div
-          class="empty-state"
-          *ngIf="!filteredUsers.length"
-        >
-          <strong>Nenhum utilizador encontrado</strong>
-
-          <span>
-            Não existem utilizadores que correspondam aos filtros selecionados.
-          </span>
-
-          <button
-            *ngIf="hasActiveFilters()"
-            type="button"
-            class="empty-clear-button"
-            (click)="clearFilters()"
-          >
-            Limpar filtros
-          </button>
-        </div>
+          <div class="empty-state" *ngIf="!filteredUsers.length">
+            <strong>Nenhum utilizador encontrado</strong>
+            <span>Não existem utilizadores que correspondam aos filtros selecionados.</span>
+            <button
+              *ngIf="hasActiveFilters()"
+              type="button"
+              class="empty-clear-button"
+              (click)="clearFilters()"
+            >
+              Limpar filtros
+            </button>
+          </div>
+        </ng-container>
       </ng-container>
-    </ng-container>
+    </div>
 
-    <footer
-      class="table-footer"
-      *ngIf="!isLoading && users.length"
-    >
+    <footer class="table-footer" *ngIf="!isLoading && users.length">
       <div>
         A mostrar
-        <strong>
-          {{ visibleStart }}–{{ visibleEnd }}
-        </strong>
+        <strong>{{ visibleStart }}–{{ visibleEnd }}</strong>
         de
-        <strong>
-          {{ filteredUsers.length }}
-        </strong>
+        <strong>{{ filteredUsers.length }}</strong>
         utilizadores
       </div>
 
-      <div
-        class="pagination-controls"
-        *ngIf="filteredUsers.length > pageSize"
-      >
-        <button
-          type="button"
-          [disabled]="currentPage === 1"
-          (click)="previousPage()"
-        >
+      <div class="pagination-controls" *ngIf="filteredUsers.length > pageSize">
+        <button type="button" [disabled]="currentPage <= 1" (click)="previousPage()">
           Anterior
         </button>
-
-        <span>
-          {{ currentPage }} / {{ totalPages }}
-        </span>
-
-        <button
-          type="button"
-          [disabled]="currentPage === totalPages"
-          (click)="nextPage()"
-        >
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button type="button" [disabled]="currentPage >= totalPages" (click)="nextPage()">
           Seguinte
         </button>
       </div>
     </footer>
   </div>
 </section>
+
+<!-- MODAL CRIAR UTILIZADOR -->
+<div
+  class="modal-backdrop"
+  *ngIf="showCreateUserModal"
+  (click)="closeCreateUserModal()"
+>
+  <section
+    class="user-modal create-user-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-user-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="modal-eyebrow">Gestão de utilizadores</span>
+        <h2 id="create-user-title">Criar novo utilizador</h2>
+        <p>
+          O utilizador será criado como inativo e deverá ser validado posteriormente.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isCreatingUser"
+        aria-label="Fechar modal"
+        (click)="closeCreateUserModal()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <div class="modal-content">
+      <p
+        class="modal-error-message"
+        *ngIf="createUserErrorMessage"
+      >
+        {{ createUserErrorMessage }}
+      </p>
+
+      <div class="user-form-grid">
+        <label>
+          Nome *
+          <input
+            type="text"
+            maxlength="100"
+            placeholder="Nome do utilizador"
+            [(ngModel)]="createUserForm.name"
+          />
+        </label>
+
+        <label>
+          Username *
+          <input
+            type="text"
+            maxlength="50"
+            placeholder="username"
+            [(ngModel)]="createUserForm.username"
+          />
+        </label>
+
+        <label>
+          Email *
+          <input
+            type="email"
+            placeholder="email@exemplo.com"
+            [(ngModel)]="createUserForm.email"
+          />
+        </label>
+
+        <label>
+          Telefone
+          <input
+            type="tel"
+            inputmode="numeric"
+            maxlength="9"
+            placeholder="912345678"
+            [(ngModel)]="createUserForm.phone"
+          />
+        </label>
+
+        <label>
+          Password *
+          <input
+            type="password"
+            maxlength="100"
+            autocomplete="new-password"
+            [(ngModel)]="createUserForm.password"
+          />
+        </label>
+
+        <label>
+          Confirmar Password *
+          <input
+            type="password"
+            maxlength="100"
+            autocomplete="new-password"
+            [(ngModel)]="createUserForm.confirmPassword"
+          />
+        </label>
+      </div>
+
+      <section class="team-assignment-section">
+        <div class="section-heading">
+          <div>
+            <strong>Equipa e cargo <span class="optional-label">Opcional</span></strong>
+            <span>
+              Podes criar o utilizador sem equipa. Se associares uma equipa, o backend calcula a role inicial através da equipa e do cargo.
+            </span>
+          </div>
+        </div>
+
+        <p
+          class="inline-error"
+          *ngIf="teamsErrorMessage"
+        >
+          {{ teamsErrorMessage }}
+          <button
+            type="button"
+            (click)="loadTeams()"
+          >
+            Tentar novamente
+          </button>
+        </p>
+
+        <div class="team-assignment-grid">
+          <label class="team-search-label">
+            Pesquisar equipa
+            <input
+              type="search"
+              placeholder="Pesquisar equipa..."
+              [(ngModel)]="teamSearch"
+            />
+          </label>
+
+          <label>
+            Equipa
+            <select
+              [(ngModel)]="createUserForm.teamId"
+              (ngModelChange)="onCreateTeamChange()"
+              [disabled]="isLoadingTeams"
+            >
+              <option value="">
+                {{ isLoadingTeams ? 'A carregar equipas...' : 'Sem equipa' }}
+              </option>
+
+              <option
+                *ngFor="let team of filteredCreateTeams; trackBy: trackTeamById"
+                [value]="team.id"
+              >
+                {{ team.name }}
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Cargo
+            <select
+              [(ngModel)]="createUserForm.positionIndex"
+              [disabled]="!createUserForm.teamId"
+            >
+              <option [ngValue]="null">
+                {{ createUserForm.teamId ? 'Selecionar cargo' : 'Sem cargo' }}
+              </option>
+
+              <option
+                *ngFor="let position of selectedTeamPositions; let index = index"
+                [ngValue]="index"
+              >
+                {{ position }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <footer class="modal-footer">
+      <button
+        type="button"
+        class="cancel-button"
+        [disabled]="isCreatingUser"
+        (click)="closeCreateUserModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="submit-user-button"
+        [disabled]="isCreatingUser"
+        (click)="createUser()"
+      >
+        <span
+          class="button-spinner"
+          *ngIf="isCreatingUser"
+        ></span>
+
+        <span
+          class="material-symbols-rounded"
+          *ngIf="!isCreatingUser"
+        >
+          person_add
+        </span>
+
+        {{ isCreatingUser ? 'A criar...' : 'Criar utilizador' }}
+      </button>
+    </footer>
+  </section>
+</div>
+

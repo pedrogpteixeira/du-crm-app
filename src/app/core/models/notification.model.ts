@@ -6,6 +6,7 @@ export type NotificationType =
 
 export type ContractNotificationResource =
   | 'contracts/repsol'
+  | 'contracts/portulogos'
   | 'contracts/wallbox'
   | 'contracts/yes-energy'
   | 'contracts/galp-power-gas'

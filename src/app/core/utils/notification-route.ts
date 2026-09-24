@@ -10,6 +10,7 @@ const CONTRACT_ROUTES: Record<
   string
 > = {
   'contracts/repsol': '/home/contracts/repsol',
+  'contracts/portulogos': '/home/contracts/portulogos',
   'contracts/wallbox': '/home/contracts/wallbox',
   'contracts/yes-energy': '/home/contracts/yes-energy',
   'contracts/galp-power-gas': '/home/contracts/galp-power-gas',
