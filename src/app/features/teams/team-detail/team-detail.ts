@@ -118,6 +118,9 @@ export class TeamDetail implements OnInit {
   teamCommissions: TeamCommission[] = [];
   companies: Company[] = [];
 
+  commissionsExpanded = false;
+  commissionsLoaded = false;
+
   readonly companyNameById =
     new Map<string, string>();
 
@@ -384,12 +387,53 @@ export class TeamDetail implements OnInit {
   private initializeTeam(
     teamId: string,
   ): void {
+    this.resetCommissionsLazyState();
     this.loadTeam(teamId);
+  }
 
-    if (this.canManageCommissions) {
-      this.loadCompanies();
+  toggleCommissions(): void {
+    if (!this.canManageCommissions) {
+      return;
+    }
+
+    this.commissionsExpanded =
+      !this.commissionsExpanded;
+
+    if (
+      this.commissionsExpanded &&
+      !this.commissionsLoaded &&
+      !this.isLoadingCommissions
+    ) {
+      this.loadCommissionData();
+    }
+  }
+
+  retryLoadCommissions(): void {
+    if (!this.canManageCommissions) {
+      return;
+    }
+
+    this.commissionsError = '';
+    this.loadCommissionData();
+  }
+
+  private loadCommissionData(): void {
+    if (!this.canManageCommissions) {
+      return;
+    }
+
+    this.loadCompanies();
+
+    if (!this.commissionsLoaded) {
       this.loadTeamCommissions();
     }
+  }
+
+  private resetCommissionsLazyState(): void {
+    this.commissionsExpanded = false;
+    this.commissionsLoaded = false;
+    this.teamCommissions = [];
+    this.commissionsError = '';
   }
 
   loadTeam(teamId: string): void {
@@ -484,7 +528,8 @@ export class TeamDetail implements OnInit {
   private loadTeamCommissions(): void {
     if (
       !this.canManageCommissions ||
-      !this.teamId
+      !this.teamId ||
+      this.isLoadingCommissions
     ) {
       return;
     }
@@ -506,10 +551,12 @@ export class TeamDetail implements OnInit {
             ...(commissions || []),
           ];
 
+          this.commissionsLoaded = true;
           this.sortTeamCommissions();
         },
 
         error: () => {
+          this.commissionsLoaded = false;
           this.commissionsError =
             'Não foi possível carregar as comissões da equipa.';
         },

@@ -38,7 +38,7 @@ export type IberdrolaContractStatus =
   | 'Em fornecimento'
   | 'Ativo'
   | 'Parcialmente Baixa'
-  | 'Cancelada'
+  | 'Cancelado'
   | 'Baixa';
 
 export const IBERDROLA_CONTRACT_STATUSES: readonly IberdrolaContractStatus[] = [
@@ -57,7 +57,7 @@ export const IBERDROLA_CONTRACT_STATUSES: readonly IberdrolaContractStatus[] = [
   'Em fornecimento',
   'Ativo',
   'Parcialmente Baixa',
-  'Cancelada',
+  'Cancelado',
   'Baixa',
 ];
 

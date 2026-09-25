@@ -303,7 +303,7 @@
 
             <span
               class="commissions-count"
-              *ngIf="teamCommissions.length"
+              *ngIf="commissionsLoaded"
             >
               {{ teamCommissions.length }}
               configuração{{
@@ -314,354 +314,415 @@
             </span>
           </div>
 
-          <button
-            type="button"
-            class="add-commission-button"
-            [disabled]="
+          <div class="commissions-header-actions">
+            <button
+              type="button"
+              class="add-commission-button"
+              *ngIf="commissionsExpanded && commissionsLoaded"
+              [disabled]="
+                isLoadingCommissions ||
+                isLoadingCompanies
+              "
+              (click)="openCreateCommissionModal()"
+            >
+              <span class="material-symbols-rounded">
+                add
+              </span>
+
+              Adicionar configuração
+            </button>
+
+            <button
+              type="button"
+              class="commissions-toggle-button"
+              [attr.aria-expanded]="commissionsExpanded"
+              (click)="toggleCommissions()"
+            >
+              <span class="material-symbols-rounded">
+                {{
+                  commissionsExpanded
+                    ? 'expand_less'
+                    : 'expand_more'
+                }}
+              </span>
+
+              {{
+                commissionsExpanded
+                  ? 'Ocultar'
+                  : 'Ver comissões'
+              }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="commissions-lazy-state"
+          *ngIf="!commissionsExpanded"
+        >
+          <span class="material-symbols-rounded">
+            speed
+          </span>
+
+          <div>
+            <strong>
+              Carregamento sob pedido
+            </strong>
+
+            <p>
+              As configurações de comissão só são
+              carregadas quando precisares de as consultar.
+            </p>
+          </div>
+        </div>
+
+        <ng-container *ngIf="commissionsExpanded">
+          <p
+            class="commissions-loading"
+            *ngIf="
               isLoadingCommissions ||
               isLoadingCompanies
             "
-            (click)="openCreateCommissionModal()"
           >
-            <span class="material-symbols-rounded">
-              add
-            </span>
+            <span class="loading-spinner"></span>
 
-            Adicionar configuração
-          </button>
-        </div>
-
-        <p
-          class="commissions-loading"
-          *ngIf="isLoadingCommissions"
-        >
-          <span class="loading-spinner"></span>
-
-          A carregar comissões...
-        </p>
-
-        <p
-          class="commission-error-message"
-          *ngIf="commissionsError"
-        >
-          {{ commissionsError }}
-        </p>
-
-        <div
-          class="commissions-grid"
-          *ngIf="
-            !isLoadingCommissions &&
-            !commissionsError &&
-            teamCommissions.length
-          "
-        >
-          <article
-            class="commission-card"
-            *ngFor="
-              let commission of teamCommissions;
-              trackBy: trackCommissionById
-            "
-          >
-            <header class="commission-card-header">
-              <div>
-                <strong>
-                  {{
-                    getCompanyName(
-                      commission.companyId
-                    )
-                  }}
-                </strong>
-
-                <span>
-                  {{
-                    getSegmentLabel(
-                      commission.segment
-                    )
-                  }}
-                </span>
-              </div>
-
-              <span
-                class="commission-status"
-                [class.is-active]="
-                  commission.active
-                "
-                [class.is-inactive]="
-                  !commission.active
-                "
-              >
-                {{
-                  commission.active
-                    ? 'Ativa'
-                    : 'Inativa'
-                }}
-              </span>
-            </header>
-
-            <section class="commission-block">
-              <div class="commission-block-title">
-                Eletricidade
-              </div>
-
-              <div class="commission-line">
-                <span>
-                  Comissão base
-                </span>
-
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.electricityCommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <p class="commission-helper">
-                Aplicada quando não existe uma comissão
-                específica para a potência contratada.
-              </p>
-
-              <div class="power-commissions">
-                <span class="power-commissions-title">
-                  Comissões específicas por potência
-                </span>
-
-                <ng-container
-                  *ngIf="
-                    commission
-                      .electricityPowerCommissions
-                      .length;
-                    else noPowerCommissions
-                  "
-                >
-                  <div
-                    class="commission-line power-line"
-                    *ngFor="
-                      let powerCommission of
-                        commission
-                          .electricityPowerCommissions
-                    "
-                  >
-                    <span>
-                      {{
-                        formatPower(
-                          powerCommission.powerKva
-                        )
-                      }}
-                    </span>
-
-                    <strong>
-                      {{
-                        formatCommission(
-                          powerCommission.commission
-                        )
-                      }}
-                    </strong>
-                  </div>
-                </ng-container>
-
-                <ng-template #noPowerCommissions>
-                  <p class="commission-helper">
-                    Todas as potências utilizam a
-                    comissão base.
-                  </p>
-                </ng-template>
-              </div>
-            </section>
-
-            <section class="commission-block">
-              <div class="commission-block-title">
-                Gás
-              </div>
-
-              <div class="commission-line">
-                <span>Comissão</span>
-
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.gasCommission
-                    )
-                  }}
-                </strong>
-              </div>
-            </section>
-
-            <section class="commission-block">
-              <div class="commission-block-title">
-                Condições adicionais
-              </div>
-
-              <div class="commission-line">
-                <span>Débito Direto</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.directDebitCommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>Fatura Eletrónica</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission
-                        .electronicInvoiceCommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>SVA</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.SVACommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>PEL</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.PELCommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>PEL+</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.PELPlusCommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>PGI</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.PGICommission
-                    )
-                  }}
-                </strong>
-              </div>
-
-              <div class="commission-line">
-                <span>MGI</span>
-                <strong>
-                  {{
-                    formatCommission(
-                      commission.MGICommission
-                    )
-                  }}
-                </strong>
-              </div>
-            </section>
-
-            <footer class="commission-actions">
-              <button
-                type="button"
-                class="commission-state-button"
-                [disabled]="
-                  isSavingCommission ||
-                  deletingCommissionId ===
-                    commission.id
-                "
-                (click)="
-                  toggleCommissionActive(
-                    commission
-                  )
-                "
-              >
-                {{
-                  commission.active
-                    ? 'Desativar'
-                    : 'Ativar'
-                }}
-              </button>
-
-              <button
-                type="button"
-                class="commission-edit-button"
-                [disabled]="
-                  deletingCommissionId ===
-                    commission.id
-                "
-                (click)="
-                  openEditCommissionModal(
-                    commission
-                  )
-                "
-              >
-                Editar
-              </button>
-
-              <button
-                type="button"
-                class="commission-delete-button"
-                [disabled]="
-                  deletingCommissionId ===
-                    commission.id
-                "
-                (click)="
-                  deleteCommission(
-                    commission
-                  )
-                "
-              >
-                {{
-                  deletingCommissionId ===
-                    commission.id
-                    ? 'A eliminar...'
-                    : 'Eliminar'
-                }}
-              </button>
-            </footer>
-          </article>
-        </div>
-
-        <div
-          class="commissions-empty"
-          *ngIf="
-            !isLoadingCommissions &&
-            !commissionsError &&
-            !teamCommissions.length
-          "
-        >
-          <span class="material-symbols-rounded">
-            payments
-          </span>
-
-          <strong>
-            Sem comissões configuradas
-          </strong>
-
-          <p>
-            Esta equipa ainda não tem
-            configurações de comissões.
+            A carregar comissões...
           </p>
 
-          <button
-            type="button"
-            (click)="openCreateCommissionModal()"
+          <div
+            class="commission-error-message"
+            *ngIf="commissionsError"
           >
-            Adicionar configuração
-          </button>
-        </div>
+            <span>{{ commissionsError }}</span>
+
+            <button
+              type="button"
+              class="retry-commissions-button"
+              [disabled]="
+                isLoadingCommissions ||
+                isLoadingCompanies
+              "
+              (click)="retryLoadCommissions()"
+            >
+              Tentar novamente
+            </button>
+          </div>
+
+          <div
+            class="commissions-grid"
+            *ngIf="
+              commissionsLoaded &&
+              !isLoadingCommissions &&
+              !isLoadingCompanies &&
+              !commissionsError &&
+              teamCommissions.length
+            "
+          >
+            <article
+              class="commission-card"
+              *ngFor="
+                let commission of teamCommissions;
+                trackBy: trackCommissionById
+              "
+            >
+              <header class="commission-card-header">
+                <div>
+                  <strong>
+                    {{
+                      getCompanyName(
+                        commission.companyId
+                      )
+                    }}
+                  </strong>
+
+                  <span>
+                    {{
+                      getSegmentLabel(
+                        commission.segment
+                      )
+                    }}
+                  </span>
+                </div>
+
+                <span
+                  class="commission-status"
+                  [class.is-active]="commission.active"
+                  [class.is-inactive]="!commission.active"
+                >
+                  {{
+                    commission.active
+                      ? 'Ativa'
+                      : 'Inativa'
+                  }}
+                </span>
+              </header>
+
+              <section class="commission-block">
+                <div class="commission-block-title">
+                  Eletricidade
+                </div>
+
+                <div class="commission-line">
+                  <span>
+                    Comissão base
+                  </span>
+
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.electricityCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <p class="commission-helper">
+                  Aplicada quando não existe uma comissão
+                  específica para a potência contratada.
+                </p>
+
+                <div class="power-commissions">
+                  <span class="power-commissions-title">
+                    Comissões específicas por potência
+                  </span>
+
+                  <ng-container
+                    *ngIf="
+                      commission
+                        .electricityPowerCommissions
+                        .length;
+                      else noPowerCommissions
+                    "
+                  >
+                    <div
+                      class="commission-line power-line"
+                      *ngFor="
+                        let powerCommission of
+                          commission
+                            .electricityPowerCommissions
+                      "
+                    >
+                      <span>
+                        {{
+                          formatPower(
+                            powerCommission.powerKva
+                          )
+                        }}
+                      </span>
+
+                      <strong>
+                        {{
+                          formatCommission(
+                            powerCommission.commission
+                          )
+                        }}
+                      </strong>
+                    </div>
+                  </ng-container>
+
+                  <ng-template #noPowerCommissions>
+                    <p class="commission-helper">
+                      Todas as potências utilizam a
+                      comissão base.
+                    </p>
+                  </ng-template>
+                </div>
+              </section>
+
+              <section class="commission-block">
+                <div class="commission-block-title">
+                  Gás
+                </div>
+
+                <div class="commission-line">
+                  <span>Comissão</span>
+
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.gasCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+              </section>
+
+              <section class="commission-block">
+                <div class="commission-block-title">
+                  Condições adicionais
+                </div>
+
+                <div class="commission-line">
+                  <span>Débito Direto</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.directDebitCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>Fatura Eletrónica</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission
+                          .electronicInvoiceCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>SVA</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.SVACommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>PEL</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.PELCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>PEL+</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.PELPlusCommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>PGI</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.PGICommission
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="commission-line">
+                  <span>MGI</span>
+                  <strong>
+                    {{
+                      formatCommission(
+                        commission.MGICommission
+                      )
+                    }}
+                  </strong>
+                </div>
+              </section>
+
+              <footer class="commission-actions">
+                <button
+                  type="button"
+                  class="commission-state-button"
+                  [disabled]="
+                    isSavingCommission ||
+                    deletingCommissionId ===
+                      commission.id
+                  "
+                  (click)="
+                    toggleCommissionActive(
+                      commission
+                    )
+                  "
+                >
+                  {{
+                    commission.active
+                      ? 'Desativar'
+                      : 'Ativar'
+                  }}
+                </button>
+
+                <button
+                  type="button"
+                  class="commission-edit-button"
+                  [disabled]="
+                    deletingCommissionId ===
+                      commission.id
+                  "
+                  (click)="
+                    openEditCommissionModal(
+                      commission
+                    )
+                  "
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="commission-delete-button"
+                  [disabled]="
+                    deletingCommissionId ===
+                      commission.id
+                  "
+                  (click)="
+                    deleteCommission(
+                      commission
+                    )
+                  "
+                >
+                  {{
+                    deletingCommissionId ===
+                      commission.id
+                      ? 'A eliminar...'
+                      : 'Eliminar'
+                  }}
+                </button>
+              </footer>
+            </article>
+          </div>
+
+          <div
+            class="commissions-empty"
+            *ngIf="
+              commissionsLoaded &&
+              !isLoadingCommissions &&
+              !isLoadingCompanies &&
+              !commissionsError &&
+              !teamCommissions.length
+            "
+          >
+            <span class="material-symbols-rounded">
+              payments
+            </span>
+
+            <strong>
+              Sem comissões configuradas
+            </strong>
+
+            <p>
+              Esta equipa ainda não tem
+              configurações de comissões.
+            </p>
+
+            <button
+              type="button"
+              (click)="openCreateCommissionModal()"
+            >
+              Adicionar configuração
+            </button>
+          </div>
+        </ng-container>
       </article>
     </div>
   </ng-container>

@@ -17,6 +17,7 @@ import {
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { resolveLightContractRegistration } from '../../../core/utils/contract-light-registration';
 
 import { Client, ClientService } from '../../../core/services/client';
 
@@ -932,11 +933,24 @@ export class GalpPowerGasContractCreate implements OnInit {
 
     this.addSharedFields(payload);
 
-    if (this.isProLayout()) {
+    if (this.isLightLayout()) {
+      this.addLightRegistrationFields(payload);
+    } else {
       this.addProFields(payload);
     }
 
     return payload;
+  }
+
+  private addLightRegistrationFields(payload: CreateGalpPowerGasContractRequest): void {
+    const registration = resolveLightContractRegistration(
+      this.selectedTeamIds,
+      this.availableTeams,
+      this.getRequiredTeamIds(),
+    );
+
+    payload.codigoRegistoCE = registration.codigoRegistoCE;
+    payload.nomeRegistoCE = registration.nomeRegistoCE;
   }
 
   private addSharedFields(payload: CreateGalpPowerGasContractRequest): void {

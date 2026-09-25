@@ -243,6 +243,16 @@
 
       <a
         *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/autos"
+        routerLinkActive="active"
+        title="Autos"
+      >
+        <span class="icon material-symbols-rounded">receipt_long</span>
+        <span class="label">Autos</span>
+      </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
         routerLink="/home/users"
         routerLinkActive="active"
         title="Utilizadores"

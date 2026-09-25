@@ -52,6 +52,11 @@ export interface TeamsInvalidationEvent {
   timestamp: string;
 }
 
+export interface AutosInvalidationEvent {
+  reason?: string;
+  timestamp: string;
+}
+
 export interface TicketSocketEvent extends TicketApiModel {
   ticketId?: string;
   id?: string;
@@ -369,6 +374,12 @@ export class SocketService {
   listenTeamsInvalidated(): Observable<TeamsInvalidationEvent> {
     return this.createEventObservable<TeamsInvalidationEvent>(
       'teams:invalidated',
+    );
+  }
+
+  listenAutosInvalidated(): Observable<AutosInvalidationEvent> {
+    return this.createEventObservable<AutosInvalidationEvent>(
+      'autos:invalidated',
     );
   }
 

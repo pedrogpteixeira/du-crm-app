@@ -1,0 +1,350 @@
+<section class="autos-page">
+  <header class="page-header">
+    <div>
+      <h1>Autos</h1>
+      <p>Consulta, revê e gere autos de comissões.</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        *ngIf="isSuperAdmin"
+        type="button"
+        class="primary-button"
+        (click)="openGenerateModal()"
+      >
+        <span class="material-symbols-rounded">add</span>
+        Gerar Auto
+      </button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [class.is-active]="showFilters || hasActiveFilters()"
+        (click)="toggleFilters()"
+      >
+        <span class="material-symbols-rounded">filter_alt</span>
+        Filtros
+      </button>
+    </div>
+  </header>
+
+  <div class="feedback success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="feedback error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <section class="filters-card" *ngIf="showFilters">
+    <label>
+      Comercializadora
+      <select [(ngModel)]="filters.provider" (ngModelChange)="applyFilters()">
+        <option value="">Todas</option>
+        <option *ngFor="let option of providerOptions" [value]="option.id">
+          {{ option.label }}
+        </option>
+      </select>
+    </label>
+
+    <label>
+      Estado
+      <select [(ngModel)]="filters.status" (ngModelChange)="applyFilters()">
+        <option value="">Todos</option>
+        <option value="draft">Rascunho</option>
+        <option value="finalized">Finalizado</option>
+      </select>
+    </label>
+
+    <label>
+      Tipo
+      <select [(ngModel)]="filters.type" (ngModelChange)="applyFilters()">
+        <option value="">Todos</option>
+        <option value="manual">Manual</option>
+        <option value="automatic">Automático</option>
+      </select>
+    </label>
+
+    <label>
+      Período desde
+      <input type="date" [(ngModel)]="filters.periodStart" (ngModelChange)="applyFilters()" />
+    </label>
+
+    <label>
+      Período até
+      <input type="date" [(ngModel)]="filters.periodEnd" (ngModelChange)="applyFilters()" />
+    </label>
+
+    <button type="button" class="clear-button" [disabled]="!hasActiveFilters()" (click)="clearFilters()">
+      Limpar filtros
+    </button>
+  </section>
+
+  <section class="autos-card">
+    <div class="table-wrap" *ngIf="visibleAutos.length; else noRows">
+      <div class="table-header auto-grid">
+        <div>Comercializadora</div>
+        <div>Período</div>
+        <div>Tipo</div>
+        <div>Contratos</div>
+        <div>A pagar</div>
+        <div>A devolver</div>
+        <div>Líquido</div>
+        <div>Estado</div>
+        <div>Criado por</div>
+        <div>Criado em</div>
+        <div>Ações</div>
+      </div>
+
+      <div
+        class="auto-row auto-grid"
+        *ngFor="let auto of visibleAutos; trackBy: trackAutoById"
+        role="link"
+        tabindex="0"
+        [attr.aria-label]="'Abrir Auto ' + providerLabel(auto.provider)"
+        (click)="openAuto(auto)"
+        (keydown.enter)="openAuto(auto)"
+      >
+        <div class="provider-cell">
+          <strong>{{ providerLabel(auto.provider) }}</strong>
+        </div>
+
+        <div>{{ formatDate(auto.periodStart) }} → {{ formatDate(auto.periodEnd) }}</div>
+        <div>{{ typeLabel(auto.type) }}</div>
+        <div>{{ auto.contractsCount }}</div>
+        <div class="money positive">{{ formatCurrency(auto.totalPositive) }}</div>
+        <div class="money negative">{{ formatCurrency(auto.totalNegative) }}</div>
+        <div class="money net">{{ formatCurrency(auto.totalNet) }}</div>
+        <div>
+          <span class="status-badge" [class.is-finalized]="auto.status === 'finalized'">
+            {{ statusLabel(auto.status) }}
+          </span>
+        </div>
+        <div>{{ creatorLabel(auto) }}</div>
+        <div>{{ formatDateTime(auto.createdAt) }}</div>
+
+        <div class="row-actions">
+          <button
+            type="button"
+            class="icon-button"
+            [disabled]="exportingAutoId === auto.id"
+            title="Exportar Excel"
+            (click)="$event.stopPropagation(); exportAuto(auto)"
+          >
+            <span class="material-symbols-rounded">download</span>
+          </button>
+
+          <button
+            *ngIf="isSuperAdmin && auto.status === 'draft'"
+            type="button"
+            class="icon-button danger"
+            title="Eliminar Auto"
+            (click)="$event.stopPropagation(); requestDelete(auto)"
+          >
+            <span class="material-symbols-rounded">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noRows>
+      <div class="empty-state" *ngIf="!isLoading">
+        <span class="material-symbols-rounded">receipt_long</span>
+        <strong>Ainda não existem autos.</strong>
+        <span *ngIf="isSuperAdmin">Gere o primeiro auto para começar.</span>
+        <button *ngIf="isSuperAdmin" type="button" class="primary-button" (click)="openGenerateModal()">
+          <span class="material-symbols-rounded">add</span>
+          Gerar Auto
+        </button>
+      </div>
+    </ng-template>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="spinner"></span>
+      A carregar autos...
+    </div>
+
+    <footer class="table-footer" *ngIf="!isLoading && filteredAutos.length">
+      <span>
+        A mostrar <strong>{{ visibleStart }}–{{ visibleEnd }}</strong> de
+        <strong>{{ filteredAutos.length }}</strong> autos
+      </span>
+
+      <div class="pagination" *ngIf="filteredAutos.length > pageSize">
+        <button type="button" [disabled]="currentPage === 1" (click)="previousPage()">Anterior</button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button type="button" [disabled]="currentPage === totalPages" (click)="nextPage()">Seguinte</button>
+      </div>
+    </footer>
+  </section>
+</section>
+
+<!-- Gerar Auto -->
+<div class="modal-backdrop" *ngIf="showGenerateModal" (click)="closeGenerateModal()">
+  <section class="modal auto-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">Autos de comissões</span>
+        <h2>Gerar Auto</h2>
+        <p>Escolhe a comercializadora e o período antes de criar o rascunho.</p>
+      </div>
+
+      <button type="button" class="close-button" [disabled]="isPreviewing || isLoadingMore || isCreating" (click)="closeGenerateModal()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <div class="modal-body">
+      <div class="feedback error" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+      <div class="date-presets" aria-label="Períodos recomendados">
+        <span>Período rápido</span>
+
+        <div class="date-preset-actions">
+          <button
+            *ngFor="let preset of datePresets"
+            type="button"
+            class="date-preset-button"
+            [class.is-active]="isDatePresetActive(preset.days)"
+            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            (click)="applyDatePreset(preset.days)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">date_range</span>
+            {{ preset.label }}
+          </button>
+        </div>
+
+        <small>Os atalhos incluem o dia de hoje. Também podes ajustar as datas manualmente.</small>
+      </div>
+
+      <div class="generate-form">
+        <label>
+          Comercializadora
+          <select
+            [(ngModel)]="generateForm.provider"
+            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            (ngModelChange)="onGenerateFormChanged()"
+          >
+            <option *ngFor="let option of providerOptions" [value]="option.id">{{ option.label }}</option>
+          </select>
+        </label>
+
+        <label>
+          Data inicial
+          <input
+            type="date"
+            [(ngModel)]="generateForm.periodStart"
+            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            (ngModelChange)="onGenerateFormChanged()"
+          />
+        </label>
+
+        <label>
+          Data final
+          <input
+            type="date"
+            [(ngModel)]="generateForm.periodEnd"
+            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            (ngModelChange)="onGenerateFormChanged()"
+          />
+        </label>
+      </div>
+
+      <ng-container *ngIf="preview as currentPreview">
+        <div class="preview-summary">
+          <div><span>Contratos</span><strong>{{ currentPreview.contractsCount }}</strong></div>
+          <div><span>A pagar</span><strong>{{ formatCurrency(currentPreview.totalPositive) }}</strong></div>
+          <div><span>A devolver</span><strong>{{ formatCurrency(currentPreview.totalNegative) }}</strong></div>
+          <div><span>Total líquido</span><strong>{{ formatCurrency(currentPreview.totalNet) }}</strong></div>
+        </div>
+
+        <div class="preview-movement-summary">
+          <div><span>Pagamentos</span><strong>{{ currentPreview.paymentCount }}</strong></div>
+          <div><span>Retornos</span><strong>{{ currentPreview.refundCount }}</strong></div>
+          <div><span>Sem movimento</span><strong>{{ currentPreview.zeroCount }}</strong></div>
+          <div><span>Avisos</span><strong>{{ currentPreview.warningCount }}</strong></div>
+        </div>
+
+        <div class="diagnostics" *ngIf="currentPreview.diagnostics?.length">
+          <strong>Diagnóstico</strong>
+          <span *ngFor="let diagnostic of currentPreview.diagnostics">{{ diagnosticLabel(diagnostic) }}</span>
+        </div>
+
+        <section class="preview-items">
+          <div class="preview-items-header">
+            <div>
+              <strong>Contratos do preview</strong>
+              <span>{{ previewLoadedCount }} de {{ previewTotalCount }} carregados</span>
+            </div>
+
+          </div>
+
+          <app-auto-items-table
+            [provider]="currentPreview.provider"
+            [items]="currentPreview.items"
+            maxHeight="44vh"
+          />
+
+          <div class="preview-load-more" *ngIf="canLoadMorePreview">
+            <span>{{ previewLoadedCount }} de {{ previewTotalCount }} contratos</span>
+
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="isLoadingMore || isCreating || isPreviewing"
+              (click)="loadMorePreview()"
+            >
+              <span class="spinner small" *ngIf="isLoadingMore"></span>
+              {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+            </button>
+          </div>
+
+          <div class="preview-load-complete" *ngIf="!canLoadMorePreview && previewTotalCount">
+            {{ previewLoadedCount }} de {{ previewTotalCount }} contratos carregados
+          </div>
+        </section>
+      </ng-container>
+    </div>
+
+    <footer class="modal-footer">
+      <button type="button" class="secondary-button" [disabled]="isPreviewing || isLoadingMore || isCreating" (click)="closeGenerateModal()">Cancelar</button>
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="isPreviewing || isLoadingMore || isCreating || hasCurrentPreview"
+        [title]="hasCurrentPreview ? 'Altera as datas ou a comercializadora para pré-visualizar novamente.' : 'Pré-visualizar o período selecionado'"
+        (click)="previewAuto()"
+      >
+        <span class="spinner small" *ngIf="isPreviewing"></span>
+        {{ isPreviewing ? 'A pré-visualizar...' : (hasCurrentPreview ? 'Pré-visualização atual' : 'Pré-visualizar') }}
+      </button>
+
+      <button *ngIf="preview" type="button" class="primary-button" [disabled]="isCreating || isPreviewing || isLoadingMore || !hasCurrentPreview" (click)="createAuto()">
+        <span class="spinner small" *ngIf="isCreating"></span>
+        {{ isCreating ? 'A criar...' : 'Criar Auto' }}
+      </button>
+    </footer>
+  </section>
+</div>
+
+<!-- Eliminar -->
+<div class="modal-backdrop" *ngIf="autoPendingDeletion as pending" (click)="cancelDelete()">
+  <section class="modal confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">Confirmação</span>
+        <h2>Eliminar Auto?</h2>
+        <p>O rascunho de {{ providerLabel(pending.provider) }} será eliminado.</p>
+      </div>
+    </header>
+
+    <footer class="modal-footer">
+      <button type="button" class="secondary-button" [disabled]="isDeleting" (click)="cancelDelete()">Cancelar</button>
+      <button type="button" class="danger-button" [disabled]="isDeleting" (click)="confirmDelete()">
+        <span class="spinner small" *ngIf="isDeleting"></span>
+        {{ isDeleting ? 'A eliminar...' : 'Eliminar Auto' }}
+      </button>
+    </footer>
+  </section>
+</div>

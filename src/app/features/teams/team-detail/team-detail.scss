@@ -1265,6 +1265,83 @@ label {
   font-weight: 700;
 }
 
+.commissions-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.commissions-toggle-button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 12px;
+  padding: 9px 13px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 850;
+
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 19px;
+  }
+
+  &:hover {
+    background: #f8fafc;
+    color: #243646;
+  }
+}
+
+.commissions-lazy-state {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  margin-top: 16px;
+  padding: 16px;
+
+  border: 1px dashed #dbe3ec;
+  border-radius: 14px;
+  background: #f8fafc;
+
+  > .material-symbols-rounded {
+    flex-shrink: 0;
+    color: #64748b;
+    font-size: 28px;
+  }
+
+  > div {
+    min-width: 0;
+  }
+
+  strong {
+    display: block;
+    color: #243646;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+}
+
 .add-commission-button {
   min-height: 42px;
   display: inline-flex;
@@ -1314,6 +1391,11 @@ label {
 }
 
 .commission-error-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
   margin: 16px 0 0;
   padding: 11px 14px;
 
@@ -1324,6 +1406,26 @@ label {
 
   font-size: 13px;
   font-weight: 800;
+}
+
+.retry-commissions-button {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 9px;
+  padding: 7px 10px;
+
+  background: #ffffff;
+  color: #b91c1c;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .commissions-grid {
@@ -1898,8 +2000,13 @@ label {
     flex-direction: column;
   }
 
-  .add-commission-button {
+  .commissions-header-actions {
     width: 100%;
+  }
+
+  .add-commission-button,
+  .commissions-toggle-button {
+    flex: 1 1 auto;
   }
 
   .commissions-grid {

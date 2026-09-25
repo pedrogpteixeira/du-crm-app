@@ -15,6 +15,7 @@ import { environment } from '../../../../environments/environment';
 import { Client, ClientService } from '../../../core/services/client';
 
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { resolveLightContractRegistration } from '../../../core/utils/contract-light-registration';
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 
 import {
@@ -911,9 +912,19 @@ export class WallboxContractCreate implements OnInit {
 
     this.addIfFilled(payload, 'offer', this.contractForm.offer);
 
-    this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE);
+    if (this.isLightLayout()) {
+      const registration = resolveLightContractRegistration(
+        this.selectedTeamIds,
+        this.availableTeams,
+        this.getRequiredTeamIds(),
+      );
 
-    this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE);
+      payload.codigoRegistoCE = registration.codigoRegistoCE;
+      payload.nomeRegistoCE = registration.nomeRegistoCE;
+    } else {
+      this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE);
+      this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE);
+    }
 
     this.addIfFilled(payload, 'email', this.contractForm.email.trim());
 

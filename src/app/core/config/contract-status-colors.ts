@@ -46,7 +46,6 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Baixa': '#475569',
 
   'Cancelado': '#b91c1c',
-  'Cancelada': '#b91c1c',
   'Anulado': '#b91c1c',
 };
 

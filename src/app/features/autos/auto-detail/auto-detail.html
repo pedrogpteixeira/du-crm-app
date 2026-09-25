@@ -1,0 +1,167 @@
+<section class="auto-detail-page">
+  <a class="back-link" routerLink="/home/autos">
+    <span class="material-symbols-rounded">arrow_back</span>
+    Autos
+  </a>
+
+  <div class="feedback success" *ngIf="successMessage">{{ successMessage }}</div>
+  <div class="feedback error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <div class="loading-state" *ngIf="isLoadingAuto && !auto">
+    <span class="spinner"></span>
+    A carregar Auto...
+  </div>
+
+  <ng-container *ngIf="auto as currentAuto">
+    <header class="detail-header">
+      <div>
+        <span class="eyebrow">Auto de comissões</span>
+        <h1>Auto {{ providerLabel(currentAuto.provider) }}</h1>
+        <p>{{ formatDate(currentAuto.periodStart) }} → {{ formatDate(currentAuto.periodEnd) }}</p>
+
+        <div class="badges">
+          <span class="status-badge" [class.is-finalized]="currentAuto.status === 'finalized'">
+            {{ statusLabel(currentAuto.status) }}
+          </span>
+          <span class="type-badge">{{ typeLabel(currentAuto.type) }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="secondary-button" [disabled]="isExporting" (click)="exportAuto()">
+          <span class="spinner small" *ngIf="isExporting"></span>
+          <span class="material-symbols-rounded" *ngIf="!isExporting">download</span>
+          {{ isExporting ? 'A exportar...' : 'Exportar Excel' }}
+        </button>
+
+        <button *ngIf="canDelete" type="button" class="danger-outline-button" (click)="requestDelete()">
+          <span class="material-symbols-rounded">delete</span>
+          Eliminar Auto
+        </button>
+
+        <button *ngIf="canFinalize" type="button" class="primary-button" (click)="requestFinalize()">
+          <span class="material-symbols-rounded">task_alt</span>
+          Finalizar Auto
+        </button>
+      </div>
+    </header>
+
+    <section class="metadata-card">
+      <div><span>Comercializadora</span><strong>{{ providerLabel(currentAuto.provider) }}</strong></div>
+      <div><span>Período</span><strong>{{ formatDate(currentAuto.periodStart) }} → {{ formatDate(currentAuto.periodEnd) }}</strong></div>
+      <div><span>Tipo</span><strong>{{ typeLabel(currentAuto.type) }}</strong></div>
+      <div><span>Estado</span><strong>{{ statusLabel(currentAuto.status) }}</strong></div>
+      <div><span>Criado por</span><strong>{{ creatorLabel() }}</strong></div>
+      <div><span>Criado em</span><strong>{{ formatDateTime(currentAuto.createdAt) }}</strong></div>
+      <div><span>Finalizado em</span><strong>{{ formatDateTime(currentAuto.finalizedAt) }}</strong></div>
+    </section>
+
+    <section class="summary-grid">
+      <article><span>Contratos</span><strong>{{ currentAuto.contractsCount }}</strong></article>
+      <article><span>A pagar</span><strong class="positive">{{ formatCurrency(currentAuto.totalPositive) }}</strong></article>
+      <article><span>A devolver</span><strong class="negative">{{ formatCurrency(currentAuto.totalNegative) }}</strong></article>
+      <article><span>Total líquido</span><strong>{{ formatCurrency(currentAuto.totalNet) }}</strong></article>
+    </section>
+
+    <section class="diagnostics-card" *ngIf="currentAuto.diagnostics?.length">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Validação</span>
+          <h2>Diagnóstico</h2>
+        </div>
+      </div>
+
+      <div class="diagnostic-list">
+        <div *ngFor="let diagnostic of currentAuto.diagnostics">
+          <span class="material-symbols-rounded">info</span>
+          {{ diagnosticLabel(diagnostic) }}
+        </div>
+      </div>
+    </section>
+
+    <section class="items-card">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Movimentos</span>
+          <h2>Contratos</h2>
+        </div>
+        <span>
+          {{ formatInteger(loadedItemsCount) }} de {{ formatInteger(totalItemsCount) }} contratos
+        </span>
+      </div>
+
+      <app-auto-items-table
+        *ngIf="currentAuto.items.length; else emptyItems"
+        [provider]="currentAuto.provider"
+        [items]="currentAuto.items"
+        maxHeight="calc(100vh - 300px)"
+      />
+
+      <div class="items-pagination" *ngIf="currentAuto.pagination.total > 0">
+        <div>
+          <strong>{{ formatInteger(loadedItemsCount) }}</strong>
+          <span>de {{ formatInteger(totalItemsCount) }} contratos carregados</span>
+        </div>
+
+        <button
+          *ngIf="hasMoreItems"
+          type="button"
+          class="secondary-button load-more-button"
+          [disabled]="isLoadingMore || isLoadingAuto"
+          (click)="loadMore()"
+        >
+          <span class="spinner small" *ngIf="isLoadingMore"></span>
+          <span class="material-symbols-rounded" *ngIf="!isLoadingMore">expand_more</span>
+          {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+        </button>
+      </div>
+
+      <div class="load-more-error" *ngIf="loadMoreErrorMessage">
+        <span class="material-symbols-rounded">error</span>
+        <span>{{ loadMoreErrorMessage }}</span>
+        <button type="button" [disabled]="isLoadingMore" (click)="loadMore()">Tentar novamente</button>
+      </div>
+
+      <ng-template #emptyItems>
+        <div class="empty-state">Este Auto não possui contratos.</div>
+      </ng-template>
+    </section>
+  </ng-container>
+</section>
+
+<!-- Finalizar -->
+<div class="modal-backdrop" *ngIf="showFinalizeConfirm" (click)="cancelFinalize()">
+  <section class="confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <span class="modal-icon warning material-symbols-rounded">warning</span>
+    <h2>Finalizar Auto?</h2>
+    <p>
+      Depois de finalizado, os movimentos deste Auto passam a fazer parte do histórico financeiro dos contratos e serão considerados nos Autos seguintes.
+    </p>
+    <p>Esta operação não deve ser tratada como uma simples pré-visualização.</p>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary-button" [disabled]="isFinalizing" (click)="cancelFinalize()">Cancelar</button>
+      <button type="button" class="primary-button" [disabled]="isFinalizing" (click)="confirmFinalize()">
+        <span class="spinner small" *ngIf="isFinalizing"></span>
+        {{ isFinalizing ? 'A finalizar...' : 'Finalizar' }}
+      </button>
+    </div>
+  </section>
+</div>
+
+<!-- Eliminar -->
+<div class="modal-backdrop" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+  <section class="confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <span class="modal-icon danger material-symbols-rounded">delete</span>
+    <h2>Eliminar Auto?</h2>
+    <p>Este Auto ainda está em rascunho e será eliminado permanentemente.</p>
+
+    <div class="modal-actions">
+      <button type="button" class="secondary-button" [disabled]="isDeleting" (click)="cancelDelete()">Cancelar</button>
+      <button type="button" class="danger-button" [disabled]="isDeleting" (click)="confirmDelete()">
+        <span class="spinner small" *ngIf="isDeleting"></span>
+        {{ isDeleting ? 'A eliminar...' : 'Eliminar Auto' }}
+      </button>
+    </div>
+  </section>
+</div>

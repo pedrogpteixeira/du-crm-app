@@ -18,6 +18,7 @@ import {
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { resolveLightContractRegistration } from '../../../core/utils/contract-light-registration';
 
 import { Auth } from '../../../core/services/auth';
 
@@ -1049,9 +1050,19 @@ export class YesEnergyContractCreate implements OnInit {
       this.addIfFilled(payload, 'controleQualidade', this.contractForm.controleQualidade.trim());
     }
 
-    this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE.trim());
+    if (this.isLightLayout()) {
+      const registration = resolveLightContractRegistration(
+        this.selectedTeamIds,
+        this.availableTeams,
+        this.getRequiredTeamIds(),
+      );
 
-    this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE.trim());
+      payload.codigoRegistoCE = registration.codigoRegistoCE;
+      payload.nomeRegistoCE = registration.nomeRegistoCE;
+    } else {
+      this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE.trim());
+      this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE.trim());
+    }
 
     this.addIfFilled(payload, 'agendamento', this.contractForm.agendamento);
 

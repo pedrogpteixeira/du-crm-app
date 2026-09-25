@@ -30,6 +30,24 @@ export const routes: Routes = [
           import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
+        path: 'autos',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/autos/autos').then((m) => m.Autos),
+      },
+      {
+        path: 'autos/:autoId',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/autos/auto-detail/auto-detail').then((m) => m.AutoDetail),
+      },
+      {
         path: 'users',
         canActivate: [roleIncludesGuard],
         data: {

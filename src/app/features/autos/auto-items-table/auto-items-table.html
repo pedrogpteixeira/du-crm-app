@@ -1,0 +1,50 @@
+<div class="table-wrap" [style.max-height]="maxHeight">
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th *ngFor="let column of columns">{{ columnLabel(column) }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let item of items; let index = index; trackBy: trackItem">
+        <td *ngFor="let column of columns" [ngSwitch]="column">
+          <ng-container *ngSwitchCase="'contractId'">{{ item.contractId }}</ng-container>
+          <ng-container *ngSwitchCase="'clientName'">{{ item.clientName || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'signatureDate'">{{ formatDate(item.signatureDate) }}</ng-container>
+          <ng-container *ngSwitchCase="'cpe'">{{ item.cpe || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'cui'">{{ item.cui || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'campaign'">{{ item.campaign || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'power'">{{ item.power ?? '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'nif'">{{ item.nif ?? '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'electronicInvoice'">{{ formatBoolean(item.electronicInvoice) }}</ng-container>
+          <ng-container *ngSwitchCase="'directDebit'">{{ formatBoolean(item.directDebit) }}</ng-container>
+          <ng-container *ngSwitchCase="'sva'">{{ formatSva(item.sva) }}</ng-container>
+          <ng-container *ngSwitchCase="'state'">{{ item.state || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'registrationName'">{{ item.registrationName || '—' }}</ng-container>
+          <ng-container *ngSwitchCase="'registrationCode'">{{ item.registrationCode || '—' }}</ng-container>
+
+          <ng-container *ngSwitchCase="'movementType'">
+            <span
+              class="movement-badge"
+              [class.refund]="item.movementType === 'refund'"
+              [class.zero]="item.movementType === 'zero'"
+            >
+              {{ movementLabel(item.movementType) }}
+            </span>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'commission'">
+            <span
+              class="money"
+              [class.negative]="item.commission < 0"
+              [class.positive]="item.commission > 0"
+            >
+              {{ formatCurrency(item.commission) }}
+            </span>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

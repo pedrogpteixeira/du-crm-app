@@ -244,7 +244,7 @@ export class IberdrolaContracts implements OnInit {
       'Em fornecimento': 'status-supply',
       Ativo: 'status-active',
       'Parcialmente Baixa': 'status-partial-low',
-      Cancelada: 'status-cancelled',
+      Cancelado: 'status-cancelled',
       Baixa: 'status-low',
     };
 
