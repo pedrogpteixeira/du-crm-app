@@ -26,7 +26,7 @@ const COLUMN_LABELS: Readonly<Record<AutoItemColumnKey, string>> = {
   sva: 'SVA',
   state: 'Estado',
   registrationName: 'Nome Registo CE',
-  registrationCode: 'Código Registo CE',
+  tipoSegmento: 'Tipo Segmento',
   movementType: 'Movimento',
   commission: 'Comissão',
 };

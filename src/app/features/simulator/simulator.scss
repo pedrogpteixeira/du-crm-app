@@ -251,3 +251,84 @@ button:disabled {
     line-height: 1.6;
   }
 }
+@media (max-width: 1200px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .result-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .provider {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .simulator-page {
+    gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .card,
+  .result-card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .form-grid,
+  .result-card {
+    grid-template-columns: 1fr;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .provider {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .provider-logo {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+  }
+
+  .provider h3 {
+    font-size: 18px;
+  }
+
+  .tariff-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .tariff-info div {
+    min-width: 0;
+  }
+
+  .price {
+    text-align: left;
+  }
+
+  .price strong {
+    font-size: 27px;
+  }
+
+  .empty-results {
+    padding: 38px 18px;
+  }
+}

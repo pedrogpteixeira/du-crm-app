@@ -95,7 +95,7 @@ export type AutoItemColumnKey =
   | 'sva'
   | 'state'
   | 'registrationName'
-  | 'registrationCode'
+  | 'tipoSegmento'
   | 'movementType'
   | 'commission';
 
@@ -113,7 +113,7 @@ const FULL_ENERGY_COLUMNS: readonly AutoItemColumnKey[] = [
   'sva',
   'state',
   'registrationName',
-  'registrationCode',
+  'tipoSegmento',
   'movementType',
   'commission',
 ];
@@ -138,7 +138,7 @@ export const AUTO_COLUMNS_BY_PROVIDER: Readonly<
     'directDebit',
     'state',
     'registrationName',
-    'registrationCode',
+    'tipoSegmento',
     'movementType',
     'commission',
   ],
@@ -151,7 +151,7 @@ export const AUTO_COLUMNS_BY_PROVIDER: Readonly<
     'directDebit',
     'state',
     'registrationName',
-    'registrationCode',
+    'tipoSegmento',
     'movementType',
     'commission',
   ],
@@ -163,7 +163,7 @@ export const AUTO_COLUMNS_BY_PROVIDER: Readonly<
     'nif',
     'state',
     'registrationName',
-    'registrationCode',
+    'tipoSegmento',
     'movementType',
     'commission',
   ],
@@ -177,7 +177,7 @@ export const AUTO_COLUMNS_BY_PROVIDER: Readonly<
     'directDebit',
     'state',
     'registrationName',
-    'registrationCode',
+    'tipoSegmento',
     'movementType',
     'commission',
   ],
@@ -223,7 +223,7 @@ export interface AutoItem {
   sva?: string | boolean | null;
   state?: string;
   registrationName?: string;
-  registrationCode?: string;
+  tipoSegmento?: string;
   movementType: AutoMovementType;
   commission: number;
   calculatedCommission?: number;

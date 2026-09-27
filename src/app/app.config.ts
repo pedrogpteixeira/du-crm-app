@@ -28,6 +28,7 @@ import { authInterceptor } from './core/interceptors/auth-interceptor';
 
 import { NotificationService } from './core/services/notification';
 import { UserService } from './core/services/user';
+import { ThemeService } from './core/services/theme';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -50,8 +51,11 @@ export const appConfig: ApplicationConfig = {
     ),
 
     provideAppInitializer(() => {
+      const themeService = inject(ThemeService);
+      themeService.applyTheme(themeService.getCurrentTheme());
+
       const auth = inject(Auth);
-      
+
       inject(SocketService);
       inject(NotificationService);
       inject(UserService);

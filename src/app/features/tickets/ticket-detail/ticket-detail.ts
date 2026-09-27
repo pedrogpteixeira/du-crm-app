@@ -166,7 +166,9 @@ export class TicketDetail implements OnInit {
   }
 
   get companyName(): string {
-    return this.ticket ? getContractCompanyName(this.ticket.companyId) : '—';
+    return this.ticket
+      ? getContractCompanyName(this.ticket.companyId, this.ticket.contractId)
+      : '—';
   }
 
   get isTreatmentEditType(): boolean {
@@ -821,6 +823,7 @@ export class TicketDetail implements OnInit {
       this.socketService.listenIberdrolaContractUpdated(),
       this.socketService.listenIberdrolaSolarContractUpdated(),
       this.socketService.listenMeoEnergiasContractUpdated(),
+      this.socketService.listenVodafoneContractUpdated(),
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {

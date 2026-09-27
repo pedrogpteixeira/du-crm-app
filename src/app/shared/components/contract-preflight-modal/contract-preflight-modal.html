@@ -1,0 +1,93 @@
+<div class="preflight-backdrop" (click)="close()">
+  <section
+    #dialog
+    class="preflight-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="contract-preflight-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="preflight-header" [class.is-error]="isBlocking">
+      <div class="preflight-icon" aria-hidden="true">
+        <span class="material-symbols-rounded">{{ isBlocking ? 'error' : 'warning' }}</span>
+      </div>
+
+      <div class="preflight-heading">
+        <h2 id="contract-preflight-title">{{ title }}</h2>
+        <p>{{ description }}</p>
+      </div>
+
+      <button type="button" class="icon-button" aria-label="Fechar" (click)="close()">×</button>
+    </header>
+
+    <div class="preflight-body">
+      <section class="errors-block" *ngIf="errors.length">
+        <strong>Corrija antes de continuar:</strong>
+        <ul>
+          <li *ngFor="let error of errors">{{ error.message }}</li>
+        </ul>
+      </section>
+
+      <article class="warning-card" *ngFor="let warning of warnings">
+        <div class="warning-card-title">
+          <div>
+            <span class="warning-type">{{ warning.supplyPointType }}</span>
+            <strong>{{ warning.identifier }}</strong>
+          </div>
+          <span class="remaining-days">Faltam {{ warning.remainingDays }} dias</span>
+        </div>
+
+        <div class="warning-grid">
+          <div>
+            <span>Contrato anterior</span>
+            <strong>{{ warning.previousClientName || warning.previousContractId }}</strong>
+          </div>
+
+          <div>
+            <span>Data de referência</span>
+            <strong>
+              {{ formatDate(warning.referenceDate) }} ·
+              {{ getReferenceDateSourceLabel(warning.referenceDateSource) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Período exigido</span>
+            <strong>{{ warning.requiredDays }} dias</strong>
+          </div>
+
+          <div>
+            <span>Decorridos</span>
+            <strong>{{ warning.elapsedDays }} dias</strong>
+          </div>
+
+          <div>
+            <span>Restantes</span>
+            <strong>{{ warning.remainingDays }} dias</strong>
+          </div>
+
+          <div class="eligible-date">
+            <span>Novo registo recomendado a partir de</span>
+            <strong>{{ formatDate(warning.eligibleAt) }}</strong>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <footer class="preflight-actions">
+      <button type="button" class="secondary" (click)="close()">
+        {{ isPostCreate ? 'Entendido' : 'Voltar ao contrato' }}
+      </button>
+
+      <button
+        type="button"
+        class="warning-action"
+        *ngIf="!isPostCreate && !isBlocking"
+        (click)="confirm()"
+      >
+        Criar na mesma
+      </button>
+    </footer>
+  </section>
+</div>

@@ -4,9 +4,11 @@ import { IBERDROLA_COMPANY_ID } from '../services/iberdrola-contract';
 import { IBERDROLA_SOLAR_COMPANY_ID } from '../services/iberdrola-solar-contract';
 import { MEO_ENERGIAS_COMPANY_ID } from '../services/meo-energias-contract';
 import { YES_ENERGY_COMPANY_ID } from '../services/yes-energy-contract';
+import { VODAFONE_COMPANY_ID } from '../services/vodafone-contract';
 
 interface ContractRouteConfig {
-  companyId: string;
+  companyId?: string;
+  contractIdPrefix?: string;
   companyName: string;
   segment: ClientContractProvider;
 }
@@ -48,6 +50,11 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
     segment: 'meo-energias',
   },
   {
+    companyId: VODAFONE_COMPANY_ID,
+    companyName: 'Vodafone',
+    segment: 'vodafone',
+  },
+  {
     companyId: environment.GALP_POWER_GAS_COMPANY_ID,
     companyName: 'Galp Power & Gás',
     segment: 'galp-power-gas',
@@ -59,34 +66,47 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
   },
 ];
 
+function resolveContractRouteConfig(
+  companyId: string,
+  contractId = '',
+): ContractRouteConfig | null {
+  const companyMatch = CONTRACT_ROUTE_CONFIGS.find(
+    (entry) => entry.companyId && entry.companyId === companyId,
+  );
+
+  if (companyMatch) {
+    return companyMatch;
+  }
+
+  if (!contractId) {
+    return null;
+  }
+
+  return (
+    CONTRACT_ROUTE_CONFIGS.find(
+      (entry) => entry.contractIdPrefix && contractId.startsWith(entry.contractIdPrefix),
+    ) ?? null
+  );
+}
 
 export function getContractProviderByCompanyId(
   companyId: string,
+  contractId = '',
 ): ClientContractProvider | null {
-  const config = CONTRACT_ROUTE_CONFIGS.find(
-    (entry) => entry.companyId === companyId,
-  );
-
-  return config?.segment ?? null;
+  return resolveContractRouteConfig(companyId, contractId)?.segment ?? null;
 }
 
 export function getContractDetailRoute(
   companyId: string,
   contractId: string,
 ): string[] | null {
-  const config = CONTRACT_ROUTE_CONFIGS.find(
-    (entry) => entry.companyId === companyId,
-  );
+  const config = resolveContractRouteConfig(companyId, contractId);
 
   if (!config || !contractId) {
     return null;
   }
 
-  return [
-    '/home/contracts',
-    config.segment,
-    contractId,
-  ];
+  return ['/home/contracts', config.segment, contractId];
 }
 
 export function getContractDetailRouteByProvider(
@@ -112,10 +132,9 @@ export function getContractProviderName(provider: ClientContractProvider): strin
   return config?.companyName ?? 'Comercializadora desconhecida';
 }
 
-export function getContractCompanyName(companyId: string): string {
-  const config = CONTRACT_ROUTE_CONFIGS.find(
-    (entry) => entry.companyId === companyId,
+export function getContractCompanyName(companyId: string, contractId = ''): string {
+  return (
+    resolveContractRouteConfig(companyId, contractId)?.companyName ??
+    'Comercializadora desconhecida'
   );
-
-  return config?.companyName ?? 'Comercializadora desconhecida';
 }

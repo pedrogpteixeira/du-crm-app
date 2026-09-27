@@ -320,3 +320,142 @@ button:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
+@media (max-width: 850px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .toolbar {
+    max-width: none;
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+
+  .table-header,
+  .article-row {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 650px) {
+  .knowledge-folder-page {
+    gap: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .actions button {
+    flex: 1 1 150px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr 48px;
+  }
+
+  .toolbar select {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 1px solid #cbd5e1;
+  }
+
+  .subfolders-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .subfolder-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table-card {
+    padding: 12px;
+    overflow: visible;
+    border-radius: 18px;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .article-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin-bottom: 10px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .article-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .article-row strong {
+    grid-column: 1 / -1;
+  }
+
+  .article-row span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .article-row span:nth-child(2)::before {
+    content: 'Fornecedor';
+  }
+
+  .article-row span:nth-child(3)::before {
+    content: 'Estado';
+  }
+
+  .article-row span:nth-child(4)::before {
+    content: 'Criado em';
+  }
+
+  .article-row span::before {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .article-row {
+    grid-template-columns: 1fr;
+  }
+}

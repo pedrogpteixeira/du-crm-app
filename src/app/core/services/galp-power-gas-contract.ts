@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +15,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export type GalpPowerGasContractStatus =
   | 'Pedido de chamada'
   | 'Em validação'
@@ -157,6 +166,7 @@ export interface GalpPowerGasContractDetail {
   iban: string;
 
   campaign: GalpPowerGasContractCampaign | null;
+  campaigns?: Campaign[];
   antigaComercializadora: string;
 
   cpe: string;
@@ -323,6 +333,18 @@ export class GalpPowerGasContractService {
     );
   }
 
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<GalpPowerGasContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<GalpPowerGasContractList>>(
+      `${this.apiUrl}/api/contracts/galp-power-gas/followers/${userId}/table`,
+      { params },
+    );
+  }
+
   getGalpPowerGasContractById(contractId: string): Observable<GalpPowerGasContractDetail> {
     return this.http.get<GalpPowerGasContractDetail>(
       `${this.apiUrl}/api/contracts/galp-power-gas/${contractId}`,
@@ -331,8 +353,8 @@ export class GalpPowerGasContractService {
 
   createGalpPowerGasContract(
     payload: CreateGalpPowerGasContractRequest,
-  ): Observable<GalpPowerGasContractDetail> {
-    return this.http.post<GalpPowerGasContractDetail>(
+  ): Observable<ContractCreationResponse<GalpPowerGasContractDetail>> {
+    return this.http.post<ContractCreationResponse<GalpPowerGasContractDetail>>(
       `${this.apiUrl}/api/contracts/galp-power-gas`,
       payload,
     );
@@ -379,7 +401,9 @@ export class GalpPowerGasContractService {
     return this.getGalpPowerGasContractById(id);
   }
 
-  create(payload: CreateGalpPowerGasContractRequest): Observable<GalpPowerGasContractDetail> {
+  create(
+    payload: CreateGalpPowerGasContractRequest,
+  ): Observable<ContractCreationResponse<GalpPowerGasContractDetail>> {
     return this.createGalpPowerGasContract(payload);
   }
 

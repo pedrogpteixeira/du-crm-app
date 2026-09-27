@@ -7,9 +7,13 @@ export interface UserPreferences {
   id?: string;
   userId?: string;
   sidebarCollapsedByDefault: boolean;
-  repsolContractsDefaultView: 'table' | 'kanban';
-  repsolContractDetailsCollapsedByDefault: boolean;
+  contractsDefaultView?: 'table' | 'kanban';
+  contractDetailsCollapsedByDefault?: boolean;
   contractLayout?: 'light' | 'pro';
+  theme?: 'light' | 'dark';
+  // Backward-compatible aliases while older API responses are phased out.
+  repsolContractsDefaultView?: 'table' | 'kanban';
+  repsolContractDetailsCollapsedByDefault?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

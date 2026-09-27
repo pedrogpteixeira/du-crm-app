@@ -9,6 +9,7 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Registo Plataforma Galp': '#6d28d9',
   'Pendente Validação Comercial': '#6d28d9',
   'Registo MEO': '#6d28d9',
+  'Registo VODAFONE': '#6d28d9',
   'Envio Quality Check': '#6d28d9',
   'Atribuído': '#6d28d9',
   'Acesso RPE': '#0369a1',

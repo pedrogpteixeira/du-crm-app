@@ -141,6 +141,23 @@
       </a>
     </div>
 
+    <!-- VODAFONE -->
+    <div
+      class="nav-section"
+      *ngIf="canAccessRoles('Super Admin', 'DU', 'Vodafone')"
+    >
+      <span class="section-title">CRM Vodafone</span>
+
+      <a
+        routerLink="/home/contracts/vodafone"
+        routerLinkActive="active"
+        title="Vodafone"
+      >
+        <span class="icon material-symbols-rounded">description</span>
+        <span class="label">Vodafone</span>
+      </a>
+    </div>
+
     <!-- MEO ENERGIAS -->
     <div
       class="nav-section"

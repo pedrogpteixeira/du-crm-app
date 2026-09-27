@@ -24,6 +24,14 @@ import { Auth } from '../../../core/services/auth';
 
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 
+import {
+  buildContractPreflightRequest,
+  ContractPreflightError,
+  getNewSupplyPointReentryWarnings,
+  ContractPreflightService,
+  SupplyPointReentryWarning,
+} from '../../../core/services/contract-preflight';
+
 import { Client, ClientService } from '../../../core/services/client';
 
 import { ContractLayout, PreferencesService } from '../../../core/services/preferences';
@@ -134,10 +142,11 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
 
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-iberdrola-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone],
+  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
   templateUrl: './iberdrola-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './iberdrola-contract-create.scss',
@@ -149,6 +158,8 @@ export class IberdrolaContractCreate implements OnInit {
   private readonly campaignService = inject(CampaignService);
 
   private readonly iberdrolaContractService = inject(IberdrolaContractService);
+
+  private readonly contractPreflightService = inject(ContractPreflightService);
 
   private readonly preferencesService = inject(PreferencesService);
 
@@ -192,6 +203,17 @@ export class IberdrolaContractCreate implements OnInit {
   isCheckingClient = false;
   isCreatingClient = false;
   isCreatingContract = false;
+  isPreflightLoading = false;
+  isPreflightModalOpen = false;
+  isPostCreateWarningModalOpen = false;
+  preflightCanProceed = true;
+  preflightWarnings: SupplyPointReentryWarning[] = [];
+  preflightErrors: ContractPreflightError[] = [];
+  postCreateWarnings: SupplyPointReentryWarning[] = [];
+
+  private pendingCreatePayload: CreateIberdrolaContractRequest | null = null;
+  private pendingCreatedContractId: string | null = null;
+  private navigateAfterPostCreateWarning = false;
   isUploadingDocuments = false;
 
   clientChecked = false;
@@ -526,7 +548,7 @@ export class IberdrolaContractCreate implements OnInit {
   }
 
   cancel(): void {
-    if (this.isCreatingContract) {
+    if (this.isCreatingContract || this.isPreflightLoading) {
       return;
     }
 
@@ -534,11 +556,11 @@ export class IberdrolaContractCreate implements OnInit {
   }
 
   createContract(): void {
-    this.contractForm.estado = this.estadoOptions[0];
-
-    if (this.isCreatingContract) {
+    if (this.isPreflightLoading || this.isCreatingContract) {
       return;
     }
+
+    this.contractForm.estado = this.estadoOptions[0];
 
     if (!this.client) {
       this.errorMessage = 'É necessário identificar ou criar o cliente.';
@@ -633,6 +655,99 @@ export class IberdrolaContractCreate implements OnInit {
 
     const payload = this.buildContractPayload();
 
+    this.runPreflight(payload);
+  }
+
+  private runPreflight(payload: CreateIberdrolaContractRequest): void {
+    const preflightPayload = buildContractPreflightRequest({
+      companyId: this.contractForm.companyId,
+      tipoProduto: this.contractForm.tipoProduto,
+      cpe: this.contractForm.cpe,
+      cui: this.contractForm.cui,
+    });
+
+    this.isPreflightLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.contractPreflightService
+      .preflightContract('iberdrola', preflightPayload)
+      .pipe(
+        finalize(() => {
+          this.isPreflightLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          const canProceed = result.canProceed && result.errors.length === 0;
+
+          if (!canProceed || result.warnings.length > 0 || result.errors.length > 0) {
+            this.preflightCanProceed = canProceed;
+            this.preflightWarnings = result.warnings;
+            this.preflightErrors = result.errors;
+            this.pendingCreatePayload = canProceed ? payload : null;
+            this.isPreflightModalOpen = true;
+            return;
+          }
+
+          this.createContractAfterPreflight(payload, []);
+        },
+        error: () => {
+          this.errorMessage =
+            'Não foi possível validar o CPE/CUI neste momento. Tente novamente.';
+        },
+      });
+  }
+
+  closePreflightModal(): void {
+    this.isPreflightModalOpen = false;
+    this.preflightCanProceed = true;
+    this.preflightWarnings = [];
+    this.preflightErrors = [];
+    this.pendingCreatePayload = null;
+  }
+
+  confirmPreflightCreation(): void {
+    if (!this.preflightCanProceed || !this.pendingCreatePayload) {
+      return;
+    }
+
+    const payload = this.pendingCreatePayload;
+    const acceptedWarnings = [...this.preflightWarnings];
+
+    this.closePreflightModal();
+    this.createContractAfterPreflight(payload, acceptedWarnings);
+  }
+
+  acknowledgePostCreateWarnings(): void {
+    const contractId = this.pendingCreatedContractId;
+    const shouldNavigate = this.navigateAfterPostCreateWarning;
+
+    this.isPostCreateWarningModalOpen = false;
+    this.postCreateWarnings = [];
+    this.pendingCreatedContractId = null;
+    this.navigateAfterPostCreateWarning = false;
+
+    if (contractId && shouldNavigate) {
+      this.router.navigate(['/home/contracts/iberdrola', contractId]);
+    }
+  }
+
+  private openPostCreateWarningModal(
+    contractId: string,
+    warnings: SupplyPointReentryWarning[],
+    navigateAfterClose: boolean,
+  ): void {
+    this.pendingCreatedContractId = contractId;
+    this.postCreateWarnings = warnings;
+    this.navigateAfterPostCreateWarning = navigateAfterClose;
+    this.isPostCreateWarningModalOpen = true;
+  }
+
+  private createContractAfterPreflight(
+    payload: CreateIberdrolaContractRequest,
+    preflightWarnings: SupplyPointReentryWarning[],
+  ): void {
     this.isCreatingContract = true;
 
     this.isUploadingDocuments = false;
@@ -641,12 +756,17 @@ export class IberdrolaContractCreate implements OnInit {
     this.successMessage = '';
 
     let createdContract: IberdrolaContractDetail | null = null;
+    let creationWarnings: SupplyPointReentryWarning[] = [];
 
     this.iberdrolaContractService
       .createIberdrolaContract(payload)
       .pipe(
         tap((contract) => {
           createdContract = contract;
+          creationWarnings = getNewSupplyPointReentryWarnings(
+            contract.warnings ?? [],
+            preflightWarnings,
+          );
         }),
 
         switchMap((contract) => {
@@ -687,6 +807,11 @@ export class IberdrolaContractCreate implements OnInit {
             ? 'Contrato e documentos criados com sucesso.'
             : 'Contrato criado com sucesso.';
 
+          if (creationWarnings.length) {
+            this.openPostCreateWarningModal(contract.id, creationWarnings, true);
+            return;
+          }
+
           this.router.navigate(['/home/contracts/iberdrola', contract.id]);
         },
 
@@ -700,6 +825,10 @@ export class IberdrolaContractCreate implements OnInit {
         complete: () => {
           if (createdContract && this.errorMessage.includes('O contrato foi criado')) {
             this.successMessage = `Contrato ${createdContract.id} criado com sucesso.`;
+
+            if (creationWarnings.length) {
+              this.openPostCreateWarningModal(createdContract.id, creationWarnings, false);
+            }
           }
         },
       });

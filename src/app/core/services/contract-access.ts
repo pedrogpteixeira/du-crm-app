@@ -16,7 +16,7 @@ export class ContractAccessService {
   private readonly http = inject(HttpClient);
 
   getContractStatus(companyId: string, contractId: string): Observable<string | null> {
-    const provider = getContractProviderByCompanyId(companyId);
+    const provider = getContractProviderByCompanyId(companyId, contractId);
 
     if (!provider || !contractId) {
       return of(null);

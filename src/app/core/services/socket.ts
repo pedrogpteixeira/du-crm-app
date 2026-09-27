@@ -93,6 +93,9 @@ export interface IberdrolaSolarContractSocketEvent
 export interface MeoEnergiasContractSocketEvent
   extends ContractSocketBaseEvent {}
 
+export interface VodafoneContractSocketEvent
+  extends ContractSocketBaseEvent {}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -361,6 +364,18 @@ export class SocketService {
   listenMeoEnergiasContractUpdated() {
     return this.createEventObservable<MeoEnergiasContractSocketEvent>(
       'meo-energias-contract:updated',
+    );
+  }
+
+  listenVodafoneContractCreated() {
+    return this.createEventObservable<VodafoneContractSocketEvent>(
+      'vodafone-contract:created',
+    );
+  }
+
+  listenVodafoneContractUpdated() {
+    return this.createEventObservable<VodafoneContractSocketEvent>(
+      'vodafone-contract:updated',
     );
   }
 

@@ -11,6 +11,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export type GalpSolarContractStatus =
   | 'Pedido de Proposta'
   | 'Proposta enviada'
@@ -231,6 +236,18 @@ export class GalpSolarContractService {
 
     return this.http.get<ContractKanbanResponse<GalpSolarContractList>>(
       `${this.baseUrl}/followers/${userId}`,
+      { params },
+    );
+  }
+
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<GalpSolarContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<GalpSolarContractList>>(
+      `${this.baseUrl}/followers/${userId}/table`,
       { params },
     );
   }

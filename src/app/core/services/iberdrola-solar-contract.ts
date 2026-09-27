@@ -11,6 +11,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export const IBERDROLA_SOLAR_COMPANY_ID = 'cmp_FKsS04kTr7' as const;
 
 export type IberdrolaSolarTipoSegmento = 'Residencial' | 'Empresarial';
@@ -256,6 +261,18 @@ export class IberdrolaSolarContractService {
 
     return this.http.get<ContractKanbanResponse<IberdrolaSolarContractList>>(
       `${this.baseUrl}/followers/${userId}`,
+      { params },
+    );
+  }
+
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<IberdrolaSolarContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<IberdrolaSolarContractList>>(
+      `${this.baseUrl}/followers/${userId}/table`,
       { params },
     );
   }

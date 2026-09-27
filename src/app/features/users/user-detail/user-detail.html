@@ -278,6 +278,140 @@
           O valor apresentado é exatamente o recebido do backend.
         </p>
       </section>
+
+      <section class="preferences-override-section">
+        <div class="role-section-heading">
+          <div>
+            <strong>Preferências administrativas</strong>
+            <span>Configura apenas os campos que o Super Admin pode gerir.</span>
+          </div>
+          <span class="admin-badge">Super Admin</span>
+        </div>
+
+        <p class="preferences-loading" *ngIf="isLoadingUserPreferences">
+          A carregar preferências do utilizador...
+        </p>
+
+        <div class="preferences-inline-error" *ngIf="userPreferencesErrorMessage">
+          <span>{{ userPreferencesErrorMessage }}</span>
+          <button
+            type="button"
+            [disabled]="isLoadingUserPreferences"
+            (click)="loadEditableUserPreferences()"
+          >
+            Tentar novamente
+          </button>
+        </div>
+
+        <div
+          class="admin-preferences-grid"
+          *ngIf="!isLoadingUserPreferences && editUserForm.contractLayout"
+        >
+          <div class="admin-preference-row">
+            <div>
+              <strong>Sidebar colapsada por defeito</strong>
+              <span>Define como a navegação abre para este utilizador.</span>
+            </div>
+
+            <label class="admin-switch" aria-label="Sidebar colapsada por defeito">
+              <input
+                type="checkbox"
+                [ngModel]="editUserForm.sidebarCollapsedByDefault"
+                (ngModelChange)="editUserForm.sidebarCollapsedByDefault = $event"
+              />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="admin-preference-block">
+            <div class="admin-preference-copy">
+              <strong>Vista por defeito dos contratos</strong>
+              <span>Escolhe a vista inicial ao abrir uma comercializadora.</span>
+            </div>
+
+            <div class="contract-layout-options" role="group" aria-label="Vista por defeito dos contratos">
+              <button
+                type="button"
+                [class.active]="editUserForm.contractsDefaultView === 'table'"
+                (click)="editUserForm.contractsDefaultView = 'table'"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">table_rows</span>
+                <span>
+                  <strong>Tabela</strong>
+                  <small>Leitura detalhada</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                [class.active]="editUserForm.contractsDefaultView === 'kanban'"
+                (click)="editUserForm.contractsDefaultView = 'kanban'"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">view_kanban</span>
+                <span>
+                  <strong>Estados</strong>
+                  <small>Organização Kanban</small>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="admin-preference-row">
+            <div>
+              <strong>Secções minimizadas por defeito</strong>
+              <span>Define como abre o detalhe dos contratos.</span>
+            </div>
+
+            <label class="admin-switch" aria-label="Secções minimizadas por defeito">
+              <input
+                type="checkbox"
+                [ngModel]="editUserForm.contractDetailsCollapsedByDefault"
+                (ngModelChange)="editUserForm.contractDetailsCollapsedByDefault = $event"
+              />
+              <span></span>
+            </label>
+          </div>
+
+          <div class="admin-preference-block">
+            <div class="admin-preference-copy">
+              <strong>Layout dos contratos</strong>
+              <span>Este campo é administrado pelo Super Admin.</span>
+            </div>
+
+            <div class="contract-layout-options" role="group" aria-label="Layout dos contratos">
+              <button
+                type="button"
+                [class.active]="editUserForm.contractLayout === 'light'"
+                [attr.aria-pressed]="editUserForm.contractLayout === 'light'"
+                (click)="editUserForm.contractLayout = 'light'"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
+                <span>
+                  <strong>Light</strong>
+                  <small>Fluxo mais rápido</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                [class.active]="editUserForm.contractLayout === 'pro'"
+                [attr.aria-pressed]="editUserForm.contractLayout === 'pro'"
+                (click)="editUserForm.contractLayout = 'pro'"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+                <span>
+                  <strong>Pro</strong>
+                  <small>Mais controlo</small>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p class="admin-preference-help">
+          O tema da aplicação é uma preferência pessoal e não pode ser alterado pelo Super Admin em nome de outro utilizador.
+        </p>
+      </section>
     </div>
 
     <footer class="modal-footer">
@@ -293,7 +427,7 @@
       <button
         type="button"
         class="submit-user-button"
-        [disabled]="isEditingUser"
+        [disabled]="isEditingUser || isLoadingUserPreferences"
         (click)="saveUserChanges()"
       >
         <span class="button-spinner" *ngIf="isEditingUser"></span>

@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +15,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export type RepsolContractStatus =
   | 'Pedido de Chamada'
   | 'Em validação'
@@ -155,6 +164,7 @@ export interface RepsolContractDetail {
   iban: string;
 
   campaign: RepsolContractCampaign | null;
+  campaigns?: Campaign[];
   antigaComercializadora: string;
 
   cpe: string;
@@ -298,12 +308,24 @@ export class RepsolContractService {
     );
   }
 
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<RepsolContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<RepsolContractList>>(
+      `${this.apiUrl}/api/contracts/repsol/followers/${userId}/table`,
+      { params },
+    );
+  }
+
   getRepsolContractById(contractId: string): Observable<RepsolContractDetail> {
     return this.http.get<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol/${contractId}`);
   }
 
-  createRepsolContract(payload: CreateRepsolContractRequest): Observable<RepsolContractDetail> {
-    return this.http.post<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol`, payload);
+  createRepsolContract(payload: CreateRepsolContractRequest): Observable<ContractCreationResponse<RepsolContractDetail>> {
+    return this.http.post<ContractCreationResponse<RepsolContractDetail>>(`${this.apiUrl}/api/contracts/repsol`, payload);
   }
 
   updateRepsolContract(

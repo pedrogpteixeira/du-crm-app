@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +15,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export const YES_ENERGY_COMPANY_ID = 'cmp_1GdwakqCnA' as const;
 
 export type YesEnergyTipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
@@ -195,6 +204,7 @@ export interface YesEnergyContractDetail {
   iban?: string;
 
   campaign: YesEnergyContractCampaign | null;
+  campaigns?: Campaign[];
 
   antigaComercializadora?: string;
 
@@ -335,6 +345,18 @@ export class YesEnergyContractService {
     );
   }
 
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<YesEnergyContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<YesEnergyContractList>>(
+      `${this.apiUrl}/api/contracts/yes-energy/followers/${userId}/table`,
+      { params },
+    );
+  }
+
   getYesEnergyContractById(contractId: string): Observable<YesEnergyContractDetail> {
     return this.http.get<YesEnergyContractDetail>(
       `${this.apiUrl}/api/contracts/yes-energy/${contractId}`,
@@ -343,8 +365,8 @@ export class YesEnergyContractService {
 
   createYesEnergyContract(
     payload: CreateYesEnergyContractRequest,
-  ): Observable<YesEnergyContractDetail> {
-    return this.http.post<YesEnergyContractDetail>(
+  ): Observable<ContractCreationResponse<YesEnergyContractDetail>> {
+    return this.http.post<ContractCreationResponse<YesEnergyContractDetail>>(
       `${this.apiUrl}/api/contracts/yes-energy`,
       payload,
     );

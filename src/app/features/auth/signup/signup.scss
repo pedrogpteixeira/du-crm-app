@@ -190,3 +190,37 @@ a {
     font-weight: 700;
   }
 }
+@media (max-width: 600px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 16px 12px;
+  }
+
+  .auth-card {
+    margin-block: auto;
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .brand {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .brand-icon {
+    min-width: 54px;
+    width: 64px;
+    height: 54px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: 27px;
+  }
+
+  button,
+  input {
+    min-height: 46px;
+  }
+}

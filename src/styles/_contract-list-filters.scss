@@ -62,6 +62,12 @@
   }
 
   .filters-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     align-items: end;
@@ -455,12 +461,28 @@
 
   @media (max-width: 720px) {
     .contracts-page {
+      width: 100%;
+      min-width: 0;
       height: auto;
       overflow: visible;
     }
 
+    .page-header,
+    .header-actions,
     .filters-card {
-      grid-template-columns: 1fr;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+
+    .filters-card {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px;
+      border-radius: 15px;
     }
 
     .clear-filters-button {
@@ -468,7 +490,14 @@
     }
 
     .filters-toggle-button {
+      width: 100%;
       flex: 1 1 auto;
+      min-height: 44px;
+    }
+
+    .contracts-total-summary {
+      width: 100%;
+      align-items: flex-start;
     }
   }
 }

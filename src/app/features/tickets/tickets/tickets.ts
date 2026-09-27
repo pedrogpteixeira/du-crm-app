@@ -443,7 +443,7 @@ export class Tickets implements OnInit {
       if (ticket.companyId) {
         companies.set(
           ticket.companyId,
-          getContractCompanyName(ticket.companyId),
+          getContractCompanyName(ticket.companyId, ticket.contractId),
         );
       }
 
@@ -498,7 +498,7 @@ export class Tickets implements OnInit {
         companyName:
           companyId === '__unknown__'
             ? 'Comercializadora desconhecida'
-            : getContractCompanyName(companyId),
+            : getContractCompanyName(companyId, groupedTickets[0]?.contractId ?? ''),
         tickets: groupedTickets,
       }))
       .sort((a, b) =>

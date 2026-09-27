@@ -631,3 +631,34 @@
     display: none;
   }
 }
+/* =========================================================
+   MOBILE DRAWER
+   On small screens the collapsed state means "closed" rather
+   than a permanently visible 72px rail.
+   ========================================================= */
+@media (max-width: 900px) {
+  :host {
+    position: relative;
+    z-index: 1000;
+  }
+
+  .sidebar {
+    width: min(86vw, 300px);
+    max-width: 300px;
+    height: 100dvh;
+    padding: 14px 12px;
+    transform: translateX(0);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease;
+    box-shadow: 10px 0 36px rgba(15, 23, 42, 0.24);
+  }
+
+  .sidebar.collapsed {
+    width: min(86vw, 300px);
+    max-width: 300px;
+    padding: 14px 12px;
+    transform: translateX(-105%);
+    box-shadow: none;
+  }
+}

@@ -36,6 +36,7 @@ import {
   mergeContractsById,
   prependContractById,
 } from '../../../core/utils/contract-kanban';
+import { ContractTableResponse } from '../../../core/utils/contract-table';
 import { ContractListFiltersComponent } from '../../../shared/components/contract-list-filters/contract-list-filters';
 
 @Component({
@@ -68,10 +69,20 @@ export class MeoEnergiasContracts implements OnInit {
   filterFields: ContractFilterFieldDefinition[] = [];
 
   totalContracts = 0;
+  tableOffset = 0;
+  tableLimit = 0;
+  tableHasMore = false;
+  tableNextOffset: number | null = null;
 
   showFilters = false;
-  isLoading = false;
+  isLoadingTable = false;
+  isLoadingKanban = false;
+  isLoadingMore = false;
   errorMessage = '';
+
+  get isLoading(): boolean {
+    return this.viewMode === 'table' ? this.isLoadingTable : this.isLoadingKanban;
+  }
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
   readonly statuses: MeoEnergiasContractStatus[] = [...MEO_ENERGIAS_CONTRACT_STATUSES];
@@ -92,6 +103,18 @@ export class MeoEnergiasContracts implements OnInit {
   }
 
   loadContracts(showLoading = true): void {
+    if (this.viewMode === 'table') {
+      this.isLoadingKanban = false;
+      this.loadTableContracts(showLoading);
+      return;
+    }
+
+    this.isLoadingTable = false;
+    this.isLoadingMore = false;
+    this.loadKanbanContracts(showLoading);
+  }
+
+  private loadTableContracts(showLoading = true): void {
     const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = currentUser?.id ?? currentUser?._id;
 
@@ -105,7 +128,109 @@ export class MeoEnergiasContracts implements OnInit {
     this.resetLoadedContracts();
 
     if (showLoading) {
-      this.isLoading = true;
+      this.isLoadingTable = true;
+    }
+
+    this.errorMessage = '';
+
+    this.meoEnergiasContractService
+      .getTableContracts(userId, {
+        offset: 0,
+        estado: this.appliedFilters.status,
+        filters: this.buildApiFilters(),
+      })
+      .pipe(
+        finalize(() => {
+          if (showLoading && requestId === this.loadRequestId) {
+            this.isLoadingTable = false;
+          }
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
+            return;
+          }
+
+          this.replaceWithTableResponse(response);
+        },
+        error: (error) => {
+          if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
+            return;
+          }
+
+          this.resetLoadedContracts();
+          this.errorMessage =
+            error?.error?.message || 'Não foi possível carregar os contratos MEO Energias.';
+        },
+      });
+  }
+
+  loadMoreTable(): void {
+    const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
+    const userId = currentUser?.id ?? currentUser?._id;
+    const nextOffset = this.tableNextOffset;
+    const requestId = this.loadRequestId;
+
+    if (
+      !userId ||
+      !this.tableHasMore ||
+      nextOffset === null ||
+      this.isLoadingMore ||
+      this.viewMode !== 'table'
+    ) {
+      return;
+    }
+
+    this.isLoadingMore = true;
+    this.errorMessage = '';
+
+    this.meoEnergiasContractService
+      .getTableContracts(userId, {
+        offset: nextOffset,
+        estado: this.appliedFilters.status,
+        filters: this.buildApiFilters(),
+      })
+      .pipe(
+        finalize(() => {
+          if (requestId === this.loadRequestId) {
+            this.isLoadingMore = false;
+          }
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
+            return;
+          }
+
+          this.replaceWithTableResponse(response, true);
+        },
+        error: (error) => {
+          if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
+            return;
+          }
+
+          this.errorMessage = error?.error?.message || 'Não foi possível carregar mais contratos.';
+        },
+      });
+  }
+
+  private loadKanbanContracts(showLoading = true): void {
+    const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
+    const userId = currentUser?.id ?? currentUser?._id;
+
+    if (!userId) {
+      this.resetLoadedContracts();
+      this.errorMessage = 'Não foi possível identificar o utilizador autenticado.';
+      return;
+    }
+
+    const requestId = ++this.loadRequestId;
+    this.resetLoadedContracts();
+
+    if (showLoading) {
+      this.isLoadingKanban = true;
     }
 
     this.errorMessage = '';
@@ -119,7 +244,7 @@ export class MeoEnergiasContracts implements OnInit {
       .pipe(
         finalize(() => {
           if (showLoading && requestId === this.loadRequestId) {
-            this.isLoading = false;
+            this.isLoadingKanban = false;
           }
         }),
       )
@@ -241,7 +366,12 @@ export class MeoEnergiasContracts implements OnInit {
   }
 
   setViewMode(mode: 'table' | 'kanban'): void {
+    if (this.viewMode === mode) {
+      return;
+    }
+
     this.viewMode = mode;
+    this.loadContracts();
   }
 
   applyFilters(): void {
@@ -264,7 +394,9 @@ export class MeoEnergiasContracts implements OnInit {
   }
 
   get hasMoreInAnyState(): boolean {
-    return hasAnyMoreContracts(this.paginationByStatus);
+    return this.viewMode === 'table'
+      ? this.tableHasMore
+      : hasAnyMoreContracts(this.paginationByStatus);
   }
 
   toggleFilters(): void {
@@ -289,6 +421,22 @@ export class MeoEnergiasContracts implements OnInit {
 
   private buildApiFilters(): ContractApiFilters {
     return buildContractApiFiltersFromDefinitions(this.appliedFilters, this.filterFields);
+  }
+
+  private replaceWithTableResponse(
+    response: ContractTableResponse<MeoEnergiasContractList>,
+    append = false,
+  ): void {
+    this.totalContracts = Number.isFinite(response.total) ? Math.max(0, response.total) : 0;
+    this.tableOffset = Number.isFinite(response.offset) ? Math.max(0, response.offset) : 0;
+    this.tableLimit = Number.isFinite(response.limit) ? Math.max(0, response.limit) : 0;
+    this.tableHasMore = response.hasMore === true;
+    this.tableNextOffset = response.nextOffset ?? null;
+
+    const incomingContracts = response.contracts ?? [];
+    this.contracts = append ? [...this.contracts, ...incomingContracts] : [...incomingContracts];
+    this.filteredContracts = this.contracts;
+    this.buildFilterOptions();
   }
 
   private replaceWithResponse(response: ContractKanbanResponse<MeoEnergiasContractList>): void {
@@ -334,6 +482,11 @@ export class MeoEnergiasContracts implements OnInit {
     this.filteredContracts = [];
     this.contractsByStatus = {};
     this.paginationByStatus = {};
+    this.tableOffset = 0;
+    this.tableLimit = 0;
+    this.tableHasMore = false;
+    this.tableNextOffset = null;
+    this.isLoadingMore = false;
   }
 
   private buildFilterOptions(): void {
@@ -365,6 +518,11 @@ export class MeoEnergiasContracts implements OnInit {
     const contractId = event.contractId;
 
     if (!contractId) {
+      return;
+    }
+
+    if (this.viewMode === 'table') {
+      this.loadTableContracts(false);
       return;
     }
 

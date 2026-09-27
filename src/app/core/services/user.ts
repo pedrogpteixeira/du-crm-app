@@ -17,6 +17,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { Auth } from './auth';
 import { SocketService } from './socket';
+import type { ContractLayout } from './preferences';
 
 export interface UpdateProfilePictureResponse {
   profilePicture: string;
@@ -51,6 +52,7 @@ export interface CreateUserRequest {
   name: string;
   email: string;
   password: string;
+  contractLayout: ContractLayout;
   phone?: string;
   role?: string;
   defaultTeam?: string;

@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +15,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export type PortulogosContractStatus =
   | 'Pedido de Chamada'
   | 'Em validação'
@@ -155,6 +164,7 @@ export interface PortulogosContractDetail {
   iban: string;
 
   campaign: PortulogosContractCampaign | null;
+  campaigns?: Campaign[];
   antigaComercializadora: string;
 
   cpe: string;
@@ -260,7 +270,10 @@ export type UpdatePortulogosContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type PortulogosContractList = Omit<PortulogosContract, 'observacoes' | 'observacoesInternas'> & {
+export type PortulogosContractList = Omit<
+  PortulogosContract,
+  'observacoes' | 'observacoesInternas'
+> & {
   userId?: string;
   campanha?: string;
 } & Partial<
@@ -298,12 +311,31 @@ export class PortulogosContractService {
     );
   }
 
-  getPortulogosContractById(contractId: string): Observable<PortulogosContractDetail> {
-    return this.http.get<PortulogosContractDetail>(`${this.apiUrl}/api/contracts/portulogos/${contractId}`);
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<PortulogosContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<PortulogosContractList>>(
+      `${this.apiUrl}/api/contracts/portulogos/followers/${userId}/table`,
+      { params },
+    );
   }
 
-  createPortulogosContract(payload: CreatePortulogosContractRequest): Observable<PortulogosContractDetail> {
-    return this.http.post<PortulogosContractDetail>(`${this.apiUrl}/api/contracts/portulogos`, payload);
+  getPortulogosContractById(contractId: string): Observable<PortulogosContractDetail> {
+    return this.http.get<PortulogosContractDetail>(
+      `${this.apiUrl}/api/contracts/portulogos/${contractId}`,
+    );
+  }
+
+  createPortulogosContract(
+    payload: CreatePortulogosContractRequest,
+  ): Observable<ContractCreationResponse<PortulogosContractDetail>> {
+    return this.http.post<ContractCreationResponse<PortulogosContractDetail>>(
+      `${this.apiUrl}/api/contracts/portulogos`,
+      payload,
+    );
   }
 
   updatePortulogosContract(

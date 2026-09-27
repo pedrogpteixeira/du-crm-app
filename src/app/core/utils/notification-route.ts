@@ -18,6 +18,7 @@ const CONTRACT_ROUTES: Record<
   'contracts/iberdrola': '/home/contracts/iberdrola',
   'contracts/iberdrola-solar': '/home/contracts/iberdrola-solar',
   'contracts/meo-energias': '/home/contracts/meo-energias',
+  'contracts/vodafone': '/home/contracts/vodafone',
 };
 
 function isContractNotificationResource(

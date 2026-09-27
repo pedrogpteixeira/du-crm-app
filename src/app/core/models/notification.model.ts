@@ -13,7 +13,8 @@ export type ContractNotificationResource =
   | 'contracts/galp-solar'
   | 'contracts/iberdrola'
   | 'contracts/iberdrola-solar'
-  | 'contracts/meo-energias';
+  | 'contracts/meo-energias'
+  | 'contracts/vodafone';
 
 export type NotificationResource =
   | 'omie'

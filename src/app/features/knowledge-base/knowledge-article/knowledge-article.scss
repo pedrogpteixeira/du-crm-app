@@ -485,3 +485,85 @@ button:disabled {
   place-items: center;
   font-size: 16px;
 }
+@media (max-width: 1000px) {
+  .article-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .details-card {
+    order: -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .article-page {
+    gap: 16px;
+  }
+
+  .article-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .article-header h1 {
+    font-size: 27px;
+  }
+
+  .actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .actions button {
+    flex: 1 1 150px;
+  }
+
+  .content-card,
+  .details-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title-input {
+    font-size: 21px;
+  }
+
+  .article-status {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dropzone {
+    min-height: 130px;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .selected-file,
+  .attachment-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .attachment-link {
+    width: 100%;
+  }
+
+  .attachment-preview-button,
+  .delete-attachment-btn,
+  .remove-file,
+  .upload-attachments-btn,
+  .file-select-btn {
+    width: 100%;
+  }
+
+  .attachment-preview-button {
+    min-height: 42px;
+    border-top: 1px solid #e2e8f0;
+    border-left: 0;
+  }
+}

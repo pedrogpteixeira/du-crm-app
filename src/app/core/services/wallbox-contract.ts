@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +13,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export type WallboxTipoSegmento = 'Residencial' | 'Empresarial';
 
 export type WallboxTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
@@ -257,6 +264,7 @@ export interface WallboxContractDetail {
   moradaFaturacao?: string;
 
   campaign: WallboxContractCampaign | null;
+  campaigns?: Campaign[];
 
   nivelTensao?: WallboxNivelTensao;
   tipoLocalInstalacao?: WallboxTipoLocalInstalacao;
@@ -331,6 +339,18 @@ export class WallboxContractService {
 
     return this.http.get<ContractKanbanResponse<WallboxContractList>>(
       `${this.apiUrl}/api/contracts/wallbox/followers/${userId}`,
+      { params },
+    );
+  }
+
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<WallboxContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<WallboxContractList>>(
+      `${this.apiUrl}/api/contracts/wallbox/followers/${userId}/table`,
       { params },
     );
   }

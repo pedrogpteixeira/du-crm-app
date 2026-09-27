@@ -35,7 +35,6 @@ import {
 } from '../../../core/services/iberdrola-solar-contract';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
-import { ProfileUser, UserService } from '../../../core/services/user';
 
 interface EditableContractForm {
   nomeClienteEmpresa: string;
@@ -87,6 +86,7 @@ interface AuthenticatedUserLike {
   role?: string;
   name?: string;
   username?: string;
+  teams?: Array<{ id?: string }>;
 }
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
@@ -128,7 +128,6 @@ export class IberdrolaSolarContractDetail implements OnInit {
   private readonly iberdrolaSolarContractService = inject(IberdrolaSolarContractService);
   private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
-  private readonly userService = inject(UserService);
   private readonly destroyRef = inject(DestroyRef);
 
   private currentUserId = '';
@@ -869,30 +868,19 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-    this.userService.getUserById(this.currentUserId).subscribe({
-      next: (user) => {
-        this.isRequiredTeamMember = isRequiredContractTeamMember(user);
-        const teamIds =
-          (
-            user as ProfileUser & {
-              teams?: Array<{ id?: string }>;
-            }
-          ).teams
-            ?.map((team) => team.id ?? '')
-            .filter(Boolean) ?? [];
+    const teamIds =
+      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
-        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
-          (teamId): teamId is string => Boolean(teamId),
-        );
+    const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+      (teamId): teamId is string => Boolean(teamId),
+    );
 
-        this.canAccessInternalObservations =
-          this.isSuperAdmin || teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
+    this.canAccessInternalObservations =
+      this.isSuperAdmin || teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
 
-        if (!this.canAccessInternalObservations) {
-          this.internalObservationDraft = '';
-        }
-      },
-    });
+    if (!this.canAccessInternalObservations) {
+      this.internalObservationDraft = '';
+    }
   }
 
   private loadCampaigns(companyId: string): void {

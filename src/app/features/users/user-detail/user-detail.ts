@@ -22,6 +22,13 @@ import {
 
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
+import {
+  ContractLayout,
+  ContractsDefaultView,
+  PreferencesService,
+  UserPreferences,
+  UserPreferencesPatch,
+} from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import {
   ProfileUser,
@@ -37,6 +44,10 @@ interface EditUserForm {
   phone: string;
   defaultTeam: string;
   role: string;
+  sidebarCollapsedByDefault: boolean;
+  contractsDefaultView: ContractsDefaultView | '';
+  contractDetailsCollapsedByDefault: boolean;
+  contractLayout: ContractLayout | '';
 }
 
 type FeedbackType = 'success' | 'error';
@@ -56,6 +67,7 @@ export class UserDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
+  private readonly preferencesService = inject(PreferencesService);
   private readonly socketService = inject(SocketService);
   private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
@@ -70,15 +82,19 @@ export class UserDetail implements OnInit {
   isLoading = false;
   isEditingUser = false;
   isChangingStatus = false;
+  isLoadingUserPreferences = false;
   isSuperAdmin = false;
 
   errorMessage = '';
   editUserErrorMessage = '';
+  userPreferencesErrorMessage = '';
   feedbackMessage = '';
   feedbackType: FeedbackType = 'success';
 
   showEditUserModal = false;
   showStatusConfirmModal = false;
+
+  private originalUserPreferences: UserPreferences | null = null;
 
   get pendingStatusActionLabel(): string {
     return this.user?.active ? 'Desativar' : 'Ativar';
@@ -110,9 +126,16 @@ export class UserDetail implements OnInit {
       phone: this.user.phone ?? '',
       defaultTeam: this.user.defaultTeam?.id ?? '',
       role: this.user.role ?? '',
+      sidebarCollapsedByDefault: false,
+      contractsDefaultView: '',
+      contractDetailsCollapsedByDefault: false,
+      contractLayout: '',
     };
+    this.originalUserPreferences = null;
     this.editUserErrorMessage = '';
+    this.userPreferencesErrorMessage = '';
     this.showEditUserModal = true;
+    this.loadEditableUserPreferences();
   }
 
   closeEditUserModal(): void {
@@ -122,13 +145,52 @@ export class UserDetail implements OnInit {
 
     this.showEditUserModal = false;
     this.editUserErrorMessage = '';
+    this.userPreferencesErrorMessage = '';
+    this.originalUserPreferences = null;
     this.editUserForm = this.getEmptyEditUserForm();
+  }
+
+  loadEditableUserPreferences(): void {
+    if (!this.isSuperAdmin || !this.user || this.isLoadingUserPreferences) {
+      return;
+    }
+
+    this.isLoadingUserPreferences = true;
+    this.userPreferencesErrorMessage = '';
+
+    this.preferencesService
+      .getUserPreferences(this.user.id)
+      .pipe(
+        finalize(() => {
+          this.isLoadingUserPreferences = false;
+        }),
+      )
+      .subscribe({
+        next: (preferences) => {
+          this.originalUserPreferences = preferences;
+          this.editUserForm = {
+            ...this.editUserForm,
+            sidebarCollapsedByDefault: preferences.sidebarCollapsedByDefault,
+            contractsDefaultView: preferences.contractsDefaultView,
+            contractDetailsCollapsedByDefault:
+              preferences.contractDetailsCollapsedByDefault,
+            contractLayout: preferences.contractLayout,
+          };
+        },
+        error: (error: HttpErrorResponse) => {
+          this.userPreferencesErrorMessage = this.getPreferencesError(
+            error,
+            'Não foi possível carregar o layout dos contratos deste utilizador.',
+          );
+        },
+      });
   }
 
   saveUserChanges(): void {
     if (
       !this.isSuperAdmin ||
       this.isEditingUser ||
+      this.isLoadingUserPreferences ||
       !this.user
     ) {
       return;
@@ -148,40 +210,71 @@ export class UserDetail implements OnInit {
     const normalizedRole = this.editUserForm.role.trim();
     const roleChanged = normalizedRole !== (originalUser.role ?? '');
     const hasProfileChanges = Object.keys(updatePayload).length > 0;
+    const preferencesPayload = this.buildAdminPreferencesPayload();
+    const hasPreferencesChanges = Object.keys(preferencesPayload).length > 0;
 
-    if (!hasProfileChanges && !roleChanged) {
+    if (!hasProfileChanges && !roleChanged && !hasPreferencesChanges) {
       this.closeEditUserModal();
       return;
     }
 
     this.isEditingUser = true;
 
-    const saveRole = (baseUser: ProfileUser) => {
-      if (!roleChanged) {
+    const saveAdministrativePreferences = (
+      baseUser: ProfileUser,
+      previousChangeSaved: boolean,
+    ) => {
+      if (!hasPreferencesChanges) {
         this.finishSuccessfulUserEdit(baseUser);
+        return;
+      }
+
+      this.preferencesService
+        .updateUserPreferences(originalUser.id, preferencesPayload)
+        .subscribe({
+          next: (updatedPreferences) => {
+            this.originalUserPreferences = updatedPreferences;
+            this.finishSuccessfulUserEdit(baseUser);
+          },
+          error: (error: HttpErrorResponse) => {
+            this.isEditingUser = false;
+            this.setUser(baseUser);
+            this.editUserErrorMessage = this.getPreferencesError(
+              error,
+              previousChangeSaved
+                ? 'Os restantes dados foram guardados, mas não foi possível atualizar as preferências administrativas.'
+                : 'Não foi possível atualizar as preferências administrativas.',
+              preferencesPayload,
+            );
+            this.refreshEditablePreferencesAfterFailure();
+          },
+        });
+    };
+
+    const saveRole = (baseUser: ProfileUser, profileSaved: boolean) => {
+      if (!roleChanged) {
+        saveAdministrativePreferences(baseUser, profileSaved);
         return;
       }
 
       this.userService
         .updateUserRole(originalUser.id, normalizedRole)
-        .pipe(
-          finalize(() => {
-            this.isEditingUser = false;
-          }),
-        )
         .subscribe({
           next: (updatedUser) => {
-            this.finishSuccessfulUserEdit({
+            const mergedUser: ProfileUser = {
               ...baseUser,
               ...updatedUser,
               role: normalizedRole,
-            });
+            };
+
+            saveAdministrativePreferences(mergedUser, true);
           },
           error: (error: HttpErrorResponse) => {
+            this.isEditingUser = false;
             this.setUser(baseUser);
             this.editUserErrorMessage = this.getOperationError(
               error,
-              hasProfileChanges
+              profileSaved
                 ? 'Os dados do utilizador foram guardados, mas não foi possível atualizar a role.'
                 : 'Não foi possível atualizar a role do utilizador.',
             );
@@ -190,7 +283,7 @@ export class UserDetail implements OnInit {
     };
 
     if (!hasProfileChanges) {
-      saveRole(originalUser);
+      saveRole(originalUser, false);
       return;
     }
 
@@ -201,13 +294,7 @@ export class UserDetail implements OnInit {
           ...updatedUser,
         };
 
-        if (roleChanged) {
-          saveRole(mergedUser);
-          return;
-        }
-
-        this.isEditingUser = false;
-        this.finishSuccessfulUserEdit(mergedUser);
+        saveRole(mergedUser, true);
       },
       error: (error: HttpErrorResponse) => {
         this.isEditingUser = false;
@@ -216,6 +303,27 @@ export class UserDetail implements OnInit {
           'Não foi possível guardar as alterações do utilizador.',
         );
       },
+    });
+  }
+
+  private refreshEditablePreferencesAfterFailure(): void {
+    if (!this.user) {
+      return;
+    }
+
+    this.preferencesService.getUserPreferences(this.user.id).subscribe({
+      next: (preferences) => {
+        this.originalUserPreferences = preferences;
+        this.editUserForm = {
+          ...this.editUserForm,
+          sidebarCollapsedByDefault: preferences.sidebarCollapsedByDefault,
+          contractsDefaultView: preferences.contractsDefaultView,
+          contractDetailsCollapsedByDefault:
+            preferences.contractDetailsCollapsedByDefault,
+          contractLayout: preferences.contractLayout,
+        };
+      },
+      error: () => undefined,
     });
   }
 
@@ -570,10 +678,56 @@ export class UserDetail implements OnInit {
     return payload;
   }
 
+  private buildAdminPreferencesPayload(): UserPreferencesPatch {
+    const original = this.originalUserPreferences;
+    const payload: UserPreferencesPatch = {};
+
+    if (!original) {
+      return payload;
+    }
+
+    if (
+      this.editUserForm.sidebarCollapsedByDefault !==
+      original.sidebarCollapsedByDefault
+    ) {
+      payload.sidebarCollapsedByDefault =
+        this.editUserForm.sidebarCollapsedByDefault;
+    }
+
+    if (
+      this.editUserForm.contractsDefaultView &&
+      this.editUserForm.contractsDefaultView !== original.contractsDefaultView
+    ) {
+      payload.contractsDefaultView = this.editUserForm.contractsDefaultView;
+    }
+
+    if (
+      this.editUserForm.contractDetailsCollapsedByDefault !==
+      original.contractDetailsCollapsedByDefault
+    ) {
+      payload.contractDetailsCollapsedByDefault =
+        this.editUserForm.contractDetailsCollapsedByDefault;
+    }
+
+    if (
+      this.editUserForm.contractLayout &&
+      this.editUserForm.contractLayout !== original.contractLayout
+    ) {
+      payload.contractLayout = this.editUserForm.contractLayout;
+    }
+
+    // theme is deliberately excluded: another user's theme can only be changed
+    // by that user, even when the editor is a Super Admin.
+    return payload;
+  }
+
   private finishSuccessfulUserEdit(user: ProfileUser): void {
     this.setUser(user);
     this.isEditingUser = false;
     this.showEditUserModal = false;
+    this.editUserErrorMessage = '';
+    this.userPreferencesErrorMessage = '';
+    this.originalUserPreferences = null;
     this.editUserForm = this.getEmptyEditUserForm();
     this.showFeedback('Utilizador atualizado com sucesso.', 'success');
   }
@@ -584,6 +738,22 @@ export class UserDetail implements OnInit {
   ): string {
     if (error.status === 403) {
       return 'Não tem permissão para executar esta operação.';
+    }
+
+    return this.extractApiMessage(error) || fallback;
+  }
+
+  private getPreferencesError(
+    error: HttpErrorResponse,
+    fallback: string,
+    payload?: UserPreferencesPatch,
+  ): string {
+    if (error.status === 403 && payload?.contractLayout) {
+      return 'Não tem permissão para alterar o layout dos contratos.';
+    }
+
+    if (error.status === 403) {
+      return 'Não tem permissão para alterar as preferências deste utilizador.';
     }
 
     return this.extractApiMessage(error) || fallback;
@@ -631,6 +801,10 @@ export class UserDetail implements OnInit {
       phone: '',
       defaultTeam: '',
       role: '',
+      sidebarCollapsedByDefault: false,
+      contractsDefaultView: '',
+      contractDetailsCollapsedByDefault: false,
+      contractLayout: '',
     };
   }
 }

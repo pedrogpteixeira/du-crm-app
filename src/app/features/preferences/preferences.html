@@ -1,126 +1,230 @@
 <section class="preferences-page">
-  <header class="page-header">
-    <div>
-      <span class="breadcrumb">
-        Definições
-      </span>
+  <header class="preferences-hero">
+    <div class="hero-copy">
+      <span class="hero-icon material-symbols-rounded" aria-hidden="true">tune</span>
 
-      <h1>
-        Preferências
-      </h1>
-
-      <p>
-        Personaliza a forma como utilizas o CRM.
-      </p>
+      <div>
+        <span class="breadcrumb">Definições</span>
+        <h1>Preferências</h1>
+        <p>Personaliza a navegação e a experiência dos contratos no CRM.</p>
+      </div>
     </div>
+
+    <span class="changes-badge" *ngIf="hasUnsavedChanges">
+      <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+      Alterações por guardar
+    </span>
   </header>
 
-  <p class="success-message" *ngIf="successMessage">
-    {{ successMessage }}
-  </p>
+  <div class="feedback-stack" *ngIf="successMessage || errorMessage">
+    <p class="feedback-message success-message" *ngIf="successMessage">
+      <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+      {{ successMessage }}
+    </p>
+
+    <p class="feedback-message error-message" *ngIf="errorMessage">
+      <span class="material-symbols-rounded" aria-hidden="true">error</span>
+      {{ errorMessage }}
+    </p>
+  </div>
 
   <div class="settings-grid">
-    <article class="card">
-      <div class="section-title">
-        Vista / Interface
-      </div>
+    <article class="settings-card">
+      <header class="card-header">
+        <span class="card-icon material-symbols-rounded" aria-hidden="true">palette</span>
 
-      <div class="setting-row">
         <div>
-          <strong>Sidebar colapsada por defeito</strong>
-          <span>
-            Define se a sidebar deve abrir automaticamente colapsada ao entrar no CRM.
-          </span>
+          <span class="card-kicker">Interface</span>
+          <h2>Aparência e navegação</h2>
+          <p>Define o aspeto do CRM e como a navegação se apresenta quando inicias uma sessão.</p>
         </div>
+      </header>
 
-        <label class="switch">
-          <input
-            type="checkbox"
-            [(ngModel)]="preferences.sidebarCollapsedByDefault"
-            (ngModelChange)="updateSidebarPreference($event)"
-          />
-
-          <span></span>
-        </label>
-      </div>
-
-      <div class="setting-row">
-        <div>
-          <strong>Vista por defeito dos contratos</strong>
-          <span>
-            Escolhe se a página de contratos deve abrir em tabela ou organizada por estados.
-          </span>
-        </div>
-
-        <select
-          [(ngModel)]="preferences.contractsDefaultView"
-          (ngModelChange)="updateContractsView($event)"
-        >
-          <option value="table">
-            Tabela
-          </option>
-
-          <option value="kanban">
-            Estados
-          </option>
-        </select>
-      </div>
-
-      <div class="setting-row">
-        <div>
-            <strong>Secções dos contratos minimizadas por defeito</strong>
-
-            <span>
-            Define se os blocos da página de detalhe dos contratos devem abrir recolhidos.
-            </span>
-        </div>
-
-        <label class="switch">
-            <input
-            type="checkbox"
-            [(ngModel)]="preferences.contractDetailsCollapsedByDefault"
-            (ngModelChange)="updateContractDetailsSectionsPreference($event)"
-            />
-
-            <span></span>
-        </label>
-        </div>
-
-        <div class="setting-row">
-          <div>
-            <strong>Layout dos contratos</strong>
-
-            <span>
-              Escolhe a experiência de utilização dos contratos.
-            </span>
+      <div class="settings-list">
+        <section class="setting-item setting-item-stacked">
+          <div class="setting-copy">
+            <strong>Tema da aplicação</strong>
+            <span>Escolhe entre a aparência clara e escura do CRM.</span>
           </div>
 
-          <select
-            [(ngModel)]="preferences.contractLayout"
-            (ngModelChange)="updateContractLayout($event)"
-          >
-            <option value="light">
-              Light
-            </option>
+          <div class="option-segment" role="group" aria-label="Tema da aplicação">
+            <button
+              type="button"
+              [class.active]="preferences.theme === 'light'"
+              [attr.aria-pressed]="preferences.theme === 'light'"
+              (click)="updateTheme('light')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">light_mode</span>
+              <span>
+                <strong>Claro</strong>
+                <small>Interface luminosa</small>
+              </span>
+            </button>
 
-            <option value="pro">
-              Pro
-            </option>
-          </select>
+            <button
+              type="button"
+              [class.active]="preferences.theme === 'dark'"
+              [attr.aria-pressed]="preferences.theme === 'dark'"
+              (click)="updateTheme('dark')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+              <span>
+                <strong>Escuro</strong>
+                <small>Menor luminosidade</small>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="setting-item">
+          <div class="setting-copy">
+            <strong>Sidebar colapsada por defeito</strong>
+            <span>Abre a navegação lateral numa versão mais compacta.</span>
+          </div>
+
+          <label class="switch" aria-label="Sidebar colapsada por defeito">
+            <input
+              type="checkbox"
+              [ngModel]="preferences.sidebarCollapsedByDefault"
+              (ngModelChange)="updateSidebarPreference($event)"
+            />
+            <span></span>
+          </label>
+        </section>
+
+        <section class="setting-item setting-item-stacked">
+          <div class="setting-copy">
+            <strong>Vista por defeito dos contratos</strong>
+            <span>Escolhe a apresentação usada ao abrir uma comercializadora.</span>
+          </div>
+
+          <div class="option-segment" role="group" aria-label="Vista por defeito dos contratos">
+            <button
+              type="button"
+              [class.active]="preferences.contractsDefaultView === 'table'"
+              (click)="updateContractsView('table')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">table_rows</span>
+              <span>
+                <strong>Tabela</strong>
+                <small>Leitura detalhada</small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              [class.active]="preferences.contractsDefaultView === 'kanban'"
+              (click)="updateContractsView('kanban')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">view_kanban</span>
+              <span>
+                <strong>Estados</strong>
+                <small>Organização Kanban</small>
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article class="settings-card">
+      <header class="card-header">
+        <span class="card-icon material-symbols-rounded" aria-hidden="true">description</span>
+
+        <div>
+          <span class="card-kicker">Contratos</span>
+          <h2>Experiência de utilização</h2>
+          <p>Ajusta a densidade e o comportamento das páginas de contratos.</p>
         </div>
+      </header>
+
+      <div class="settings-list">
+        <section class="setting-item">
+          <div class="setting-copy">
+            <strong>Secções minimizadas por defeito</strong>
+            <span>Abre os blocos do detalhe do contrato recolhidos.</span>
+          </div>
+
+          <label class="switch" aria-label="Secções dos contratos minimizadas por defeito">
+            <input
+              type="checkbox"
+              [ngModel]="preferences.contractDetailsCollapsedByDefault"
+              (ngModelChange)="updateContractDetailsSectionsPreference($event)"
+            />
+            <span></span>
+          </label>
+        </section>
+
+        <section class="setting-item setting-item-stacked">
+          <div class="setting-copy">
+            <strong>Layout dos contratos</strong>
+            <span *ngIf="canEditContractLayout; else managedLayoutDescription">
+              Define o modo de criação e edição de contratos associado à tua conta.
+            </span>
+            <ng-template #managedLayoutDescription>
+              <span>Este valor é configurado pelo administrador.</span>
+            </ng-template>
+          </div>
+
+          <div
+            class="option-segment"
+            role="group"
+            aria-label="Layout dos contratos"
+            *ngIf="canEditContractLayout; else readOnlyContractLayout"
+          >
+            <button
+              type="button"
+              [class.active]="preferences.contractLayout === 'light'"
+              (click)="updateContractLayout('light')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
+              <span>
+                <strong>Light</strong>
+                <small>Fluxo mais rápido</small>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              [class.active]="preferences.contractLayout === 'pro'"
+              (click)="updateContractLayout('pro')"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+              <span>
+                <strong>Pro</strong>
+                <small>Mais controlo</small>
+              </span>
+            </button>
+          </div>
+
+          <ng-template #readOnlyContractLayout>
+            <div class="managed-preference-value">
+              <span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>
+              <div>
+                <strong>{{ preferences.contractLayout === 'pro' ? 'Pro' : 'Light' }}</strong>
+                <small>Configurado pelo administrador</small>
+              </div>
+            </div>
+          </ng-template>
+        </section>
+      </div>
     </article>
   </div>
 
-  <div class="actions" *ngIf="hasUnsavedChanges">
-    <button
-      type="button"
-      [disabled]="isSaving"
-      (click)="persistPreferences()"
-    >
+  <aside class="save-bar" *ngIf="hasUnsavedChanges">
+    <div class="save-bar-copy">
+      <span class="material-symbols-rounded" aria-hidden="true">cloud_upload</span>
+      <div>
+        <strong>Alterações por guardar</strong>
+        <span>Guarda para sincronizar estas preferências com a tua conta.</span>
+      </div>
+    </div>
+
+    <button type="button" [disabled]="isSaving" (click)="persistPreferences()">
+      <span class="material-symbols-rounded" aria-hidden="true">
+        {{ isSaving ? 'progress_activity' : 'save' }}
+      </span>
       {{ isSaving ? 'A guardar...' : 'Guardar preferências' }}
     </button>
-  </div>
-  <p class="error-message" *ngIf="errorMessage">
-    {{ errorMessage }}
-  </p>
+  </aside>
 </section>

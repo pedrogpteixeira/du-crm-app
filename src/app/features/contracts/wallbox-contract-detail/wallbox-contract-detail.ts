@@ -19,10 +19,9 @@ import {
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
-import { Campaign, CampaignService } from '../../../core/services/campaign';
+import type { Campaign } from '../../../core/services/campaign';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
-import { ProfileUser, UserService } from '../../../core/services/user';
 import {
   UpdateWallboxContractRequest,
   WALLBOX_CONTRACT_STATUSES,
@@ -96,6 +95,7 @@ interface AuthenticatedUserLike {
   role?: string;
   name?: string;
   username?: string;
+  teams?: Array<{ id?: string }>;
 }
 
 interface WallboxContractApiShape extends WallboxContractDetailModel {
@@ -140,15 +140,12 @@ export class WallboxContractDetail implements OnInit {
 
   private readonly auth = inject(Auth);
 
-  private readonly campaignService = inject(CampaignService);
 
   private readonly wallboxContractService = inject(WallboxContractService);
 
   private readonly preferencesService = inject(PreferencesService);
 
   private readonly socketService = inject(SocketService);
-
-  private readonly userService = inject(UserService);
 
   private currentUserId = '';
   currentUserName = '';
@@ -237,6 +234,28 @@ export class WallboxContractDetail implements OnInit {
     return this.isSuperAdmin && this.canMutateContract;
   }
 
+  get inactiveCurrentCampaignOption(): { id: string; name: string } | null {
+    const currentCampaign = this.contract?.campaign;
+    const currentCampaignId = currentCampaign?.id?.trim() ?? '';
+
+    if (!currentCampaignId) {
+      return null;
+    }
+
+    const isActiveOption = this.campaigns.some(
+      (campaign) => campaign.id === currentCampaignId,
+    );
+
+    if (isActiveOption) {
+      return null;
+    }
+
+    return {
+      id: currentCampaignId,
+      name: currentCampaign?.name?.trim() || currentCampaignId,
+    };
+  }
+
   ngOnInit(): void {
     this.resolvePermissions();
 
@@ -249,7 +268,7 @@ export class WallboxContractDetail implements OnInit {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
-        this.loadContract(this.contractId, true);
+        this.loadContract(this.contractId);
       }
     });
 
@@ -343,7 +362,7 @@ export class WallboxContractDetail implements OnInit {
     });
   }
 
-  loadContract(contractId: string, loadCampaignOptions = false): void {
+  loadContract(contractId: string): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -369,15 +388,13 @@ export class WallboxContractDetail implements OnInit {
             return;
           }
 
+          this.campaigns = contract.campaigns ?? [];
+
           const normalizedContract = this.normalizeContractResponse(contract);
 
           this.contract = normalizedContract;
 
           this.initializeEditForm(normalizedContract);
-
-          if (loadCampaignOptions) {
-            this.loadCampaigns(normalizedContract.companyId);
-          }
         },
 
         error: () => {
@@ -788,9 +805,7 @@ export class WallboxContractDetail implements OnInit {
     const role = currentUser?.role?.toLowerCase() ?? '';
 
     this.currentUserId = currentUser?.id ?? currentUser?._id ?? '';
-
     this.currentUserName = currentUser?.name ?? currentUser?.username ?? 'Utilizador';
-
     this.isSuperAdmin = role.includes('super admin') || role.includes('du');
     this.isRequiredTeamMember = isRequiredContractTeamMember(currentUser);
 
@@ -798,33 +813,20 @@ export class WallboxContractDetail implements OnInit {
       return;
     }
 
-    this.userService.getUserById(this.currentUserId).subscribe({
-      next: (user) => {
-        this.isRequiredTeamMember = isRequiredContractTeamMember(user);
-        const teamIds =
-          (
-            user as ProfileUser & {
-              teams?: Array<{
-                id?: string;
-              }>;
-            }
-          ).teams
-            ?.map((team) => team.id ?? '')
-            .filter(Boolean) ?? [];
+    const teamIds =
+      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
-        const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
-          (teamId): teamId is string => Boolean(teamId),
-        );
+    const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
+      (teamId): teamId is string => Boolean(teamId),
+    );
 
-        this.canAccessInternalObservations = teamIds.some((teamId) =>
-          authorizedTeamIds.includes(teamId),
-        );
+    this.canAccessInternalObservations = teamIds.some((teamId) =>
+      authorizedTeamIds.includes(teamId),
+    );
 
-        if (!this.canAccessInternalObservations) {
-          this.internalObservationDraft = '';
-        }
-      },
-    });
+    if (!this.canAccessInternalObservations) {
+      this.internalObservationDraft = '';
+    }
   }
 
   private refreshContractActivity(): void {
@@ -1044,47 +1046,6 @@ export class WallboxContractDetail implements OnInit {
 
       this.ownSocketSuppressionTimer = null;
     }
-  }
-
-  private loadCampaigns(companyId: string): void {
-    this.campaignService
-      .getCampaignsByCompanyId(companyId)
-      .pipe(
-        map((campaigns) => {
-          const assignedCampaign = this.contract?.campaign;
-
-          const assignedId = assignedCampaign?.id ?? '';
-
-          const assignedName = this.normalizeCampaignName(assignedCampaign?.name ?? '');
-
-          return campaigns.filter((campaign) => {
-            const isAssignedById = Boolean(assignedId && campaign.id === assignedId);
-
-            const isAssignedByName = Boolean(
-              assignedName && this.normalizeCampaignName(campaign.name) === assignedName,
-            );
-
-            return campaign.active || isAssignedById || isAssignedByName;
-          });
-        }),
-      )
-      .subscribe({
-        next: (campaigns) => {
-          this.campaigns = campaigns;
-
-          if (this.contract) {
-            this.contract = this.normalizeContractResponse(this.contract);
-
-            if (!this.isEditing) {
-              this.initializeEditForm(this.contract);
-            }
-          }
-        },
-
-        error: () => {
-          this.showError('Não foi possível carregar as campanhas.');
-        },
-      });
   }
 
   private hasContractAccess(contract: WallboxContractDetailModel): boolean {
@@ -1672,6 +1633,21 @@ export class WallboxContractDetail implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     }).format(parsedDate);
+  }
+
+  formatDateOnly(value: string | null | undefined): string {
+    if (!value) {
+      return '-';
+    }
+
+    const normalized = value.slice(0, 10);
+    const [year, month, day] = normalized.split('-');
+
+    if (year && month && day) {
+      return `${day}/${month}/${year}`;
+    }
+
+    return value;
   }
 
   canManageQualityControl(): boolean {

@@ -23,7 +23,7 @@
         Cancelar
       </button>
 
-      <button *ngIf="isEditing" type="button" (click)="save()" [disabled]="isSaving">
+      <button *ngIf="isEditing" type="button" (click)="save()" [disabled]="isSaving || !isPhoneValid">
         {{ isSaving ? 'A guardar...' : 'Guardar' }}
       </button>
 
@@ -90,14 +90,31 @@
         <label>
           Telefone
 
-          <input
-            *ngIf="isEditing"
-            [(ngModel)]="editableUser.phone"
-          />
+          <ng-container *ngIf="isEditing; else phoneView">
+            <input
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel"
+              maxlength="9"
+              placeholder="9 dígitos"
+              [ngModel]="editableUser.phone"
+              (ngModelChange)="onPhoneChange($event)"
+              [class.invalid]="!isPhoneValid"
+              aria-describedby="profile-phone-error"
+            />
 
-          <strong *ngIf="!isEditing">
-            {{ user.phone }}
-          </strong>
+            <span
+              *ngIf="!isPhoneValid"
+              id="profile-phone-error"
+              class="field-error"
+            >
+              O telefone deve ter exatamente 9 dígitos.
+            </span>
+          </ng-container>
+
+          <ng-template #phoneView>
+            <strong>{{ user.phone || 'Não indicado' }}</strong>
+          </ng-template>
         </label>
       </div>
     </article>

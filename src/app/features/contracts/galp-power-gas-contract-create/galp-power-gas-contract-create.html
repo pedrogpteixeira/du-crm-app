@@ -622,7 +622,7 @@
 
       <app-file-dropzone
         [(files)]="selectedFiles"
-        [disabled]="isCreatingContract || isUploadingDocuments"
+        [disabled]="isPreflightLoading || isCreatingContract || isUploadingDocuments"
       />
 
       <p class="muted" *ngIf="isUploadingDocuments">A carregar documentos...</p>
@@ -659,20 +659,39 @@
         type="button"
         class="secondary"
         routerLink="/home/contracts/galp-power-gas"
-        [disabled]="isCreatingContract"
+        [disabled]="isPreflightLoading || isCreatingContract"
       >
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isCreatingContract" (click)="createContract()">
+      <button type="button" [disabled]="isPreflightLoading || isCreatingContract" (click)="createContract()">
         {{
-          isUploadingDocuments
-            ? 'A carregar documentos...'
-            : isCreatingContract
-              ? 'A criar contrato...'
-              : 'Criar contrato'
+          isPreflightLoading
+            ? 'A verificar CPE/CUI...'
+            : isUploadingDocuments
+              ? 'A carregar documentos...'
+              : isCreatingContract
+                ? 'A criar contrato...'
+                : 'Criar contrato'
         }}
       </button>
     </div>
   </ng-container>
 </section>
+
+<app-contract-preflight-modal
+  *ngIf="isPreflightModalOpen"
+  [warnings]="preflightWarnings"
+  [errors]="preflightErrors"
+  [canProceed]="preflightCanProceed"
+  (closed)="closePreflightModal()"
+  (proceed)="confirmPreflightCreation()"
+></app-contract-preflight-modal>
+
+<app-contract-preflight-modal
+  *ngIf="isPostCreateWarningModalOpen"
+  mode="post-create"
+  [warnings]="postCreateWarnings"
+  (closed)="acknowledgePostCreateWarnings()"
+></app-contract-preflight-modal>
+

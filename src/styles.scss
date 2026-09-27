@@ -386,3 +386,301 @@ select:disabled {
   opacity: 0.55;
   cursor: wait;
 }
+
+/* =========================================================
+   RESPONSIVE BASELINE
+   Shared safeguards for smaller laptops, tablets and phones.
+   Component-specific layouts still keep control of their own
+   breakpoints; these rules only prevent common overflow issues.
+========================================================= */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+input,
+textarea,
+select,
+button {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .contract-detail-page > .page-header {
+    top: 64px !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  .contract-detail-page > .page-header {
+    top: 60px !important;
+    max-width: 100% !important;
+  }
+
+  .attachment-preview-button {
+    width: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ticket-detail-page > .page-header {
+    top: 64px !important;
+    width: 100% !important;
+    backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ticket-detail-page > .page-header {
+    top: 60px !important;
+  }
+}
+
+/* =========================================================
+   APPLICATION THEME
+   Theme preference is persisted by the API. The data-theme attribute is
+   applied centrally by ThemeService; these shared tokens/overrides provide a
+   dark foundation without duplicating theme logic inside every component.
+========================================================= */
+:root {
+  --app-bg: #eef6fa;
+  --app-shell-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f8fafc;
+  --app-surface-hover: #eef6fa;
+  --app-border: #e2e8f0;
+  --app-border-strong: #cbd5e1;
+  --app-text: #243646;
+  --app-text-muted: #64748b;
+  --app-accent: #008db1;
+  --app-input-bg: #ffffff;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #0b1220;
+  --app-shell-bg: #0f172a;
+  --app-surface: #111c2e;
+  --app-surface-muted: #162236;
+  --app-surface-hover: #1a2a40;
+  --app-border: #26364b;
+  --app-border-strong: #3b4d64;
+  --app-text: #edf4fb;
+  --app-text-muted: #9fb0c3;
+  --app-accent: #38b9d8;
+  --app-input-bg: #0f1a2b;
+}
+
+html,
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+html[data-theme='dark'] body,
+html[data-theme='dark'] .home-layout,
+html[data-theme='dark'] .main-layout,
+html[data-theme='dark'] .content {
+  background: var(--app-shell-bg) !important;
+  color: var(--app-text);
+}
+
+html[data-theme='dark'] .utility-bar {
+  background: rgba(15, 23, 42, 0.96) !important;
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme='dark'] .mobile-menu-button,
+html[data-theme='dark'] .notification-trigger {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .card,
+  .settings-card,
+  .filters-card,
+  .table-card,
+  .user-modal,
+  .confirm-modal,
+  .notification-dropdown,
+  .form-card,
+  .details-card,
+  .summary-card,
+  .analytics-card,
+  .content-card,
+  .modal-card,
+  .ticket-card,
+  .company-card
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .setting-item,
+  .filter-field,
+  .table-header,
+  .role-override-section,
+  .preferences-override-section,
+  .team-assignment-section,
+  .contract-layout-section
+) {
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme='dark'] :is(
+  .setting-item,
+  .role-override-section,
+  .preferences-override-section
+) {
+  background: var(--app-surface-muted) !important;
+}
+
+html[data-theme='dark'] :is(input, textarea, select) {
+  border-color: var(--app-border-strong) !important;
+  background-color: var(--app-input-bg) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(input, textarea)::placeholder {
+  color: #71849a !important;
+}
+
+html[data-theme='dark'] select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, #9fb0c3 50%),
+    linear-gradient(135deg, #9fb0c3 50%, transparent 50%);
+}
+
+html[data-theme='dark'] :is(h1, h2, h3, h4, .section-title) {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .page-header p,
+  .modal-header p,
+  .setting-copy > span,
+  .card-header p,
+  .muted,
+  .role-value,
+  .meta span,
+  .online-section p,
+  .loading,
+  .save-bar-copy span:not(.material-symbols-rounded)
+) {
+  color: var(--app-text-muted) !important;
+}
+
+html[data-theme='dark'] :is(
+  .table-header,
+  .user-row,
+  .notification-item,
+  .modal-header,
+  .modal-footer,
+  .save-bar
+) {
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme='dark'] :is(.user-row, .notification-item) {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] .user-row:hover,
+html[data-theme='dark'] .notification-item.clickable:hover,
+html[data-theme='dark'] .notification-item.clickable:focus-visible {
+  background: var(--app-surface-hover) !important;
+}
+
+html[data-theme='dark'] .notification-item.unread {
+  background: #10263a !important;
+}
+
+html[data-theme='dark'] .notification-badge {
+  border-color: var(--app-shell-bg) !important;
+}
+
+html[data-theme='dark'] :is(
+  .option-segment button,
+  .contract-layout-options button,
+  .edit-user-button,
+  .filters-toggle-button,
+  .pagination-controls button,
+  .cancel-button
+) {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface-muted) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .option-segment button.active,
+  .contract-layout-options button.active
+) {
+  border-color: #2c8aa3 !important;
+  background: #123042 !important;
+  color: #7dddf2 !important;
+}
+
+html[data-theme='dark'] :is(
+  .option-segment button strong,
+  .contract-layout-options button strong,
+  .role-section-heading strong,
+  .save-bar-copy strong,
+  .meta strong
+) {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .option-segment button.active strong,
+  .contract-layout-options button.active strong
+) {
+  color: #7dddf2 !important;
+}
+
+html[data-theme='dark'] .contract-detail-page > .page-header {
+  border-color: var(--app-border) !important;
+  background: rgba(17, 28, 46, 0.96) !important;
+}
+
+html[data-theme='dark'] .contract-detail-page > .page-header .header-actions {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-muted) !important;
+}
+
+html[data-theme='dark'] .contract-detail-page > .page-header .edit-action-button,
+html[data-theme='dark'] .contract-detail-page > .page-header .cancel-action-button {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] .modal-backdrop {
+  background: rgba(2, 6, 23, 0.7) !important;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #3b4d64;
+}

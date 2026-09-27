@@ -1,0 +1,279 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+}
+
+.preflight-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.preflight-modal {
+  width: min(760px, 100%);
+  max-height: calc(100dvh - 36px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  outline: none;
+}
+
+.preflight-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-bottom: 1px solid #fed7aa;
+  background: #fffaf3;
+
+  &.is-error {
+    border-bottom-color: #fecaca;
+    background: #fff7f7;
+
+    .preflight-icon {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+  }
+}
+
+.preflight-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #ffedd5;
+  color: #c2410c;
+
+  .material-symbols-rounded {
+    font-size: 24px;
+  }
+}
+
+.preflight-heading {
+  min-width: 0;
+
+  h2 {
+    margin: 0 0 5px;
+    color: #243646;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.55;
+  }
+}
+
+.icon-button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 22px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(148, 163, 184, 0.14);
+    color: #243646;
+  }
+}
+
+.preflight-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  overflow-y: auto;
+}
+
+.errors-block {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #991b1b;
+  font-size: 12px;
+
+  ul {
+    margin: 7px 0 0;
+    padding-left: 18px;
+  }
+}
+
+.warning-card {
+  padding: 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  background: #fffdfa;
+}
+
+.warning-card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ffedd5;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  strong {
+    overflow-wrap: anywhere;
+    color: #243646;
+    font-size: 14px;
+  }
+}
+
+.warning-type {
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.remaining-days {
+  flex-shrink: 0;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #ffedd5;
+  color: #9a3412;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.warning-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  padding-top: 12px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  span {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  strong {
+    color: #334155;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .eligible-date {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+
+    strong {
+      color: #9a3412;
+      font-size: 14px;
+    }
+  }
+}
+
+.preflight-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #e2e8f0;
+
+  button {
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .secondary {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+  }
+
+  .warning-action {
+    border: 1px solid #c2410c;
+    background: #c2410c;
+    color: #fff;
+  }
+}
+
+@media (max-width: 640px) {
+  .preflight-backdrop {
+    padding: 10px;
+  }
+
+  .preflight-modal {
+    max-height: calc(100dvh - 20px);
+    border-radius: 14px;
+  }
+
+  .preflight-header {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .preflight-body,
+  .preflight-actions {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .warning-card-title {
+    flex-direction: column;
+  }
+
+  .warning-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .warning-grid .eligible-date {
+    grid-column: auto;
+  }
+
+  .preflight-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}

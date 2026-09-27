@@ -241,7 +241,7 @@
 
                   <ng-template #contratoView>
                     <strong>
-                      {{ getValue(contract.dataContrato) }}
+                      {{ formatDateOnly(contract.dataContrato) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -257,7 +257,7 @@
 
                   <ng-template #registoView>
                     <strong>
-                      {{ getValue(contract.dataRegisto) }}
+                      {{ formatDateOnly(contract.dataRegisto) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -275,7 +275,7 @@
 
                   <ng-template #instalacaoDataView>
                     <strong>
-                      {{ getValue(contract.dataInstalacao) }}
+                      {{ formatDateOnly(contract.dataInstalacao) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -291,7 +291,7 @@
 
                   <ng-template #ativacaoView>
                     <strong>
-                      {{ getValue(contract.dataAtivacao) }}
+                      {{ formatDateOnly(contract.dataAtivacao) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -307,7 +307,7 @@
 
                   <ng-template #baixaView>
                     <strong>
-                      {{ getValue(contract.dataBaixa) }}
+                      {{ formatDateOnly(contract.dataBaixa) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -525,6 +525,12 @@
                 <select [(ngModel)]="editForm.campaignId">
                   <option value="">Selecionar campanha</option>
 
+                  <option
+                    *ngIf="inactiveCurrentCampaignOption as inactiveCampaign"
+                    [value]="inactiveCampaign.id"
+                  >
+                    {{ inactiveCampaign.name }} (Inativa)
+                  </option>
                   <option *ngFor="let campaign of campaigns" [value]="campaign.id">
                     {{ campaign.name }}
                   </option>

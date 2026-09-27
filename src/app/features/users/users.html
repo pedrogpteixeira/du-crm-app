@@ -339,6 +339,43 @@
         </label>
       </div>
 
+      <section class="contract-layout-section">
+        <div class="section-heading">
+          <div>
+            <strong>Layout dos contratos *</strong>
+            <span>Define o modo de criação e edição de contratos associado a este utilizador.</span>
+          </div>
+        </div>
+
+        <div class="contract-layout-options" role="group" aria-label="Layout dos contratos">
+          <button
+            type="button"
+            [class.active]="createUserForm.contractLayout === 'light'"
+            [attr.aria-pressed]="createUserForm.contractLayout === 'light'"
+            (click)="createUserForm.contractLayout = 'light'"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
+            <span>
+              <strong>Light</strong>
+              <small>Fluxo mais rápido</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            [class.active]="createUserForm.contractLayout === 'pro'"
+            [attr.aria-pressed]="createUserForm.contractLayout === 'pro'"
+            (click)="createUserForm.contractLayout = 'pro'"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+            <span>
+              <strong>Pro</strong>
+              <small>Mais controlo</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
       <section class="team-assignment-section">
         <div class="section-heading">
           <div>
@@ -427,7 +464,7 @@
       <button
         type="button"
         class="submit-user-button"
-        [disabled]="isCreatingUser"
+        [disabled]="isCreatingUser || !createUserForm.contractLayout"
         (click)="createUser()"
       >
         <span

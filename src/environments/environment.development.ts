@@ -70,6 +70,11 @@ export const environment = {
       active: true,
     },
     {
+      id: 'cmp_UL2eeL1SvE',
+      name: 'Vodafone',
+      active: true,
+    },
+    {
       id: 'cmp_cYTHohh7uo',
       name: 'Ezu',
       active: true,

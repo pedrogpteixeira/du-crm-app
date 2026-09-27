@@ -48,6 +48,7 @@ export class KnowledgeCampaigns implements OnInit {
     name: '',
     active: true,
     loyalty: false,
+    chargebackDays: null as number | null,
     startDate: '',
     endDate: '',
   };
@@ -57,6 +58,7 @@ export class KnowledgeCampaigns implements OnInit {
   editCampaign = {
     active: true,
     loyalty: false,
+    chargebackDays: null as number | null,
   };
 
   ngOnInit(): void {
@@ -145,6 +147,7 @@ export class KnowledgeCampaigns implements OnInit {
       name: '',
       active: true,
       loyalty: false,
+      chargebackDays: null,
       startDate: '',
       endDate: '',
     };
@@ -160,6 +163,15 @@ export class KnowledgeCampaigns implements OnInit {
       return;
     }
 
+    const chargebackError = this.getChargebackDaysError(
+      this.newCampaign.chargebackDays,
+    );
+
+    if (chargebackError) {
+      this.errorMessage = chargebackError;
+      return;
+    }
+
     this.isCreatingCampaign = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -169,6 +181,9 @@ export class KnowledgeCampaigns implements OnInit {
       name: this.newCampaign.name.trim(),
       active: this.newCampaign.active,
       loyalty: this.newCampaign.loyalty,
+      chargebackDays: this.normalizeChargebackDays(
+        this.newCampaign.chargebackDays,
+      ),
     };
 
     if (this.newCampaign.startDate) {
@@ -206,6 +221,7 @@ export class KnowledgeCampaigns implements OnInit {
     this.editCampaign = {
       active: campaign.active,
       loyalty: campaign.loyalty,
+      chargebackDays: campaign.chargebackDays ?? null,
     };
 
     this.showEditCampaignModal = true;
@@ -223,11 +239,21 @@ export class KnowledgeCampaigns implements OnInit {
     this.editCampaign = {
       active: true,
       loyalty: false,
+      chargebackDays: null,
     };
   }
 
   saveCampaignChanges(): void {
     if (!this.canManageCampaigns || !this.editingCampaign) {
+      return;
+    }
+
+    const chargebackError = this.getChargebackDaysError(
+      this.editCampaign.chargebackDays,
+    );
+
+    if (chargebackError) {
+      this.errorMessage = chargebackError;
       return;
     }
 
@@ -239,6 +265,9 @@ export class KnowledgeCampaigns implements OnInit {
       .updateCampaign(this.editingCampaign.id, {
         active: this.editCampaign.active,
         loyalty: this.editCampaign.loyalty,
+        chargebackDays: this.normalizeChargebackDays(
+          this.editCampaign.chargebackDays,
+        ),
       })
       .subscribe({
         next: (updatedCampaign) => {
@@ -261,6 +290,20 @@ export class KnowledgeCampaigns implements OnInit {
       });
   }
 
+  get newCampaignChargebackError(): string {
+    return this.getChargebackDaysError(this.newCampaign.chargebackDays);
+  }
+
+  get editCampaignChargebackError(): string {
+    return this.getChargebackDaysError(this.editCampaign.chargebackDays);
+  }
+
+  formatChargebackDays(chargebackDays?: number | null): string {
+    return chargebackDays == null
+      ? 'Não configurado'
+      : `${chargebackDays} ${chargebackDays === 1 ? 'dia' : 'dias'}`;
+  }
+
   formatDate(date?: string | null): string {
     if (!date) {
       return '—';
@@ -277,6 +320,36 @@ export class KnowledgeCampaigns implements OnInit {
       month: 'short',
       year: 'numeric',
     }).format(parsedDate);
+  }
+
+  private getChargebackDaysError(
+    rawValue: number | string | null | undefined,
+  ): string {
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      return '';
+    }
+
+    const value = Number(rawValue);
+
+    if (!Number.isFinite(value) || !Number.isInteger(value)) {
+      return 'Introduza um número inteiro de dias.';
+    }
+
+    if (value < 0) {
+      return 'O número de dias não pode ser negativo.';
+    }
+
+    return '';
+  }
+
+  private normalizeChargebackDays(
+    rawValue: number | string | null | undefined,
+  ): number | null {
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      return null;
+    }
+
+    return Number(rawValue);
   }
 
   private clearSuccessMessage(): void {

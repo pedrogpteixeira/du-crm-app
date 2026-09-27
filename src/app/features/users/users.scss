@@ -707,6 +707,78 @@
 
 
 
+.contract-layout-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.contract-layout-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+
+  button {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dbe4ea;
+    border-radius: 13px;
+    background: #ffffff;
+    color: #64748b;
+    padding: 11px 13px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.16s ease,
+      background 0.16s ease,
+      color 0.16s ease,
+      box-shadow 0.16s ease;
+
+    &:hover {
+      border-color: #a9cbd5;
+      background: #f8fcfd;
+    }
+
+    &.active {
+      border-color: #6bb9cd;
+      background: #eef8fb;
+      color: #006f8b;
+      box-shadow: inset 0 0 0 1px rgba(0, 141, 177, 0.05);
+    }
+
+    > .material-symbols-rounded {
+      flex: 0 0 auto;
+      font-size: 22px;
+    }
+
+    > span:last-child {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    strong {
+      color: #2f4050;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    &.active strong {
+      color: #006f8b;
+    }
+
+    small {
+      color: #8291a0;
+      font-size: 10px;
+      font-weight: 700;
+    }
+  }
+}
+
 .team-assignment-section {
   margin-top: 22px;
   padding-top: 20px;
@@ -894,8 +966,91 @@
 }
 
 @media (max-width: 700px) {
+  .contract-layout-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .table-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 700px) {
+  .card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .user-row {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+    min-height: 0;
+    margin-bottom: 10px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+  }
+
+  .user-row:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .user-cell {
+    grid-column: 1 / -1;
+  }
+
+  .role-value,
+  .muted {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  .role-value::before,
+  .muted::before {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .role-value::before {
+    content: 'Role';
+  }
+
+  .muted::before {
+    content: 'Equipa';
+  }
+
+  .account-status-badge {
+    align-self: end;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-row {
+    grid-template-columns: 1fr;
+  }
+
+  .role-value,
+  .muted,
+  .account-status-badge {
+    grid-column: 1;
   }
 }

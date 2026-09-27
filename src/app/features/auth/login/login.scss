@@ -141,3 +141,38 @@ a {
   background: #e0f2fe;
   color: #0369a1;
 }
+
+@media (max-width: 600px) {
+  .auth-page {
+    align-items: flex-start;
+    padding: 16px 12px;
+  }
+
+  .auth-card {
+    margin-block: auto;
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .brand {
+    gap: 12px;
+    margin-bottom: 26px;
+  }
+
+  .brand-icon {
+    min-width: 54px;
+    width: 64px;
+    height: 54px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
+
+  button,
+  input {
+    min-height: 46px;
+  }
+}

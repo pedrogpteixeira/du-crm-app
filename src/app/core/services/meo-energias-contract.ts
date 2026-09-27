@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,6 +15,11 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export const MEO_ENERGIAS_COMPANY_ID = 'cmp_KCnjrA0i-U' as const;
 
 export type MeoEnergiasTipoSegmento = 'Residencial' | 'Empresarial';
@@ -179,6 +188,7 @@ export interface MeoEnergiasContractDetail {
   iban?: string;
 
   campaign: MeoEnergiasContractCampaign | null;
+  campaigns?: Campaign[];
   antigaComercializadora?: string;
   cpe?: string;
   cui?: string;
@@ -301,6 +311,18 @@ export class MeoEnergiasContractService {
     );
   }
 
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<MeoEnergiasContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<MeoEnergiasContractList>>(
+      `${this.apiUrl}/api/contracts/meo-energias/followers/${userId}/table`,
+      { params },
+    );
+  }
+
   getMeoEnergiasContractById(contractId: string): Observable<MeoEnergiasContractDetail> {
     return this.http.get<MeoEnergiasContractDetail>(
       `${this.apiUrl}/api/contracts/meo-energias/${contractId}`,
@@ -309,8 +331,8 @@ export class MeoEnergiasContractService {
 
   createMeoEnergiasContract(
     payload: CreateMeoEnergiasContractRequest,
-  ): Observable<MeoEnergiasContractDetail> {
-    return this.http.post<MeoEnergiasContractDetail>(
+  ): Observable<ContractCreationResponse<MeoEnergiasContractDetail>> {
+    return this.http.post<ContractCreationResponse<MeoEnergiasContractDetail>>(
       `${this.apiUrl}/api/contracts/meo-energias`,
       payload,
     );

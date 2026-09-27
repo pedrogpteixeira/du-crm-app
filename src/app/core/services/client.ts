@@ -13,7 +13,8 @@ export type ClientContractProvider =
   | 'galp-solar'
   | 'iberdrola'
   | 'iberdrola-solar'
-  | 'meo-energias';
+  | 'meo-energias'
+  | 'vodafone';
 
 export interface ClientContractUser {
   id?: string;

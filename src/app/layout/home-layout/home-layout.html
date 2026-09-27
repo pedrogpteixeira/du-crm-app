@@ -1,14 +1,37 @@
 <div
   class="home-layout"
   [class.sidebar-collapsed]="isSidebarCollapsed"
+  [class.mobile-sidebar-open]="isMobileViewport && !isSidebarCollapsed"
 >
   <app-sidebar
     [collapsed]="isSidebarCollapsed"
     (toggle)="toggleSidebar()"
   />
 
+  <button
+    class="mobile-sidebar-backdrop"
+    type="button"
+    [class.is-visible]="isMobileViewport && !isSidebarCollapsed"
+    [attr.aria-hidden]="isMobileViewport && !isSidebarCollapsed ? 'false' : 'true'"
+    [attr.tabindex]="isMobileViewport && !isSidebarCollapsed ? 0 : -1"
+    aria-label="Fechar menu"
+    (click)="closeMobileSidebar()"
+  ></button>
+
   <section class="main-layout">
     <header class="utility-bar">
+      <button
+        class="mobile-menu-button"
+        type="button"
+        aria-label="Abrir menu"
+        [attr.aria-expanded]="isMobileViewport && !isSidebarCollapsed"
+        (click)="toggleSidebar()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">
+          menu
+        </span>
+      </button>
+
       <div class="utility-actions">
         <app-notification-dropdown />
       </div>

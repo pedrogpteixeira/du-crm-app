@@ -43,6 +43,7 @@ describe('getNotificationRoute', () => {
     ['contracts/iberdrola', '/home/contracts/iberdrola'],
     ['contracts/iberdrola-solar', '/home/contracts/iberdrola-solar'],
     ['contracts/meo-energias', '/home/contracts/meo-energias'],
+    ['contracts/vodafone', '/home/contracts/vodafone'],
   ] as const)(
     'routes %s notifications to the contract detail',
     (resource, baseRoute) => {

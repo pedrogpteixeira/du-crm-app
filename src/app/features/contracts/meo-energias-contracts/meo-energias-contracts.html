@@ -124,6 +124,22 @@
       </span>
     </a>
 
+    <div class="table-pagination" *ngIf="!isLoadingTable && contracts.length">
+      <span class="table-loaded-count">
+        {{ contracts.length }} de {{ totalContracts }} contratos
+      </span>
+
+      <button
+        type="button"
+        class="table-load-more"
+        *ngIf="tableHasMore"
+        [disabled]="isLoadingMore"
+        (click)="loadMoreTable()"
+      >
+        {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+      </button>
+    </div>
+
     <div
       class="filtered-empty-state"
       *ngIf="!isLoading && !errorMessage && !contracts.length && hasActiveFilters()"

@@ -511,6 +511,106 @@ strong {
   font-weight: 900;
 }
 
+.preferences-override-section {
+  margin-top: 16px;
+  padding: 18px;
+  border: 1px solid #dbe5eb;
+  border-radius: 16px;
+  background: #f8fbfc;
+}
+
+.preferences-loading {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preferences-inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 800;
+
+  button {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+.contract-layout-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+
+  button {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border: 1px solid #dbe4ea;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #64748b;
+    padding: 10px 12px;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &.active {
+      border-color: #6bb9cd;
+      background: #eef8fb;
+      color: #006f8b;
+    }
+
+    > .material-symbols-rounded {
+      flex: 0 0 auto;
+      font-size: 21px;
+    }
+
+    > span:last-child {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    strong {
+      color: #2f4050;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    &.active strong {
+      color: #006f8b;
+    }
+
+    small {
+      color: #8291a0;
+      font-size: 9px;
+      font-weight: 700;
+    }
+  }
+}
+
+.admin-preference-help {
+  margin: 11px 0 0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .modal-footer {
   display: flex;
   align-items: center;
@@ -694,5 +794,150 @@ strong {
     button {
       width: 100%;
     }
+  }
+}
+
+.admin-preferences-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-preference-row,
+.admin-preference-block {
+  padding: 13px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.admin-preference-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+
+  > div,
+  .admin-preference-copy {
+    min-width: 0;
+  }
+
+  strong,
+  .admin-preference-copy strong {
+    display: block;
+    color: #243646;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  span,
+  .admin-preference-copy span {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 650;
+    line-height: 1.45;
+  }
+}
+
+.admin-preference-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-preference-copy {
+  strong {
+    display: block;
+    color: #243646;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  span {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 650;
+    line-height: 1.45;
+  }
+}
+
+.admin-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex: 0 0 48px;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  > span {
+    position: absolute;
+    inset: 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #dbe3ea;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  > span::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    top: 2px;
+    left: 2px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+    transition: transform 0.18s ease;
+  }
+
+  input:checked + span {
+    border-color: #008db1;
+    background: #008db1;
+  }
+
+  input:checked + span::before {
+    transform: translateX(20px);
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-preference-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-switch {
+    width: 52px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: -8px -4px -8px 0;
+  }
+
+  .admin-switch > span {
+    position: relative;
+    inset: auto;
+    width: 46px;
+    height: 26px;
+  }
+
+  .admin-switch > span::before {
+    width: 20px;
+    height: 20px;
   }
 }

@@ -2,6 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+import type { Campaign } from './campaign';
+
+import { ContractCreationResponse } from './contract-preflight';
+
 import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
@@ -11,13 +15,19 @@ import {
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
+import {
+  ContractTableQuery,
+  ContractTableResponse,
+  buildContractTableParams,
+} from '../utils/contract-table';
 export const IBERDROLA_COMPANY_ID = 'cmp_JHtuvY63fm' as const;
 
 export type IberdrolaTipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 
 export type IberdrolaTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
 
-export type IberdrolaContratacao = 'Contratação Digital' | 'Contratação Papel' | 'Contratação Tablet';
+export type IberdrolaContratacao =
+  'Contratação Digital' | 'Contratação Papel' | 'Contratação Tablet';
 
 export type IberdrolaTipoContratacao =
   'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
@@ -198,6 +208,7 @@ export interface IberdrolaContractDetail {
   iban?: string;
 
   campaign: IberdrolaContractCampaign | null;
+  campaigns?: Campaign[];
   antigaComercializadora?: string;
   cpe?: string;
   cui?: string;
@@ -322,6 +333,18 @@ export class IberdrolaContractService {
     );
   }
 
+  getTableContracts(
+    userId: string,
+    query: ContractTableQuery = {},
+  ): Observable<ContractTableResponse<IberdrolaContractList>> {
+    const params = buildContractTableParams(query);
+
+    return this.http.get<ContractTableResponse<IberdrolaContractList>>(
+      `${this.apiUrl}/api/contracts/iberdrola/followers/${userId}/table`,
+      { params },
+    );
+  }
+
   getIberdrolaContractById(contractId: string): Observable<IberdrolaContractDetail> {
     return this.http.get<IberdrolaContractDetail>(
       `${this.apiUrl}/api/contracts/iberdrola/${contractId}`,
@@ -330,8 +353,8 @@ export class IberdrolaContractService {
 
   createIberdrolaContract(
     payload: CreateIberdrolaContractRequest,
-  ): Observable<IberdrolaContractDetail> {
-    return this.http.post<IberdrolaContractDetail>(
+  ): Observable<ContractCreationResponse<IberdrolaContractDetail>> {
+    return this.http.post<ContractCreationResponse<IberdrolaContractDetail>>(
       `${this.apiUrl}/api/contracts/iberdrola`,
       payload,
     );

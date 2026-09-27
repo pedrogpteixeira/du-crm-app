@@ -49,6 +49,7 @@
       <span>Início</span>
       <span>Fim</span>
       <span>Fidelização</span>
+      <span>Chargeback</span>
       <span>Estado</span>
       <span *ngIf="canManageCampaigns">Ações</span>
     </div>
@@ -70,6 +71,8 @@
       >
         {{ campaign.loyalty ? 'Com fidelização' : 'Sem fidelização' }}
       </span>
+
+      <span>{{ formatChargebackDays(campaign.chargebackDays) }}</span>
 
       <span
         class="status-badge"
@@ -197,6 +200,30 @@
       </select>
     </label>
 
+    <label>
+      Dias de chargeback
+      <input
+        #newChargebackDaysModel="ngModel"
+        type="number"
+        min="0"
+        step="1"
+        inputmode="numeric"
+        [(ngModel)]="newCampaign.chargebackDays"
+        [class.input-error]="
+          newChargebackDaysModel.dirty && !!newCampaignChargebackError
+        "
+      />
+      <small class="field-help">
+        Número de dias durante os quais a campanha está sujeita a chargeback.
+      </small>
+      <small
+        class="field-error"
+        *ngIf="newChargebackDaysModel.dirty && newCampaignChargebackError"
+      >
+        {{ newCampaignChargebackError }}
+      </small>
+    </label>
+
     <div class="modal-actions">
       <button
         type="button"
@@ -208,7 +235,7 @@
 
       <button
         type="button"
-        [disabled]="isCreatingCampaign"
+        [disabled]="isCreatingCampaign || !!newCampaignChargebackError"
         (click)="createCampaign()"
       >
         {{ isCreatingCampaign ? 'A criar...' : 'Criar campanha' }}
@@ -258,6 +285,30 @@
       </select>
     </label>
 
+    <label>
+      Dias de chargeback
+      <input
+        #editChargebackDaysModel="ngModel"
+        type="number"
+        min="0"
+        step="1"
+        inputmode="numeric"
+        [(ngModel)]="editCampaign.chargebackDays"
+        [class.input-error]="
+          editChargebackDaysModel.dirty && !!editCampaignChargebackError
+        "
+      />
+      <small class="field-help">
+        Número de dias durante os quais a campanha está sujeita a chargeback.
+      </small>
+      <small
+        class="field-error"
+        *ngIf="editChargebackDaysModel.dirty && editCampaignChargebackError"
+      >
+        {{ editCampaignChargebackError }}
+      </small>
+    </label>
+
     <div class="modal-actions">
       <button
         type="button"
@@ -270,7 +321,7 @@
 
       <button
         type="button"
-        [disabled]="isEditingCampaign"
+        [disabled]="isEditingCampaign || !!editCampaignChargebackError"
         (click)="saveCampaignChanges()"
       >
         {{ isEditingCampaign ? 'A guardar...' : 'Guardar alterações' }}

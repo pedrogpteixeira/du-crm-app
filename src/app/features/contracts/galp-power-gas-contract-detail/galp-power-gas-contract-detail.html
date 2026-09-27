@@ -288,7 +288,7 @@
 
                   <ng-template #dataContratoView>
                     <strong>
-                      {{ getValue(contract.dataContrato) }}
+                      {{ formatDateOnly(contract.dataContrato) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -304,7 +304,7 @@
 
                   <ng-template #dataRegistoView>
                     <strong>
-                      {{ getValue(contract.dataRegisto) }}
+                      {{ formatDateOnly(contract.dataRegisto) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -322,7 +322,7 @@
 
                   <ng-template #ativacaoCpeView>
                     <strong>
-                      {{ getValue(contract.dataAtivacaoCPE) }}
+                      {{ formatDateOnly(contract.dataAtivacaoCPE) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -338,7 +338,7 @@
 
                   <ng-template #ativacaoCuiView>
                     <strong>
-                      {{ getValue(contract.dataAtivacaoCUI) }}
+                      {{ formatDateOnly(contract.dataAtivacaoCUI) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -356,7 +356,7 @@
 
                   <ng-template #baixaCpeView>
                     <strong>
-                      {{ getValue(contract.dataBaixaCPE) }}
+                      {{ formatDateOnly(contract.dataBaixaCPE) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -372,7 +372,7 @@
 
                   <ng-template #baixaCuiView>
                     <strong>
-                      {{ getValue(contract.dataBaixaCUI) }}
+                      {{ formatDateOnly(contract.dataBaixaCUI) }}
                     </strong>
                   </ng-template>
                 </label>
@@ -650,6 +650,12 @@
                 <select [(ngModel)]="editForm.campaignId">
                   <option value="">Selecionar campanha</option>
 
+                  <option
+                    *ngIf="inactiveCurrentCampaignOption as inactiveCampaign"
+                    [value]="inactiveCampaign.id"
+                  >
+                    {{ inactiveCampaign.name }} (Inativa)
+                  </option>
                   <option *ngFor="let campaign of campaigns" [value]="campaign.id">
                     {{ campaign.name }}
                   </option>

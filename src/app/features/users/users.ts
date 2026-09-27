@@ -14,6 +14,7 @@ import { finalize } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Auth } from '../../core/services/auth';
+import type { ContractLayout } from '../../core/services/preferences';
 import { SocketService } from '../../core/services/socket';
 import { Team, TeamService } from '../../core/services/team';
 import {
@@ -36,6 +37,7 @@ interface CreateUserForm {
   phone: string;
   password: string;
   confirmPassword: string;
+  contractLayout: ContractLayout | '';
   teamId: string;
   positionIndex: number | null;
 }
@@ -365,6 +367,7 @@ export class Users implements OnInit {
       name: this.createUserForm.name.trim(),
       email: this.createUserForm.email.trim(),
       password: this.createUserForm.password,
+      contractLayout: this.createUserForm.contractLayout as ContractLayout,
       role: '',
       ...(phone ? { phone } : {}),
     };
@@ -543,6 +546,13 @@ export class Users implements OnInit {
     }
 
     if (
+      this.createUserForm.contractLayout !== 'light' &&
+      this.createUserForm.contractLayout !== 'pro'
+    ) {
+      return 'Seleciona o layout dos contratos.';
+    }
+
+    if (
       this.createUserForm.teamId &&
       this.createUserForm.positionIndex === null
     ) {
@@ -668,6 +678,7 @@ export class Users implements OnInit {
       phone: '',
       password: '',
       confirmPassword: '',
+      contractLayout: '',
       teamId: '',
       positionIndex: null,
     };

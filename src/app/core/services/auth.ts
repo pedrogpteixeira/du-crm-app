@@ -17,6 +17,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { AuthUser } from '../models/auth-user';
+import { AppTheme, ThemeService } from './theme';
 
 export type AuthenticationState =
   | 'initializing'
@@ -42,6 +43,7 @@ interface ChangePasswordResponse {
 export class Auth {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+  private readonly themeService = inject(ThemeService);
 
   private accessToken: string | null = null;
 
@@ -318,6 +320,7 @@ export class Auth {
 
     localStorage.removeItem('preferences');
     localStorage.removeItem('token');
+    this.themeService.resetTheme();
   }
 
   // ---------------------------------------------------------------------------
@@ -350,13 +353,32 @@ export class Auth {
   private saveUserPreferences(user: AuthUser): void {
     if (!user.preferences) {
       localStorage.removeItem('preferences');
+      this.themeService.setTheme('light');
 
       return;
     }
 
+    const preferences = user.preferences;
+    const normalizedPreferences = {
+      ...preferences,
+      contractsDefaultView:
+        preferences.contractsDefaultView ??
+        preferences.repsolContractsDefaultView ??
+        'table',
+      contractDetailsCollapsedByDefault:
+        preferences.contractDetailsCollapsedByDefault ??
+        preferences.repsolContractDetailsCollapsedByDefault ??
+        false,
+      contractLayout:
+        preferences.contractLayout === 'pro' ? 'pro' : 'light',
+      theme: (preferences.theme === 'dark' ? 'dark' : 'light') as AppTheme,
+    };
+
     localStorage.setItem(
       'preferences',
-      JSON.stringify(user.preferences),
+      JSON.stringify(normalizedPreferences),
     );
+
+    this.themeService.setTheme(normalizedPreferences.theme);
   }
 }

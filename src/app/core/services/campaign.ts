@@ -9,6 +9,7 @@ export interface Campaign {
   companyId: string;
   name: string;
   loyalty: boolean;
+  chargebackDays?: number | null;
   startDate: string;
   endDate: string;
   active: boolean;
@@ -21,6 +22,7 @@ export interface CreateCampaignRequest {
   name: string;
   active: boolean;
   loyalty: boolean;
+  chargebackDays?: number | null;
   startDate?: string;
   endDate?: string;
 }
@@ -28,6 +30,7 @@ export interface CreateCampaignRequest {
 export interface UpdateCampaignRequest {
   active?: boolean;
   loyalty?: boolean;
+  chargebackDays?: number | null;
 }
 
 @Injectable({

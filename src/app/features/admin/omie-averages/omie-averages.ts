@@ -1,16 +1,7 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  ViewChild,
-  inject,
-} from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 
 import {
@@ -25,11 +16,7 @@ import { MibgasPrices } from '../mibgas-prices/mibgas-prices';
 
 @Component({
   selector: 'app-omie-averages',
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MibgasPrices,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, MibgasPrices],
   templateUrl: './omie-averages.html',
   styleUrl: './omie-averages.scss',
 })
@@ -37,10 +24,9 @@ export class OmieAverages implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly auth = inject(Auth);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private readonly indexedEnergyAverageService = inject(
-    IndexedEnergyAverageService,
-  );
+  private readonly indexedEnergyAverageService = inject(IndexedEnergyAverageService);
 
   @ViewChild(MibgasPrices)
   private mibgasPricesComponent?: MibgasPrices;
@@ -72,45 +58,40 @@ export class OmieAverages implements OnInit {
   ];
 
   editForm = this.fb.group({
-    averagePriceMwh: [
-      null as number | null,
-      [
-        Validators.required,
-        Validators.min(0),
-      ],
-    ],
+    averagePriceMwh: [null as number | null, [Validators.required, Validators.min(0)]],
   });
 
   get canEdit(): boolean {
     const role = this.auth.getCurrentUser()?.role ?? '';
 
-    return role
-      .toLowerCase()
-      .includes('super admin');
+    return role.toLowerCase().includes('super admin');
   }
 
   get isRefreshing(): boolean {
-    return (
-      this.isLoading ||
-      !!this.mibgasPricesComponent?.isLoading
-    );
+    return this.isLoading || !!this.mibgasPricesComponent?.isLoading;
   }
 
   ngOnInit(): void {
+    this.indexedEnergyAverageService.latestAveragesInvalidated$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadAverages(true);
+      });
+
     this.loadAverages();
   }
 
   refreshAll(): void {
-    this.loadAverages();
-    this.mibgasPricesComponent?.loadPrices();
+    this.loadAverages(true);
+    this.mibgasPricesComponent?.loadPrices(true);
   }
 
-  loadAverages(): void {
+  loadAverages(forceRefresh = false): void {
     this.isLoading = true;
     this.errorMessage = '';
 
     this.indexedEnergyAverageService
-      .getLatestAverages()
+      .getLatestAverages(forceRefresh)
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -122,9 +103,7 @@ export class OmieAverages implements OnInit {
           this.cards = this.buildCards(response);
         },
         error: () => {
-          this.showError(
-            'Não foi possível carregar as médias OMIE.',
-          );
+          this.showError('Não foi possível carregar as médias OMIE.');
         },
       });
   }
@@ -151,24 +130,19 @@ export class OmieAverages implements OnInit {
 
   saveAverage(average: IndexedEnergyAverage): void {
     if (!this.canEdit) {
-      this.showError(
-        'Não tens permissão para editar médias OMIE.',
-      );
+      this.showError('Não tens permissão para editar médias OMIE.');
       return;
     }
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
 
-      this.showError(
-        'Introduz um valor válido em €/MWh.',
-      );
+      this.showError('Introduz um valor válido em €/MWh.');
 
       return;
     }
 
-    const value =
-      this.editForm.controls.averagePriceMwh.value;
+    const value = this.editForm.controls.averagePriceMwh.value;
 
     if (
       value === null ||
@@ -176,9 +150,7 @@ export class OmieAverages implements OnInit {
       !Number.isFinite(Number(value)) ||
       Number(value) < 0
     ) {
-      this.showError(
-        'O valor não pode ser vazio, negativo ou inválido.',
-      );
+      this.showError('O valor não pode ser vazio, negativo ou inválido.');
 
       return;
     }
@@ -211,22 +183,15 @@ export class OmieAverages implements OnInit {
           this.editingId = null;
           this.editForm.reset();
 
-          this.showSuccess(
-            'Média OMIE atualizada com sucesso.',
-          );
+          this.showSuccess('Média OMIE atualizada com sucesso.');
         },
         error: (error) => {
-          this.showError(
-            error?.error?.message ||
-              'Não foi possível atualizar a média OMIE.',
-          );
+          this.showError(error?.error?.message || 'Não foi possível atualizar a média OMIE.');
         },
       });
   }
 
-  private buildCards(
-    response: LatestIndexedEnergyAveragesResponse,
-  ): IndexedEnergyAverageCard[] {
+  private buildCards(response: LatestIndexedEnergyAveragesResponse): IndexedEnergyAverageCard[] {
     return [
       {
         periodType: 'daily',
@@ -246,13 +211,9 @@ export class OmieAverages implements OnInit {
     ];
   }
 
-  getReferenceLabel(
-    average: IndexedEnergyAverage,
-  ): string {
+  getReferenceLabel(average: IndexedEnergyAverage): string {
     if (average.periodType === 'daily') {
-      return average.referenceDate
-        ? this.formatDate(average.referenceDate)
-        : '-';
+      return average.referenceDate ? this.formatDate(average.referenceDate) : '-';
     }
 
     if (average.periodType === 'weekly') {
@@ -285,9 +246,7 @@ export class OmieAverages implements OnInit {
       return '-';
     }
 
-    return new Intl.DateTimeFormat('pt-PT').format(
-      new Date(value),
-    );
+    return new Intl.DateTimeFormat('pt-PT').format(new Date(value));
   }
 
   formatDateTime(value?: string): string {
@@ -304,17 +263,12 @@ export class OmieAverages implements OnInit {
     }).format(new Date(value));
   }
 
-  getWeeklyRangeLabel(
-    average: IndexedEnergyAverage,
-  ): string {
+  getWeeklyRangeLabel(average: IndexedEnergyAverage): string {
     if (!average.year || !average.week) {
       return '-';
     }
 
-    const startDate = this.getDateOfISOWeek(
-      average.week,
-      average.year,
-    );
+    const startDate = this.getDateOfISOWeek(average.week, average.year);
 
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
@@ -327,27 +281,16 @@ export class OmieAverages implements OnInit {
     return `${formatter.format(startDate)} a ${formatter.format(endDate)}`;
   }
 
-  private getDateOfISOWeek(
-    week: number,
-    year: number,
-  ): Date {
-    const simple = new Date(
-      year,
-      0,
-      1 + (week - 1) * 7,
-    );
+  private getDateOfISOWeek(week: number, year: number): Date {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
 
     const dayOfWeek = simple.getDay();
     const isoWeekStart = new Date(simple);
 
     if (dayOfWeek <= 4) {
-      isoWeekStart.setDate(
-        simple.getDate() - simple.getDay() + 1,
-      );
+      isoWeekStart.setDate(simple.getDate() - simple.getDay() + 1);
     } else {
-      isoWeekStart.setDate(
-        simple.getDate() + 8 - simple.getDay(),
-      );
+      isoWeekStart.setDate(simple.getDate() + 8 - simple.getDay());
     }
 
     isoWeekStart.setHours(0, 0, 0, 0);
@@ -355,9 +298,7 @@ export class OmieAverages implements OnInit {
     return isoWeekStart;
   }
 
-  private formatMonth(
-    month?: number | null,
-  ): string {
+  private formatMonth(month?: number | null): string {
     if (!month) {
       return '-';
     }

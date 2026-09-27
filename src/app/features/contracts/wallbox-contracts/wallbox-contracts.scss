@@ -43,7 +43,6 @@
   }
 }
 
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -83,9 +82,7 @@
     &.active {
       background: #ffffff;
       color: #243646;
-      box-shadow:
-        0 4px 12px
-        rgba(15, 23, 42, 0.08);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
     }
   }
 }
@@ -122,9 +119,7 @@
   padding: 18px;
   border-radius: 22px;
   background: #ffffff;
-  box-shadow:
-    0 14px 40px
-    rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
   overflow-x: auto;
 }
 
@@ -274,8 +269,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  max-height:
-    calc(100vh - 230px);
+  max-height: calc(100vh - 230px);
   padding-bottom: 14px;
   overflow-x: auto;
   overflow-y: auto;
@@ -312,8 +306,7 @@
 
   padding: 0 10px;
 
-  border-radius:
-    12px 12px 0 0;
+  border-radius: 12px 12px 0 0;
 
   color: #ffffff;
   font-size: 13px;
@@ -335,8 +328,7 @@
 
     border-radius: 999px;
 
-    background:
-      rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.2);
 
     color: #ffffff;
 
@@ -363,9 +355,7 @@
   background: #ffffff;
   color: inherit;
   text-decoration: none;
-  box-shadow:
-    0 4px 12px
-    rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
   transition:
     transform 0.15s ease,
     box-shadow 0.2s ease,
@@ -374,9 +364,7 @@
   &:hover {
     border-color: #cbd5e1;
     transform: translateY(-2px);
-    box-shadow:
-      0 8px 18px
-      rgba(15, 23, 42, 0.12);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
   }
 
   .contract-id {
@@ -457,6 +445,59 @@
 }
 
 /* =========================
+   TABLE PAGINATION
+========================= */
+
+.table-pagination {
+  min-width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  padding: 18px 14px 4px;
+}
+
+.table-loaded-count {
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.table-load-more {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #243646;
+
+  padding: 9px 16px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #94a3b8;
+    background: #f8fafc;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+/* =========================
    FEEDBACK
 ========================= */
 
@@ -527,8 +568,7 @@
   }
 
   .kanban-wrapper {
-    max-height:
-      calc(100vh - 280px);
+    max-height: calc(100vh - 280px);
   }
 
   .kanban-column {
@@ -536,6 +576,5 @@
     min-width: 260px;
   }
 }
-
 
 @include contractListFilters.styles;

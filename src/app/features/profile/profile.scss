@@ -156,6 +156,22 @@ input:disabled {
   color: #64748b;
 }
 
+input.invalid {
+  border-color: #dc2626;
+}
+
+input.invalid:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .avatar-large {
   width: 150px;
   height: 150px;

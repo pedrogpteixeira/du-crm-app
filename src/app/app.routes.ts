@@ -477,6 +477,57 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/vodafone',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Vodafone',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/vodafone-contracts/vodafone-contracts'
+          ).then(
+            (m) => m.VodafoneContracts,
+          ),
+      },
+      {
+        path: 'contracts/vodafone/create',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Vodafone',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/vodafone-contract-create/vodafone-contract-create'
+          ).then(
+            (m) => m.VodafoneContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/vodafone/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: [
+            'Super Admin',
+            'DU',
+            'Vodafone',
+          ],
+        },
+        loadComponent: () =>
+          import(
+            './features/contracts/vodafone-contract-detail/vodafone-contract-detail'
+          ).then(
+            (m) => m.VodafoneContractDetail,
+          ),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/profile/profile').then((m) => m.Profile),

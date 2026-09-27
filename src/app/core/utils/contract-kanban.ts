@@ -100,6 +100,15 @@ export function mergeContractsById<TContract extends { id: string }>(
   return result;
 }
 
+
+export function sortContractsByUpdatedAtDesc<TContract extends { updatedAt?: string | null }>(
+  contracts: readonly TContract[],
+): TContract[] {
+  return [...contracts].sort(
+    (a, b) => getContractUpdatedAtTimestamp(b.updatedAt) - getContractUpdatedAtTimestamp(a.updatedAt),
+  );
+}
+
 export function prependContractById<TContract extends { id: string }>(
   contracts: readonly TContract[],
   contract: TContract,
@@ -111,6 +120,16 @@ export function hasAnyMoreContracts(
   pagination: Readonly<Record<string, ContractKanbanColumnState>>,
 ): boolean {
   return Object.values(pagination).some((state) => state.hasMore);
+}
+
+
+function getContractUpdatedAtTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function shouldIgnoreFilterValue(value: ContractApiFilters[string]): boolean {

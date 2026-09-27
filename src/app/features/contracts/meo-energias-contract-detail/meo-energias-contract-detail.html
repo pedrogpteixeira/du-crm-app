@@ -697,6 +697,12 @@
                 <select [(ngModel)]="editForm.campaignId">
                   <option value="">Selecionar campanha</option>
 
+                  <option
+                    *ngIf="inactiveCurrentCampaignOption as inactiveCampaign"
+                    [value]="inactiveCampaign.id"
+                  >
+                    {{ inactiveCampaign.name }} (Inativa)
+                  </option>
                   <option *ngFor="let campaign of campaigns" [value]="campaign.id">
                     {{ campaign.name }}
                   </option>

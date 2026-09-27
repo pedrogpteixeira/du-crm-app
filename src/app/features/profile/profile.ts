@@ -190,9 +190,26 @@ export class Profile implements OnInit {
     this.editableUser = { ...this.user };
   }
 
+  onPhoneChange(value: string | null | undefined): void {
+    this.editableUser.phone = String(value ?? '')
+      .replace(/\D/g, '')
+      .slice(0, 9);
+  }
+
+  get isPhoneValid(): boolean {
+    const phone = this.editableUser.phone?.trim() ?? '';
+
+    return !phone || /^\d{9}$/.test(phone);
+  }
+
   save(): void {
     if (!this.user.id || !this.editableUser.defaultTeam?.id) {
       this.showTemporaryMessage('error', 'Não foi possível guardar o perfil.');
+      return;
+    }
+
+    if (!this.isPhoneValid) {
+      this.showTemporaryMessage('error', 'O telefone deve ter exatamente 9 dígitos.');
       return;
     }
 
