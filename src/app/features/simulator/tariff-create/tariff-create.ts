@@ -37,6 +37,8 @@ import {
   GAS_LEVELS,
 } from '../../../core/constants/energy';
 
+import { IBERDROLA_COMPANY_ID } from '../../../core/services/iberdrola-contract';
+
 @Component({
   selector: 'app-tariff-create',
   imports: [
@@ -154,6 +156,12 @@ export class TariffCreate implements OnInit {
       sva:
         this.fb.control<number | null>(null),
 
+      PEL:
+        this.fb.control<number | null>(null),
+
+      PELPlus:
+        this.fb.control<number | null>(null),
+
       loyalty:
         this.fb.control<number | null>(null),
 
@@ -172,6 +180,9 @@ export class TariffCreate implements OnInit {
         this.fb.control<number | null>(null),
 
       sva:
+        this.fb.control<number | null>(null),
+
+      MGI:
         this.fb.control<number | null>(null),
 
       gasBonus:
@@ -238,6 +249,12 @@ export class TariffCreate implements OnInit {
   }
 
   private listenToFormChanges(): void {
+    this.form.controls.companyId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.onCompanyChange();
+      });
+
     this.form.controls.productType.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -261,6 +278,37 @@ export class TariffCreate implements OnInit {
       .subscribe(() => {
         this.onTariffTypeChange();
       });
+  }
+
+  private onCompanyChange(): void {
+    this.clearMessages();
+
+    if (this.isIberdrolaEnergySelected()) {
+      this.form.controls.electricityDiscounts.controls.sva.setValue(
+        null,
+        { emitEvent: false },
+      );
+
+      this.form.controls.gasDiscounts.controls.sva.setValue(
+        null,
+        { emitEvent: false },
+      );
+    } else {
+      this.form.controls.electricityDiscounts.patchValue(
+        {
+          PEL: null,
+          PELPlus: null,
+        },
+        { emitEvent: false },
+      );
+
+      this.form.controls.gasDiscounts.controls.MGI.setValue(
+        null,
+        { emitEvent: false },
+      );
+    }
+
+    this.configureDiscountValidators();
   }
 
   private onProductTypeChange(): void {
@@ -903,6 +951,7 @@ export class TariffCreate implements OnInit {
         const electricityDiscounts =
           this.buildDiscounts(
             value.electricityDiscounts,
+            'electricity',
           );
 
         if (electricityDiscounts) {
@@ -984,6 +1033,7 @@ export class TariffCreate implements OnInit {
         const gasDiscounts =
           this.buildDiscounts(
             value.gasDiscounts,
+            'gas',
           );
 
         if (gasDiscounts) {
@@ -1089,29 +1139,61 @@ export class TariffCreate implements OnInit {
       directDebit: number | null;
       welcomeBonus: number | null;
       sva: number | null;
+      PEL?: number | null;
+      PELPlus?: number | null;
+      MGI?: number | null;
       loyalty?: number | null;
-      gasBonus: number | null;
+      gasBonus?: number | null;
     },
+    energy: 'electricity' | 'gas',
   ): TariffDiscounts | undefined {
-    const cleanedDiscounts =
-      Object.fromEntries(
-        Object.entries(discounts)
-          .filter(([, value]) => {
-            return (
-              value !== null &&
-              value !== undefined &&
-              Number(value) > 0
-            );
-          })
-          .map(([key, value]) => [
-            key,
-            Number(value),
-          ]),
-      ) as TariffDiscounts;
+    const result: TariffDiscounts = {};
 
-    return Object.keys(cleanedDiscounts).length
-      ? cleanedDiscounts
+    const addDiscount = (
+      key: keyof TariffDiscounts,
+      value: number | null | undefined,
+    ): void => {
+      if (
+        value === null ||
+        value === undefined ||
+        Number(value) <= 0
+      ) {
+        return;
+      }
+
+      result[key] = Number(value);
+    };
+
+    addDiscount(
+      'electronicInvoice',
+      discounts.electronicInvoice,
+    );
+    addDiscount('directDebit', discounts.directDebit);
+    addDiscount('welcomeBonus', discounts.welcomeBonus);
+    addDiscount('loyalty', discounts.loyalty);
+    addDiscount('gasBonus', discounts.gasBonus);
+
+    if (this.isIberdrolaEnergySelected()) {
+      if (energy === 'electricity') {
+        addDiscount('PEL', discounts.PEL);
+        addDiscount('PELPlus', discounts.PELPlus);
+      } else {
+        addDiscount('MGI', discounts.MGI);
+      }
+    } else {
+      addDiscount('sva', discounts.sva);
+    }
+
+    return Object.keys(result).length
+      ? result
       : undefined;
+  }
+
+  isIberdrolaEnergySelected(): boolean {
+    return (
+      this.form.controls.companyId.value ===
+      IBERDROLA_COMPANY_ID
+    );
   }
 
   shouldShowElectricityFields(): boolean {
@@ -1297,6 +1379,8 @@ export class TariffCreate implements OnInit {
         directDebit: null,
         welcomeBonus: null,
         sva: null,
+        PEL: null,
+        PELPlus: null,
         loyalty: null,
         gasBonus: null,
       },
@@ -1313,6 +1397,7 @@ export class TariffCreate implements OnInit {
         directDebit: null,
         welcomeBonus: null,
         sva: null,
+        MGI: null,
         gasBonus: null,
       },
       {
@@ -1362,6 +1447,8 @@ export class TariffCreate implements OnInit {
           directDebit: null,
           welcomeBonus: null,
           sva: null,
+          PEL: null,
+          PELPlus: null,
           loyalty: null,
           gasBonus: null,
         },
@@ -1371,6 +1458,7 @@ export class TariffCreate implements OnInit {
           directDebit: null,
           welcomeBonus: null,
           sva: null,
+          MGI: null,
           gasBonus: null,
         },
 

@@ -116,7 +116,9 @@ interface IberdrolaContractCreateForm {
 
   faturaEletronica: boolean;
   debitoDireto: boolean;
-  sva: boolean;
+  PEL: boolean;
+  PELPlus: boolean;
+  MGI: boolean;
   iban: string;
 
   campanha: string;
@@ -314,7 +316,9 @@ export class IberdrolaContractCreate implements OnInit {
 
     faturaEletronica: false,
     debitoDireto: false,
-    sva: false,
+    PEL: false,
+    PELPlus: false,
+    MGI: false,
     iban: '',
 
     campanha: '',
@@ -377,12 +381,15 @@ export class IberdrolaContractCreate implements OnInit {
   onTipoProdutoChange(): void {
     if (!this.shouldShowLuzFields()) {
       this.clearElectricityFields();
+      this.contractForm.PEL = false;
+      this.contractForm.PELPlus = false;
     } else if (!this.contractForm.cpe.trim()) {
       this.contractForm.cpe = DEFAULT_CPE_PREFIX;
     }
 
     if (!this.shouldShowGasFields()) {
       this.clearGasFields();
+      this.contractForm.MGI = false;
     } else if (!this.contractForm.cui.trim()) {
       this.contractForm.cui = DEFAULT_CUI_PREFIX;
     }
@@ -555,6 +562,32 @@ export class IberdrolaContractCreate implements OnInit {
     this.router.navigate(['/home/contracts/iberdrola']);
   }
 
+  onPelChanged(enabled: boolean): void {
+    if (!this.shouldShowLuzFields()) {
+      this.contractForm.PEL = false;
+      return;
+    }
+
+    this.contractForm.PEL = enabled;
+
+    if (enabled) {
+      this.contractForm.PELPlus = false;
+    }
+  }
+
+  onPelPlusChanged(enabled: boolean): void {
+    if (!this.shouldShowLuzFields()) {
+      this.contractForm.PELPlus = false;
+      return;
+    }
+
+    this.contractForm.PELPlus = enabled;
+
+    if (enabled) {
+      this.contractForm.PEL = false;
+    }
+  }
+
   createContract(): void {
     if (this.isPreflightLoading || this.isCreatingContract) {
       return;
@@ -594,6 +627,21 @@ export class IberdrolaContractCreate implements OnInit {
 
     if (!this.contractForm.telefone) {
       this.errorMessage = 'O telefone é obrigatório.';
+      return;
+    }
+
+    if (!this.shouldShowLuzFields() && (this.contractForm.PEL || this.contractForm.PELPlus)) {
+      this.errorMessage = 'PEL e PEL Plus só podem ser utilizados em produtos com Luz.';
+      return;
+    }
+
+    if (!this.shouldShowGasFields() && this.contractForm.MGI) {
+      this.errorMessage = 'MGI só pode ser utilizado em produtos com Gás.';
+      return;
+    }
+
+    if (this.contractForm.PEL && this.contractForm.PELPlus) {
+      this.errorMessage = 'PEL e PEL Plus não podem estar ativos em simultâneo.';
       return;
     }
 
@@ -1167,7 +1215,11 @@ export class IberdrolaContractCreate implements OnInit {
 
       debitoDireto: this.contractForm.debitoDireto,
 
-      sva: this.contractForm.sva,
+      PEL: this.contractForm.PEL,
+
+      PELPlus: this.contractForm.PELPlus,
+
+      MGI: this.contractForm.MGI,
     };
 
     this.addIfFilled(payload, 'idVenda', this.contractForm.idVenda.trim());

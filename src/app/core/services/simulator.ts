@@ -41,7 +41,6 @@ export interface SimulationDiscountConditions {
 
   PEL?: boolean;
   PELPlus?: boolean;
-  PGI?: boolean;
   MGI?: boolean;
 }
 
@@ -93,6 +92,9 @@ export interface TariffDiscounts {
   directDebit?: number;
   welcomeBonus?: number;
   sva?: number;
+  PEL?: number;
+  PELPlus?: number;
+  MGI?: number;
   loyalty?: number;
   gasBonus?: number;
 }

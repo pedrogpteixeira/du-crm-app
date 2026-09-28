@@ -483,9 +483,9 @@
         </label>
 
         <label>
-          SVA
+          Débito Direto
 
-          <select [(ngModel)]="contractForm.sva">
+          <select [(ngModel)]="contractForm.debitoDireto">
             <option [ngValue]="false">Não</option>
 
             <option [ngValue]="true">Sim</option>
@@ -493,9 +493,37 @@
         </label>
 
         <label>
-          Débito Direto
+          PEL
 
-          <select [(ngModel)]="contractForm.debitoDireto">
+          <select
+            [(ngModel)]="contractForm.PEL"
+            (ngModelChange)="onPelChanged($event)"
+            [disabled]="!shouldShowLuzFields()"
+          >
+            <option [ngValue]="false">Não</option>
+
+            <option [ngValue]="true">Sim</option>
+          </select>
+        </label>
+
+        <label>
+          PEL Plus
+
+          <select
+            [(ngModel)]="contractForm.PELPlus"
+            (ngModelChange)="onPelPlusChanged($event)"
+            [disabled]="!shouldShowLuzFields()"
+          >
+            <option [ngValue]="false">Não</option>
+
+            <option [ngValue]="true">Sim</option>
+          </select>
+        </label>
+
+        <label>
+          MGI
+
+          <select [(ngModel)]="contractForm.MGI" [disabled]="!shouldShowGasFields()">
             <option [ngValue]="false">Não</option>
 
             <option [ngValue]="true">Sim</option>

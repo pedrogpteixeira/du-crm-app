@@ -531,7 +531,7 @@ export class GalpSolarContractCreate implements OnInit {
             ? 'Contrato e documentos criados com sucesso.'
             : 'Contrato Galp Solar criado com sucesso.';
 
-          this.router.navigate(['/home/galp-solar/contracts', contract.id]);
+          this.router.navigate(['/home/contracts/galp-solar', contract.id]);
         },
 
         error: (error) => {

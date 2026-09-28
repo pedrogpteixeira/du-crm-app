@@ -1,3 +1,5 @@
+@use './styles/dark-theme';
+
 * {
   margin: 0;
   padding: 0;
@@ -451,236 +453,159 @@ button {
 }
 
 /* =========================================================
-   APPLICATION THEME
-   Theme preference is persisted by the API. The data-theme attribute is
-   applied centrally by ThemeService; these shared tokens/overrides provide a
-   dark foundation without duplicating theme logic inside every component.
+   CONTRACT KANBAN CARDS
+   Shared visual structure for every provider. Cards keep the
+   same height while preserving a clear hierarchy and readable
+   truncation for unusually long names.
 ========================================================= */
-:root {
-  --app-bg: #eef6fa;
-  --app-shell-bg: #f8fafc;
-  --app-surface: #ffffff;
-  --app-surface-muted: #f8fafc;
-  --app-surface-hover: #eef6fa;
-  --app-border: #e2e8f0;
-  --app-border-strong: #cbd5e1;
-  --app-text: #243646;
-  --app-text-muted: #64748b;
-  --app-accent: #008db1;
-  --app-input-bg: #ffffff;
+.contracts-page .kanban-list > .kanban-card {
+  height: 172px;
+  min-height: 172px;
+  max-height: 172px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  padding: 10px 14px 8px;
+
+  border: 1px solid #dce6ee;
+  border-radius: 10px;
+
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  overflow: hidden;
+
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
-html[data-theme='dark'] {
-  color-scheme: dark;
-  --app-bg: #0b1220;
-  --app-shell-bg: #0f172a;
-  --app-surface: #111c2e;
-  --app-surface-muted: #162236;
-  --app-surface-hover: #1a2a40;
-  --app-border: #26364b;
-  --app-border-strong: #3b4d64;
-  --app-text: #edf4fb;
-  --app-text-muted: #9fb0c3;
-  --app-accent: #38b9d8;
-  --app-input-bg: #0f1a2b;
+.contracts-page .kanban-list > .kanban-card:hover {
+  border-color: #b8ccd9;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbfd 100%);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
-html,
-body {
-  background: var(--app-bg);
-  color: var(--app-text);
+.contracts-page .kanban-list > .kanban-card .contract-id {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+
+  color: #7b8b99;
+
+  font-size: 10.5px;
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-html[data-theme='dark'] body,
-html[data-theme='dark'] .home-layout,
-html[data-theme='dark'] .main-layout,
-html[data-theme='dark'] .content {
-  background: var(--app-shell-bg) !important;
-  color: var(--app-text);
+.contracts-page .kanban-list > .kanban-card .contract-client {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+
+  color: #0f7f9d;
+
+  font-size: 14.25px;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-html[data-theme='dark'] .utility-bar {
-  background: rgba(15, 23, 42, 0.96) !important;
-  border-color: var(--app-border) !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta {
+  width: 100%;
+  min-width: 0;
+  min-height: 19px;
+
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+
+  color: inherit;
 }
 
-html[data-theme='dark'] .mobile-menu-button,
-html[data-theme='dark'] .notification-trigger {
-  border-color: var(--app-border) !important;
-  background: var(--app-surface) !important;
-  color: var(--app-text) !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta-label {
+  min-width: 0;
+
+  color: #7a8b9a;
+  font-size: 10.5px;
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+
+  white-space: nowrap;
 }
 
-html[data-theme='dark'] :is(
-  .card,
-  .settings-card,
-  .filters-card,
-  .table-card,
-  .user-modal,
-  .confirm-modal,
-  .notification-dropdown,
-  .form-card,
-  .details-card,
-  .summary-card,
-  .analytics-card,
-  .content-card,
-  .modal-card,
-  .ticket-card,
-  .company-card
-) {
-  border-color: var(--app-border) !important;
-  background: var(--app-surface) !important;
-  color: var(--app-text) !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta-value {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+
+  color: #243646;
+  font-size: 12.25px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
-html[data-theme='dark'] :is(
-  .setting-item,
-  .filter-field,
-  .table-header,
-  .role-override-section,
-  .preferences-override-section,
-  .team-assignment-section,
-  .contract-layout-section
-) {
-  border-color: var(--app-border) !important;
+/* Keep ownership / registration metadata in the same vertical rhythm as
+   every other row. The divider sits inside the existing gap instead of
+   creating additional spacing or pinning the footer to the bottom. */
+.contracts-page .kanban-list > .kanban-card .kanban-meta:nth-last-child(2) {
+  position: relative;
 }
 
-html[data-theme='dark'] :is(
-  .setting-item,
-  .role-override-section,
-  .preferences-override-section
-) {
-  background: var(--app-surface-muted) !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta:nth-last-child(2)::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: 0;
+  left: 0;
+  border-top: 1px solid #edf2f6;
+  pointer-events: none;
 }
 
-html[data-theme='dark'] :is(input, textarea, select) {
-  border-color: var(--app-border-strong) !important;
-  background-color: var(--app-input-bg) !important;
-  color: var(--app-text) !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta:nth-last-child(-n + 2) .kanban-meta-label {
+  color: #8a99a7;
+  font-size: 10px;
 }
 
-html[data-theme='dark'] :is(input, textarea)::placeholder {
-  color: #71849a !important;
+.contracts-page .kanban-list > .kanban-card .kanban-meta:nth-last-child(-n + 2) .kanban-meta-value {
+  color: #425466;
+  font-size: 11.75px;
+  font-weight: 650;
 }
 
-html[data-theme='dark'] select {
-  background-image:
-    linear-gradient(45deg, transparent 50%, #9fb0c3 50%),
-    linear-gradient(135deg, #9fb0c3 50%, transparent 50%);
-}
+@media (max-width: 640px) {
+  .contracts-page .kanban-list > .kanban-card {
+    padding-inline: 13px;
+  }
 
-html[data-theme='dark'] :is(h1, h2, h3, h4, .section-title) {
-  color: var(--app-text) !important;
-}
-
-html[data-theme='dark'] :is(
-  .page-header p,
-  .modal-header p,
-  .setting-copy > span,
-  .card-header p,
-  .muted,
-  .role-value,
-  .meta span,
-  .online-section p,
-  .loading,
-  .save-bar-copy span:not(.material-symbols-rounded)
-) {
-  color: var(--app-text-muted) !important;
-}
-
-html[data-theme='dark'] :is(
-  .table-header,
-  .user-row,
-  .notification-item,
-  .modal-header,
-  .modal-footer,
-  .save-bar
-) {
-  border-color: var(--app-border) !important;
-}
-
-html[data-theme='dark'] :is(.user-row, .notification-item) {
-  color: var(--app-text) !important;
-}
-
-html[data-theme='dark'] .user-row:hover,
-html[data-theme='dark'] .notification-item.clickable:hover,
-html[data-theme='dark'] .notification-item.clickable:focus-visible {
-  background: var(--app-surface-hover) !important;
-}
-
-html[data-theme='dark'] .notification-item.unread {
-  background: #10263a !important;
-}
-
-html[data-theme='dark'] .notification-badge {
-  border-color: var(--app-shell-bg) !important;
-}
-
-html[data-theme='dark'] :is(
-  .option-segment button,
-  .contract-layout-options button,
-  .edit-user-button,
-  .filters-toggle-button,
-  .pagination-controls button,
-  .cancel-button
-) {
-  border-color: var(--app-border-strong) !important;
-  background: var(--app-surface-muted) !important;
-  color: var(--app-text) !important;
-}
-
-html[data-theme='dark'] :is(
-  .option-segment button.active,
-  .contract-layout-options button.active
-) {
-  border-color: #2c8aa3 !important;
-  background: #123042 !important;
-  color: #7dddf2 !important;
-}
-
-html[data-theme='dark'] :is(
-  .option-segment button strong,
-  .contract-layout-options button strong,
-  .role-section-heading strong,
-  .save-bar-copy strong,
-  .meta strong
-) {
-  color: var(--app-text) !important;
-}
-
-html[data-theme='dark'] :is(
-  .option-segment button.active strong,
-  .contract-layout-options button.active strong
-) {
-  color: #7dddf2 !important;
-}
-
-html[data-theme='dark'] .contract-detail-page > .page-header {
-  border-color: var(--app-border) !important;
-  background: rgba(17, 28, 46, 0.96) !important;
-}
-
-html[data-theme='dark'] .contract-detail-page > .page-header .header-actions {
-  border-color: var(--app-border) !important;
-  background: var(--app-surface-muted) !important;
-}
-
-html[data-theme='dark'] .contract-detail-page > .page-header .edit-action-button,
-html[data-theme='dark'] .contract-detail-page > .page-header .cancel-action-button {
-  border-color: var(--app-border-strong) !important;
-  background: var(--app-surface) !important;
-  color: var(--app-text) !important;
-}
-
-html[data-theme='dark'] .modal-backdrop {
-  background: rgba(2, 6, 23, 0.7) !important;
-}
-
-html[data-theme='dark'] ::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-
-html[data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: #3b4d64;
+  .contracts-page .kanban-list > .kanban-card .kanban-meta {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
 }

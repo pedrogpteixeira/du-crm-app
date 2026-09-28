@@ -112,6 +112,9 @@ export interface IberdrolaContract {
   estado: IberdrolaContractStatus;
   tipoSegmento?: IberdrolaTipoSegmento;
   tipoProduto?: IberdrolaTipoProduto;
+  PEL?: boolean;
+  PELPlus?: boolean;
+  MGI?: boolean;
   nomeRegistoCE?: string;
   user: IberdrolaContractListUser | null;
   observacoes?: string;
@@ -204,7 +207,9 @@ export interface IberdrolaContractDetail {
 
   faturaEletronica: boolean;
   debitoDireto: boolean;
-  sva: boolean;
+  PEL?: boolean;
+  PELPlus?: boolean;
+  MGI?: boolean;
   iban?: string;
 
   campaign: IberdrolaContractCampaign | null;
@@ -269,7 +274,9 @@ export interface CreateIberdrolaContractRequest {
 
   faturaEletronica?: boolean;
   debitoDireto?: boolean;
-  sva?: boolean;
+  PEL?: boolean;
+  PELPlus?: boolean;
+  MGI?: boolean;
   iban?: string;
 
   campanha: string;

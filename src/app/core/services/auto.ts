@@ -93,6 +93,9 @@ export type AutoItemColumnKey =
   | 'electronicInvoice'
   | 'directDebit'
   | 'sva'
+  | 'PEL'
+  | 'PELPlus'
+  | 'MGI'
   | 'state'
   | 'registrationName'
   | 'tipoSegmento'
@@ -118,12 +121,33 @@ const FULL_ENERGY_COLUMNS: readonly AutoItemColumnKey[] = [
   'commission',
 ];
 
+const IBERDROLA_ENERGY_COLUMNS: readonly AutoItemColumnKey[] = [
+  'contractId',
+  'clientName',
+  'signatureDate',
+  'cpe',
+  'cui',
+  'campaign',
+  'power',
+  'nif',
+  'electronicInvoice',
+  'directDebit',
+  'PEL',
+  'PELPlus',
+  'MGI',
+  'state',
+  'registrationName',
+  'tipoSegmento',
+  'movementType',
+  'commission',
+];
+
 export const AUTO_COLUMNS_BY_PROVIDER: Readonly<
   Record<AutoProvider, readonly AutoItemColumnKey[]>
 > = {
   repsol: FULL_ENERGY_COLUMNS,
   'galp-power-gas': FULL_ENERGY_COLUMNS,
-  iberdrola: FULL_ENERGY_COLUMNS,
+  iberdrola: IBERDROLA_ENERGY_COLUMNS,
   'yes-energy': FULL_ENERGY_COLUMNS,
   'meo-energias': [
     'contractId',
@@ -221,6 +245,9 @@ export interface AutoItem {
   electronicInvoice?: boolean;
   directDebit?: boolean;
   sva?: string | boolean | null;
+  PEL?: boolean;
+  PELPlus?: boolean;
+  MGI?: boolean;
   state?: string;
   registrationName?: string;
   tipoSegmento?: string;

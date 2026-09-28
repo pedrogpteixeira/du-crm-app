@@ -70,7 +70,6 @@
   <div class="card" *ngIf="viewMode === 'table'">
     <div class="table-header">
       <span>ID Contrato</span>
-      <span>ID Venda</span>
       <span>Cliente / Empresa</span>
       <span>NIF</span>
       <span>Segmento</span>
@@ -93,10 +92,6 @@
     >
       <span>
         {{ contract.id }}
-      </span>
-
-      <span>
-        {{ getValue(contract.idVenda) }}
       </span>
 
       <strong>
@@ -185,39 +180,34 @@
             <span class="contract-id">
               {{ contract.id }}
             </span>
-
-            <span>
-              ID Venda:
-              {{ getValue(contract.idVenda) }}
-            </span>
-
-            <strong>
+            
+            <strong class="contract-client">
               {{ getValue(contract.nomeClienteEmpresa) }}
             </strong>
 
-            <span>
-              NIF:
-              {{ getValue(contract.nif) }}
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">NIF:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.nif) }}</span>
             </span>
 
-            <span>
-              Segmento:
-              {{ getValue(contract.tipoSegmento) }}
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">Segmento:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.tipoSegmento) }}</span>
             </span>
 
-            <span>
-              Produto:
-              {{ getValue(contract.tipoProduto) }}
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">Produto:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.tipoProduto) }}</span>
             </span>
 
-            <span>
-              Criado por:
-              {{ getContractUserName(contract) }}
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">Criado por:</span>
+              <span class="kanban-meta-value">{{ getContractUserName(contract) }}</span>
             </span>
 
-            <span>
-              Registo C.E.:
-              {{ getValue(contract.nomeRegistoCE) }}
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">Registo C.E.:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.nomeRegistoCE) }}</span>
             </span>
           </a>
 

@@ -624,17 +624,63 @@
               </label>
 
               <label>
-                SVA
+                PEL
 
-                <select *ngIf="isEditing; else svaView" [(ngModel)]="editForm.sva">
+                <select
+                  *ngIf="isEditing; else pelView"
+                  [(ngModel)]="editForm.PEL"
+                  (ngModelChange)="onPelChanged($event)"
+                  [disabled]="!shouldShowLuzFields()"
+                >
                   <option [ngValue]="false">Não</option>
 
                   <option [ngValue]="true">Sim</option>
                 </select>
 
-                <ng-template #svaView>
+                <ng-template #pelView>
                   <strong>
-                    {{ formatBoolean(contract.sva) }}
+                    {{ formatBoolean(contract.PEL ?? false) }}
+                  </strong>
+                </ng-template>
+              </label>
+
+              <label>
+                PEL Plus
+
+                <select
+                  *ngIf="isEditing; else pelPlusView"
+                  [(ngModel)]="editForm.PELPlus"
+                  (ngModelChange)="onPelPlusChanged($event)"
+                  [disabled]="!shouldShowLuzFields()"
+                >
+                  <option [ngValue]="false">Não</option>
+
+                  <option [ngValue]="true">Sim</option>
+                </select>
+
+                <ng-template #pelPlusView>
+                  <strong>
+                    {{ formatBoolean(contract.PELPlus ?? false) }}
+                  </strong>
+                </ng-template>
+              </label>
+
+              <label>
+                MGI
+
+                <select
+                  *ngIf="isEditing; else mgiView"
+                  [(ngModel)]="editForm.MGI"
+                  [disabled]="!shouldShowGasFields()"
+                >
+                  <option [ngValue]="false">Não</option>
+
+                  <option [ngValue]="true">Sim</option>
+                </select>
+
+                <ng-template #mgiView>
+                  <strong>
+                    {{ formatBoolean(contract.MGI ?? false) }}
                   </strong>
                 </ng-template>
               </label>

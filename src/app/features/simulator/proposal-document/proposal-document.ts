@@ -479,6 +479,15 @@ export class ProposalDocument {
         sva:
           'Serviço de valor acrescentado',
 
+        PEL:
+          'PEL',
+
+        PELPlus:
+          'PEL Plus',
+
+        MGI:
+          'MGI',
+
         loyalty:
           'Fidelização',
 

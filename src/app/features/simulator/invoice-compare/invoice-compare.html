@@ -401,7 +401,7 @@
     class="card associated-products-card"
     *ngIf="shouldShowElectricityFields() || shouldShowGasFields()"
   >
-    <div class="section-title">Serviços / Produtos associados</div>
+    <div class="section-title">Condições Iberdrola Energia</div>
 
     <div class="associated-products-grid">
       <section
@@ -410,19 +410,19 @@
       >
         <div class="associated-product-heading">
           <strong>
-            {{ form.productType === 'dual' ? 'Produto associado à eletricidade' : 'Produto adicional (SVA Iberdrola)' }}
+            {{ form.productType === 'dual' ? 'Condição associada à eletricidade' : 'Condição de eletricidade' }}
           </strong>
-          <span>Seleciona no máximo uma opção.</span>
+          <span>Apenas Iberdrola Energia · PEL e PEL Plus podem afetar desconto e comissão.</span>
         </div>
 
         <div class="radio-options">
           <label class="radio-option">
             <input
               type="radio"
-              name="electricityCommissionProduct"
+              name="electricityIberdrolaCondition"
               value="none"
-              [(ngModel)]="electricityCommissionProduct"
-              (ngModelChange)="onElectricityCommissionProductChange($event)"
+              [(ngModel)]="electricityIberdrolaCondition"
+              (ngModelChange)="onElectricityIberdrolaConditionChange($event)"
             />
             <span>Nenhum</span>
           </label>
@@ -430,10 +430,10 @@
           <label class="radio-option">
             <input
               type="radio"
-              name="electricityCommissionProduct"
+              name="electricityIberdrolaCondition"
               value="PEL"
-              [(ngModel)]="electricityCommissionProduct"
-              (ngModelChange)="onElectricityCommissionProductChange($event)"
+              [(ngModel)]="electricityIberdrolaCondition"
+              (ngModelChange)="onElectricityIberdrolaConditionChange($event)"
             />
             <span>PEL</span>
           </label>
@@ -441,12 +441,12 @@
           <label class="radio-option">
             <input
               type="radio"
-              name="electricityCommissionProduct"
+              name="electricityIberdrolaCondition"
               value="PELPlus"
-              [(ngModel)]="electricityCommissionProduct"
-              (ngModelChange)="onElectricityCommissionProductChange($event)"
+              [(ngModel)]="electricityIberdrolaCondition"
+              (ngModelChange)="onElectricityIberdrolaConditionChange($event)"
             />
-            <span>PEL+</span>
+            <span>PEL Plus</span>
           </label>
         </div>
       </section>
@@ -457,41 +457,31 @@
       >
         <div class="associated-product-heading">
           <strong>
-            {{ form.productType === 'dual' ? 'Produto associado ao gás' : 'Produto adicional' }}
+            {{ form.productType === 'dual' ? 'Condição associada ao gás' : 'Condição de gás' }}
           </strong>
-          <span>Seleciona no máximo uma opção.</span>
+          <span>Apenas Iberdrola Energia · MGI pode afetar desconto e comissão.</span>
         </div>
 
         <div class="radio-options">
           <label class="radio-option">
             <input
               type="radio"
-              name="gasCommissionProduct"
+              name="gasIberdrolaCondition"
               value="none"
-              [(ngModel)]="gasCommissionProduct"
-              (ngModelChange)="onGasCommissionProductChange($event)"
+              [(ngModel)]="gasIberdrolaCondition"
+              (ngModelChange)="onGasIberdrolaConditionChange($event)"
             />
             <span>Nenhum</span>
           </label>
 
-          <label class="radio-option">
-            <input
-              type="radio"
-              name="gasCommissionProduct"
-              value="PGI"
-              [(ngModel)]="gasCommissionProduct"
-              (ngModelChange)="onGasCommissionProductChange($event)"
-            />
-            <span>PGI</span>
-          </label>
 
           <label class="radio-option">
             <input
               type="radio"
-              name="gasCommissionProduct"
+              name="gasIberdrolaCondition"
               value="MGI"
-              [(ngModel)]="gasCommissionProduct"
-              (ngModelChange)="onGasCommissionProductChange($event)"
+              [(ngModel)]="gasIberdrolaCondition"
+              (ngModelChange)="onGasIberdrolaConditionChange($event)"
             />
             <span>MGI</span>
           </label>

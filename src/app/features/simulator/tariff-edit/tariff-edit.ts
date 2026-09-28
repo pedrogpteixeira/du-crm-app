@@ -38,6 +38,8 @@ import {
   GAS_LEVELS,
 } from '../../../core/constants/energy';
 
+import { IBERDROLA_COMPANY_ID } from '../../../core/services/iberdrola-contract';
+
 interface SearchFilters {
   name: string;
   companyId: string;
@@ -53,8 +55,11 @@ interface DiscountFormValue {
   directDebit: number | null;
   welcomeBonus: number | null;
   sva: number | null;
-  loyalty: number | null;
-  gasBonus: number | null;
+  PEL?: number | null;
+  PELPlus?: number | null;
+  MGI?: number | null;
+  loyalty?: number | null;
+  gasBonus?: number | null;
 }
 
 @Component({
@@ -148,6 +153,8 @@ export class TariffEdit implements OnInit {
       directDebit: this.fb.control<number | null>(null),
       welcomeBonus: this.fb.control<number | null>(null),
       sva: this.fb.control<number | null>(null),
+      PEL: this.fb.control<number | null>(null),
+      PELPlus: this.fb.control<number | null>(null),
       loyalty: this.fb.control<number | null>(null),
       gasBonus: this.fb.control<number | null>(null),
     }),
@@ -157,6 +164,7 @@ export class TariffEdit implements OnInit {
       directDebit: this.fb.control<number | null>(null),
       welcomeBonus: this.fb.control<number | null>(null),
       sva: this.fb.control<number | null>(null),
+      MGI: this.fb.control<number | null>(null),
       loyalty: this.fb.control<number | null>(null),
       gasBonus: this.fb.control<number | null>(null),
     }),
@@ -331,12 +339,12 @@ export class TariffEdit implements OnInit {
           tariff.gasAdditionalCostPerKwh ?? null,
 
         electricityDiscounts:
-          this.toDiscountFormValue(
+          this.toElectricityDiscountFormValue(
             tariff.electricityDiscounts,
           ),
 
         gasDiscounts:
-          this.toDiscountFormValue(
+          this.toGasDiscountFormValue(
             tariff.gasDiscounts,
           ),
 
@@ -782,13 +790,15 @@ export class TariffEdit implements OnInit {
         const currentDiscounts =
           this.buildCompleteDiscounts(
             current.electricityDiscounts,
+            'electricity',
           );
 
         const originalDiscounts =
           this.buildCompleteDiscounts(
-            this.toDiscountFormValue(
+            this.toElectricityDiscountFormValue(
               original.electricityDiscounts,
             ),
+            'electricity',
           );
 
         if (
@@ -845,13 +855,15 @@ export class TariffEdit implements OnInit {
         const currentDiscounts =
           this.buildCompleteDiscounts(
             current.gasDiscounts,
+            'gas',
           );
 
         const originalDiscounts =
           this.buildCompleteDiscounts(
-            this.toDiscountFormValue(
+            this.toGasDiscountFormValue(
               original.gasDiscounts,
             ),
+            'gas',
           );
 
         if (
@@ -1306,26 +1318,49 @@ export class TariffEdit implements OnInit {
 
   private buildCompleteDiscounts(
     discounts: DiscountFormValue,
+    energy: 'electricity' | 'gas',
   ): TariffDiscounts {
     const result: TariffDiscounts = {};
 
-    Object.entries(discounts).forEach(
-      ([key, value]) => {
-        if (
-          value !== null &&
-          value !== undefined &&
-          Number(value) > 0
-        ) {
-          result[key as keyof TariffDiscounts] =
-            Number(value);
-        }
-      },
+    const addDiscount = (
+      key: keyof TariffDiscounts,
+      value: number | null | undefined,
+    ): void => {
+      if (
+        value === null ||
+        value === undefined ||
+        Number(value) <= 0
+      ) {
+        return;
+      }
+
+      result[key] = Number(value);
+    };
+
+    addDiscount(
+      'electronicInvoice',
+      discounts.electronicInvoice,
     );
+    addDiscount('directDebit', discounts.directDebit);
+    addDiscount('welcomeBonus', discounts.welcomeBonus);
+    addDiscount('loyalty', discounts.loyalty);
+    addDiscount('gasBonus', discounts.gasBonus);
+
+    if (this.isIberdrolaEnergyTariff()) {
+      if (energy === 'electricity') {
+        addDiscount('PEL', discounts.PEL);
+        addDiscount('PELPlus', discounts.PELPlus);
+      } else {
+        addDiscount('MGI', discounts.MGI);
+      }
+    } else {
+      addDiscount('sva', discounts.sva);
+    }
 
     return result;
   }
 
-  private toDiscountFormValue(
+  private toElectricityDiscountFormValue(
     discounts?: TariffDiscounts,
   ): DiscountFormValue {
     return {
@@ -1338,8 +1373,17 @@ export class TariffEdit implements OnInit {
       welcomeBonus:
         discounts?.welcomeBonus ?? null,
 
-      sva:
-        discounts?.sva ?? null,
+      sva: this.isIberdrolaEnergyTariff()
+        ? null
+        : discounts?.sva ?? null,
+
+      PEL: this.isIberdrolaEnergyTariff()
+        ? discounts?.PEL ?? null
+        : null,
+
+      PELPlus: this.isIberdrolaEnergyTariff()
+        ? discounts?.PELPlus ?? null
+        : null,
 
       loyalty:
         discounts?.loyalty ?? null,
@@ -1347,6 +1391,45 @@ export class TariffEdit implements OnInit {
       gasBonus:
         discounts?.gasBonus ?? null,
     };
+  }
+
+  private toGasDiscountFormValue(
+    discounts?: TariffDiscounts,
+  ): DiscountFormValue {
+    return {
+      electronicInvoice:
+        discounts?.electronicInvoice ?? null,
+
+      directDebit:
+        discounts?.directDebit ?? null,
+
+      welcomeBonus:
+        discounts?.welcomeBonus ?? null,
+
+      sva: this.isIberdrolaEnergyTariff()
+        ? null
+        : discounts?.sva ?? null,
+
+      MGI: this.isIberdrolaEnergyTariff()
+        ? discounts?.MGI ?? null
+        : null,
+
+      loyalty:
+        discounts?.loyalty ?? null,
+
+      gasBonus:
+        discounts?.gasBonus ?? null,
+    };
+  }
+
+  isIberdrolaEnergyTariff(
+    tariff: SimulationTariff | null = this.selectedTariff,
+  ): boolean {
+    return Boolean(
+      tariff &&
+        (tariff.companyId === IBERDROLA_COMPANY_ID ||
+          tariff.provider?.id === IBERDROLA_COMPANY_ID),
+    );
   }
 
   private toDateInputValue(

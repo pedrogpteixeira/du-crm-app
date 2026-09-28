@@ -20,6 +20,9 @@
           <ng-container *ngSwitchCase="'electronicInvoice'">{{ formatBoolean(item.electronicInvoice) }}</ng-container>
           <ng-container *ngSwitchCase="'directDebit'">{{ formatBoolean(item.directDebit) }}</ng-container>
           <ng-container *ngSwitchCase="'sva'">{{ formatSva(item.sva) }}</ng-container>
+          <ng-container *ngSwitchCase="'PEL'">{{ formatBoolean(item.PEL) }}</ng-container>
+          <ng-container *ngSwitchCase="'PELPlus'">{{ formatBoolean(item.PELPlus) }}</ng-container>
+          <ng-container *ngSwitchCase="'MGI'">{{ formatBoolean(item.MGI) }}</ng-container>
           <ng-container *ngSwitchCase="'state'">{{ item.state || '—' }}</ng-container>
           <ng-container *ngSwitchCase="'registrationName'">{{ item.registrationName || '—' }}</ng-container>
           <ng-container *ngSwitchCase="'tipoSegmento'">{{ item.tipoSegmento || '—' }}</ng-container>

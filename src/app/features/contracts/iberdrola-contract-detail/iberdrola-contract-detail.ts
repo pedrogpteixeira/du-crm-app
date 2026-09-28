@@ -87,7 +87,9 @@ interface EditableContractForm {
   moradaFaturacao: string;
 
   faturaEletronica: boolean;
-  sva: boolean;
+  PEL: boolean;
+  PELPlus: boolean;
+  MGI: boolean;
   debitoDireto: boolean;
   iban: string;
 
@@ -569,10 +571,13 @@ export class IberdrolaContractDetail implements OnInit {
   onTipoProdutoChange(): void {
     if (!this.shouldShowLuzFields()) {
       this.clearElectricityFields();
+      this.editForm.PEL = false;
+      this.editForm.PELPlus = false;
     }
 
     if (!this.shouldShowGasFields()) {
       this.clearGasFields();
+      this.editForm.MGI = false;
     }
   }
 
@@ -596,6 +601,32 @@ export class IberdrolaContractDetail implements OnInit {
     this.editForm.telefone = digits ? Number(digits) : null;
   }
 
+  onPelChanged(enabled: boolean): void {
+    if (!this.shouldShowLuzFields()) {
+      this.editForm.PEL = false;
+      return;
+    }
+
+    this.editForm.PEL = enabled;
+
+    if (enabled) {
+      this.editForm.PELPlus = false;
+    }
+  }
+
+  onPelPlusChanged(enabled: boolean): void {
+    if (!this.shouldShowLuzFields()) {
+      this.editForm.PELPlus = false;
+      return;
+    }
+
+    this.editForm.PELPlus = enabled;
+
+    if (enabled) {
+      this.editForm.PEL = false;
+    }
+  }
+
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
@@ -615,6 +646,21 @@ export class IberdrolaContractDetail implements OnInit {
 
     if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
       this.showError('O telefone deve ter exatamente 9 dígitos.');
+      return;
+    }
+
+    if (!this.shouldShowLuzFields() && (this.editForm.PEL || this.editForm.PELPlus)) {
+      this.showError('PEL e PEL Plus só podem ser utilizados em produtos com Luz.');
+      return;
+    }
+
+    if (!this.shouldShowGasFields() && this.editForm.MGI) {
+      this.showError('MGI só pode ser utilizado em produtos com Gás.');
+      return;
+    }
+
+    if (this.editForm.PEL && this.editForm.PELPlus) {
+      this.showError('PEL e PEL Plus não podem estar ativos em simultâneo.');
       return;
     }
 
@@ -1424,7 +1470,17 @@ export class IberdrolaContractDetail implements OnInit {
 
         faturaEletronica: Boolean(contract.faturaEletronica),
 
-        sva: Boolean(contract.sva),
+        PEL:
+          (contract.tipoProduto === 'Luz' || contract.tipoProduto === 'Luz + Gás') &&
+          (contract.PEL ?? false),
+
+        PELPlus:
+          (contract.tipoProduto === 'Luz' || contract.tipoProduto === 'Luz + Gás') &&
+          (contract.PELPlus ?? false),
+
+        MGI:
+          (contract.tipoProduto === 'Gás' || contract.tipoProduto === 'Luz + Gás') &&
+          (contract.MGI ?? false),
 
         debitoDireto: Boolean(contract.debitoDireto),
 
@@ -1686,7 +1742,16 @@ export class IberdrolaContractDetail implements OnInit {
       this.originalEditForm.faturaEletronica,
     );
 
-    this.assignChangedValue(payload, 'sva', this.editForm.sva, this.originalEditForm.sva);
+    this.assignChangedValue(payload, 'PEL', this.editForm.PEL, this.originalEditForm.PEL);
+
+    this.assignChangedValue(
+      payload,
+      'PELPlus',
+      this.editForm.PELPlus,
+      this.originalEditForm.PELPlus,
+    );
+
+    this.assignChangedValue(payload, 'MGI', this.editForm.MGI, this.originalEditForm.MGI);
 
     this.assignChangedValue(
       payload,
@@ -1866,7 +1931,9 @@ export class IberdrolaContractDetail implements OnInit {
       moradaFaturacao: '',
 
       faturaEletronica: false,
-      sva: false,
+      PEL: false,
+      PELPlus: false,
+      MGI: false,
       debitoDireto: false,
       iban: '',
 

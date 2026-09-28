@@ -757,7 +757,7 @@
               </div>
             </label>
 
-            <label>
+            <label *ngIf="!isIberdrolaEnergyTariff()">
               Serviço de valor acrescentado
 
               <div class="percentage-input">
@@ -767,6 +767,38 @@
                   max="100"
                   step="0.1"
                   formControlName="sva"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label *ngIf="isIberdrolaEnergyTariff()">
+              PEL
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="PEL"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label *ngIf="isIberdrolaEnergyTariff()">
+              PEL Plus
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="PELPlus"
                 />
 
                 <span>%</span>
@@ -985,7 +1017,7 @@
               </div>
             </label>
 
-            <label>
+            <label *ngIf="!isIberdrolaEnergyTariff()">
               Serviço de valor acrescentado
 
               <div class="percentage-input">
@@ -995,6 +1027,22 @@
                   max="100"
                   step="0.1"
                   formControlName="sva"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
+
+            <label *ngIf="isIberdrolaEnergyTariff()">
+              MGI
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="MGI"
                 />
 
                 <span>%</span>

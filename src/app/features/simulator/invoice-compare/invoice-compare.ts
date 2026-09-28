@@ -51,14 +51,13 @@ type OfferSortOption =
   | 'crmCertoCommission'
   | 'price';
 
-type ElectricityCommissionProduct =
+type ElectricityIberdrolaCondition =
   | 'none'
   | 'PEL'
   | 'PELPlus';
 
-type GasCommissionProduct =
+type GasIberdrolaCondition =
   | 'none'
-  | 'PGI'
   | 'MGI';
 
 @Component({
@@ -123,11 +122,11 @@ export class InvoiceCompare {
 
   sortBy: OfferSortOption = 'saving';
 
-  electricityCommissionProduct:
-    ElectricityCommissionProduct = 'none';
+  electricityIberdrolaCondition:
+    ElectricityIberdrolaCondition = 'none';
 
-  gasCommissionProduct:
-    GasCommissionProduct = 'none';
+  gasIberdrolaCondition:
+    GasIberdrolaCondition = 'none';
 
   selectedOffer:
     | InvoiceComparisonOffer
@@ -191,7 +190,6 @@ export class InvoiceCompare {
       gasBonus: false,
       PEL: false,
       PELPlus: false,
-      PGI: false,
       MGI: false,
     } as Required<SimulationDiscountConditions>,
   };
@@ -245,7 +243,7 @@ export class InvoiceCompare {
 
   onProductTypeChange(): void {
     this.clearResults();
-    this.normalizeCommissionProducts();
+    this.normalizeIberdrolaConditions();
 
     if (this.form.productType === 'gas') {
       this.clearElectricityFields();
@@ -259,19 +257,18 @@ export class InvoiceCompare {
     }
   }
 
-  onElectricityCommissionProductChange(
-    value: ElectricityCommissionProduct,
+  onElectricityIberdrolaConditionChange(
+    value: ElectricityIberdrolaCondition,
   ): void {
-    this.electricityCommissionProduct = value;
+    this.electricityIberdrolaCondition = value;
     this.form.discountConditions.PEL = value === 'PEL';
     this.form.discountConditions.PELPlus = value === 'PELPlus';
   }
 
-  onGasCommissionProductChange(
-    value: GasCommissionProduct,
+  onGasIberdrolaConditionChange(
+    value: GasIberdrolaCondition,
   ): void {
-    this.gasCommissionProduct = value;
-    this.form.discountConditions.PGI = value === 'PGI';
+    this.gasIberdrolaCondition = value;
     this.form.discountConditions.MGI = value === 'MGI';
   }
 
@@ -851,23 +848,21 @@ export class InvoiceCompare {
       gasBonus: hasGas
         ? Boolean(this.form.discountConditions.gasBonus)
         : false,
-      PEL: hasElectricity && this.electricityCommissionProduct === 'PEL',
-      PELPlus: hasElectricity && this.electricityCommissionProduct === 'PELPlus',
-      PGI: hasGas && this.gasCommissionProduct === 'PGI',
-      MGI: hasGas && this.gasCommissionProduct === 'MGI',
+      PEL: hasElectricity && this.electricityIberdrolaCondition === 'PEL',
+      PELPlus: hasElectricity && this.electricityIberdrolaCondition === 'PELPlus',
+      MGI: hasGas && this.gasIberdrolaCondition === 'MGI',
     };
   }
 
-  private normalizeCommissionProducts(): void {
+  private normalizeIberdrolaConditions(): void {
     if (this.form.productType === 'electricity') {
-      this.gasCommissionProduct = 'none';
-      this.form.discountConditions.PGI = false;
+      this.gasIberdrolaCondition = 'none';
       this.form.discountConditions.MGI = false;
       return;
     }
 
     if (this.form.productType === 'gas') {
-      this.electricityCommissionProduct = 'none';
+      this.electricityIberdrolaCondition = 'none';
       this.form.discountConditions.PEL = false;
       this.form.discountConditions.PELPlus = false;
     }
@@ -1051,20 +1046,14 @@ export class InvoiceCompare {
     }
 
     if (backendMessage.includes('PEL and PELPlus cannot both be enabled')) {
-      return 'Não é possível selecionar simultaneamente PEL e PEL+.';
+      return 'Não é possível selecionar simultaneamente PEL e PEL Plus.';
     }
 
-    if (backendMessage.includes('PGI and MGI cannot both be enabled')) {
-      return 'Não é possível selecionar simultaneamente PGI e MGI.';
-    }
 
     if (backendMessage.includes('PEL and PELPlus are only available')) {
-      return 'PEL e PEL+ só estão disponíveis em propostas de eletricidade.';
+      return 'PEL e PEL Plus só estão disponíveis em propostas de eletricidade.';
     }
 
-    if (backendMessage.includes('PGI and MGI are only available')) {
-      return 'PGI e MGI só estão disponíveis em propostas de gás.';
-    }
 
     return (
       backendMessage ||
