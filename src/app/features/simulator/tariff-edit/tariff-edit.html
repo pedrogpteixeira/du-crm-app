@@ -14,20 +14,6 @@
     </div>
   </header>
 
-  <p
-    class="success-message"
-    *ngIf="successMessage"
-  >
-    {{ successMessage }}
-  </p>
-
-  <p
-    class="error-message"
-    *ngIf="errorMessage"
-  >
-    {{ errorMessage }}
-  </p>
-
   <!-- FILTROS -->
 
   <article class="card search-card">
@@ -1220,7 +1206,6 @@
           type="submit"
           class="save-changes-btn"
           [disabled]="
-            editForm.invalid ||
             !hasChanges() ||
             isSaving ||
             isDeleting

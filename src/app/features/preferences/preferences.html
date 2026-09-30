@@ -16,18 +16,6 @@
     </span>
   </header>
 
-  <div class="feedback-stack" *ngIf="successMessage || errorMessage">
-    <p class="feedback-message success-message" *ngIf="successMessage">
-      <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
-      {{ successMessage }}
-    </p>
-
-    <p class="feedback-message error-message" *ngIf="errorMessage">
-      <span class="material-symbols-rounded" aria-hidden="true">error</span>
-      {{ errorMessage }}
-    </p>
-  </div>
-
   <div class="settings-grid">
     <article class="settings-card">
       <header class="card-header">

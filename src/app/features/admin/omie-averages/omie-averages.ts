@@ -4,6 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import {
   IndexedEnergyAverage,
   IndexedEnergyAverageCard,
@@ -33,9 +35,31 @@ export class OmieAverages implements OnInit {
 
   isLoading = false;
   isSaving = false;
+  private readonly toast = inject(ToastService);
 
-  successMessage = '';
-  errorMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   editingId: string | null = null;
 

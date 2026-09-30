@@ -28,14 +28,6 @@
     </div>
   </header>
 
-  <div class="feedback success" *ngIf="successMessage">
-    {{ successMessage }}
-  </div>
-
-  <div class="feedback error" *ngIf="errorMessage">
-    {{ errorMessage }}
-  </div>
-
   <section class="filters-card" *ngIf="showFilters">
     <label>
       Comercializadora
@@ -81,47 +73,94 @@
   </section>
 
   <section class="autos-card">
+    <div class="autos-table-toolbar" *ngIf="!isLoading && filteredAutos.length">
+      <div class="autos-table-title">
+        <div class="autos-table-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">receipt_long</span>
+        </div>
+        <div>
+          <strong>Autos de comissões</strong>
+          <span>{{ filteredAutos.length }} {{ filteredAutos.length === 1 ? 'auto encontrado' : 'autos encontrados' }}</span>
+        </div>
+      </div>
+
+      <div class="autos-table-hint">
+        <span class="material-symbols-rounded" aria-hidden="true">ads_click</span>
+        Clique numa linha para consultar o detalhe
+      </div>
+    </div>
+
     <div class="table-wrap" *ngIf="visibleAutos.length; else noRows">
       <div class="table-header auto-grid">
         <div>Comercializadora</div>
         <div>Período</div>
-        <div>Tipo</div>
         <div>Contratos</div>
         <div>A pagar</div>
         <div>A devolver</div>
         <div>Líquido</div>
         <div>Estado</div>
-        <div>Criado por</div>
         <div>Criado em</div>
-        <div>Ações</div>
+        <div class="actions-heading">Ações</div>
       </div>
 
       <div
         class="auto-row auto-grid"
         *ngFor="let auto of visibleAutos; trackBy: trackAutoById"
-        role="link"
-        tabindex="0"
-        [attr.aria-label]="'Abrir Auto ' + providerLabel(auto.provider)"
-        (click)="openAuto(auto)"
-        (keydown.enter)="openAuto(auto)"
       >
+        <a
+          class="auto-row-link"
+          [routerLink]="['/home/autos', auto.id]"
+          [attr.aria-label]="'Abrir Auto ' + providerLabel(auto.provider)"
+          title="Abrir Auto"
+        ></a>
         <div class="provider-cell">
-          <strong>{{ providerLabel(auto.provider) }}</strong>
+          <div class="provider-mark" aria-hidden="true">
+            <span class="material-symbols-rounded">domain</span>
+          </div>
+          <div class="provider-copy">
+            <strong>{{ providerLabel(auto.provider) }}</strong>
+            <span class="type-inline-badge">
+              <span class="material-symbols-rounded" aria-hidden="true">
+                {{ auto.type === 'automatic' ? 'autorenew' : 'person' }}
+              </span>
+              {{ typeLabel(auto.type) }}
+            </span>
+          </div>
         </div>
 
-        <div>{{ formatDate(auto.periodStart) }} → {{ formatDate(auto.periodEnd) }}</div>
-        <div>{{ typeLabel(auto.type) }}</div>
-        <div>{{ auto.contractsCount }}</div>
-        <div class="money positive">{{ formatCurrency(auto.totalPositive) }}</div>
-        <div class="money negative">{{ formatCurrency(auto.totalNegative) }}</div>
-        <div class="money net">{{ formatCurrency(auto.totalNet) }}</div>
+        <div class="period-cell">
+          <span>{{ formatDate(auto.periodStart) }}</span>
+          <span class="period-arrow material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+          <span>{{ formatDate(auto.periodEnd) }}</span>
+        </div>
+
+        <div>
+          <span class="contracts-count">{{ auto.contractsCount }}</span>
+        </div>
+
+        <div class="money-cell">
+          <span class="money-indicator positive" aria-hidden="true"></span>
+          <span class="money positive">{{ formatCurrency(auto.totalPositive) }}</span>
+        </div>
+        <div class="money-cell">
+          <span class="money-indicator negative" aria-hidden="true"></span>
+          <span class="money negative">{{ formatCurrency(auto.totalNegative) }}</span>
+        </div>
+        <div class="money-cell net-cell">
+          <span class="money net">{{ formatCurrency(auto.totalNet) }}</span>
+        </div>
+
         <div>
           <span class="status-badge" [class.is-finalized]="auto.status === 'finalized'">
+            <span class="status-dot" aria-hidden="true"></span>
             {{ statusLabel(auto.status) }}
           </span>
         </div>
-        <div>{{ creatorLabel(auto) }}</div>
-        <div>{{ formatDateTime(auto.createdAt) }}</div>
+
+        <div class="created-cell">
+          <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+          <span>{{ formatDateTime(auto.createdAt) }}</span>
+        </div>
 
         <div class="row-actions">
           <button
@@ -129,6 +168,7 @@
             class="icon-button"
             [disabled]="exportingAutoId === auto.id"
             title="Exportar Excel"
+            aria-label="Exportar Auto para Excel"
             (click)="$event.stopPropagation(); exportAuto(auto)"
           >
             <span class="material-symbols-rounded">download</span>
@@ -139,10 +179,13 @@
             type="button"
             class="icon-button danger"
             title="Eliminar Auto"
+            aria-label="Eliminar Auto"
             (click)="$event.stopPropagation(); requestDelete(auto)"
           >
             <span class="material-symbols-rounded">delete</span>
           </button>
+
+          <span class="row-chevron material-symbols-rounded" aria-hidden="true">chevron_right</span>
         </div>
       </div>
     </div>

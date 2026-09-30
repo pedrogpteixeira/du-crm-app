@@ -72,9 +72,9 @@
 
   <div class="kpi-grid">
     <app-analytics-kpi-card
-      *ngIf="totalContracts() !== null; else totalKpiLoading"
-      [label]="'Total contratos ' + providerLabel()"
-      [value]="formatNumber(totalContracts() ?? 0)"
+      *ngIf="statesTotal() !== null; else totalKpiLoading"
+      [label]="statesKpiLabel()"
+      [value]="formatNumber(statesTotal() ?? 0)"
       icon="description"
       [emphasis]="true"
     />
@@ -172,11 +172,11 @@
     </ng-template>
   </div>
 
-  <div class="empty-dashboard" *ngIf="totalContracts() === 0">
+  <div class="empty-dashboard" *ngIf="hasNoDataForSelectedPeriod()">
     <span class="material-symbols-rounded" aria-hidden="true">query_stats</span>
     <div>
       <strong>Sem dados para o período selecionado</strong>
-      <p>Não existem contratos {{ providerLabel() }} em {{ periodLabel() | lowercase }}.</p>
+      <p>Não existem dados agregados {{ providerLabel() }} para {{ periodLabel() | lowercase }}.</p>
     </div>
   </div>
 
@@ -186,18 +186,18 @@
         <app-analytics-donut-chart
           *ngIf="stateUsesDonut(); else stateBarChart"
           [title]="'Clientes ' + providerLabel() + ' por Estado'"
-          description="Distribuição atual dos contratos por estado."
+          [description]="statesDescription()"
           [items]="byState()"
-          [centerValue]="formatNumber(totalContracts() ?? 0)"
+          [centerValue]="formatNumber(statesTotal() ?? 0)"
           centerLabel="contratos"
         />
 
         <ng-template #stateBarChart>
           <app-analytics-bar-chart
             [title]="'Clientes ' + providerLabel() + ' por Estado'"
-            description="Distribuição atual dos contratos por estado."
+            [description]="statesDescription()"
             [items]="byState()"
-            [totalCount]="totalContracts() ?? 0"
+            [totalCount]="statesTotal() ?? 0"
           />
         </ng-template>
 
@@ -228,9 +228,9 @@
       <ng-container *ngIf="registrationNames() as registrationData; else registrationState">
         <app-analytics-bar-chart
           [title]="'Clientes ' + providerLabel() + ' por Nome Registo C.U.'"
-          description="Quantidade e peso relativo por Nome Registo C.U."
+          [description]="registrationNamesDescription()"
           [items]="byNomeRegistoCE()"
-          [totalCount]="totalContracts() ?? 0"
+          [totalCount]="registrationNamesTotal() ?? 0"
         />
 
         <div class="block-refresh-warning" *ngIf="registrationNamesError()">
@@ -260,9 +260,9 @@
       <ng-container *ngIf="products() as productsData; else productsState">
         <app-analytics-donut-chart
           [title]="'Clientes ' + providerLabel() + ' por Tipo de Produto'"
-          description="Distribuição dos contratos por produto contratado."
+          [description]="productsDescription()"
           [items]="byTipoProduto()"
-          [centerValue]="formatNumber(totalContracts() ?? 0)"
+          [centerValue]="formatNumber(productsTotal() ?? 0)"
           centerLabel="contratos"
         />
 
@@ -293,9 +293,9 @@
       <ng-container *ngIf="segments() as segmentsData; else segmentsState">
         <app-analytics-bar-chart
           [title]="'Clientes ' + providerLabel() + ' por Segmento'"
-          description="Os labels de fidelização empresarial são devolvidos diretamente pelo backend."
+          [description]="segmentsDescription()"
           [items]="byTipoSegmento()"
-          [totalCount]="totalContracts() ?? 0"
+          [totalCount]="segmentsTotal() ?? 0"
         />
 
         <div class="block-refresh-warning" *ngIf="segmentsError()">
@@ -332,7 +332,7 @@
           [selectedView]="directDebitView()"
           [summaryLabel]="'Total ' + providerLabel() + ' com Débito Direto'"
           [summaryValue]="formatPercentage(percentageWithDirectDebit())"
-          [summaryMeta]="formatNumber(totalWithDirectDebit()) + ' de ' + formatNumber(directDebitTotalContracts()) + ' contratos'"
+          [summaryMeta]="directDebitSummaryMeta()"
           (selectedViewChange)="selectDirectDebitView($event)"
         />
 
@@ -363,7 +363,7 @@
       <ng-container *ngIf="sva() as svaData; else svaState">
         <app-analytics-donut-chart
           [title]="'SVA · ' + providerLabel()"
-          description="Distribuição dos contratos com e sem SVA."
+          [description]="svaDescription()"
           [items]="svaDistribution()"
           [centerValue]="formatNumber(svaTotalContracts())"
           centerLabel="contratos"

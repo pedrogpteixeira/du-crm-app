@@ -35,14 +35,6 @@
     A carregar campanhas...
   </p>
 
-  <p class="error-message" *ngIf="errorMessage">
-    {{ errorMessage }}
-  </p>
-
-  <p class="success-message" *ngIf="successMessage">
-    {{ successMessage }}
-  </p>
-
   <div class="campaigns-card" [class.read-only]="!canManageCampaigns">
     <div class="table-header">
       <span>Nome</span>

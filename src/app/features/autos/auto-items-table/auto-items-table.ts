@@ -1,16 +1,21 @@
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   Input,
+  Output,
 } from '@angular/core';
 
 import {
   AUTO_COLUMNS_BY_PROVIDER,
   AutoItem,
   AutoItemColumnKey,
+  AutoItemPayment,
   AutoProvider,
 } from '../../../core/services/auto';
+import { getContractDetailRouteByProvider } from '../../../core/config/contract-detail-route';
 
 const COLUMN_LABELS: Readonly<Record<AutoItemColumnKey, string>> = {
   contractId: 'ID',
@@ -34,9 +39,27 @@ const COLUMN_LABELS: Readonly<Record<AutoItemColumnKey, string>> = {
   commission: 'Comissão',
 };
 
+export type AutoItemPaymentViewStatus =
+  | 'unpaid'
+  | 'paid'
+  | 'not-applicable'
+  | 'loading'
+  | 'unavailable';
+
+export interface AutoItemPaymentView {
+  payment?: AutoItemPayment;
+  paymentLabel: string;
+  paymentStatus: AutoItemPaymentViewStatus;
+}
+
+export interface AutoItemPaymentActionEvent {
+  item: AutoItem;
+  payment: AutoItemPayment;
+}
+
 @Component({
   selector: 'app-auto-items-table',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './auto-items-table.html',
   styleUrl: './auto-items-table.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +68,15 @@ export class AutoItemsTable {
   @Input({ required: true }) provider!: AutoProvider;
   @Input() items: readonly AutoItem[] = [];
   @Input() maxHeight: string | null = null;
+
+  @Input() showPayments = false;
+  @Input() canManagePayments = false;
+  @Input() paymentsLoading = false;
+  @Input() paymentsUnavailable = false;
+  @Input() paymentsByAutoItemId: ReadonlyMap<string, AutoItemPayment> = new Map();
+
+  @Output() registerPayment = new EventEmitter<AutoItem>();
+  @Output() viewPayment = new EventEmitter<AutoItemPaymentActionEvent>();
 
   get columns(): readonly AutoItemColumnKey[] {
     return AUTO_COLUMNS_BY_PROVIDER[this.provider];
@@ -56,11 +88,11 @@ export class AutoItemsTable {
 
   movementLabel(type: AutoItem['movementType']): string {
     if (type === 'payment') {
-      return 'Pagamento';
+      return 'Comissão';
     }
 
     if (type === 'refund') {
-      return 'Retorno';
+      return 'Reembolso';
     }
 
     return 'Sem movimento';
@@ -71,6 +103,12 @@ export class AutoItemsTable {
       style: 'currency',
       currency: 'EUR',
     }).format(Number(value ?? 0));
+  }
+
+  formatCommission(value: number | null | undefined): string {
+    const numericValue = Number(value ?? 0);
+    const formatted = this.formatCurrency(numericValue);
+    return numericValue > 0 ? `+${formatted}` : formatted;
   }
 
   formatDate(value: string | null | undefined): string {
@@ -110,7 +148,76 @@ export class AutoItemsTable {
     return value || '—';
   }
 
+  contractRoute(item: AutoItem): string[] | null {
+    return getContractDetailRouteByProvider(this.provider, item.contractId);
+  }
+
+  autoItemId(item: AutoItem): string {
+    return item.domainId ?? item.id ?? '';
+  }
+
+  paymentView(item: AutoItem): AutoItemPaymentView {
+    const isFinanciallyApplicable =
+      item.movementType === 'payment' &&
+      Number(item.commission) > 0;
+
+    if (!isFinanciallyApplicable) {
+      return {
+        paymentLabel: 'Não aplicável',
+        paymentStatus: 'not-applicable',
+      };
+    }
+
+    if (this.paymentsLoading) {
+      return {
+        paymentLabel: 'A carregar...',
+        paymentStatus: 'loading',
+      };
+    }
+
+    if (this.paymentsUnavailable) {
+      return {
+        paymentLabel: 'Indisponível',
+        paymentStatus: 'unavailable',
+      };
+    }
+
+    const itemId = this.autoItemId(item);
+    const payment = itemId ? this.paymentsByAutoItemId.get(itemId) : undefined;
+
+    if (!payment) {
+      return {
+        paymentLabel: 'Por pagar',
+        paymentStatus: 'unpaid',
+      };
+    }
+
+    return {
+      payment,
+      paymentLabel: 'Pago',
+      paymentStatus: 'paid',
+    };
+  }
+
+  paymentStatusClass(status: AutoItemPaymentViewStatus): string {
+    return `payment-${status}`;
+  }
+
+  onRegisterPayment(event: MouseEvent, item: AutoItem): void {
+    event.stopPropagation();
+    this.registerPayment.emit(item);
+  }
+
+  onViewPayment(
+    event: MouseEvent,
+    item: AutoItem,
+    payment: AutoItemPayment,
+  ): void {
+    event.stopPropagation();
+    this.viewPayment.emit({ item, payment });
+  }
+
   trackItem(index: number, item: AutoItem): string {
-    return item.id ?? item.contractId ?? String(index);
+    return item.domainId ?? item.id ?? item.contractId ?? String(index);
   }
 }

@@ -1,3 +1,5 @@
+import { ToastService } from '../../../core/services/toast';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -122,10 +124,31 @@ export class IberdrolaSolarContractCreate implements OnInit {
   clientChecked = false;
 
   clientNotFound = false;
+  private readonly toast = inject(ToastService);
 
-  errorMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
 
-  successMessage = '';
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   readonly estadoOptions = IBERDROLA_SOLAR_CONTRACT_STATUSES;
 

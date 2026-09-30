@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import { Auth } from '../../../core/services/auth';
 
 import {
@@ -111,7 +113,19 @@ export class InvoiceCompare {
 
   isLoading = false;
   hasSimulation = false;
-  errorMessage = '';
+  private readonly toast = inject(ToastService);
+
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
 
   hasLogoError: Record<string, boolean> = {};
 

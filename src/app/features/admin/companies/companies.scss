@@ -1,0 +1,634 @@
+:host {
+  --companies-surface: #ffffff;
+  --companies-surface-soft: #f8fafc;
+  --companies-surface-hover: #eef6fa;
+  --companies-border: #e2e8f0;
+  --companies-border-strong: #cbd5e1;
+  --companies-heading: #243646;
+  --companies-text: #64748b;
+  --companies-muted: #94a3b8;
+  --companies-accent: #008db1;
+  --companies-primary: #2f4050;
+  --companies-primary-hover: #243646;
+  --companies-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+
+  display: block;
+}
+
+:host-context(html[data-theme='dark']) {
+  --companies-surface: #17212b;
+  --companies-surface-soft: #1d2a35;
+  --companies-surface-hover: #22313d;
+  --companies-border: #2c3d4b;
+  --companies-border-strong: #3a4d5c;
+  --companies-heading: #f1f5f9;
+  --companies-text: #cbd5e1;
+  --companies-muted: #94a3b8;
+  --companies-accent: #38bdf8;
+  --companies-primary: #0ea5e9;
+  --companies-primary-hover: #0284c7;
+  --companies-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.companies-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  h1 {
+    margin: 4px 0 6px;
+    color: var(--companies-heading);
+    font-size: 32px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--companies-text);
+    font-size: 15px;
+  }
+}
+
+.breadcrumb {
+  color: var(--companies-accent);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.companies-card {
+  overflow: hidden;
+
+  background: var(--companies-surface);
+  border: 1px solid var(--companies-border);
+  border-radius: 22px;
+  padding: 18px;
+
+  box-shadow: var(--companies-shadow);
+}
+
+.table-header,
+.company-row {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.5fr)
+    140px
+    minmax(220px, 1fr)
+    120px;
+  align-items: center;
+  gap: 18px;
+}
+
+.table-header {
+  padding: 0 14px 14px;
+
+  color: var(--companies-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.company-row {
+  min-height: 66px;
+  padding: 12px 14px;
+  border-radius: 16px;
+
+  transition: background 0.18s ease;
+
+  &:hover {
+    background: var(--companies-surface-hover);
+  }
+}
+
+.company-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--companies-heading);
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.reentry-value {
+  color: var(--companies-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.status-badge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  padding: 6px 12px;
+
+  font-size: 13px;
+  font-weight: 850;
+
+  &.active {
+    color: #15803d;
+    background: #dcfce7;
+  }
+
+  &.inactive {
+    color: #b91c1c;
+    background: #fee2e2;
+  }
+}
+
+:host-context(html[data-theme='dark']) .status-badge {
+  &.active {
+    color: #86efac;
+    background: rgba(22, 163, 74, 0.18);
+  }
+
+  &.inactive {
+    color: #fca5a5;
+    background: rgba(220, 38, 38, 0.18);
+  }
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.edit-btn,
+.modal-actions button,
+.modal-close {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+  }
+}
+
+.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  border-radius: 10px;
+  padding: 9px 12px;
+
+  background: #e0f2fe;
+  color: #0369a1;
+
+  font-size: 13px;
+  font-weight: 850;
+
+  .material-symbols-rounded {
+    font-size: 17px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #bae6fd;
+  }
+}
+
+:host-context(html[data-theme='dark']) .edit-btn {
+  background: rgba(14, 165, 233, 0.14);
+  color: #7dd3fc;
+
+  &:hover:not(:disabled) {
+    background: rgba(14, 165, 233, 0.22);
+  }
+}
+
+.loading-state,
+.empty-state {
+  min-height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  color: var(--companies-text);
+  font-size: 14px;
+  font-weight: 750;
+
+  .material-symbols-rounded {
+    font-size: 22px;
+  }
+}
+
+.success-message,
+.error-message,
+.modal-error {
+  width: fit-content;
+  margin: 0;
+
+  border-radius: 12px;
+  padding: 10px 14px;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.success-message {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.error-message,
+.modal-error {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+:host-context(html[data-theme='dark']) {
+  .success-message {
+    color: #86efac;
+    background: rgba(22, 163, 74, 0.18);
+  }
+
+  .error-message,
+  .modal-error {
+    color: #fca5a5;
+    background: rgba(220, 38, 38, 0.18);
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(15, 23, 42, 0.48);
+
+  z-index: 1200;
+}
+
+.modal {
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  background: var(--companies-surface);
+  border: 1px solid var(--companies-border);
+  border-radius: 22px;
+  padding: 24px;
+
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.3);
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  h2 {
+    margin: 3px 0 5px;
+    color: var(--companies-heading);
+    font-size: 24px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--companies-text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.modal-eyebrow {
+  color: var(--companies-accent);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.modal-close {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+  background: var(--companies-surface-soft);
+  color: var(--companies-text);
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--companies-surface-hover);
+    color: var(--companies-heading);
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  color: var(--companies-text);
+
+  input[type='number'] {
+    height: 44px;
+
+    border: 1px solid var(--companies-border-strong);
+    border-radius: 12px;
+    outline: none;
+
+    padding: 0 12px;
+
+    background: var(--companies-surface);
+    color: var(--companies-heading);
+
+    font: inherit;
+    font-weight: 700;
+
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+
+    &:focus {
+      border-color: var(--companies-accent);
+      box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
+    }
+
+    &.input-error {
+      border-color: #dc2626;
+    }
+  }
+}
+
+.field-label {
+  color: var(--companies-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.field-help,
+.field-error {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.field-help {
+  color: var(--companies-muted);
+  font-weight: 650;
+}
+
+.field-error {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.switch-field {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: fit-content;
+
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  strong {
+    color: var(--companies-heading);
+    font-size: 14px;
+    font-weight: 850;
+  }
+}
+
+.switch-track {
+  position: relative;
+
+  width: 46px;
+  height: 26px;
+
+  flex-shrink: 0;
+
+  border-radius: 999px;
+  background: #cbd5e1;
+
+  transition: background 0.2s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+
+  width: 20px;
+  height: 20px;
+
+  border-radius: 50%;
+  background: #ffffff;
+
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+
+  transition: transform 0.2s ease;
+}
+
+.switch-field input:checked + .switch-track {
+  background: #00b894;
+}
+
+.switch-field input:checked + .switch-track .switch-thumb {
+  transform: translateX(20px);
+}
+
+.switch-field input:focus-visible + .switch-track {
+  outline: 3px solid rgba(0, 141, 177, 0.22);
+  outline-offset: 2px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 4px;
+
+  button {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    border-radius: 12px;
+    padding: 10px 17px;
+
+    font-size: 13px;
+    font-weight: 850;
+  }
+}
+
+.secondary-btn {
+  background: var(--companies-surface-soft);
+  color: var(--companies-heading);
+
+  &:hover:not(:disabled) {
+    background: var(--companies-surface-hover);
+  }
+}
+
+.save-btn {
+  background: var(--companies-primary);
+  color: #ffffff;
+
+  &:hover:not(:disabled) {
+    background: var(--companies-primary-hover);
+  }
+}
+
+.spinning {
+  animation: companies-spin 0.8s linear infinite;
+}
+
+@keyframes companies-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .page-header h1 {
+    font-size: 28px;
+  }
+
+  .companies-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .company-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px 16px;
+
+    margin-bottom: 10px;
+    padding: 15px;
+
+    border: 1px solid var(--companies-border);
+    border-radius: 14px;
+  }
+
+  .company-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .company-name,
+  .row-actions {
+    grid-column: 1 / -1;
+  }
+
+  .status-badge,
+  .reentry-value {
+    position: relative;
+    margin-top: 18px;
+  }
+
+  .status-badge::before,
+  .reentry-value::before {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 0;
+
+    color: var(--companies-muted);
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status-badge::before {
+    content: 'Estado';
+  }
+
+  .reentry-value::before {
+    content: 'Reentrada CPE/CUI';
+  }
+
+  .row-actions {
+    justify-content: stretch;
+  }
+
+  .edit-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .companies-page {
+    gap: 16px;
+  }
+
+  .company-row {
+    grid-template-columns: 1fr;
+  }
+
+  .status-badge,
+  .reentry-value {
+    width: fit-content;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .modal {
+    max-height: calc(100dvh - 20px);
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}

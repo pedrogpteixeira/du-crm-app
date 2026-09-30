@@ -85,7 +85,15 @@ export class IberdrolaSolarContracts implements OnInit {
   }
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-  readonly statuses: IberdrolaSolarContractStatus[] = [...IBERDROLA_SOLAR_CONTRACT_STATUSES];
+  readonly statuses: IberdrolaSolarContractStatus[] = (() => {
+    const statuses: IberdrolaSolarContractStatus[] = IBERDROLA_SOLAR_CONTRACT_STATUSES.filter(
+      (status) => status !== 'Cancelado'
+    );
+    const activeIndex = statuses.indexOf('Ativo');
+
+    statuses.splice(activeIndex + 1, 0, 'Cancelado');
+    return statuses;
+  })();
 
   ngOnInit(): void {
     this.refreshFilterFields();

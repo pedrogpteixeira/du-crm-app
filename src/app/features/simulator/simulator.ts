@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { ToastService } from '../../core/services/toast';
+
 import { SimulatorRequest, SimulatorResult, SimulatorService } from '../../core/services/simulator';
 
 import { ELECTRICITY_POWERS, OTHER_POWER } from '../../core/constants/energy';
@@ -20,7 +22,19 @@ export class Simulator {
 
   hasSimulation = false;
   isLoading = false;
-  errorMessage = '';
+  private readonly toast = inject(ToastService);
+
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
 
   hasLogoError: Record<string, boolean> = {};
 

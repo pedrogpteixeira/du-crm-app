@@ -1,7 +1,5 @@
 <section class="contract-detail-page">
   <p class="loading" *ngIf="isLoading">A carregar contrato...</p>
-  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
   <p class="socket-message" *ngIf="socketMessage">{{ socketMessage }}</p>
 
   <span class="last-sync" *ngIf="lastSocketUpdate">
@@ -242,19 +240,38 @@
                 </label>
 
                 <label>
-                  Data de Registo
+                  <span class="data-registo-label">
+                    Data de Registo
+                    <span
+                      *ngIf="isDataRegistoRequired"
+                      class="data-registo-required-marker"
+                      aria-hidden="true"
+                    >*</span>
+                  </span>
 
                   <input
                     *ngIf="isEditing; else dataRegistoView"
+                    class="data-registo-input"
                     type="date"
                     [(ngModel)]="editForm.dataRegisto"
+                    [required]="isDataRegistoRequired"
+                    [attr.aria-invalid]="isDataRegistoMissing ? 'true' : null"
+                    [attr.aria-describedby]="isDataRegistoMissing ? 'data-registo-error' : null"
                   />
 
                   <ng-template #dataRegistoView>
-                    <strong>
-                      {{ formatDateOnly(contract.dataRegisto) }}
+                    <strong [class.data-registo-missing-value]="isDataRegistoMissing">
+                      {{ isDataRegistoMissing ? 'Em falta' : formatDateOnly(contract.dataRegisto) }}
                     </strong>
                   </ng-template>
+
+                  <small
+                    *ngIf="isDataRegistoMissing"
+                    id="data-registo-error"
+                    class="data-registo-validation-message"
+                  >
+                    A Data de Registo é obrigatória para este estado.
+                  </small>
                 </label>
               </div>
 
@@ -276,19 +293,34 @@
                 </label>
 
                 <label>
-                  Data de Ativação
+                  <span class="data-ativacao-label">
+                    Data de Ativação
+                    <span
+                      *ngIf="isDataAtivacaoRequired"
+                      class="data-ativacao-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else ativacaoView"
+                    class="data-ativacao-input"
                     type="date"
                     [(ngModel)]="editForm.dataAtivacao"
+                    [required]="isDataAtivacaoRequired"
+                    [attr.aria-invalid]="isDataAtivacaoInvalid ? 'true' : null"
                   />
 
                   <ng-template #ativacaoView>
-                    <strong>
-                      {{ formatDateOnly(contract.dataAtivacao) }}
+                    <strong [class.data-ativacao-missing-value]="isDataAtivacaoMissing">
+                      {{ isDataAtivacaoMissing ? 'Em falta' : formatDateOnly(contract.dataAtivacao) }}
                     </strong>
                   </ng-template>
+
+                  <small *ngIf="isDataAtivacaoMissing" class="data-ativacao-validation-message">
+                    A Data de Ativação é obrigatória ao alterar o estado para Ativo.
+                  </small>
                 </label>
 
                 <label>

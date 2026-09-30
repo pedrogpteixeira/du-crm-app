@@ -54,10 +54,17 @@ export class AnalyticsBarChart {
   }
 
   barPercentage(item: AnalyticsBarChartItem): number {
-    if (typeof item.chartPercentage === 'number') {
+    if (typeof item.chartPercentage === 'number' && Number.isFinite(item.chartPercentage)) {
       return Math.max(0, Math.min(item.chartPercentage, 100));
     }
 
+    // As distribuições normais já trazem a percentagem calculada pelo backend
+    // para o período selecionado. Não voltamos a inferir o denominador no frontend.
+    if (typeof item.percentage === 'number' && Number.isFinite(item.percentage)) {
+      return Math.max(0, Math.min(item.percentage, 100));
+    }
+
+    // Fallback defensivo para payloads legacy sem percentagem pré-agregada.
     if (this.totalCount <= 0 || item.count <= 0) {
       return 0;
     }

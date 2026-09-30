@@ -12,6 +12,8 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
 
+import { ToastService } from '../../core/services/toast';
+
 import { environment } from '../../../environments/environment';
 import { Auth } from '../../core/services/auth';
 import { UserService } from '../../core/services/user';
@@ -55,9 +57,31 @@ export class Profile implements OnInit {
 
   currentPasswordError = '';
   newPasswordError = '';
+  private readonly toast = inject(ToastService);
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   user: AuthUser = this.getEmptyUser();
   editableUser: AuthUser = { ...this.user };

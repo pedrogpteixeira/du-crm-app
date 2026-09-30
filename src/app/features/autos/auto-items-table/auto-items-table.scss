@@ -6,18 +6,23 @@
 .table-wrap {
   max-width: 100%;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  background: #fff;
 }
 
 .items-table {
   width: max-content;
   min-width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #526273;
   font-size: 11px;
 }
 
 .items-table th,
 .items-table td {
-  padding: 10px 11px;
   border-bottom: 1px solid #edf2f5;
   text-align: left;
   white-space: nowrap;
@@ -26,50 +31,348 @@
 .items-table th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 5;
+  height: 38px;
+  padding: 0 11px;
   background: #f7fafb;
-  color: #64748b;
+  color: #748596;
   font-size: 9px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .055em;
+  box-shadow: inset 0 -1px 0 #e5edf1;
 }
 
-.items-table tr:hover td {
-  background: #fbfdfe;
+.items-table td {
+  height: 52px;
+  padding: 0;
+  background: #fff;
+  transition: background .14s ease;
 }
+
+.contract-row:last-child td { border-bottom: 0; }
+.contract-row:hover td { background: #f8fcfd; }
+
+.contract-cell-link {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 11px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.contract-cell-link:focus-visible,
+.payment-action:focus-visible {
+  outline: 2px solid #008db1;
+  outline-offset: -2px;
+}
+
+/* Keep contract context visible while navigating wide provider tables. */
+.items-table :is(th, td)[data-column='contractId'] {
+  position: sticky;
+  left: 0;
+  min-width: 112px;
+  max-width: 112px;
+}
+
+.items-table :is(th, td)[data-column='clientName'] {
+  position: sticky;
+  left: 112px;
+  min-width: 190px;
+  max-width: 190px;
+}
+
+.items-table th[data-column='contractId'],
+.items-table th[data-column='clientName'] {
+  z-index: 8;
+  background: #f4f8fa;
+}
+
+.items-table td[data-column='contractId'],
+.items-table td[data-column='clientName'] {
+  z-index: 3;
+  background: #fff;
+}
+
+.items-table td[data-column='clientName'] {
+  box-shadow: 8px 0 12px -12px rgba(15,23,42,.35);
+}
+
+.contract-row:hover td[data-column='contractId'],
+.contract-row:hover td[data-column='clientName'] {
+  background: #f8fcfd;
+}
+
+.items-table :is(th, td)[data-column='signatureDate'] { min-width: 118px; }
+.items-table :is(th, td)[data-column='cpe'] { min-width: 170px; }
+.items-table :is(th, td)[data-column='cui'] { min-width: 165px; }
+.items-table :is(th, td)[data-column='campaign'] { min-width: 135px; max-width: 190px; }
+.items-table :is(th, td)[data-column='power'] { min-width: 95px; }
+.items-table :is(th, td)[data-column='nif'] { min-width: 105px; }
+.items-table :is(th, td)[data-column='electronicInvoice'],
+.items-table :is(th, td)[data-column='directDebit'] { min-width: 112px; }
+.items-table :is(th, td)[data-column='sva'],
+.items-table :is(th, td)[data-column='PEL'],
+.items-table :is(th, td)[data-column='PELPlus'],
+.items-table :is(th, td)[data-column='MGI'] { min-width: 92px; }
+.items-table :is(th, td)[data-column='state'] { min-width: 145px; max-width: 190px; }
+.items-table :is(th, td)[data-column='registrationName'] { min-width: 185px; max-width: 220px; }
+.items-table :is(th, td)[data-column='tipoSegmento'] { min-width: 125px; }
+.items-table :is(th, td)[data-column='movementType'] { min-width: 130px; }
+.items-table :is(th, td)[data-column='commission'] {
+  min-width: 116px;
+  text-align: right;
+}
+.items-table td[data-column='commission'] .contract-cell-link { justify-content: flex-end; }
+
+.contract-id-value {
+  max-width: 90px;
+  overflow: hidden;
+  color: #607383;
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+.client-name-value {
+  max-width: 168px;
+  overflow: hidden;
+  color: #243646;
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+}
+
+.date-value,
+.code-value {
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.code-value { font-size: 10px; }
+
+.text-value,
+.meta-value {
+  display: block;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.state-value {
+  display: inline-flex;
+  align-items: center;
+  max-width: 170px;
+  overflow: hidden;
+  padding: 4px 8px;
+  border: 1px solid #dce6eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #526273;
+  font-size: 9px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+}
+
+.segment-value,
+.service-value {
+  color: #526273;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.boolean-badge {
+  min-width: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 7px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+}
+.boolean-badge .material-symbols-rounded { font-size: 12px; }
+.boolean-badge.is-yes { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.boolean-badge.is-no { border-color: #e2e8f0; background: #f8fafc; color: #64748b; }
+.boolean-badge.is-empty { color: #94a3b8; }
 
 .movement-badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   width: fit-content;
-  padding: 5px 9px;
+  padding: 5px 8px;
   border-radius: 999px;
   background: #ecfdf5;
   color: #166534;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 850;
 }
-
-.movement-badge.refund {
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.movement-badge.zero {
-  background: #f1f5f9;
-  color: #64748b;
-}
+.movement-badge .material-symbols-rounded { font-size: 13px; }
+.movement-badge.refund { background: #fef2f2; color: #991b1b; }
+.movement-badge.zero { background: #f1f5f9; color: #64748b; }
 
 .money {
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
+.positive { color: #15803d; }
+.negative { color: #b91c1c; }
 
-.positive {
-  color: #15803d;
+/* Payment remains visible while horizontally exploring the contract data. */
+.payment-column-heading,
+.payment-cell {
+  position: sticky;
+  right: 0;
+  min-width: 205px;
+  max-width: 205px;
+}
+.payment-column-heading {
+  z-index: 9 !important;
+  background: #f1f7f9 !important;
+  box-shadow: -8px 0 12px -12px rgba(15,23,42,.45), inset 0 -1px 0 #e5edf1;
+}
+.payment-cell {
+  z-index: 4;
+  padding: 0 10px !important;
+  background: #fbfdfe !important;
+  cursor: default;
+  box-shadow: -8px 0 12px -12px rgba(15,23,42,.4);
+}
+.contract-row:hover .payment-cell { background: #f5fafc !important; }
+
+.payment-cell-content {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.negative {
-  color: #b91c1c;
+.payment-badge {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+.payment-badge .material-symbols-rounded { font-size: 13px; }
+
+.payment-unpaid {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+.payment-paid {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+.payment-not-applicable,
+.payment-loading,
+.payment-unavailable {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+}
+.payment-loading .material-symbols-rounded { animation: spin-payment 1s linear infinite; }
+@keyframes spin-payment { to { transform: rotate(360deg); } }
+
+.payment-action {
+  min-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: 1px solid #d7e2e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.payment-action .material-symbols-rounded { font-size: 14px; }
+.payment-action:hover { border-color: #9fb7c4; background: #f8fbfc; color: #176b87; }
+.payment-action.primary { border-color: #008db1; background: #008db1; color: #fff; }
+.payment-action.primary:hover { background: #007d9d; }
+
+@media (max-width: 700px) {
+  /* On narrow screens the three desktop sticky zones would overlap.
+     Keep the header vertically sticky, but let columns scroll horizontally as one table. */
+  .items-table th[data-column='contractId'],
+  .items-table th[data-column='clientName'],
+  .payment-column-heading {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    z-index: 5 !important;
+  }
+
+  .items-table td[data-column='contractId'],
+  .items-table td[data-column='clientName'],
+  .payment-cell {
+    position: static;
+    left: auto;
+    right: auto;
+    z-index: auto;
+    box-shadow: none;
+  }
+
+  .items-table :is(th, td)[data-column='contractId'] {
+    min-width: 96px;
+    max-width: 96px;
+  }
+
+  .items-table :is(th, td)[data-column='clientName'] {
+    min-width: 150px;
+    max-width: 150px;
+  }
+
+  .items-table th[data-column='contractId'],
+  .items-table th[data-column='clientName'] {
+    background: #f7fafb;
+  }
+
+  .items-table td[data-column='contractId'],
+  .items-table td[data-column='clientName'] {
+    background: #fff;
+  }
+
+  .contract-row:hover td[data-column='contractId'],
+  .contract-row:hover td[data-column='clientName'] {
+    background: #f8fcfd;
+  }
+
+  .client-name-value { max-width: 128px; }
+
+  .payment-column-heading,
+  .payment-cell {
+    min-width: 172px;
+    max-width: 172px;
+  }
+
+  .payment-column-heading { background: #f7fafb !important; }
+  .payment-cell { background: #fff !important; }
+  .contract-row:hover .payment-cell { background: #f8fcfd !important; }
+  .payment-action { padding: 0 7px; }
 }

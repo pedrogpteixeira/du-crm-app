@@ -1,0 +1,164 @@
+<section class="companies-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Administração › Companies</span>
+      <h1>Companies</h1>
+      <p>Configuração das comercializadoras disponíveis no CRM.</p>
+    </div>
+  </header>
+
+  <section class="companies-card">
+    <div class="loading-state" *ngIf="isLoading">
+      <span class="material-symbols-rounded spinning">progress_activity</span>
+      <span>A carregar Companies...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && !errorMessage && companies.length === 0">
+      <span class="material-symbols-rounded">domain_disabled</span>
+      <span>Nenhuma Company encontrada.</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading && companies.length > 0">
+      <div class="table-header" aria-hidden="true">
+        <span>Empresa</span>
+        <span>Estado</span>
+        <span>Dias para reentrada CPE/CUI</span>
+        <span>Ações</span>
+      </div>
+
+      <div class="company-row" *ngFor="let company of companies">
+        <strong class="company-name">{{ company.name }}</strong>
+
+        <span
+          class="status-badge"
+          [class.active]="company.active"
+          [class.inactive]="!company.active"
+        >
+          {{ company.active ? 'Ativa' : 'Inativa' }}
+        </span>
+
+        <span class="reentry-value">
+          {{ formatReentryDays(company) }}
+        </span>
+
+        <div class="row-actions">
+          <button type="button" class="edit-btn" [disabled]="isSaving" (click)="openEdit(company)">
+            <span class="material-symbols-rounded">edit</span>
+            Editar
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+
+  <div
+    class="modal-backdrop"
+    *ngIf="editingCompany as company"
+    (pointerdown)="onBackdropPointerDown($event)"
+    (pointerup)="onBackdropPointerUp($event)"
+    (pointercancel)="resetBackdropPointer()"
+  >
+    <section
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Editar ' + company.name"
+      (pointerdown)="onModalPointerDown($event)"
+      (pointerup)="onModalPointerUp($event)"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">Configuração</span>
+          <h2>Editar {{ company.name }}</h2>
+          <p>Altera apenas o estado e a regra de reentrada desta Company.</p>
+        </div>
+
+        <button
+          type="button"
+          class="modal-close"
+          [disabled]="isSaving"
+          (click)="closeEdit()"
+          aria-label="Fechar"
+        >
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </header>
+
+      <form [formGroup]="editForm" (ngSubmit)="saveCompany()">
+        <div class="form-field">
+          <span class="field-label">Estado</span>
+
+          <label class="switch-field">
+            <input type="checkbox" formControlName="active" />
+            <span class="switch-track" aria-hidden="true">
+              <span class="switch-thumb"></span>
+            </span>
+            <strong>
+              {{ editForm.controls.active.value ? 'Ativa' : 'Inativa' }}
+            </strong>
+          </label>
+        </div>
+
+        <label class="form-field" for="supplyPointReentryDays">
+          <span class="field-label">Dias para reentrada CPE/CUI</span>
+
+          <input
+            id="supplyPointReentryDays"
+            type="number"
+            min="0"
+            step="1"
+            formControlName="supplyPointReentryDays"
+            placeholder="Sem limite configurado"
+            [class.input-error]="
+              editForm.controls.supplyPointReentryDays.invalid &&
+              editForm.controls.supplyPointReentryDays.touched
+            "
+          />
+
+          <small class="field-help">
+            Número mínimo de dias utilizado na validação de reentrada de CPE/CUI. Deixa vazio para
+            não configurar um limite.
+          </small>
+
+          <small
+            class="field-error"
+            *ngIf="
+              editForm.controls.supplyPointReentryDays.hasError('min') &&
+              editForm.controls.supplyPointReentryDays.touched
+            "
+          >
+            O número de dias não pode ser negativo.
+          </small>
+
+          <small
+            class="field-error"
+            *ngIf="
+              editForm.controls.supplyPointReentryDays.hasError('integer') &&
+              editForm.controls.supplyPointReentryDays.touched
+            "
+          >
+            Introduz um número inteiro de dias.
+          </small>
+        </label>
+
+        <footer class="modal-actions">
+          <button type="button" class="secondary-btn" [disabled]="isSaving" (click)="closeEdit()">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="save-btn"
+            [disabled]="isSaving || editForm.invalid || !hasEditChanges"
+          >
+            <span class="material-symbols-rounded spinning" *ngIf="isSaving">
+              progress_activity
+            </span>
+
+            {{ isSaving ? 'A guardar...' : 'Guardar alterações' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+</section>

@@ -48,20 +48,6 @@
       </div>
     </header>
 
-    <p
-      class="success-message"
-      *ngIf="successMessage"
-    >
-      {{ successMessage }}
-    </p>
-
-    <p
-      class="error-message"
-      *ngIf="errorMessage"
-    >
-      {{ errorMessage }}
-    </p>
-
     <div
       class="loading-state"
       *ngIf="isLoading && !cards.length"

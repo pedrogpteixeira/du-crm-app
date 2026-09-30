@@ -119,8 +119,8 @@ export class Dashboard {
   readonly isExporting = signal(false);
 
   readonly directDebitViewOptions: readonly AnalyticsBarChartViewOption[] = [
-    { id: 'crm-total', label: 'CRM Total' },
-    { id: 'team-rate', label: 'Por Equipa' },
+    { id: 'crm-total', label: 'Peso no CRM' },
+    { id: 'team-rate', label: 'Taxa por Equipa' },
   ];
 
   readonly hasAnalyticsAccess = this.auth.roleIncludes(['Super Admin', 'DU']);
@@ -201,22 +201,52 @@ export class Dashboard {
   );
 
   /**
-   * States continua a ser a fonte preferencial do total. O período apenas
-   * escolhe uma chave já pré-agregada no payload; nunca recalculamos datas.
+   * Cada análise usa exclusivamente o total da sua própria response.
+   * O frontend não cruza amostras nem recalcula qualquer período temporal.
    */
-  readonly totalContracts = computed<number | null>(() => {
-    const period = this.selectedPeriod();
-    const sources = [
-      this.getTotalForPeriod(this.states(), period),
-      this.getTotalForPeriod(this.registrationNames(), period),
-      this.getTotalForPeriod(this.products(), period),
-      this.getTotalForPeriod(this.segments(), period),
-      this.getTotalForPeriod(this.directDebit(), period),
-      this.getTotalForPeriod(this.sva(), period),
-    ];
+  readonly statesTotal = computed<number | null>(() =>
+    this.getTotalForPeriod(this.states(), this.selectedPeriod()),
+  );
 
-    return sources.find((value): value is number => value !== null) ?? null;
+  readonly registrationNamesTotal = computed<number | null>(() =>
+    this.getTotalForPeriod(this.registrationNames(), this.selectedPeriod()),
+  );
+
+  readonly productsTotal = computed<number | null>(() =>
+    this.getTotalForPeriod(this.products(), this.selectedPeriod()),
+  );
+
+  readonly segmentsTotal = computed<number | null>(() =>
+    this.getTotalForPeriod(this.segments(), this.selectedPeriod()),
+  );
+
+  readonly statesKpiLabel = computed(() =>
+    this.selectedPeriod() === 'all'
+      ? `Total contratos ${this.providerLabel()}`
+      : 'Contratos com atividade de estado',
+  );
+
+  readonly statesDescription = computed(() => {
+    const total = this.statesTotal() ?? 0;
+
+    if (this.selectedPeriod() === 'all') {
+      return `Estado atual de todos os contratos. ${this.formatNumber(total)} contratos.`;
+    }
+
+    return `Baseado na última alteração de estado no período selecionado. ${this.formatNumber(total)} contratos com atividade de estado.`;
   });
+
+  readonly registrationNamesDescription = computed(() =>
+    this.getCommercialSampleDescription(this.registrationNamesTotal() ?? 0),
+  );
+
+  readonly productsDescription = computed(() =>
+    this.getCommercialSampleDescription(this.productsTotal() ?? 0),
+  );
+
+  readonly segmentsDescription = computed(() =>
+    this.getCommercialSampleDescription(this.segmentsTotal() ?? 0),
+  );
 
   /** Dados completos transformados para o período, sem alterar a cache. */
   readonly registrationNamesForSelectedPeriod = computed(() =>
@@ -294,11 +324,23 @@ export class Dashboard {
       .map((item) => this.toDirectDebitChartItem(item, view));
   });
 
-  readonly directDebitDescription = computed(() =>
-    this.directDebitView() === 'crm-total'
-      ? `Percentagem do total de contratos ${this.providerLabel()} correspondente a contratos com débito direto de cada Nome Registo C.U.`
-      : 'Percentagem de contratos com débito direto dentro do total de contratos de cada equipa.',
-  );
+  readonly directDebitDescription = computed(() => {
+    const viewDescription =
+      this.directDebitView() === 'crm-total'
+        ? `Percentagem dos contratos analisados ${this.providerLabel()} correspondente a contratos com débito direto de cada Nome Registo C.U.`
+        : 'Percentagem de contratos com débito direto dentro do total de contratos analisados de cada equipa.';
+
+    return `${viewDescription} ${this.getCommercialSampleDescription(this.directDebitTotalContracts())}`;
+  });
+
+  readonly directDebitSummaryMeta = computed(() => {
+    const sampleLabel =
+      this.selectedPeriod() === 'all'
+        ? 'contratos analisados'
+        : 'contratos registados no período';
+
+    return `${this.formatNumber(this.totalWithDirectDebit())} de ${this.formatNumber(this.directDebitTotalContracts())} ${sampleLabel}`;
+  });
 
   readonly svaTotalContracts = computed(() =>
     this.getTotalForPeriod(this.sva(), this.selectedPeriod()) ?? 0,
@@ -333,6 +375,23 @@ export class Dashboard {
   readonly svaDistribution = computed(() =>
     this.mapDistributionItems(this.sva()?.distribution ?? []),
   );
+
+  readonly svaDescription = computed(() =>
+    this.getCommercialSampleDescription(this.svaTotalContracts()),
+  );
+
+  readonly hasNoDataForSelectedPeriod = computed(() => {
+    const totals = [
+      this.statesTotal(),
+      this.registrationNamesTotal(),
+      this.productsTotal(),
+      this.segmentsTotal(),
+      this.directDebit() ? this.directDebitTotalContracts() : null,
+      this.sva() ? this.svaTotalContracts() : null,
+    ];
+
+    return totals.every((total) => total === 0);
+  });
 
   constructor() {
     if (!this.hasAnalyticsAccess) {
@@ -399,7 +458,7 @@ export class Dashboard {
         providerLabel: this.providerLabel(),
         period: this.selectedPeriod(),
         periodLabel: this.periodLabel(),
-        totalContracts: this.totalContracts() ?? 0,
+        statesTotal: this.statesTotal() ?? 0,
         states,
         registrationNames,
         products,
@@ -683,10 +742,18 @@ export class Dashboard {
       chartPercentage: item.percentageOfTotalContracts,
       tooltipLines: [
         `${this.formatNumber(item.directDebitCount)} contratos com débito direto`,
-        `${this.formatPercentage(item.percentageOfTotalContracts)} do total de contratos da comercializadora`,
+        `${this.formatPercentage(item.percentageOfTotalContracts)} do total de contratos analisados`,
         `Total da equipa: ${this.formatNumber(item.teamTotalContracts)} contratos`,
       ],
     };
+  }
+
+  private getCommercialSampleDescription(total: number): string {
+    if (this.selectedPeriod() === 'all') {
+      return `Baseado na Data de Registo. ${this.formatNumber(total)} contratos analisados.`;
+    }
+
+    return `Baseado na Data de Registo. ${this.formatNumber(total)} contratos registados no período.`;
   }
 
   private getTotalForPeriod(

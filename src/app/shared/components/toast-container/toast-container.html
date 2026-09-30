@@ -1,0 +1,37 @@
+<div
+  class="toast-viewport"
+  aria-live="polite"
+  aria-atomic="false"
+  aria-relevant="additions removals"
+>
+  <article
+    class="toast"
+    *ngFor="let toast of toastService.toasts(); trackBy: trackByToastId"
+    [class.toast-success]="toast.type === 'success'"
+    [class.toast-error]="toast.type === 'error'"
+    [class.toast-warning]="toast.type === 'warning'"
+    [class.toast-info]="toast.type === 'info'"
+    [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+    [style.--toast-duration]="toast.duration + 'ms'"
+  >
+    <span class="toast-icon material-symbols-rounded" aria-hidden="true">
+      {{ getIcon(toast) }}
+    </span>
+
+    <div class="toast-copy">
+      <strong>{{ getTitle(toast) }}</strong>
+      <p>{{ toast.message }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="toast-close"
+      (click)="dismiss(toast.id)"
+      [attr.aria-label]="'Fechar notificação: ' + toast.message"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    </button>
+
+    <span class="toast-progress" aria-hidden="true"></span>
+  </article>
+</div>

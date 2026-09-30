@@ -26,6 +26,7 @@ import {
 } from '../../../core/models/indexed-gas-price.model';
 
 import { IndexedGasPriceService } from '../../../core/services/indexed-gas-price';
+import { ToastService } from '../../../core/services/toast';
 
 interface MibgasPriceForm {
   priceMwh: FormControl<number | null>;
@@ -38,8 +39,6 @@ interface MibgasPriceCard {
 
   isSaving: boolean;
 
-  successMessage: string;
-  errorMessage: string;
 }
 
 @Component({
@@ -52,6 +51,7 @@ interface MibgasPriceCard {
 })
 export class MibgasPrices implements OnInit, OnDestroy {
   private readonly indexedGasPriceService = inject(IndexedGasPriceService);
+  private readonly toast = inject(ToastService);
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -118,7 +118,7 @@ export class MibgasPrices implements OnInit, OnDestroy {
 
   savePrice(card: MibgasPriceCard): void {
     if (!this.canEdit) {
-      card.errorMessage = 'Não tens permissão para editar preços MIBGAS.';
+      this.toast.error('Não tens permissão para editar preços MIBGAS.');
 
       this.cdr.markForCheck();
       return;
@@ -132,15 +132,13 @@ export class MibgasPrices implements OnInit, OnDestroy {
     const priceMwh = card.form.controls.priceMwh.value;
 
     if (!this.isValidPrice(priceMwh)) {
-      card.errorMessage = 'Introduz um preço válido em €/MWh.';
+      this.toast.error('Introduz um preço válido em €/MWh.');
 
       this.cdr.markForCheck();
       return;
     }
 
     card.isSaving = true;
-    card.successMessage = '';
-    card.errorMessage = '';
 
     this.indexedGasPriceService
       .updatePrice(card.price.id, {
@@ -169,16 +167,14 @@ export class MibgasPrices implements OnInit, OnDestroy {
           card.form.markAsPristine();
           card.form.markAsUntouched();
 
-          card.successMessage = 'Preço MIBGAS atualizado com sucesso.';
-
-          this.clearCardMessageLater(card, 'success');
+          this.toast.success('Preço MIBGAS atualizado com sucesso.');
 
           this.editingId = null;
         },
         error: (error) => {
-          card.errorMessage = error?.error?.message || 'Não foi possível atualizar o preço MIBGAS.';
-
-          this.clearCardMessageLater(card, 'error');
+          this.toast.error(
+            error?.error?.message || 'Não foi possível atualizar o preço MIBGAS.',
+          );
         },
       });
   }
@@ -197,8 +193,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
     card.form.markAsPristine();
     card.form.markAsUntouched();
 
-    card.successMessage = '';
-    card.errorMessage = '';
   }
 
   getProductLabel(productType: IndexedGasProductType): string {
@@ -238,8 +232,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
         price,
         form: this.createPriceForm(price),
         isSaving: false,
-        successMessage: '',
-        errorMessage: '',
       };
 
       this.listenToPriceChanges(card);
@@ -274,8 +266,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
         emitEvent: false,
       });
 
-      card.successMessage = '';
-      card.errorMessage = '';
     });
 
     const priceKwhSubscription = card.form.controls.priceKwh.valueChanges.subscribe((priceKwh) => {
@@ -289,8 +279,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
         emitEvent: false,
       });
 
-      card.successMessage = '';
-      card.errorMessage = '';
     });
 
     this.formSubscriptions.add(priceMwhSubscription);
@@ -325,19 +313,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
     return Math.round(value * multiplier) / multiplier;
   }
 
-  private clearCardMessageLater(card: MibgasPriceCard, type: 'success' | 'error'): void {
-    const timeout = type === 'success' ? 4000 : 5000;
-
-    setTimeout(() => {
-      if (type === 'success') {
-        card.successMessage = '';
-      } else {
-        card.errorMessage = '';
-      }
-
-      this.cdr.markForCheck();
-    }, timeout);
-  }
 
   startEdit(card: MibgasPriceCard): void {
     if (!this.canEdit) {
@@ -348,8 +323,6 @@ export class MibgasPrices implements OnInit, OnDestroy {
 
     this.resetCard(card);
 
-    card.successMessage = '';
-    card.errorMessage = '';
   }
 
   cancelEdit(card: MibgasPriceCard): void {

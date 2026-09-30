@@ -1,7 +1,5 @@
 <section class="contract-detail-page">
   <p class="loading" *ngIf="isLoading">A carregar contrato...</p>
-  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
   <p class="socket-message" *ngIf="socketMessage">{{ socketMessage }}</p>
 
   <span class="last-sync" *ngIf="lastSocketUpdate">
@@ -54,7 +52,6 @@
       </div>
     </header>
 
-
     <p class="socket-message" *ngIf="!canMutateContract">
       Este contrato está em modo de consulta devido ao estado {{ contract.estado }}.
     </p>
@@ -93,7 +90,11 @@
               <label>
                 Tipo Produto *
 
-                <select *ngIf="isEditing; else produtoView" [(ngModel)]="editForm.tipoProduto">
+                <select
+                  *ngIf="isEditing; else produtoView"
+                  [(ngModel)]="editForm.tipoProduto"
+                  (ngModelChange)="clearDataBaixaBackendError()"
+                >
                   <option *ngFor="let option of tipoProdutoOptions" [value]="option">
                     {{ option }}
                   </option>
@@ -246,7 +247,11 @@
                 <label>
                   Estado
 
-                  <select *ngIf="isEditing; else estadoView" [(ngModel)]="editForm.estado">
+                  <select
+                    *ngIf="isEditing; else estadoView"
+                    [(ngModel)]="editForm.estado"
+                    (ngModelChange)="clearDataBaixaBackendError()"
+                  >
                     <option *ngFor="let option of estadoOptions" [value]="option">
                       {{ option }}
                     </option>
@@ -294,64 +299,146 @@
                 </label>
 
                 <label>
-                  Data de Registo
+                  <span class="data-registo-label">
+                    Data de Registo
+                    <span
+                      *ngIf="isDataRegistoRequired"
+                      class="data-registo-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else dataRegistoView"
+                    class="data-registo-input"
                     type="date"
                     [(ngModel)]="editForm.dataRegisto"
+                    [required]="isDataRegistoRequired"
+                    [attr.aria-invalid]="isDataRegistoMissing ? 'true' : null"
+                    [attr.aria-describedby]="isDataRegistoMissing ? 'data-registo-error' : null"
                   />
 
                   <ng-template #dataRegistoView>
-                    <strong>
-                      {{ formatDateOnly(contract.dataRegisto) }}
+                    <strong [class.data-registo-missing-value]="isDataRegistoMissing">
+                      {{ isDataRegistoMissing ? 'Em falta' : formatDateOnly(contract.dataRegisto) }}
                     </strong>
                   </ng-template>
+
+                  <small
+                    *ngIf="isDataRegistoMissing"
+                    id="data-registo-error"
+                    class="data-registo-validation-message"
+                  >
+                    A Data de Registo é obrigatória para este estado.
+                  </small>
                 </label>
               </div>
 
               <div class="status-sale-row status-sale-row--two">
                 <label>
-                  Data de Ativação CPE
+                  <span class="data-ativacao-label">
+                    Data de Ativação CPE
+                    <span
+                      *ngIf="isDataAtivacaoCpeRequired"
+                      class="data-ativacao-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else ativacaoCpeView"
+                    class="data-ativacao-input"
                     type="date"
                     [(ngModel)]="editForm.dataAtivacaoCPE"
+                    [required]="isDataAtivacaoCpeRequired"
+                    [attr.aria-invalid]="isDataAtivacaoCpeInvalid ? 'true' : null"
                   />
 
                   <ng-template #ativacaoCpeView>
-                    <strong>
-                      {{ formatDateOnly(contract.dataAtivacaoCPE) }}
+                    <strong [class.data-ativacao-missing-value]="isDataAtivacaoCpeInvalid">
+                      {{
+                        isDataAtivacaoCpeInvalid
+                          ? 'Em falta'
+                          : formatDateOnly(contract.dataAtivacaoCPE)
+                      }}
                     </strong>
                   </ng-template>
+
+                  <small
+                    *ngIf="isDataAtivacaoCpeMissing && !isDualDataAtivacaoRequirement"
+                    class="data-ativacao-validation-message"
+                  >
+                    A Data de Ativação do CPE é obrigatória para este estado.
+                  </small>
                 </label>
 
                 <label>
-                  Data de Ativação CUI
+                  <span class="data-ativacao-label">
+                    Data de Ativação CUI
+                    <span
+                      *ngIf="isDataAtivacaoCuiRequired"
+                      class="data-ativacao-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else ativacaoCuiView"
+                    class="data-ativacao-input"
                     type="date"
                     [(ngModel)]="editForm.dataAtivacaoCUI"
+                    [required]="isDataAtivacaoCuiRequired"
+                    [attr.aria-invalid]="isDataAtivacaoCuiInvalid ? 'true' : null"
                   />
 
                   <ng-template #ativacaoCuiView>
-                    <strong>
-                      {{ formatDateOnly(contract.dataAtivacaoCUI) }}
+                    <strong [class.data-ativacao-missing-value]="isDataAtivacaoCuiInvalid">
+                      {{
+                        isDataAtivacaoCuiInvalid
+                          ? 'Em falta'
+                          : formatDateOnly(contract.dataAtivacaoCUI)
+                      }}
                     </strong>
                   </ng-template>
+
+                  <small
+                    *ngIf="isDataAtivacaoCuiMissing && !isDualDataAtivacaoRequirement"
+                    class="data-ativacao-validation-message"
+                  >
+                    A Data de Ativação do CUI é obrigatória para este estado.
+                  </small>
                 </label>
+                <small
+                  *ngIf="isDualDataAtivacaoRequirement && !activationDateValidation.valid"
+                  class="data-ativacao-validation-message data-ativacao-dual-error"
+                >
+                  {{ activationDateValidation.message }}
+                </small>
               </div>
 
               <div class="status-sale-row status-sale-row--two">
                 <label>
-                  Data Baixa CPE
+                  <span class="data-baixa-label">
+                    Data Baixa CPE
+                    <span
+                      *ngIf="isDataBaixaCpeRequired"
+                      class="data-baixa-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else baixaCpeView"
+                    class="data-baixa-input"
                     type="date"
                     [(ngModel)]="editForm.dataBaixaCPE"
+                    [required]="isDataBaixaCpeRequired"
+                    [attr.aria-invalid]="isDataBaixaCpeInvalid ? 'true' : null"
+                    (ngModelChange)="clearDataBaixaBackendError()"
                   />
 
                   <ng-template #baixaCpeView>
@@ -359,15 +446,31 @@
                       {{ formatDateOnly(contract.dataBaixaCPE) }}
                     </strong>
                   </ng-template>
+
+                  <small *ngIf="isDataBaixaCpeMissing" class="data-baixa-validation-message">
+                    A Data de Baixa do CPE é obrigatória para este estado.
+                  </small>
                 </label>
 
                 <label>
-                  Data Baixa CUI
+                  <span class="data-baixa-label">
+                    Data Baixa CUI
+                    <span
+                      *ngIf="isDataBaixaCuiRequired"
+                      class="data-baixa-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
 
                   <input
                     *ngIf="isEditing; else baixaCuiView"
+                    class="data-baixa-input"
                     type="date"
                     [(ngModel)]="editForm.dataBaixaCUI"
+                    [required]="isDataBaixaCuiRequired"
+                    [attr.aria-invalid]="isDataBaixaCuiInvalid ? 'true' : null"
+                    (ngModelChange)="clearDataBaixaBackendError()"
                   />
 
                   <ng-template #baixaCuiView>
@@ -375,7 +478,22 @@
                       {{ formatDateOnly(contract.dataBaixaCUI) }}
                     </strong>
                   </ng-template>
+
+                  <small *ngIf="isDataBaixaCuiMissing" class="data-baixa-validation-message">
+                    A Data de Baixa do CUI é obrigatória para este estado.
+                  </small>
                 </label>
+                <small
+                  *ngIf="isPartialDataBaixaRequirement"
+                  class="data-baixa-partial-helper"
+                  [class.data-baixa-validation-message]="isPartialDataBaixaMissing"
+                >
+                  {{
+                    isPartialDataBaixaMissing
+                      ? 'Para uma baixa parcial de Luz + Gás, é obrigatório preencher pelo menos a Data de Baixa do CPE ou a Data de Baixa do CUI.'
+                      : 'Preencha pelo menos uma das datas de baixa.'
+                  }}
+                </small>
               </div>
             </div>
           </div>

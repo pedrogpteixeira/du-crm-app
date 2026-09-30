@@ -1,3 +1,18 @@
+import { ToastService } from '../../../core/services/toast';
+
+import {
+  DATA_REGISTO_REQUIRED_MESSAGE,
+  hasDataRegistoValue,
+  isDataRegistoRequiredError,
+  requiresDataRegisto,
+} from '../../../core/config/contract-data-registo';
+
+import {
+  getDataAtivacaoBackendMessage,
+  getSimpleActivationDateValidation,
+  isDataAtivacaoRequiredError,
+} from '../../../core/config/contract-data-ativacao';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -148,9 +163,33 @@ export class GalpSolarContractDetail implements OnInit {
   isSuperAdmin = false;
   isRequiredTeamMember = false;
   canAccessInternalObservations = false;
+  private readonly toast = inject(ToastService);
+  private dataAtivacaoBackendInvalid = false;
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   socketMessage = '';
 
   contractId = '';
@@ -163,6 +202,39 @@ export class GalpSolarContractDetail implements OnInit {
   readonly contratacaoOptions = ['Contratação Papel', 'Contratação Digital'];
 
   readonly estadoOptions = GALP_SOLAR_STATUSES;
+
+
+  get isDataRegistoRequired(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return requiresDataRegisto('galp-solar', estado);
+  }
+
+  get isDataRegistoMissing(): boolean {
+    const dataRegisto = this.isEditing ? this.editForm.dataRegisto : this.contract?.dataRegisto;
+    return this.isDataRegistoRequired && !hasDataRegistoValue(dataRegisto);
+  }
+
+  get activationDateValidation() {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    const dataAtivacao = this.isEditing ? this.editForm.dataAtivacao : this.contract?.dataAtivacao;
+
+    return getSimpleActivationDateValidation(estado, dataAtivacao);
+  }
+
+  get isDataAtivacaoRequired(): boolean {
+    return this.activationDateValidation.required;
+  }
+
+  get isDataAtivacaoMissing(): boolean {
+    return this.activationDateValidation.missing;
+  }
+
+  get isDataAtivacaoInvalid(): boolean {
+    return (
+      this.activationDateValidation.missing ||
+      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
+    );
+  }
   readonly panelSuggestions = GALP_SOLAR_PANEL_SUGGESTIONS;
   readonly paymentMethodSuggestions = GALP_SOLAR_PAYMENT_METHOD_SUGGESTIONS;
 
@@ -466,6 +538,15 @@ export class GalpSolarContractDetail implements OnInit {
       return;
     }
 
+    if (!this.validateDataRegistoRequirement()) {
+      return;
+    }
+
+    if (!this.validateActivationDateRequirement()) {
+      return;
+    }
+
+
     if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
       this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
@@ -580,6 +661,22 @@ export class GalpSolarContractDetail implements OnInit {
         },
         error: (error) => {
           this.clearOwnSocketSuppression();
+
+          if (isDataAtivacaoRequiredError(error)) {
+            this.dataAtivacaoBackendInvalid = true;
+            this.showError(
+              getDataAtivacaoBackendMessage(error) ||
+                this.activationDateValidation.message ||
+                'A Data de Ativação é obrigatória ao alterar o estado para Ativo.',
+            );
+            return;
+          }
+
+          if (isDataRegistoRequiredError(error)) {
+            this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+            return;
+          }
+
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
@@ -588,6 +685,35 @@ export class GalpSolarContractDetail implements OnInit {
         },
       });
   }
+
+  private validateActivationDateRequirement(): boolean {
+    const validation = getSimpleActivationDateValidation(
+      this.editForm.estado,
+      this.editForm.dataAtivacao,
+    );
+
+    this.dataAtivacaoBackendInvalid = !validation.valid;
+
+    if (validation.valid) {
+      return true;
+    }
+
+    this.showError(validation.message || 'A Data de Ativação é obrigatória para este estado.');
+    return false;
+  }
+
+  private validateDataRegistoRequirement(): boolean {
+    if (
+      !requiresDataRegisto('galp-solar', this.editForm.estado) ||
+      hasDataRegistoValue(this.editForm.dataRegisto)
+    ) {
+      return true;
+    }
+
+    this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+    return false;
+  }
+
 
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

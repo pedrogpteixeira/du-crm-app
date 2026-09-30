@@ -18,7 +18,7 @@ interface AnalyticsExcelExportPayload {
   providerLabel: string;
   period: AnalyticsPeriod;
   periodLabel: string;
-  totalContracts: number;
+  statesTotal: number;
   states: AnalyticsStatesAnalytics;
   registrationNames: AnalyticsRegistrationNamesAnalytics;
   products: AnalyticsProductsAnalytics;
@@ -101,6 +101,9 @@ export class AnalyticsExcelExportService {
       payload.sva.percentageWithSva,
     );
 
+    const statesTotalLabel =
+      period === 'all' ? 'Total de contratos' : 'Contratos com atividade de estado';
+
     const summarySheet: ExcelSheetDefinition = {
       name: 'Resumo',
       titleRows: [1],
@@ -110,14 +113,14 @@ export class AnalyticsExcelExportService {
         [],
         ['Comercializadora', payload.providerLabel],
         ['Período', payload.periodLabel],
-        ['Total de contratos', payload.totalContracts],
+        [statesTotalLabel, payload.statesTotal],
         ['Gerado em', new Intl.DateTimeFormat('pt-PT', {
           dateStyle: 'short',
           timeStyle: 'short',
         }).format(new Date())],
         [],
         ['Indicador', 'Quantidade', 'Percentagem (%)'],
-        ['Total de contratos', payload.totalContracts, null],
+        [statesTotalLabel, payload.statesTotal, null],
         ['Contratos com Débito Direto', directDebitTotal, directDebitPercentage],
         ['Contratos com SVA', svaTotal, svaPercentage],
       ],

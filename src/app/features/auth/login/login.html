@@ -9,10 +9,6 @@
       </div>
     </div>
 
-    <p class="success-message" *ngIf="successMessage">
-      {{ successMessage }}
-    </p>
-
     <p class="info-message" *ngIf="infoMessage">
       {{ infoMessage }}
     </p>
@@ -27,10 +23,6 @@
         Palavra-passe
         <input type="password" placeholder="Digite a sua palavra-passe" formControlName="password" autocomplete="current-password" />
       </label>
-
-      <p class="error-message" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </p>
 
       <button type="submit" [disabled]="isLoading">
         {{ isLoading ? 'A iniciar sessão...' : 'Iniciar sessão' }}

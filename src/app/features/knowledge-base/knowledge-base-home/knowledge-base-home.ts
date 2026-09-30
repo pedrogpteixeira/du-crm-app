@@ -5,7 +5,7 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import {
   Company,
@@ -29,14 +29,13 @@ interface KnowledgeCompanyConfig {
 
 @Component({
   selector: 'app-knowledge-base-home',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './knowledge-base-home.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './knowledge-base-home.scss',
 })
 export class KnowledgeBaseHome implements OnInit {
   private readonly companyService = inject(CompanyService);
-  private readonly router = inject(Router);
 
   companies: Company[] = [];
 
@@ -99,6 +98,14 @@ export class KnowledgeBaseHome implements OnInit {
       supportFolderId: 'kfo_kpcysylf4g',
       formsFolderId: 'kfo_eqkwzmdjba',
       trainingFolderId: 'kfo_0ezs3gmg45',
+    },
+    {
+      companyId: 'cmp_UL2eeL1SvE',
+      name: 'Vodafone',
+      logo: 'assets/companies/knowledge-base-home/vodafone.png',
+      supportFolderId: 'kfo_ku3x7wiv0y',
+      formsFolderId: 'kfo_222xyz9osk',
+      trainingFolderId: 'kfo_n7r31l64zk',
     },
     {
       companyId: 'cmp_KCnjrA0i-U',
@@ -199,58 +206,55 @@ export class KnowledgeBaseHome implements OnInit {
     );
   }
 
-  openCompanyAction(
+  companyActionRoute(
+    company: KnowledgeCompanyConfig,
+    action: KnowledgeCompanyAction,
+  ): string[] | null {
+    if (action === 'campaigns') {
+      return [
+        '/home/knowledge-base/campaigns',
+        company.companyId,
+      ];
+    }
+
+    const folderId = this.getFolderId(company, action);
+
+    if (!folderId) {
+      return null;
+    }
+
+    return [
+      '/home/knowledge-base/folders',
+      folderId,
+    ];
+  }
+
+  companyActionQueryParams(
+    company: KnowledgeCompanyConfig,
+    action: KnowledgeCompanyAction,
+  ): Record<string, string> {
+    return {
+      name:
+        action === 'campaigns'
+          ? company.name
+          : this.getFolderName(company, action),
+      supplier: company.name,
+      companyId: company.companyId,
+    };
+  }
+
+  handleCompanyActionClick(
+    event: MouseEvent,
     company: KnowledgeCompanyConfig,
     action: KnowledgeCompanyAction,
   ): void {
-    this.errorMessage = '';
-
-    if (action === 'campaigns') {
-      this.router.navigate(
-        [
-          '/home/knowledge-base/campaigns',
-          company.companyId,
-        ],
-        {
-          queryParams: {
-            name: company.name,
-            supplier: company.name,
-            companyId: company.companyId,
-          },
-        },
-      );
-
+    if (this.companyActionRoute(company, action)) {
       return;
     }
 
-    const folderId = this.getFolderId(
-      company,
-      action,
-    );
-
-    if (!folderId) {
-      this.errorMessage =
-        'Ainda não existe uma pasta configurada para esta opção.';
-
-      return;
-    }
-
-    this.router.navigate(
-      [
-        '/home/knowledge-base/folders',
-        folderId,
-      ],
-      {
-        queryParams: {
-          name: this.getFolderName(
-            company,
-            action,
-          ),
-          supplier: company.name,
-          companyId: company.companyId,
-        },
-      },
-    );
+    event.preventDefault();
+    this.errorMessage =
+      'Ainda não existe uma pasta configurada para esta opção.';
   }
 
   private getFolderId(

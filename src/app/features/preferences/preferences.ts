@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { ToastService } from '../../core/services/toast';
+
 import { Auth } from '../../core/services/auth';
 import {
   ContractLayout,
@@ -40,9 +42,31 @@ export class Preferences implements OnInit, OnDestroy {
   };
 
   private persistedPreferences: UserPreferences = { ...this.preferences };
+  private readonly toast = inject(ToastService);
 
-  successMessage = '';
-  errorMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   hasUnsavedChanges = false;
   isSaving = false;

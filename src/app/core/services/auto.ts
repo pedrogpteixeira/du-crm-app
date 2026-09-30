@@ -233,6 +233,7 @@ export interface Auto {
 
 export interface AutoItem {
   id?: string;
+  domainId?: string;
   autoId?: string;
   contractId: string;
   clientName?: string;
@@ -259,6 +260,48 @@ export interface AutoItem {
   settled?: boolean;
   diagnostic?: string;
 }
+
+export interface AutoItemPaymentAttachment {
+  /** Nome legado / fallback devolvido por versões anteriores da API. */
+  name?: string;
+  /** Identificador do ficheiro usado pelo endpoint de download. */
+  fileName?: string;
+  /** Nome original apresentado ao utilizador. */
+  originalName?: string;
+  key?: string;
+  contentType?: string;
+  mimetype?: string;
+  size?: number;
+}
+
+export interface AutoItemPayment {
+  domainId: string;
+  autoId: string;
+  autoItemId: string;
+  contractId: string;
+  teamId: string;
+  nomeRegistoCE: string;
+  nomeCliente: string;
+  amount: number;
+  paymentMethod: string;
+  paymentMethodOther?: string | null;
+  attachments: AutoItemPaymentAttachment[];
+  createdBy: string;
+  paidAt: string;
+  walletAppliedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const AUTO_ITEM_PAYMENT_METHODS = [
+  'Transferência Bancária',
+  'MB Way',
+  'Numerário',
+  'Outro',
+] as const;
+
+export type AutoItemPaymentMethod =
+  (typeof AUTO_ITEM_PAYMENT_METHODS)[number];
 
 export type AutoPreviewItem = AutoItem;
 
@@ -344,6 +387,15 @@ type AutoDetailResponse =
       pagination?: AutoPagination;
       diagnostics?: AutoDiagnosticEntry[];
     };
+
+type AutoItemPaymentResponse =
+  | AutoItemPayment
+  | { payment?: AutoItemPayment | null }
+  | null;
+
+type AutoItemPaymentsResponse =
+  | AutoItemPayment[]
+  | { payments?: AutoItemPayment[]; items?: AutoItemPayment[] };
 
 export interface AutosState {
   autos: Auto[];
@@ -550,6 +602,68 @@ export class AutoService {
         observe: 'response',
         responseType: 'blob',
       },
+    );
+  }
+
+  getAutoPayments(autoId: string): Observable<AutoItemPayment[]> {
+    return this.http
+      .get<AutoItemPaymentsResponse>(
+        `${this.apiUrl}/api/autos/${encodeURIComponent(autoId)}/payments`,
+      )
+      .pipe(map((response) => this.normalizeAutoItemPayments(response)));
+  }
+
+  getAutoItemPayment(autoItemId: string): Observable<AutoItemPayment | null> {
+    return this.http
+      .get<AutoItemPaymentResponse>(
+        `${this.apiUrl}/api/autos/items/${encodeURIComponent(autoItemId)}/payment`,
+      )
+      .pipe(map((response) => this.normalizeAutoItemPaymentResponse(response)));
+  }
+
+  createAutoItemPayment(
+    autoItemId: string,
+    paymentMethod: AutoItemPaymentMethod,
+    files: readonly File[] = [],
+    paymentMethodOther?: string,
+  ): Observable<AutoItemPayment> {
+    const formData = new FormData();
+    formData.append('paymentMethod', paymentMethod);
+
+    if (paymentMethod === 'Outro') {
+      const normalizedOther = paymentMethodOther?.trim();
+      if (normalizedOther) {
+        formData.append('paymentMethodOther', normalizedOther);
+      }
+    }
+
+    for (const file of files) {
+      formData.append('files', file, file.name);
+    }
+
+    return this.http
+      .post<AutoItemPaymentResponse>(
+        `${this.apiUrl}/api/autos/items/${encodeURIComponent(autoItemId)}/payment`,
+        formData,
+      )
+      .pipe(
+        map((response) => {
+          const payment = this.normalizeAutoItemPaymentResponse(response);
+          if (!payment) {
+            throw new Error('A API não devolveu o pagamento criado.');
+          }
+          return payment;
+        }),
+      );
+  }
+
+  downloadAutoItemPaymentAttachment(
+    autoItemId: string,
+    fileName: string,
+  ): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/api/autos/items/${encodeURIComponent(autoItemId)}/payment/attachments/${encodeURIComponent(fileName)}/download`,
+      { responseType: 'blob' },
     );
   }
 
@@ -764,6 +878,65 @@ export class AutoService {
         chunk.items?.length ?? 0,
       ),
       diagnostics: chunk.diagnostics,
+    };
+  }
+
+  private normalizeAutoItemPaymentResponse(
+    response: AutoItemPaymentResponse,
+  ): AutoItemPayment | null {
+    if (!response) {
+      return null;
+    }
+
+    const payment = Object.prototype.hasOwnProperty.call(response, 'payment')
+      ? (response as { payment?: AutoItemPayment | null }).payment
+      : (response as AutoItemPayment);
+
+    if (!payment) {
+      return null;
+    }
+
+    return {
+      ...payment,
+      attachments: (payment.attachments ?? []).map((attachment) =>
+        this.normalizeAutoItemPaymentAttachment(attachment),
+      ),
+    };
+  }
+
+  private normalizeAutoItemPayments(
+    response: AutoItemPaymentsResponse,
+  ): AutoItemPayment[] {
+    const payments = Array.isArray(response)
+      ? response
+      : response.payments ?? response.items ?? [];
+
+    return payments.map((payment) => ({
+      ...payment,
+      attachments: (payment.attachments ?? []).map((attachment) =>
+        this.normalizeAutoItemPaymentAttachment(attachment),
+      ),
+    }));
+  }
+
+  private normalizeAutoItemPaymentAttachment(
+    attachment: AutoItemPaymentAttachment,
+  ): AutoItemPaymentAttachment {
+    const originalName = String(
+      attachment.originalName ?? attachment.name ?? attachment.fileName ?? '',
+    ).trim();
+    const fileName = String(
+      attachment.fileName ?? attachment.name ?? attachment.originalName ?? '',
+    ).trim();
+    const mimetype = attachment.mimetype ?? attachment.contentType;
+
+    return {
+      ...attachment,
+      name: originalName || fileName,
+      originalName: originalName || fileName,
+      fileName: fileName || originalName,
+      mimetype,
+      contentType: attachment.contentType ?? mimetype,
     };
   }
 

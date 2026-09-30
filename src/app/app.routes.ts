@@ -551,6 +551,17 @@ export const routes: Routes = [
             .then((m) => m.KnowledgeBaseHome),
       },
       {
+        path: 'companies',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/admin/companies/companies').then(
+            (m) => m.Companies,
+          ),
+      },
+      {
         path: 'knowledge-base/folders/:id',
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-folder/knowledge-folder')

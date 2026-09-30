@@ -141,9 +141,7 @@
   background: #ffffff;
   border-radius: 22px;
   padding: 18px 24px;
-  box-shadow:
-    0 14px 40px
-    rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
 }
 
 .section-title {
@@ -182,8 +180,7 @@
   justify-content: center;
   flex-shrink: 0;
   font-size: 18px;
-  transition:
-    transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .chevron.collapsed {
@@ -192,8 +189,7 @@
 
 .section-content {
   margin-top: 20px;
-  animation:
-    sectionFade 0.15s ease;
+  animation: sectionFade 0.15s ease;
 }
 
 /* =========================
@@ -202,11 +198,7 @@
 
 .info-grid {
   display: grid;
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(220px, 1fr)
-    );
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 22px 42px;
 }
 
@@ -228,8 +220,7 @@ input,
 select,
 textarea {
   width: 100%;
-  border:
-    1px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: #ffffff;
   color: #243646;
@@ -254,9 +245,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: #008db1;
-  box-shadow:
-    0 0 0 4px
-    rgba(0, 141, 177, 0.1);
+  box-shadow: 0 0 0 4px rgba(0, 141, 177, 0.1);
 }
 
 strong {
@@ -357,23 +346,57 @@ strong {
   white-space: nowrap;
 }
 
-.status-contract-request { background: #0097b2; }
-.status-simulation { background: #0284c7; }
-.status-commercial-validation { background: #7c3aed; }
-.status-rgpd { background: #6366f1; }
-.status-vtv { background: #0f766e; }
-.status-contractual-sms { background: #8b5cf6; }
-.status-non-compliance { background: #f59e0b; }
-.status-docs { background: #f59e0b; }
-.status-docs-sent { background: #16a34a; }
-.status-backoffice { background: #334155; }
-.status-control { background: #475569; }
-.status-supply-request { background: #0369a1; }
-.status-supply { background: #0891b2; }
-.status-active { background: #16a34a; }
-.status-partial-low { background: #b45309; }
-.status-cancelled { background: #dc2626; }
-.status-low { background: #64748b; }
+.status-contract-request {
+  background: #0097b2;
+}
+.status-simulation {
+  background: #0284c7;
+}
+.status-commercial-validation {
+  background: #7c3aed;
+}
+.status-rgpd {
+  background: #6366f1;
+}
+.status-vtv {
+  background: #0f766e;
+}
+.status-contractual-sms {
+  background: #8b5cf6;
+}
+.status-non-compliance {
+  background: #f59e0b;
+}
+.status-docs {
+  background: #f59e0b;
+}
+.status-docs-sent {
+  background: #16a34a;
+}
+.status-backoffice {
+  background: #334155;
+}
+.status-control {
+  background: #475569;
+}
+.status-supply-request {
+  background: #0369a1;
+}
+.status-supply {
+  background: #0891b2;
+}
+.status-active {
+  background: #16a34a;
+}
+.status-partial-low {
+  background: #b45309;
+}
+.status-cancelled {
+  background: #dc2626;
+}
+.status-low {
+  background: #64748b;
+}
 
 /* =========================
    ATTACHMENTS
@@ -391,8 +414,7 @@ strong {
   align-items: stretch;
   gap: 8px;
   border-radius: 14px;
-  border:
-    1px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
   background: #f8fafc;
   overflow: hidden;
   transition:
@@ -405,8 +427,7 @@ strong {
 .attachment-item:hover {
   background: #eef6fa;
   border-color: #008db1;
-  transform:
-    translateY(-1px);
+  transform: translateY(-1px);
 }
 
 .attachment-item.deleting {
@@ -439,8 +460,7 @@ strong {
   display: grid;
   place-items: center;
   border: 0;
-  border-left:
-    1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   background: transparent;
   font-family: inherit;
   font-size: 17px;
@@ -450,9 +470,7 @@ strong {
     color 0.2s ease;
 }
 
-.delete-attachment-button:hover:not(
-  :disabled
-) {
+.delete-attachment-button:hover:not(:disabled) {
   background: #fee2e2;
 }
 
@@ -506,8 +524,7 @@ strong {
   flex-direction: row;
   align-items: center;
   gap: 14px;
-  border:
-    1px dashed #94a3b8;
+  border: 1px dashed #94a3b8;
   border-radius: 14px;
   background: #f8fafc;
   padding: 16px;
@@ -615,8 +632,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 12px;
-  border:
-    1px solid #cbd5e1;
+  border: 1px solid #cbd5e1;
   border-radius: 14px;
   background: #ffffff;
   padding: 12px;
@@ -645,8 +661,7 @@ strong {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border:
-    1px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #f8fafc;
   padding: 14px;
@@ -687,14 +702,12 @@ strong {
 @keyframes sectionFade {
   from {
     opacity: 0;
-    transform:
-      translateY(-4px);
+    transform: translateY(-4px);
   }
 
   to {
     opacity: 1;
-    transform:
-      translateY(0);
+    transform: translateY(0);
   }
 }
 
@@ -902,4 +915,105 @@ strong {
   .editing-label {
     display: none;
   }
+}
+
+/* Dynamic Data de Registo validation */
+.data-registo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.data-registo-required-marker,
+.data-registo-validation-message,
+.data-registo-missing-value {
+  color: #dc2626;
+}
+
+.data-registo-required-marker {
+  font-weight: 900;
+}
+
+.data-registo-input[aria-invalid='true'] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.data-registo-validation-message {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Dynamic Data de Baixa CPE/CUI validation */
+.data-baixa-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.data-baixa-required-marker,
+.data-baixa-validation-message {
+  color: #dc2626;
+}
+
+.data-baixa-required-marker {
+  font-weight: 900;
+}
+
+.data-baixa-input[aria-invalid='true'] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.data-baixa-validation-message,
+.data-baixa-partial-helper {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.data-baixa-partial-helper {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+.data-baixa-partial-helper.data-baixa-validation-message {
+  color: #dc2626;
+  opacity: 1;
+}
+
+/* Dynamic Data de Ativação validation */
+.data-ativacao-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.data-ativacao-required-marker,
+.data-ativacao-validation-message,
+.data-ativacao-missing-value {
+  color: #dc2626;
+}
+
+.data-ativacao-required-marker {
+  font-weight: 900;
+}
+
+.data-ativacao-input[aria-invalid='true'] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.data-ativacao-validation-message {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.data-ativacao-dual-error {
+  grid-column: 1 / -1;
+  margin-top: -2px;
 }

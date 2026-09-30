@@ -8,25 +8,41 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+
+import { ToastService } from '../../../core/services/toast';
+import {
+  DocumentPreviewService,
+  getDocumentPreviewType,
+} from '../../../core/services/document-preview';
+import { FileAccessService } from '../../../core/services/file-access';
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 import { Auth } from '../../../core/services/auth';
 import {
   AutoDetail as AutoDetailModel,
   AutoDiagnosticEntry,
+  AUTO_ITEM_PAYMENT_METHODS,
   AutoItem,
+  AutoItemPayment,
+  AutoItemPaymentAttachment,
+  AutoItemPaymentMethod,
   AutoProvider,
   AutoService,
   AutoStatus,
   AutoType,
   getAutoProviderLabel,
 } from '../../../core/services/auto';
-import { AutoItemsTable } from '../auto-items-table/auto-items-table';
+import {
+  AutoItemPaymentActionEvent,
+  AutoItemsTable,
+} from '../auto-items-table/auto-items-table';
 
 @Component({
   selector: 'app-auto-detail',
-  imports: [CommonModule, RouterLink, AutoItemsTable],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, AutoItemsTable, FileDropzone],
   templateUrl: './auto-detail.html',
   styleUrl: './auto-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,14 +52,43 @@ export class AutoDetail implements OnInit {
   private readonly router = inject(Router);
   private readonly autoService = inject(AutoService);
   private readonly auth = inject(Auth);
+  private readonly documentPreview = inject(DocumentPreviewService);
+  private readonly fileAccess = inject(FileAccessService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   private autoLoadRequestId = 0;
   private itemsRevision = 0;
   private loadingAutoId = '';
+  private paymentsLoadRequestId = 0;
 
   readonly itemsPageSize = 50;
+  readonly paymentMethodOptions = AUTO_ITEM_PAYMENT_METHODS;
+
+  paymentsByAutoItemId = new Map<string, AutoItemPayment>();
+  isLoadingPayments = false;
+  paymentsUnavailable = false;
+
+  showRegisterPaymentModal = false;
+  showPaymentDetailModal = false;
+
+  selectedPaymentItem: AutoItem | null = null;
+  selectedPayment: AutoItemPayment | null = null;
+  readonly paymentForm = new FormGroup({
+    paymentMethod: new FormControl<AutoItemPaymentMethod | ''>('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    paymentMethodOther: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(100)],
+    }),
+  });
+  selectedPaymentFiles: File[] = [];
+
+  isRegisteringPayment = false;
+  downloadingPaymentAttachment = '';
+  previewingPaymentAttachment = '';
 
   auto: AutoDetailModel | null = null;
   autoId = '';
@@ -54,15 +99,58 @@ export class AutoDetail implements OnInit {
   isFinalizing = false;
   isDeleting = false;
   isExporting = false;
-
-  errorMessage = '';
   loadMoreErrorMessage = '';
-  successMessage = '';
+
+  private readonly toast = inject(ToastService);
+
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   showFinalizeConfirm = false;
   showDeleteConfirm = false;
 
+  get paymentMethodControl(): FormControl<AutoItemPaymentMethod | ''> {
+    return this.paymentForm.controls.paymentMethod;
+  }
+
+  get paymentMethodOtherControl(): FormControl<string> {
+    return this.paymentForm.controls.paymentMethodOther;
+  }
+
+  get isOtherPaymentMethod(): boolean {
+    return this.paymentMethodControl.value === 'Outro';
+  }
+
   ngOnInit(): void {
     this.isSuperAdmin = this.auth.isSuperAdmin();
+
+    this.paymentMethodControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((paymentMethod) => {
+        this.syncPaymentMethodOtherValidation(paymentMethod);
+        this.cdr.markForCheck();
+      });
 
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -79,6 +167,7 @@ export class AutoDetail implements OnInit {
         if (this.autoId !== id) {
           this.auto = null;
           this.loadMoreErrorMessage = '';
+          this.resetPaymentsState();
         }
 
         this.autoId = id;
@@ -141,6 +230,13 @@ export class AutoDetail implements OnInit {
           }
 
           this.auto = auto;
+
+          if (auto.status === 'finalized') {
+            this.loadPayments(auto.id);
+          } else {
+            this.resetPaymentsState();
+          }
+
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -231,6 +327,332 @@ export class AutoDetail implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  loadPayments(autoId: string): void {
+    const requestId = ++this.paymentsLoadRequestId;
+    const requestedAutoId = autoId;
+
+    this.isLoadingPayments = true;
+    this.paymentsUnavailable = false;
+    this.cdr.markForCheck();
+
+    this.autoService
+      .getAutoPayments(requestedAutoId)
+      .pipe(
+        finalize(() => {
+          if (requestId !== this.paymentsLoadRequestId) {
+            return;
+          }
+
+          this.isLoadingPayments = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (payments) => {
+          if (
+            requestId !== this.paymentsLoadRequestId ||
+            requestedAutoId !== this.autoId
+          ) {
+            return;
+          }
+
+          this.paymentsByAutoItemId = new Map(
+            payments.map((payment) => [payment.autoItemId, payment]),
+          );
+          this.paymentsUnavailable = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          if (
+            requestId !== this.paymentsLoadRequestId ||
+            requestedAutoId !== this.autoId
+          ) {
+            return;
+          }
+
+          this.paymentsUnavailable = true;
+          this.errorMessage = this.getOperationError(
+            error,
+            'Não foi possível carregar os pagamentos deste Auto.',
+          );
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  openRegisterPayment(item: AutoItem): void {
+    if (!this.canManagePaymentForItem(item)) {
+      return;
+    }
+
+    const itemId = this.getAutoItemId(item);
+    if (!itemId || this.paymentsByAutoItemId.has(itemId)) {
+      return;
+    }
+
+    this.selectedPaymentItem = item;
+    this.selectedPayment = null;
+    this.resetPaymentForm();
+    this.selectedPaymentFiles = [];
+    this.showRegisterPaymentModal = true;
+  }
+
+  closeRegisterPayment(): void {
+    if (this.isRegisteringPayment) {
+      return;
+    }
+
+    this.showRegisterPaymentModal = false;
+    this.selectedPaymentItem = null;
+    this.resetPaymentForm();
+    this.selectedPaymentFiles = [];
+  }
+
+  registerSelectedPayment(): void {
+    const item = this.selectedPaymentItem;
+    const itemId = item ? this.getAutoItemId(item) : '';
+
+    if (
+      !item ||
+      !itemId ||
+      !this.canManagePaymentForItem(item) ||
+      this.isRegisteringPayment
+    ) {
+      return;
+    }
+
+    this.paymentForm.markAllAsTouched();
+
+    if (this.paymentForm.invalid) {
+      if (!this.paymentMethodControl.value) {
+        this.errorMessage = 'Seleciona o método de pagamento.';
+      } else if (
+        this.paymentMethodOtherControl.hasError('required') ||
+        this.paymentMethodOtherControl.hasError('pattern')
+      ) {
+        this.errorMessage = 'Especifica o método de pagamento.';
+      } else {
+        this.errorMessage = 'Revê os dados do pagamento antes de continuar.';
+      }
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (!this.selectedPaymentFiles.length) {
+      this.errorMessage = 'Adiciona pelo menos um comprovativo do pagamento.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const paymentMethod = this.paymentMethodControl.value as AutoItemPaymentMethod;
+    const paymentMethodOther =
+      paymentMethod === 'Outro'
+        ? this.paymentMethodOtherControl.value.trim()
+        : undefined;
+
+    if (paymentMethod === 'Outro') {
+      this.paymentMethodOtherControl.setValue(paymentMethodOther ?? '', {
+        emitEvent: false,
+      });
+    }
+
+    this.isRegisteringPayment = true;
+    this.paymentForm.disable({ emitEvent: false });
+
+    this.autoService
+      .createAutoItemPayment(
+        itemId,
+        paymentMethod,
+        this.selectedPaymentFiles,
+        paymentMethodOther,
+      )
+      .pipe(
+        finalize(() => {
+          this.isRegisteringPayment = false;
+          this.paymentForm.enable({ emitEvent: false });
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (payment) => {
+          this.upsertPayment(payment);
+          this.showRegisterPaymentModal = false;
+          this.selectedPaymentItem = null;
+          this.resetPaymentForm();
+          this.selectedPaymentFiles = [];
+          this.successMessage = 'Pagamento registado com sucesso.';
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.errorMessage = this.getOperationError(
+            error,
+            'Não foi possível registar o pagamento.',
+          );
+          this.refreshPaymentForItem(itemId);
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  openPaymentDetail(event: AutoItemPaymentActionEvent): void {
+    this.selectedPaymentItem = event.item;
+    this.selectedPayment = event.payment;
+    this.showPaymentDetailModal = true;
+  }
+
+  closePaymentDetail(): void {
+    this.showPaymentDetailModal = false;
+    this.selectedPaymentItem = null;
+    this.selectedPayment = null;
+  }
+
+  canPreviewPaymentAttachment(attachment: AutoItemPaymentAttachment): boolean {
+    return this.documentPreview.canPreview(attachment);
+  }
+
+  previewPaymentAttachment(attachment: AutoItemPaymentAttachment): void {
+    const payment = this.selectedPayment;
+    if (!payment || this.previewingPaymentAttachment) {
+      return;
+    }
+
+    const fileName = this.paymentAttachmentRequestName(attachment);
+    if (!fileName) {
+      this.errorMessage = 'Não foi possível identificar o comprovativo.';
+      return;
+    }
+
+    this.previewingPaymentAttachment = fileName;
+
+    this.documentPreview
+      .preview(attachment, () =>
+        this.autoService.downloadAutoItemPaymentAttachment(payment.autoItemId, fileName),
+      )
+      .pipe(
+        finalize(() => {
+          this.previewingPaymentAttachment = '';
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        error: (error) => {
+          this.errorMessage = this.getOperationError(
+            error,
+            'Não foi possível pré-visualizar o comprovativo.',
+          );
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  downloadPaymentAttachment(attachment: AutoItemPaymentAttachment): void {
+    const payment = this.selectedPayment;
+    if (!payment || this.downloadingPaymentAttachment) {
+      return;
+    }
+
+    if (!this.fileAccess.canViewFile(attachment)) {
+      this.errorMessage = 'Não tem permissão para visualizar este ficheiro.';
+      return;
+    }
+
+    const requestFileName = this.paymentAttachmentRequestName(attachment);
+    const downloadFileName = this.paymentAttachmentDisplayName(attachment);
+
+    if (!requestFileName) {
+      this.errorMessage = 'Não foi possível identificar o comprovativo.';
+      return;
+    }
+
+    this.downloadingPaymentAttachment = requestFileName;
+
+    this.autoService
+      .downloadAutoItemPaymentAttachment(payment.autoItemId, requestFileName)
+      .pipe(
+        finalize(() => {
+          this.downloadingPaymentAttachment = '';
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (blob) => {
+          if (!blob?.size) {
+            this.errorMessage = 'O comprovativo não foi recebido.';
+            return;
+          }
+
+          this.downloadBlob(blob, downloadFileName || requestFileName);
+        },
+        error: (error) => {
+          this.errorMessage = this.getOperationError(
+            error,
+            'Não foi possível descarregar o comprovativo.',
+          );
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  paymentAttachmentDisplayName(attachment: AutoItemPaymentAttachment): string {
+    return String(
+      attachment.originalName ?? attachment.name ?? attachment.fileName ?? 'Comprovativo',
+    ).trim() || 'Comprovativo';
+  }
+
+  paymentAttachmentRequestName(attachment: AutoItemPaymentAttachment): string {
+    return String(
+      attachment.fileName ?? attachment.name ?? attachment.originalName ?? '',
+    ).trim();
+  }
+
+  paymentAttachmentIcon(attachment: AutoItemPaymentAttachment): string {
+    const previewType = getDocumentPreviewType(attachment);
+
+    if (previewType === 'pdf') {
+      return 'picture_as_pdf';
+    }
+
+    if (previewType === 'image') {
+      return 'image';
+    }
+
+    if (previewType === 'audio') {
+      return 'audio_file';
+    }
+
+    return 'description';
+  }
+
+  isPaymentAttachmentBusy(attachment: AutoItemPaymentAttachment): boolean {
+    const fileName = this.paymentAttachmentRequestName(attachment);
+    return Boolean(
+      fileName &&
+        (this.downloadingPaymentAttachment === fileName ||
+          this.previewingPaymentAttachment === fileName),
+    );
+  }
+
+  get canManagePayments(): boolean {
+    return Boolean(this.isSuperAdmin && this.auto?.status === 'finalized');
+  }
+
+  formatFileSize(size: number | null | undefined): string {
+    if (size === null || size === undefined || Number.isNaN(Number(size))) {
+      return '';
+    }
+
+    const bytes = Number(size);
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   requestFinalize(): void {
@@ -480,17 +902,108 @@ export class AutoDetail implements OnInit {
     }).format(date);
   }
 
+  private canManagePaymentForItem(item: AutoItem): boolean {
+    return Boolean(
+      this.canManagePayments &&
+      item.movementType === 'payment' &&
+      Number(item.commission) > 0 &&
+      this.getAutoItemId(item),
+    );
+  }
+
+  private getAutoItemId(item: AutoItem): string {
+    return item.domainId ?? item.id ?? '';
+  }
+
+  private upsertPayment(payment: AutoItemPayment): void {
+    this.paymentsByAutoItemId = new Map(this.paymentsByAutoItemId);
+    this.paymentsByAutoItemId.set(payment.autoItemId, payment);
+  }
+
+  private refreshPaymentForItem(autoItemId: string): void {
+    this.autoService.getAutoItemPayment(autoItemId).subscribe({
+      next: (payment) => {
+        const nextPayments = new Map(this.paymentsByAutoItemId);
+
+        if (payment) {
+          nextPayments.set(autoItemId, payment);
+          if (this.selectedPayment?.autoItemId === autoItemId) {
+            this.selectedPayment = payment;
+          }
+        } else {
+          nextPayments.delete(autoItemId);
+        }
+
+        this.paymentsByAutoItemId = nextPayments;
+        this.cdr.markForCheck();
+      },
+      error: () => undefined,
+    });
+  }
+
+  private resetPaymentsState(): void {
+    ++this.paymentsLoadRequestId;
+    this.paymentsByAutoItemId = new Map();
+    this.isLoadingPayments = false;
+    this.paymentsUnavailable = false;
+    this.showRegisterPaymentModal = false;
+    this.showPaymentDetailModal = false;
+    this.selectedPaymentItem = null;
+    this.selectedPayment = null;
+    this.resetPaymentForm();
+    this.selectedPaymentFiles = [];
+  }
+
+  private syncPaymentMethodOtherValidation(
+    paymentMethod: AutoItemPaymentMethod | '',
+  ): void {
+    const control = this.paymentMethodOtherControl;
+
+    if (paymentMethod === 'Outro') {
+      control.setValidators([
+        Validators.required,
+        Validators.pattern(/\S/),
+        Validators.maxLength(100),
+      ]);
+    } else {
+      control.setValidators([Validators.maxLength(100)]);
+      if (control.value) {
+        control.setValue('', { emitEvent: false });
+      }
+    }
+
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private resetPaymentForm(): void {
+    this.paymentForm.reset({
+      paymentMethod: '',
+      paymentMethodOther: '',
+    });
+    this.syncPaymentMethodOtherValidation('');
+  }
+
+  paymentMethodLabel(payment: AutoItemPayment): string {
+    const customMethod = payment.paymentMethodOther?.trim();
+
+    if (payment.paymentMethod === 'Outro' && customMethod) {
+      return `Outro — ${customMethod}`;
+    }
+
+    return payment.paymentMethod || '—';
+  }
+
   private appendUniqueItems(
     currentItems: readonly AutoItem[],
     nextItems: readonly AutoItem[],
   ): AutoItem[] {
     const seen = new Set(
-      currentItems.map((item) => item.id ?? item.contractId),
+      currentItems.map((item) => item.domainId ?? item.id ?? item.contractId),
     );
     const appended = [...currentItems];
 
     for (const item of nextItems) {
-      const key = item.id ?? item.contractId;
+      const key = item.domainId ?? item.id ?? item.contractId;
       if (seen.has(key)) {
         continue;
       }
@@ -557,6 +1070,8 @@ export class AutoDetail implements OnInit {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    window.URL.revokeObjectURL(url);
+
+    // Evita libertar a Blob URL antes de o browser iniciar efetivamente o download.
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
   }
 }

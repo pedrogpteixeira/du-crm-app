@@ -6,6 +6,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, finalize, map, merge, Observable, of, switchMap } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import {
   getContractCompanyName,
   getContractDetailRoute,
@@ -113,8 +115,32 @@ export class TicketDetail implements OnInit {
   contractAccessWarning = '';
 
   loadError = '';
-  errorMessage = '';
-  successMessage = '';
+  private readonly toast = inject(ToastService);
+
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   socketMessage = '';
   lastSocketUpdate = '';
   observationDraft = '';

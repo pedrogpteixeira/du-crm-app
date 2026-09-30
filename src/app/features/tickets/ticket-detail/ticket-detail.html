@@ -1,8 +1,6 @@
 <section class="ticket-detail-page">
   <p class="loading" *ngIf="isLoading">A carregar Ticket...</p>
   <p class="error-message" *ngIf="loadError">{{ loadError }}</p>
-  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
-  <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
   <p class="socket-message" *ngIf="socketMessage">{{ socketMessage }}</p>
   <p class="error-message" *ngIf="contractAccessWarning">{{ contractAccessWarning }}</p>
 

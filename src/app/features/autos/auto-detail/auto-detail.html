@@ -4,9 +4,6 @@
     Autos
   </a>
 
-  <div class="feedback success" *ngIf="successMessage">{{ successMessage }}</div>
-  <div class="feedback error" *ngIf="errorMessage">{{ errorMessage }}</div>
-
   <div class="loading-state" *ngIf="isLoadingAuto && !auto">
     <span class="spinner"></span>
     A carregar Auto...
@@ -14,16 +11,36 @@
 
   <ng-container *ngIf="auto as currentAuto">
     <header class="detail-header">
-      <div>
-        <span class="eyebrow">Auto de comissões</span>
-        <h1>Auto {{ providerLabel(currentAuto.provider) }}</h1>
-        <p>{{ formatDate(currentAuto.periodStart) }} → {{ formatDate(currentAuto.periodEnd) }}</p>
+      <div class="detail-heading">
+        <div class="detail-title-line">
+          <div class="detail-provider-icon" aria-hidden="true">
+            <span class="material-symbols-rounded">receipt_long</span>
+          </div>
 
-        <div class="badges">
-          <span class="status-badge" [class.is-finalized]="currentAuto.status === 'finalized'">
-            {{ statusLabel(currentAuto.status) }}
+          <div>
+            <span class="eyebrow">Auto de comissões</span>
+            <h1>{{ providerLabel(currentAuto.provider) }}</h1>
+          </div>
+        </div>
+
+        <div class="detail-context">
+          <span class="detail-period">
+            <span class="material-symbols-rounded" aria-hidden="true">date_range</span>
+            {{ formatDate(currentAuto.periodStart) }} → {{ formatDate(currentAuto.periodEnd) }}
           </span>
-          <span class="type-badge">{{ typeLabel(currentAuto.type) }}</span>
+
+          <div class="badges">
+            <span class="status-badge" [class.is-finalized]="currentAuto.status === 'finalized'">
+              <span class="status-dot" aria-hidden="true"></span>
+              {{ statusLabel(currentAuto.status) }}
+            </span>
+            <span class="type-badge">
+              <span class="material-symbols-rounded" aria-hidden="true">
+                {{ currentAuto.type === 'automatic' ? 'autorenew' : 'person' }}
+              </span>
+              {{ typeLabel(currentAuto.type) }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -46,21 +63,42 @@
       </div>
     </header>
 
-    <section class="metadata-card">
-      <div><span>Comercializadora</span><strong>{{ providerLabel(currentAuto.provider) }}</strong></div>
-      <div><span>Período</span><strong>{{ formatDate(currentAuto.periodStart) }} → {{ formatDate(currentAuto.periodEnd) }}</strong></div>
-      <div><span>Tipo</span><strong>{{ typeLabel(currentAuto.type) }}</strong></div>
-      <div><span>Estado</span><strong>{{ statusLabel(currentAuto.status) }}</strong></div>
-      <div><span>Criado por</span><strong>{{ creatorLabel() }}</strong></div>
-      <div><span>Criado em</span><strong>{{ formatDateTime(currentAuto.createdAt) }}</strong></div>
-      <div><span>Finalizado em</span><strong>{{ formatDateTime(currentAuto.finalizedAt) }}</strong></div>
+    <section class="metadata-card" aria-label="Informação do Auto">
+      <div>
+        <span class="metadata-icon material-symbols-rounded" aria-hidden="true">tag</span>
+        <div><span>Identificador</span><strong>{{ currentAuto.id }}</strong></div>
+      </div>
+      <div>
+        <span class="metadata-icon material-symbols-rounded" aria-hidden="true">person</span>
+        <div><span>Criado por</span><strong>{{ creatorLabel() }}</strong></div>
+      </div>
+      <div>
+        <span class="metadata-icon material-symbols-rounded" aria-hidden="true">schedule</span>
+        <div><span>Criado em</span><strong>{{ formatDateTime(currentAuto.createdAt) }}</strong></div>
+      </div>
+      <div>
+        <span class="metadata-icon material-symbols-rounded" aria-hidden="true">task_alt</span>
+        <div><span>Finalizado em</span><strong>{{ formatDateTime(currentAuto.finalizedAt) }}</strong></div>
+      </div>
     </section>
 
-    <section class="summary-grid">
-      <article><span>Contratos</span><strong>{{ currentAuto.contractsCount }}</strong></article>
-      <article><span>A pagar</span><strong class="positive">{{ formatCurrency(currentAuto.totalPositive) }}</strong></article>
-      <article><span>A devolver</span><strong class="negative">{{ formatCurrency(currentAuto.totalNegative) }}</strong></article>
-      <article><span>Total líquido</span><strong>{{ formatCurrency(currentAuto.totalNet) }}</strong></article>
+    <section class="summary-grid" aria-label="Resumo financeiro do Auto">
+      <article>
+        <div class="summary-icon contracts" aria-hidden="true"><span class="material-symbols-rounded">description</span></div>
+        <div class="summary-copy"><span>Contratos</span><strong>{{ currentAuto.contractsCount }}</strong></div>
+      </article>
+      <article>
+        <div class="summary-icon positive" aria-hidden="true"><span class="material-symbols-rounded">trending_up</span></div>
+        <div class="summary-copy"><span>Comissões positivas</span><strong class="positive">{{ formatCurrency(currentAuto.totalPositive) }}</strong></div>
+      </article>
+      <article>
+        <div class="summary-icon negative" aria-hidden="true"><span class="material-symbols-rounded">undo</span></div>
+        <div class="summary-copy"><span>Reembolsos</span><strong class="negative">{{ formatCurrency(currentAuto.totalNegative) }}</strong></div>
+      </article>
+      <article class="net-summary">
+        <div class="summary-icon net" aria-hidden="true"><span class="material-symbols-rounded">account_balance_wallet</span></div>
+        <div class="summary-copy"><span>Total líquido</span><strong>{{ formatCurrency(currentAuto.totalNet) }}</strong></div>
+      </article>
     </section>
 
     <section class="diagnostics-card" *ngIf="currentAuto.diagnostics?.length">
@@ -80,13 +118,20 @@
     </section>
 
     <section class="items-card">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Movimentos</span>
-          <h2>Contratos</h2>
+      <div class="section-heading items-heading">
+        <div class="section-title-group">
+          <div class="section-icon" aria-hidden="true">
+            <span class="material-symbols-rounded">table_rows</span>
+          </div>
+          <div>
+            <span class="eyebrow">Movimentos</span>
+            <h2>Contratos do Auto</h2>
+            <p>Consulta os dados do contrato, o movimento financeiro e o estado de pagamento.</p>
+          </div>
         </div>
-        <span>
-          {{ formatInteger(loadedItemsCount) }} de {{ formatInteger(totalItemsCount) }} contratos
+
+        <span class="items-count-badge">
+          {{ formatInteger(loadedItemsCount) }} / {{ formatInteger(totalItemsCount) }}
         </span>
       </div>
 
@@ -94,13 +139,25 @@
         *ngIf="currentAuto.items.length; else emptyItems"
         [provider]="currentAuto.provider"
         [items]="currentAuto.items"
+        [showPayments]="currentAuto.status === 'finalized'"
+        [canManagePayments]="canManagePayments"
+        [paymentsByAutoItemId]="paymentsByAutoItemId"
+        [paymentsLoading]="isLoadingPayments"
+        [paymentsUnavailable]="paymentsUnavailable"
         maxHeight="calc(100vh - 300px)"
+        (registerPayment)="openRegisterPayment($event)"
+        (viewPayment)="openPaymentDetail($event)"
       />
 
       <div class="items-pagination" *ngIf="currentAuto.pagination.total > 0">
-        <div>
-          <strong>{{ formatInteger(loadedItemsCount) }}</strong>
-          <span>de {{ formatInteger(totalItemsCount) }} contratos carregados</span>
+        <div class="items-pagination-info">
+          <div>
+            <strong>{{ formatInteger(loadedItemsCount) }}</strong>
+            <span>de {{ formatInteger(totalItemsCount) }} contratos carregados</span>
+          </div>
+          <div class="items-progress" aria-hidden="true">
+            <span [style.width.%]="totalItemsCount ? (loadedItemsCount / totalItemsCount) * 100 : 0"></span>
+          </div>
         </div>
 
         <button
@@ -112,7 +169,7 @@
         >
           <span class="spinner small" *ngIf="isLoadingMore"></span>
           <span class="material-symbols-rounded" *ngIf="!isLoadingMore">expand_more</span>
-          {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+          {{ isLoadingMore ? 'A carregar...' : 'Carregar mais contratos' }}
         </button>
       </div>
 
@@ -163,5 +220,326 @@
         {{ isDeleting ? 'A eliminar...' : 'Eliminar Auto' }}
       </button>
     </div>
+  </section>
+</div>
+
+<!-- Registar pagamento -->
+<div class="modal-backdrop" *ngIf="showRegisterPaymentModal">
+  <section
+    class="confirm-modal payment-register-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="register-payment-title"
+    *ngIf="selectedPaymentItem as item"
+  >
+    <header class="payment-register-header modal-header">
+      <div class="payment-register-heading">
+        <div class="payment-register-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">payments</span>
+        </div>
+
+        <div>
+          <span class="eyebrow">Liquidação de comissão</span>
+          <h2 id="register-payment-title">Registar pagamento</h2>
+          <p>Associe o método de pagamento e os comprovativos a esta comissão.</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close-button"
+        [disabled]="isRegisteringPayment"
+        aria-label="Fechar modal de registo de pagamento"
+        title="Fechar"
+        (click)="closeRegisterPayment()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <div class="payment-register-body">
+      <section class="payment-register-summary" aria-label="Resumo da comissão">
+        <div class="payment-register-summary-main">
+          <span>Comissão selecionada</span>
+          <strong>{{ item.clientName || 'Cliente sem nome' }}</strong>
+          <small>{{ item.registrationName || 'Equipa não identificada' }}</small>
+        </div>
+
+        <div class="payment-register-amount">
+          <span>Valor a registar</span>
+          <strong>{{ formatCurrency(item.commission) }}</strong>
+        </div>
+      </section>
+
+      <section class="payment-register-section" [formGroup]="paymentForm">
+        <div class="payment-register-section-heading">
+          <div>
+            <span class="material-symbols-rounded" aria-hidden="true">account_balance_wallet</span>
+            <div>
+              <h3>Dados do pagamento</h3>
+              <p>Indique como esta comissão foi liquidada.</p>
+            </div>
+          </div>
+        </div>
+
+        <label class="payment-form-field" for="payment-method">
+          <span>Método de pagamento <strong aria-hidden="true">*</strong></span>
+          <select
+            id="payment-method"
+            formControlName="paymentMethod"
+          >
+            <option value="">Selecionar método</option>
+            <option *ngFor="let method of paymentMethodOptions" [ngValue]="method">
+              {{ method }}
+            </option>
+          </select>
+        </label>
+
+        <label
+          class="payment-form-field payment-form-field-other"
+          for="payment-method-other"
+          *ngIf="isOtherPaymentMethod"
+        >
+          <span>Especifique o método de pagamento <strong aria-hidden="true">*</strong></span>
+          <input
+            id="payment-method-other"
+            type="text"
+            formControlName="paymentMethodOther"
+            maxlength="100"
+            autocomplete="off"
+            placeholder="Ex.: Cheque bancário"
+          />
+
+          <div class="payment-field-meta">
+            <small
+              class="field-error"
+              *ngIf="paymentMethodOtherControl.touched && (paymentMethodOtherControl.hasError('required') || paymentMethodOtherControl.hasError('pattern'))"
+            >
+              Indica o método de pagamento utilizado.
+            </small>
+            <small
+              class="field-error"
+              *ngIf="paymentMethodOtherControl.touched && paymentMethodOtherControl.hasError('maxlength')"
+            >
+              O método de pagamento não pode exceder 100 caracteres.
+            </small>
+            <small class="payment-char-count">
+              {{ paymentMethodOtherControl.value.length }}/100
+            </small>
+          </div>
+        </label>
+      </section>
+
+      <section class="payment-register-section payment-register-attachments">
+        <div class="payment-register-section-heading attachment-heading">
+          <div>
+            <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+            <div>
+              <h3>Comprovativos <strong aria-hidden="true">*</strong></h3>
+              <p>É obrigatório adicionar pelo menos um comprovativo do pagamento.</p>
+            </div>
+          </div>
+
+          <span class="payment-file-count" *ngIf="selectedPaymentFiles.length">
+            {{ selectedPaymentFiles.length }}
+            {{ selectedPaymentFiles.length === 1 ? 'ficheiro' : 'ficheiros' }}
+          </span>
+        </div>
+
+        <app-file-dropzone
+          [(files)]="selectedPaymentFiles"
+          [disabled]="isRegisteringPayment"
+          title="Arrasta os comprovativos para aqui"
+          selectLabel="Selecionar comprovativos"
+        />
+      </section>
+    </div>
+
+    <footer class="payment-register-actions modal-footer">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="isRegisteringPayment"
+        (click)="closeRegisterPayment()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="primary-button"
+        [disabled]="isRegisteringPayment || paymentForm.invalid || !selectedPaymentFiles.length"
+        (click)="registerSelectedPayment()"
+      >
+        <span class="spinner small" *ngIf="isRegisteringPayment"></span>
+        <span class="material-symbols-rounded" *ngIf="!isRegisteringPayment" aria-hidden="true">save</span>
+        {{ isRegisteringPayment ? 'A registar pagamento...' : 'Registar pagamento' }}
+      </button>
+    </footer>
+  </section>
+</div>
+
+<!-- Detalhe do pagamento -->
+<div class="modal-backdrop" *ngIf="showPaymentDetailModal">
+  <section
+    class="confirm-modal payment-modal payment-detail-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="payment-detail-title"
+    *ngIf="selectedPayment as payment"
+  >
+    <header class="payment-detail-header modal-header">
+      <div class="payment-detail-heading">
+        <div class="payment-detail-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">receipt_long</span>
+        </div>
+        <div>
+          <span class="eyebrow">Liquidação de comissão</span>
+          <h2 id="payment-detail-title">Detalhes do pagamento</h2>
+          <p>Consulte os dados da liquidação e os comprovativos associados.</p>
+        </div>
+      </div>
+
+      <div class="payment-detail-header-actions">
+        <span class="payment-detail-status paid">
+          Pago
+        </span>
+        <button
+          type="button"
+          class="modal-close-button"
+          aria-label="Fechar"
+          title="Fechar"
+          (click)="closePaymentDetail()"
+        >
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="payment-detail-body">
+      <section class="payment-detail-summary" aria-label="Resumo da liquidação">
+        <div class="payment-detail-person">
+          <span>Cliente</span>
+          <strong>{{ payment.nomeCliente || '—' }}</strong>
+          <small>{{ payment.nomeRegistoCE || 'Equipa não identificada' }}</small>
+        </div>
+        <div class="payment-detail-amount">
+          <span>Comissão liquidada</span>
+          <strong>{{ formatCurrency(payment.amount) }}</strong>
+        </div>
+      </section>
+
+      <section class="payment-detail-section">
+        <div class="payment-detail-section-heading">
+          <span class="material-symbols-rounded" aria-hidden="true">payments</span>
+          <div>
+            <h3>Dados do pagamento</h3>
+            <p>Informação registada para esta liquidação.</p>
+          </div>
+        </div>
+
+        <div class="payment-detail-grid">
+          <div class="payment-detail-field">
+            <span>Método</span>
+            <strong>{{ paymentMethodLabel(payment) }}</strong>
+          </div>
+          <div class="payment-detail-field">
+            <span>Pago em</span>
+            <strong>{{ formatDateTime(payment.paidAt || payment.createdAt) }}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="payment-detail-section payment-proofs-section">
+        <div class="payment-detail-section-heading payment-proofs-heading">
+          <span class="material-symbols-rounded" aria-hidden="true">attach_file</span>
+          <div>
+            <h3>Comprovativos</h3>
+            <p>Pré-visualize ou descarregue os ficheiros associados ao pagamento.</p>
+          </div>
+          <span class="payment-proof-count">{{ payment.attachments.length }}</span>
+        </div>
+
+        <div class="payment-proof-list" *ngIf="payment.attachments.length; else noPaymentAttachments">
+          <article class="payment-proof-card" *ngFor="let attachment of payment.attachments">
+            <div class="payment-proof-icon" aria-hidden="true">
+              <span class="material-symbols-rounded">{{ paymentAttachmentIcon(attachment) }}</span>
+            </div>
+
+            <div class="payment-proof-info">
+              <strong [title]="paymentAttachmentDisplayName(attachment)">
+                {{ paymentAttachmentDisplayName(attachment) }}
+              </strong>
+              <span *ngIf="attachment.size !== undefined">
+                {{ formatFileSize(attachment.size) }}
+              </span>
+            </div>
+
+            <div class="payment-proof-actions">
+              <button
+                *ngIf="canPreviewPaymentAttachment(attachment)"
+                type="button"
+                class="payment-proof-action preview"
+                [disabled]="isPaymentAttachmentBusy(attachment)"
+                [attr.aria-label]="'Pré-visualizar ' + paymentAttachmentDisplayName(attachment)"
+                [attr.title]="'Pré-visualizar ' + paymentAttachmentDisplayName(attachment)"
+                (click)="previewPaymentAttachment(attachment)"
+              >
+                <span
+                  class="spinner small"
+                  *ngIf="previewingPaymentAttachment === paymentAttachmentRequestName(attachment)"
+                ></span>
+                <span
+                  class="material-symbols-rounded"
+                  *ngIf="previewingPaymentAttachment !== paymentAttachmentRequestName(attachment)"
+                  aria-hidden="true"
+                >visibility</span>
+                <span>Pré-visualizar</span>
+              </button>
+
+              <button
+                type="button"
+                class="payment-proof-action download"
+                [disabled]="isPaymentAttachmentBusy(attachment)"
+                [attr.aria-label]="'Descarregar ' + paymentAttachmentDisplayName(attachment)"
+                [attr.title]="'Descarregar ' + paymentAttachmentDisplayName(attachment)"
+                (click)="downloadPaymentAttachment(attachment)"
+              >
+                <span
+                  class="spinner small"
+                  *ngIf="downloadingPaymentAttachment === paymentAttachmentRequestName(attachment)"
+                ></span>
+                <span
+                  class="material-symbols-rounded"
+                  *ngIf="downloadingPaymentAttachment !== paymentAttachmentRequestName(attachment)"
+                  aria-hidden="true"
+                >download</span>
+                <span>Descarregar</span>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noPaymentAttachments>
+          <div class="payment-empty-files">
+            <span class="material-symbols-rounded" aria-hidden="true">draft</span>
+            <div>
+              <strong>Sem comprovativos</strong>
+              <span>Este pagamento não tem ficheiros associados.</span>
+            </div>
+          </div>
+        </ng-template>
+      </section>
+    </div>
+
+    <footer class="payment-detail-actions modal-footer">
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="closePaymentDetail()"
+      >
+        Fechar
+      </button>
+    </footer>
   </section>
 </div>

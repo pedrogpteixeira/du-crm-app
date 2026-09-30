@@ -1,3 +1,5 @@
+import { ToastService } from '../../../core/services/toast';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -220,9 +222,31 @@ export class IberdrolaContractCreate implements OnInit {
 
   clientChecked = false;
   clientNotFound = false;
+  private readonly toast = inject(ToastService);
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   campaignSelectionMode: 'existing' | 'other' = 'existing';
 

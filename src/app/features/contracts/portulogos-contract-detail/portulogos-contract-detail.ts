@@ -1,3 +1,24 @@
+import { ToastService } from '../../../core/services/toast';
+
+import {
+  DATA_REGISTO_REQUIRED_MESSAGE,
+  hasDataRegistoValue,
+  isDataRegistoRequiredError,
+  requiresDataRegisto,
+} from '../../../core/config/contract-data-registo';
+
+import {
+  getDataBaixaBackendMessage,
+  getTerminationDateValidation,
+  isDataBaixaRequiredError,
+} from '../../../core/config/contract-data-baixa';
+
+import {
+  getDataAtivacaoBackendMessage,
+  getEnergyActivationDateValidation,
+  isDataAtivacaoRequiredError,
+} from '../../../core/config/contract-data-ativacao';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -173,9 +194,34 @@ export class PortulogosContractDetail implements OnInit {
   isSuperAdmin = false;
   isRequiredTeamMember = false;
   canAccessInternalObservations = false;
+  private readonly toast = inject(ToastService);
+  private dataBaixaBackendInvalid = false;
+  private dataAtivacaoBackendInvalid = false;
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   socketMessage = '';
 
   contractId = '';
@@ -194,6 +240,138 @@ export class PortulogosContractDetail implements OnInit {
   ];
 
   readonly estadoOptions: readonly PortulogosContractStatus[] = PORTULOGOS_CONTRACT_STATUSES;
+
+  get isDataRegistoRequired(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return requiresDataRegisto('portulogos', estado);
+  }
+
+  get isDataRegistoMissing(): boolean {
+    const dataRegisto = this.isEditing ? this.editForm.dataRegisto : this.contract?.dataRegisto;
+    return this.isDataRegistoRequired && !hasDataRegistoValue(dataRegisto);
+  }
+
+  get terminationDateValidation() {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
+    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
+    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
+
+    return getTerminationDateValidation(
+      'portulogos',
+      estado,
+      tipoProduto,
+      dataBaixaCPE,
+      dataBaixaCUI,
+    );
+  }
+
+  get isDataBaixaCpeRequired(): boolean {
+    return this.terminationDateValidation.requireCpe;
+  }
+
+  get isDataBaixaCuiRequired(): boolean {
+    return this.terminationDateValidation.requireCui;
+  }
+
+  get isPartialDataBaixaRequirement(): boolean {
+    return this.terminationDateValidation.requireAtLeastOne;
+  }
+
+  get isDataBaixaCpeMissing(): boolean {
+    return this.terminationDateValidation.missingCpe;
+  }
+
+  get isDataBaixaCuiMissing(): boolean {
+    return this.terminationDateValidation.missingCui;
+  }
+
+  get isPartialDataBaixaMissing(): boolean {
+    return this.terminationDateValidation.missingAtLeastOne;
+  }
+
+  get isDataBaixaCpeInvalid(): boolean {
+    return (
+      this.isDataBaixaCpeMissing ||
+      (this.dataBaixaBackendInvalid &&
+        (this.isDataBaixaCpeRequired || this.isPartialDataBaixaRequirement))
+    );
+  }
+
+  get isDataBaixaCuiInvalid(): boolean {
+    return (
+      this.isDataBaixaCuiMissing ||
+      (this.dataBaixaBackendInvalid &&
+        (this.isDataBaixaCuiRequired || this.isPartialDataBaixaRequirement))
+    );
+  }
+
+  clearDataBaixaBackendError(): void {
+    this.dataBaixaBackendInvalid = false;
+  }
+
+  get activationDateValidation() {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
+    const dataAtivacaoCPE = this.isEditing
+      ? this.editForm.dataAtivacaoCPE
+      : this.contract?.dataAtivacaoCPE;
+    const dataAtivacaoCUI = this.isEditing
+      ? this.editForm.dataAtivacaoCUI
+      : this.contract?.dataAtivacaoCUI;
+    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
+    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
+
+    return getEnergyActivationDateValidation(
+      estado,
+      tipoProduto,
+      dataAtivacaoCPE,
+      dataAtivacaoCUI,
+      dataBaixaCPE,
+      dataBaixaCUI,
+    );
+  }
+
+  get isDataAtivacaoCpeRequired(): boolean {
+    return this.activationDateValidation.requireCpe;
+  }
+
+  get isDataAtivacaoCuiRequired(): boolean {
+    return this.activationDateValidation.requireCui;
+  }
+
+  get isDualDataAtivacaoRequirement(): boolean {
+    return this.activationDateValidation.isDual;
+  }
+
+  get isDataAtivacaoCpeMissing(): boolean {
+    return this.activationDateValidation.missingCpe;
+  }
+
+  get isDataAtivacaoCuiMissing(): boolean {
+    return this.activationDateValidation.missingCui;
+  }
+
+  get isDataAtivacaoActiveSupplyMissing(): boolean {
+    return this.activationDateValidation.missingActiveSupply;
+  }
+
+  get isDataAtivacaoCpeInvalid(): boolean {
+    return (
+      this.activationDateValidation.missingCpe ||
+      this.activationDateValidation.missingActiveSupply ||
+      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
+    );
+  }
+
+  get isDataAtivacaoCuiInvalid(): boolean {
+    return (
+      this.activationDateValidation.missingCui ||
+      this.activationDateValidation.missingActiveSupply ||
+      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
+    );
+  }
+
 
   readonly cicloHorarioOptions = [
     'Simples',
@@ -215,10 +393,7 @@ export class PortulogosContractDetail implements OnInit {
   get canMutateContract(): boolean {
     return (
       !!this.contract &&
-      canMutateContractByBusinessRule(
-        this.contract.estado,
-        this.isRequiredTeamMember,
-      )
+      canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
   }
 
@@ -234,9 +409,7 @@ export class PortulogosContractDetail implements OnInit {
       return null;
     }
 
-    const isActiveOption = this.campaigns.some(
-      (campaign) => campaign.id === currentCampaignId,
-    );
+    const isActiveOption = this.campaigns.some((campaign) => campaign.id === currentCampaignId);
 
     if (isActiveOption) {
       return null;
@@ -256,9 +429,7 @@ export class PortulogosContractDetail implements OnInit {
 
     this.collapsedSections = this.buildCollapsedSections(collapseByDefault);
 
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.contractId = params.get('id') ?? '';
 
       if (this.contractId) {
@@ -270,92 +441,96 @@ export class PortulogosContractDetail implements OnInit {
       .listenPortulogosContractUpdated()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {
-      if (event.contractId !== this.contractId) {
-        return;
-      }
+        if (event.contractId !== this.contractId) {
+          return;
+        }
 
-      const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
 
-      if (activityUpdate.updated) {
-        this.contract = activityUpdate.contract;
-      }
-
-      if (
-        this.contract &&
-        (event.observacoes !== undefined || event.observacoesInternas !== undefined)
-      ) {
-        this.contract = {
-          ...this.contract,
-          ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
-          ...(event.observacoesInternas !== undefined
-            ? { observacoesInternas: event.observacoesInternas ?? '' }
-            : {}),
-        };
-      }
-
-      const stateUpdate = mergeContractStateSocketPayload(this.contract, event, this.estadoOptions);
-
-      if (stateUpdate.updated && stateUpdate.contract) {
-        this.contract = stateUpdate.contract;
+        if (activityUpdate.updated) {
+          this.contract = activityUpdate.contract;
+        }
 
         if (
-          this.isEditing &&
-          stateUpdate.estado &&
-          this.editForm.estado === this.originalEditForm.estado
+          this.contract &&
+          (event.observacoes !== undefined || event.observacoesInternas !== undefined)
         ) {
-          this.editForm = {
-            ...this.editForm,
-            estado: stateUpdate.estado,
-          };
-
-          this.originalEditForm = {
-            ...this.originalEditForm,
-            estado: stateUpdate.estado,
+          this.contract = {
+            ...this.contract,
+            ...(event.observacoes !== undefined ? { observacoes: event.observacoes ?? '' } : {}),
+            ...(event.observacoesInternas !== undefined
+              ? { observacoesInternas: event.observacoesInternas ?? '' }
+              : {}),
           };
         }
-      }
 
-      if (!this.canEditContract && this.isEditing) {
-        this.isEditing = false;
-        this.selectedFiles = [];
-      }
+        const stateUpdate = mergeContractStateSocketPayload(
+          this.contract,
+          event,
+          this.estadoOptions,
+        );
 
-      const currentTime = new Date().toLocaleTimeString('pt-PT');
+        if (stateUpdate.updated && stateUpdate.contract) {
+          this.contract = stateUpdate.contract;
 
-      this.lastSocketUpdate = currentTime;
+          if (
+            this.isEditing &&
+            stateUpdate.estado &&
+            this.editForm.estado === this.originalEditForm.estado
+          ) {
+            this.editForm = {
+              ...this.editForm,
+              estado: stateUpdate.estado,
+            };
 
-      if (event.ticketEvent && Array.isArray(event.tickets)) {
-        if (!Array.isArray(event.fluxo)) {
-          this.refreshContractActivity();
+            this.originalEditForm = {
+              ...this.originalEditForm,
+              estado: stateUpdate.estado,
+            };
+          }
         }
 
-        return;
-      }
-
-      const eventUserId = this.getSocketEventUserId(event);
-
-      const isOwnSocketUpdate = Boolean(
-        eventUserId && this.currentUserId && eventUserId === this.currentUserId,
-      );
-
-      if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
-        if (!Array.isArray(event.fluxo)) {
-          this.refreshContractActivity();
+        if (!this.canEditContract && this.isEditing) {
+          this.isEditing = false;
+          this.selectedFiles = [];
         }
 
-        this.clearOwnSocketSuppression();
-        return;
-      }
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
-      if (this.isEditing) {
-        this.synchronizeExternalUpdate(currentTime);
-        return;
-      }
+        this.lastSocketUpdate = currentTime;
 
-      this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
+        if (event.ticketEvent && Array.isArray(event.tickets)) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
 
-      this.loadContract(this.contractId);
-    });
+          return;
+        }
+
+        const eventUserId = this.getSocketEventUserId(event);
+
+        const isOwnSocketUpdate = Boolean(
+          eventUserId && this.currentUserId && eventUserId === this.currentUserId,
+        );
+
+        if (isOwnSocketUpdate || (!eventUserId && this.suppressNextOwnSocketUpdate)) {
+          if (!Array.isArray(event.fluxo)) {
+            this.refreshContractActivity();
+          }
+
+          this.clearOwnSocketSuppression();
+          return;
+        }
+
+        if (this.isEditing) {
+          this.synchronizeExternalUpdate(currentTime);
+          return;
+        }
+
+        this.socketMessage = `Este contrato foi atualizado por outro utilizador às ${currentTime}.`;
+
+        this.loadContract(this.contractId);
+      });
   }
 
   loadContract(contractId: string): void {
@@ -395,11 +570,7 @@ export class PortulogosContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return (
-      !!this.contract &&
-      this.canMutateContract &&
-      this.hasContractAccess(this.contract)
-    );
+    return !!this.contract && this.canMutateContract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -491,6 +662,7 @@ export class PortulogosContractDetail implements OnInit {
     }
 
     this.initializeEditForm(this.contract);
+    this.dataBaixaBackendInvalid = false;
     this.selectedFiles = [];
     this.isEditing = true;
     this.errorMessage = '';
@@ -500,6 +672,7 @@ export class PortulogosContractDetail implements OnInit {
   cancelEditing(): void {
     if (this.contract) {
       this.initializeEditForm(this.contract);
+      this.dataBaixaBackendInvalid = false;
     }
 
     this.selectedFiles = [];
@@ -530,6 +703,18 @@ export class PortulogosContractDetail implements OnInit {
 
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
+      return;
+    }
+
+    if (!this.validateDataRegistoRequirement()) {
+      return;
+    }
+
+    if (!this.validateActivationDateRequirement()) {
+      return;
+    }
+
+    if (!this.validateTerminationDateRequirement()) {
       return;
     }
 
@@ -611,10 +796,7 @@ export class PortulogosContractDetail implements OnInit {
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
-                contract: preserveContractAssignmentContext(
-                  contractWithFiles,
-                  updatedContract,
-                ),
+                contract: preserveContractAssignmentContext(contractWithFiles, updatedContract),
                 uploadFailed: false,
                 uploadError: null as unknown,
               })),
@@ -665,6 +847,32 @@ export class PortulogosContractDetail implements OnInit {
         },
         error: (error) => {
           this.clearOwnSocketSuppression();
+
+          if (isDataAtivacaoRequiredError(error)) {
+            this.dataAtivacaoBackendInvalid = true;
+            this.showError(
+              getDataAtivacaoBackendMessage(error) ||
+                this.activationDateValidation.message ||
+                'É necessário preencher as datas de ativação exigidas para este estado.',
+            );
+            return;
+          }
+
+          if (isDataBaixaRequiredError(error)) {
+            this.dataBaixaBackendInvalid = true;
+            this.showError(
+              getDataBaixaBackendMessage(error) ||
+                this.terminationDateValidation.message ||
+                'É necessário preencher as datas de baixa exigidas para este estado.',
+            );
+            return;
+          }
+
+          if (isDataRegistoRequiredError(error)) {
+            this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+            return;
+          }
+
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
@@ -672,6 +880,61 @@ export class PortulogosContractDetail implements OnInit {
           );
         },
       });
+  }
+
+  private validateActivationDateRequirement(): boolean {
+    const validation = getEnergyActivationDateValidation(
+      this.editForm.estado,
+      this.editForm.tipoProduto,
+      this.editForm.dataAtivacaoCPE,
+      this.editForm.dataAtivacaoCUI,
+      this.editForm.dataBaixaCPE,
+      this.editForm.dataBaixaCUI,
+    );
+
+    this.dataAtivacaoBackendInvalid = !validation.valid;
+
+    if (validation.valid) {
+      return true;
+    }
+
+    this.showError(
+      validation.message || 'É necessário preencher as datas de ativação exigidas para este estado.',
+    );
+    return false;
+  }
+
+  private validateTerminationDateRequirement(): boolean {
+    const validation = getTerminationDateValidation(
+      'portulogos',
+      this.editForm.estado,
+      this.editForm.tipoProduto,
+      this.editForm.dataBaixaCPE,
+      this.editForm.dataBaixaCUI,
+    );
+
+    this.dataBaixaBackendInvalid = !validation.valid;
+
+    if (validation.valid) {
+      return true;
+    }
+
+    this.showError(
+      validation.message || 'É necessário preencher as datas de baixa exigidas para este estado.',
+    );
+    return false;
+  }
+
+  private validateDataRegistoRequirement(): boolean {
+    if (
+      !requiresDataRegisto('portulogos', this.editForm.estado) ||
+      hasDataRegistoValue(this.editForm.dataRegisto)
+    ) {
+      return true;
+    }
+
+    this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+    return false;
   }
 
   onCampaignModeChange(): void {
@@ -793,8 +1056,7 @@ export class PortulogosContractDetail implements OnInit {
       return;
     }
 
-    const teamIds =
-      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
+    const teamIds = currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
     const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
       (teamId): teamId is string => Boolean(teamId),

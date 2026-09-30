@@ -85,7 +85,10 @@ export class VodafoneContracts implements OnInit {
   }
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-  readonly statuses: VodafoneContractStatus[] = [...VODAFONE_CONTRACT_STATUSES];
+  readonly statuses: VodafoneContractStatus[] = [
+    ...VODAFONE_CONTRACT_STATUSES.filter((status) => status !== 'Anulado'),
+    'Anulado',
+  ];
 
   ngOnInit(): void {
     this.refreshFilterFields();

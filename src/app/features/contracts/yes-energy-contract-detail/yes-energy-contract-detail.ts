@@ -1,3 +1,24 @@
+import { ToastService } from '../../../core/services/toast';
+
+import {
+  DATA_REGISTO_REQUIRED_MESSAGE,
+  hasDataRegistoValue,
+  isDataRegistoRequiredError,
+  requiresDataRegisto,
+} from '../../../core/config/contract-data-registo';
+
+import {
+  getDataBaixaBackendMessage,
+  getTerminationDateValidation,
+  isDataBaixaRequiredError,
+} from '../../../core/config/contract-data-baixa';
+
+import {
+  getDataAtivacaoBackendMessage,
+  getEnergyActivationDateValidation,
+  isDataAtivacaoRequiredError,
+} from '../../../core/config/contract-data-ativacao';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -162,7 +183,6 @@ export class YesEnergyContractDetail implements OnInit {
 
   private readonly auth = inject(Auth);
 
-
   private readonly yesEnergyContractService = inject(YesEnergyContractService);
 
   private readonly preferencesService = inject(PreferencesService);
@@ -206,9 +226,34 @@ export class YesEnergyContractDetail implements OnInit {
   isRequiredTeamMember = false;
 
   canAccessInternalObservations = false;
+  private readonly toast = inject(ToastService);
+  private dataBaixaBackendInvalid = false;
+  private dataAtivacaoBackendInvalid = false;
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   socketMessage = '';
 
   contractId = '';
@@ -235,6 +280,138 @@ export class YesEnergyContractDetail implements OnInit {
 
   readonly estadoOptions: readonly YesEnergyContractStatus[] = YES_ENERGY_CONTRACT_STATUSES;
 
+  get isDataRegistoRequired(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return requiresDataRegisto('yes-energy', estado);
+  }
+
+  get isDataRegistoMissing(): boolean {
+    const dataRegisto = this.isEditing ? this.editForm.dataRegisto : this.contract?.dataRegisto;
+    return this.isDataRegistoRequired && !hasDataRegistoValue(dataRegisto);
+  }
+
+  get terminationDateValidation() {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
+    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
+    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
+
+    return getTerminationDateValidation(
+      'yes-energy',
+      estado,
+      tipoProduto,
+      dataBaixaCPE,
+      dataBaixaCUI,
+    );
+  }
+
+  get isDataBaixaCpeRequired(): boolean {
+    return this.terminationDateValidation.requireCpe;
+  }
+
+  get isDataBaixaCuiRequired(): boolean {
+    return this.terminationDateValidation.requireCui;
+  }
+
+  get isPartialDataBaixaRequirement(): boolean {
+    return this.terminationDateValidation.requireAtLeastOne;
+  }
+
+  get isDataBaixaCpeMissing(): boolean {
+    return this.terminationDateValidation.missingCpe;
+  }
+
+  get isDataBaixaCuiMissing(): boolean {
+    return this.terminationDateValidation.missingCui;
+  }
+
+  get isPartialDataBaixaMissing(): boolean {
+    return this.terminationDateValidation.missingAtLeastOne;
+  }
+
+  get isDataBaixaCpeInvalid(): boolean {
+    return (
+      this.isDataBaixaCpeMissing ||
+      (this.dataBaixaBackendInvalid &&
+        (this.isDataBaixaCpeRequired || this.isPartialDataBaixaRequirement))
+    );
+  }
+
+  get isDataBaixaCuiInvalid(): boolean {
+    return (
+      this.isDataBaixaCuiMissing ||
+      (this.dataBaixaBackendInvalid &&
+        (this.isDataBaixaCuiRequired || this.isPartialDataBaixaRequirement))
+    );
+  }
+
+  clearDataBaixaBackendError(): void {
+    this.dataBaixaBackendInvalid = false;
+  }
+
+  get activationDateValidation() {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
+    const dataAtivacaoCPE = this.isEditing
+      ? this.editForm.dataAtivacaoCPE
+      : this.contract?.dataAtivacaoCPE;
+    const dataAtivacaoCUI = this.isEditing
+      ? this.editForm.dataAtivacaoCUI
+      : this.contract?.dataAtivacaoCUI;
+    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
+    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
+
+    return getEnergyActivationDateValidation(
+      estado,
+      tipoProduto,
+      dataAtivacaoCPE,
+      dataAtivacaoCUI,
+      dataBaixaCPE,
+      dataBaixaCUI,
+    );
+  }
+
+  get isDataAtivacaoCpeRequired(): boolean {
+    return this.activationDateValidation.requireCpe;
+  }
+
+  get isDataAtivacaoCuiRequired(): boolean {
+    return this.activationDateValidation.requireCui;
+  }
+
+  get isDualDataAtivacaoRequirement(): boolean {
+    return this.activationDateValidation.isDual;
+  }
+
+  get isDataAtivacaoCpeMissing(): boolean {
+    return this.activationDateValidation.missingCpe;
+  }
+
+  get isDataAtivacaoCuiMissing(): boolean {
+    return this.activationDateValidation.missingCui;
+  }
+
+  get isDataAtivacaoActiveSupplyMissing(): boolean {
+    return this.activationDateValidation.missingActiveSupply;
+  }
+
+  get isDataAtivacaoCpeInvalid(): boolean {
+    return (
+      this.activationDateValidation.missingCpe ||
+      this.activationDateValidation.missingActiveSupply ||
+      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
+    );
+  }
+
+  get isDataAtivacaoCuiInvalid(): boolean {
+    return (
+      this.activationDateValidation.missingCui ||
+      this.activationDateValidation.missingActiveSupply ||
+      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
+    );
+  }
+
+
   readonly cicloHorarioOptions: YesEnergyCicloHorario[] = [
     'Simples',
     'Bi-Horário Diário',
@@ -255,10 +432,7 @@ export class YesEnergyContractDetail implements OnInit {
   get canMutateContract(): boolean {
     return (
       !!this.contract &&
-      canMutateContractByBusinessRule(
-        this.contract.estado,
-        this.isRequiredTeamMember,
-      )
+      canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
   }
 
@@ -274,9 +448,7 @@ export class YesEnergyContractDetail implements OnInit {
       return null;
     }
 
-    const isActiveOption = this.campaigns.some(
-      (campaign) => campaign.id === currentCampaignId,
-    );
+    const isActiveOption = this.campaigns.some((campaign) => campaign.id === currentCampaignId);
 
     if (isActiveOption) {
       return null;
@@ -358,11 +530,11 @@ export class YesEnergyContractDetail implements OnInit {
         }
 
         if (!this.canEditContract && this.isEditing) {
-        this.isEditing = false;
-        this.selectedFiles = [];
-      }
+          this.isEditing = false;
+          this.selectedFiles = [];
+        }
 
-      const currentTime = new Date().toLocaleTimeString('pt-PT');
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
@@ -442,11 +614,7 @@ export class YesEnergyContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return (
-      !!this.contract &&
-      this.canMutateContract &&
-      this.hasContractAccess(this.contract)
-    );
+    return !!this.contract && this.canMutateContract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -538,6 +706,7 @@ export class YesEnergyContractDetail implements OnInit {
     }
 
     this.initializeEditForm(this.contract);
+    this.dataBaixaBackendInvalid = false;
 
     this.internalObservationDraft = '';
 
@@ -552,6 +721,7 @@ export class YesEnergyContractDetail implements OnInit {
   cancelEditing(): void {
     if (this.contract) {
       this.initializeEditForm(this.contract);
+      this.dataBaixaBackendInvalid = false;
     }
 
     this.internalObservationDraft = '';
@@ -596,6 +766,18 @@ export class YesEnergyContractDetail implements OnInit {
 
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
+      return;
+    }
+
+    if (!this.validateDataRegistoRequirement()) {
+      return;
+    }
+
+    if (!this.validateActivationDateRequirement()) {
+      return;
+    }
+
+    if (!this.validateTerminationDateRequirement()) {
       return;
     }
 
@@ -770,6 +952,31 @@ export class YesEnergyContractDetail implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.clearOwnSocketSuppression();
 
+          if (isDataAtivacaoRequiredError(error)) {
+            this.dataAtivacaoBackendInvalid = true;
+            this.showError(
+              getDataAtivacaoBackendMessage(error) ||
+                this.activationDateValidation.message ||
+                'É necessário preencher as datas de ativação exigidas para este estado.',
+            );
+            return;
+          }
+
+          if (isDataBaixaRequiredError(error)) {
+            this.dataBaixaBackendInvalid = true;
+            this.showError(
+              getDataBaixaBackendMessage(error) ||
+                this.terminationDateValidation.message ||
+                'É necessário preencher as datas de baixa exigidas para este estado.',
+            );
+            return;
+          }
+
+          if (isDataRegistoRequiredError(error)) {
+            this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+            return;
+          }
+
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
@@ -777,6 +984,61 @@ export class YesEnergyContractDetail implements OnInit {
           );
         },
       });
+  }
+
+  private validateActivationDateRequirement(): boolean {
+    const validation = getEnergyActivationDateValidation(
+      this.editForm.estado,
+      this.editForm.tipoProduto,
+      this.editForm.dataAtivacaoCPE,
+      this.editForm.dataAtivacaoCUI,
+      this.editForm.dataBaixaCPE,
+      this.editForm.dataBaixaCUI,
+    );
+
+    this.dataAtivacaoBackendInvalid = !validation.valid;
+
+    if (validation.valid) {
+      return true;
+    }
+
+    this.showError(
+      validation.message || 'É necessário preencher as datas de ativação exigidas para este estado.',
+    );
+    return false;
+  }
+
+  private validateTerminationDateRequirement(): boolean {
+    const validation = getTerminationDateValidation(
+      'yes-energy',
+      this.editForm.estado,
+      this.editForm.tipoProduto,
+      this.editForm.dataBaixaCPE,
+      this.editForm.dataBaixaCUI,
+    );
+
+    this.dataBaixaBackendInvalid = !validation.valid;
+
+    if (validation.valid) {
+      return true;
+    }
+
+    this.showError(
+      validation.message || 'É necessário preencher as datas de baixa exigidas para este estado.',
+    );
+    return false;
+  }
+
+  private validateDataRegistoRequirement(): boolean {
+    if (
+      !requiresDataRegisto('yes-energy', this.editForm.estado) ||
+      hasDataRegistoValue(this.editForm.dataRegisto)
+    ) {
+      return true;
+    }
+
+    this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
+    return false;
   }
 
   onCampaignModeChange(): void {
@@ -854,7 +1116,6 @@ export class YesEnergyContractDetail implements OnInit {
     this.yesEnergyContractService
       .deleteAttachment(this.contractId, document.fileName)
       .pipe(
-
         finalize(() => {
           this.deletingAttachmentFileNames.delete(document.fileName);
 
@@ -1068,8 +1329,7 @@ export class YesEnergyContractDetail implements OnInit {
       return;
     }
 
-    const teamIds =
-      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
+    const teamIds = currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
     const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
       (teamId): teamId is string => Boolean(teamId),

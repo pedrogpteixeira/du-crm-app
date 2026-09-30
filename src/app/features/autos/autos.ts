@@ -9,8 +9,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
+
+import { ToastService } from '../../core/services/toast';
 
 import { Auth } from '../../core/services/auth';
 import {
@@ -58,6 +60,7 @@ interface AutoDatePreset {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     AutoItemsTable,
   ],
   templateUrl: './autos.html',
@@ -67,7 +70,6 @@ interface AutoDatePreset {
 export class Autos implements OnInit {
   private readonly autoService = inject(AutoService);
   private readonly auth = inject(Auth);
-  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -92,9 +94,32 @@ export class Autos implements OnInit {
   isCreating = false;
   isDeleting = false;
   exportingAutoId: string | null = null;
+  private readonly toast = inject(ToastService);
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   modalErrorMessage = '';
 
   showFilters = false;
@@ -454,10 +479,6 @@ export class Autos implements OnInit {
       });
   }
 
-  openAuto(auto: Auto): void {
-    void this.router.navigate(['/home/autos', auto.id]);
-  }
-
   requestDelete(auto: Auto): void {
     if (!this.isSuperAdmin || auto.status !== 'draft') {
       return;
@@ -575,17 +596,6 @@ export class Autos implements OnInit {
     return entry.message ?? entry.detail ?? entry.code ?? 'Diagnóstico sem descrição';
   }
 
-  creatorLabel(auto: Auto): string {
-    if (auto.createdByName) {
-      return auto.createdByName;
-    }
-
-    if (typeof auto.createdBy === 'string') {
-      return auto.createdBy;
-    }
-
-    return auto.createdBy?.name ?? '—';
-  }
 
   formatCurrency(value: number | null | undefined): string {
     return new Intl.NumberFormat('pt-PT', {

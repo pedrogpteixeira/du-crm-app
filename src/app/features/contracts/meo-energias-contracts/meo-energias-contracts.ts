@@ -85,7 +85,14 @@ export class MeoEnergiasContracts implements OnInit {
   }
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-  readonly statuses: MeoEnergiasContractStatus[] = [...MEO_ENERGIAS_CONTRACT_STATUSES];
+  readonly statuses: MeoEnergiasContractStatus[] = [
+    ...MEO_ENERGIAS_CONTRACT_STATUSES.filter(
+      (status) => !(['Ativo', 'Baixa', 'Anulado'] as MeoEnergiasContractStatus[]).includes(status),
+    ),
+    'Ativo',
+    'Baixa',
+    'Anulado',
+  ];
 
   ngOnInit(): void {
     this.refreshFilterFields();

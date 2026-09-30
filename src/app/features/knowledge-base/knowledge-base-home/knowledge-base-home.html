@@ -41,15 +41,11 @@
         />
       </div>
 
-      <button
-        type="button"
+      <a
         class="company-action"
-        (click)="
-          openCompanyAction(
-            company,
-            'campaigns'
-          )
-        "
+        [routerLink]="companyActionRoute(company, 'campaigns')"
+        [queryParams]="companyActionQueryParams(company, 'campaigns')"
+        (click)="handleCompanyActionClick($event, company, 'campaigns')"
       >
         <span
           class="action-icon material-symbols-rounded"
@@ -60,17 +56,13 @@
         <span>Campanhas</span>
 
         <strong>›</strong>
-      </button>
+      </a>
 
-      <button
-        type="button"
+      <a
         class="company-action"
-        (click)="
-          openCompanyAction(
-            company,
-            'support'
-          )
-        "
+        [routerLink]="companyActionRoute(company, 'support')"
+        [queryParams]="companyActionQueryParams(company, 'support')"
+        (click)="handleCompanyActionClick($event, company, 'support')"
       >
         <span
           class="action-icon material-symbols-rounded"
@@ -81,17 +73,13 @@
         <span>Recursos</span>
 
         <strong>›</strong>
-      </button>
+      </a>
 
-      <button
-        type="button"
+      <a
         class="company-action"
-        (click)="
-          openCompanyAction(
-            company,
-            'forms'
-          )
-        "
+        [routerLink]="companyActionRoute(company, 'forms')"
+        [queryParams]="companyActionQueryParams(company, 'forms')"
+        (click)="handleCompanyActionClick($event, company, 'forms')"
       >
         <span
           class="action-icon material-symbols-rounded"
@@ -102,17 +90,13 @@
         <span>Formulários de Adesão</span>
 
         <strong>›</strong>
-      </button>
+      </a>
 
-      <button
-        type="button"
+      <a
         class="company-action"
-        (click)="
-          openCompanyAction(
-            company,
-            'training'
-          )
-        "
+        [routerLink]="companyActionRoute(company, 'training')"
+        [queryParams]="companyActionQueryParams(company, 'training')"
+        (click)="handleCompanyActionClick($event, company, 'training')"
       >
         <span
           class="action-icon material-symbols-rounded"
@@ -123,7 +107,7 @@
         <span>Formações</span>
 
         <strong>›</strong>
-      </button>
+      </a>
     </article>
   </section>
 

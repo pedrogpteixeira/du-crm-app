@@ -231,6 +231,16 @@
         <span class="icon material-symbols-rounded">library_books</span>
         <span class="label">Base de Conhecimento</span>
       </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/companies"
+        routerLinkActive="active"
+        title="Companies"
+      >
+        <span class="icon material-symbols-rounded">domain</span>
+        <span class="label">Comercializadoras</span>
+      </a>
     </div>
 
     <!-- GERAL -->

@@ -15,6 +15,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import {
   Company,
   CompanyService,
@@ -97,9 +99,31 @@ export class TariffEdit implements OnInit {
 
   showElectricityDiscounts = false;
   showGasDiscounts = false;
+  private readonly toast = inject(ToastService);
 
-  successMessage = '';
-  errorMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   filters: SearchFilters = {
     name: '',
@@ -409,6 +433,10 @@ export class TariffEdit implements OnInit {
     controls.segment.setValidators(
       Validators.required,
     );
+
+    // Evita transportar a validação de ciclo de um tarifário anterior
+    // quando o utilizador seleciona outro produto/modo de preço.
+    controls.cycleType.clearValidators();
 
     controls.salesCommission.setValidators([
       Validators.required,

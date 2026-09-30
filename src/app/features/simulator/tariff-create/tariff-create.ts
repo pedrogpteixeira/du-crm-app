@@ -15,6 +15,8 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import {
   Company,
   CompanyService,
@@ -65,9 +67,31 @@ export class TariffCreate implements OnInit {
 
   showElectricityDiscounts = false;
   showGasDiscounts = false;
+  private readonly toast = inject(ToastService);
 
-  successMessage = '';
-  errorMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
 
   readonly form = this.fb.group({
     companyId: this.fb.control<string | null>(

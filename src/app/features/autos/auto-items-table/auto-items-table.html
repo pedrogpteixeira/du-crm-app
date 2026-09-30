@@ -2,49 +2,213 @@
   <table class="items-table">
     <thead>
       <tr>
-        <th *ngFor="let column of columns">{{ columnLabel(column) }}</th>
+        <th
+          *ngFor="let column of columns"
+          [attr.data-column]="column"
+        >
+          {{ columnLabel(column) }}
+        </th>
+        <th *ngIf="showPayments" class="payment-column-heading">Pagamento</th>
       </tr>
     </thead>
 
     <tbody>
-      <tr *ngFor="let item of items; let index = index; trackBy: trackItem">
-        <td *ngFor="let column of columns" [ngSwitch]="column">
-          <ng-container *ngSwitchCase="'contractId'">{{ item.contractId }}</ng-container>
-          <ng-container *ngSwitchCase="'clientName'">{{ item.clientName || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'signatureDate'">{{ formatDate(item.signatureDate) }}</ng-container>
-          <ng-container *ngSwitchCase="'cpe'">{{ item.cpe || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'cui'">{{ item.cui || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'campaign'">{{ item.campaign || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'power'">{{ item.power ?? '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'nif'">{{ item.nif ?? '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'electronicInvoice'">{{ formatBoolean(item.electronicInvoice) }}</ng-container>
-          <ng-container *ngSwitchCase="'directDebit'">{{ formatBoolean(item.directDebit) }}</ng-container>
-          <ng-container *ngSwitchCase="'sva'">{{ formatSva(item.sva) }}</ng-container>
-          <ng-container *ngSwitchCase="'PEL'">{{ formatBoolean(item.PEL) }}</ng-container>
-          <ng-container *ngSwitchCase="'PELPlus'">{{ formatBoolean(item.PELPlus) }}</ng-container>
-          <ng-container *ngSwitchCase="'MGI'">{{ formatBoolean(item.MGI) }}</ng-container>
-          <ng-container *ngSwitchCase="'state'">{{ item.state || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'registrationName'">{{ item.registrationName || '—' }}</ng-container>
-          <ng-container *ngSwitchCase="'tipoSegmento'">{{ item.tipoSegmento || '—' }}</ng-container>
+      <tr
+        *ngFor="let item of items; let index = index; trackBy: trackItem"
+        class="contract-row"
+      >
+        <td
+          *ngFor="let column of columns"
+          [ngSwitch]="column"
+          [attr.data-column]="column"
+        >
+          <a
+            class="contract-cell-link"
+            [routerLink]="contractRoute(item)"
+            [attr.tabindex]="column === columns[0] ? 0 : -1"
+            [attr.aria-label]="column === columns[0] ? 'Abrir contrato ' + item.contractId : null"
+            title="Abrir contrato"
+          >
+            <ng-container *ngSwitchCase="'contractId'">
+              <span class="contract-id-value">{{ item.contractId }}</span>
+            </ng-container>
 
-          <ng-container *ngSwitchCase="'movementType'">
-            <span
-              class="movement-badge"
-              [class.refund]="item.movementType === 'refund'"
-              [class.zero]="item.movementType === 'zero'"
-            >
-              {{ movementLabel(item.movementType) }}
-            </span>
-          </ng-container>
+            <ng-container *ngSwitchCase="'clientName'">
+              <span class="client-name-value">{{ item.clientName || '—' }}</span>
+            </ng-container>
 
-          <ng-container *ngSwitchCase="'commission'">
-            <span
-              class="money"
-              [class.negative]="item.commission < 0"
-              [class.positive]="item.commission > 0"
-            >
-              {{ formatCurrency(item.commission) }}
-            </span>
+            <ng-container *ngSwitchCase="'signatureDate'">
+              <span class="date-value">{{ formatDate(item.signatureDate) }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'cpe'">
+              <span class="code-value">{{ item.cpe || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'cui'">
+              <span class="code-value">{{ item.cui || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'campaign'">
+              <span class="text-value">{{ item.campaign || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'power'">
+              <span class="text-value">{{ item.power ?? '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'nif'">
+              <span class="code-value">{{ item.nif ?? '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'electronicInvoice'">
+              <span
+                class="boolean-badge"
+                [class.is-yes]="item.electronicInvoice === true"
+                [class.is-no]="item.electronicInvoice === false"
+                [class.is-empty]="item.electronicInvoice === undefined"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.electronicInvoice === true ? 'check' : item.electronicInvoice === false ? 'close' : 'remove' }}
+                </span>
+                {{ formatBoolean(item.electronicInvoice) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'directDebit'">
+              <span
+                class="boolean-badge"
+                [class.is-yes]="item.directDebit === true"
+                [class.is-no]="item.directDebit === false"
+                [class.is-empty]="item.directDebit === undefined"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.directDebit === true ? 'check' : item.directDebit === false ? 'close' : 'remove' }}
+                </span>
+                {{ formatBoolean(item.directDebit) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'sva'">
+              <span class="service-value">{{ formatSva(item.sva) }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'PEL'">
+              <span
+                class="boolean-badge"
+                [class.is-yes]="item.PEL === true"
+                [class.is-no]="item.PEL === false"
+                [class.is-empty]="item.PEL === undefined"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.PEL === true ? 'check' : item.PEL === false ? 'close' : 'remove' }}
+                </span>
+                {{ formatBoolean(item.PEL) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'PELPlus'">
+              <span
+                class="boolean-badge"
+                [class.is-yes]="item.PELPlus === true"
+                [class.is-no]="item.PELPlus === false"
+                [class.is-empty]="item.PELPlus === undefined"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.PELPlus === true ? 'check' : item.PELPlus === false ? 'close' : 'remove' }}
+                </span>
+                {{ formatBoolean(item.PELPlus) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'MGI'">
+              <span
+                class="boolean-badge"
+                [class.is-yes]="item.MGI === true"
+                [class.is-no]="item.MGI === false"
+                [class.is-empty]="item.MGI === undefined"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.MGI === true ? 'check' : item.MGI === false ? 'close' : 'remove' }}
+                </span>
+                {{ formatBoolean(item.MGI) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'state'">
+              <span class="state-value">{{ item.state || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'registrationName'">
+              <span class="meta-value" [title]="item.registrationName || ''">{{ item.registrationName || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'tipoSegmento'">
+              <span class="segment-value">{{ item.tipoSegmento || '—' }}</span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'movementType'">
+              <span
+                class="movement-badge"
+                [class.refund]="item.movementType === 'refund'"
+                [class.zero]="item.movementType === 'zero'"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ item.movementType === 'payment' ? 'add_circle' : item.movementType === 'refund' ? 'undo' : 'remove_circle' }}
+                </span>
+                {{ movementLabel(item.movementType) }}
+              </span>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'commission'">
+              <span
+                class="money"
+                [class.negative]="item.commission < 0"
+                [class.positive]="item.commission > 0"
+              >
+                {{ formatCommission(item.commission) }}
+              </span>
+            </ng-container>
+          </a>
+        </td>
+
+        <td *ngIf="showPayments" class="payment-cell">
+          <ng-container *ngIf="paymentView(item) as view">
+            <div class="payment-cell-content">
+              <span
+                class="payment-badge"
+                [ngClass]="paymentStatusClass(view.paymentStatus)"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">
+                  {{ view.paymentStatus === 'paid' ? 'check_circle' : view.paymentStatus === 'unpaid' ? 'schedule' : view.paymentStatus === 'loading' ? 'progress_activity' : view.paymentStatus === 'unavailable' ? 'cloud_off' : 'remove_circle' }}
+                </span>
+                {{ view.paymentLabel }}
+              </span>
+
+              <button
+                *ngIf="canManagePayments && view.paymentStatus === 'unpaid'"
+                type="button"
+                class="payment-action primary"
+                title="Registar pagamento"
+                aria-label="Registar pagamento"
+                (click)="onRegisterPayment($event, item)"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">payments</span>
+                Registar
+              </button>
+
+              <button
+                *ngIf="canManagePayments && view.paymentStatus === 'paid' && view.payment"
+                type="button"
+                class="payment-action"
+                title="Ver pagamento"
+                aria-label="Ver pagamento"
+                (click)="onViewPayment($event, item, view.payment)"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+                Ver
+              </button>
+            </div>
           </ng-container>
         </td>
       </tr>

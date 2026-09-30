@@ -6,20 +6,6 @@
     A carregar equipa...
   </p>
 
-  <p
-    class="error-message"
-    *ngIf="errorMessage"
-  >
-    {{ errorMessage }}
-  </p>
-
-  <p
-    class="success-message"
-    *ngIf="successMessage"
-  >
-    {{ successMessage }}
-  </p>
-
   <ng-container *ngIf="team">
     <div class="breadcrumb">
       <a routerLink="/home/teams">

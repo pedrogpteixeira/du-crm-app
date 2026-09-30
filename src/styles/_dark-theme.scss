@@ -1023,3 +1023,304 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
 html[data-theme='dark'] :is(.proposal-document, .proposal-page .document-sheet) {
   color-scheme: light;
 }
+
+/* Auto payments */
+html[data-theme='dark'] :is(
+  .payment-register-summary,
+  .payment-register-actions
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+}
+html[data-theme='dark'] .payment-register-amount { border-color: var(--app-border) !important; }
+html[data-theme='dark'] .payment-register-icon { background: rgba(69,193,223,.12) !important; color: #67e8f9 !important; }
+html[data-theme='dark'] .payment-file-count { background: rgba(69,193,223,.1) !important; color: #67e8f9 !important; }
+html[data-theme='dark'] :is(.payment-register-summary-main > strong, .payment-register-section-heading h3) { color: var(--app-text) !important; }
+html[data-theme='dark'] :is(.payment-register-heading p, .payment-register-summary-main > small, .payment-register-section-heading p) { color: var(--app-text-muted) !important; }
+
+html[data-theme='dark'] :is(
+  .payment-summary-grid > div,
+  .selected-files > div,
+  .payment-attachment-list > div
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-form-field select,
+  .payment-form-field input[type='text'],
+  .payment-form-field input[type='file'],
+  .modal-close-button,
+  .payment-action
+) {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface-raised) !important;
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-summary-grid strong,
+  .selected-file-name,
+  .payment-subheading h3,
+  .payment-attachment-list strong,
+  .payment-form-field label
+) {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-summary-grid span,
+  .selected-file-size,
+  .field-help,
+  .payment-empty-files
+) {
+  color: var(--app-text-muted) !important;
+}
+
+html[data-theme='dark'] .payment-char-count { color: var(--app-text-muted) !important; }
+html[data-theme='dark'] .payment-field-meta .field-error { color: #fca5a5 !important; }
+
+html[data-theme='dark'] :is(
+  .payment-attachments-section,
+  .payment-empty-files
+) {
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme='dark'] .payment-action.primary {
+  border-color: #38bdf8 !important;
+  background: #0e7490 !important;
+  color: #fff !important;
+}
+
+html[data-theme='dark'] .payment-unpaid,
+html[data-theme='dark'] .payment-not-applicable,
+html[data-theme='dark'] .payment-loading,
+html[data-theme='dark'] .payment-unavailable {
+  border-color: var(--app-border-strong) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: var(--app-text-muted) !important;
+}
+
+html[data-theme='dark'] .payment-paid,
+html[data-theme='dark'] .payment-detail-status.paid {
+  border-color: rgba(34, 197, 94, 0.38) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #86efac !important;
+}
+
+/* Auto payment detail modal */
+html[data-theme='dark'] :is(
+  .payment-detail-summary,
+  .payment-detail-field,
+  .payment-proof-card,
+  .payment-detail-actions
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-detail-header,
+  .payment-detail-section + .payment-detail-section,
+  .payment-detail-amount
+) {
+  border-color: var(--app-border) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-detail-heading h2,
+  .payment-detail-person > strong,
+  .payment-detail-section-heading h3,
+  .payment-detail-field strong,
+  .payment-proof-info strong,
+  .payment-empty-files strong
+) {
+  color: var(--app-text) !important;
+}
+
+html[data-theme='dark'] :is(
+  .payment-detail-heading p,
+  .payment-detail-person > small,
+  .payment-detail-section-heading p,
+  .payment-proof-info span,
+  .payment-empty-files
+) {
+  color: var(--app-text-muted) !important;
+}
+
+html[data-theme='dark'] :is(.payment-detail-icon, .payment-proof-icon, .payment-proof-count) {
+  background: rgba(69, 193, 223, 0.1) !important;
+  color: #67e8f9 !important;
+}
+
+html[data-theme='dark'] .payment-proof-card:hover {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme='dark'] .payment-proof-action {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface-raised) !important;
+  color: var(--app-text-secondary) !important;
+}
+
+html[data-theme='dark'] .payment-proof-action:hover:not(:disabled),
+html[data-theme='dark'] .payment-proof-action.preview {
+  color: #67e8f9 !important;
+}
+
+html[data-theme='dark'] .payment-cancellation-note {
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  background: rgba(248, 113, 113, 0.08) !important;
+}
+
+html[data-theme='dark'] .payment-cancellation-note strong {
+  color: #fca5a5 !important;
+}
+
+/* Autos — list, detail and AutoItems table */
+html[data-theme='dark'] :is(
+  .autos-card,
+  .metadata-card,
+  .items-card,
+  .diagnostics-card,
+  .summary-grid article
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme='dark'] :is(.autos-table-toolbar, .items-pagination) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+}
+
+html[data-theme='dark'] :is(
+  .autos-table-title strong,
+  .provider-copy strong,
+  .detail-header h1,
+  .metadata-card strong,
+  .summary-grid strong,
+  .section-heading h2,
+  .client-name-value
+) {
+  color: var(--app-text-strong) !important;
+}
+
+html[data-theme='dark'] :is(
+  .autos-table-title span,
+  .autos-table-hint,
+  .type-inline-badge,
+  .period-cell,
+  .created-cell,
+  .detail-period,
+  .metadata-card span:not(.metadata-icon),
+  .summary-grid span,
+  .section-title-group p,
+  .items-pagination-info > div:first-child
+) {
+  color: var(--app-text-muted) !important;
+}
+
+html[data-theme='dark'] :is(
+  .provider-mark,
+  .contracts-count,
+  .metadata-icon,
+  .section-icon,
+  .items-count-badge
+) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+  color: var(--app-text-secondary) !important;
+}
+
+html[data-theme='dark'] :is(.autos-table-icon, .detail-provider-icon) {
+  border-color: var(--app-border) !important;
+  background: rgba(69, 193, 223, 0.1) !important;
+  color: #67e8f9 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme='dark'] .auto-row {
+  border-color: var(--app-border) !important;
+  color: var(--app-text-secondary) !important;
+}
+html[data-theme='dark'] .auto-row:hover,
+html[data-theme='dark'] .auto-row:focus-visible {
+  background: var(--app-surface-hover) !important;
+}
+html[data-theme='dark'] .net-cell .money {
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: var(--app-text-strong) !important;
+}
+
+html[data-theme='dark'] .metadata-card > div {
+  border-color: var(--app-border) !important;
+}
+html[data-theme='dark'] .summary-grid .net-summary {
+  border-color: var(--app-border-strong) !important;
+  background: var(--app-surface-soft) !important;
+}
+html[data-theme='dark'] .summary-icon.contracts,
+html[data-theme='dark'] .summary-icon.net {
+  background: rgba(69, 193, 223, 0.1) !important;
+  color: #67e8f9 !important;
+}
+html[data-theme='dark'] .summary-icon.positive {
+  background: rgba(34, 197, 94, 0.11) !important;
+  color: #86efac !important;
+}
+html[data-theme='dark'] .summary-icon.negative {
+  background: rgba(248, 113, 113, 0.1) !important;
+  color: #fca5a5 !important;
+}
+
+html[data-theme='dark'] .items-progress { background: var(--app-border) !important; }
+html[data-theme='dark'] .items-progress > span {
+  background: linear-gradient(90deg, #0e7490 0%, #38bdf8 100%) !important;
+}
+
+html[data-theme='dark'] .items-table td {
+  background: var(--app-surface) !important;
+}
+html[data-theme='dark'] .items-table :is(th, td)[data-column='contractId'],
+html[data-theme='dark'] .items-table :is(th, td)[data-column='clientName'] {
+  background: var(--app-surface) !important;
+}
+html[data-theme='dark'] .items-table th[data-column='contractId'],
+html[data-theme='dark'] .items-table th[data-column='clientName'] {
+  background: var(--app-surface-muted) !important;
+}
+html[data-theme='dark'] .items-table .contract-row:hover td,
+html[data-theme='dark'] .items-table .contract-row:hover :is(td[data-column='contractId'], td[data-column='clientName']) {
+  background: var(--app-surface-hover) !important;
+}
+html[data-theme='dark'] :is(.contract-id-value, .date-value, .code-value, .segment-value, .service-value) {
+  color: var(--app-text-secondary) !important;
+}
+html[data-theme='dark'] :is(.state-value, .boolean-badge.is-no, .boolean-badge.is-empty) {
+  border-color: var(--app-border) !important;
+  background: var(--app-surface-soft) !important;
+  color: var(--app-text-muted) !important;
+}
+html[data-theme='dark'] .boolean-badge.is-yes {
+  border-color: rgba(34, 197, 94, 0.35) !important;
+  background: rgba(34, 197, 94, 0.1) !important;
+  color: #86efac !important;
+}
+html[data-theme='dark'] .payment-column-heading {
+  background: #142238 !important;
+}
+html[data-theme='dark'] .payment-cell,
+html[data-theme='dark'] .contract-row:hover .payment-cell {
+  background: #101c2e !important;
+}
+html[data-theme='dark'] .payment-unpaid {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+  color: #fcd34d !important;
+}

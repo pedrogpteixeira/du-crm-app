@@ -26,6 +26,8 @@ import {
   of,
 } from 'rxjs';
 
+import { ToastService } from '../../../core/services/toast';
+
 import { environment } from '../../../../environments/environment';
 
 import { Auth } from '../../../core/services/auth';
@@ -150,9 +152,32 @@ export class TeamDetail implements OnInit {
   removingUserId = '';
 
   showAddUserModal = false;
+  private readonly toast = inject(ToastService);
 
-  errorMessage = '';
-  successMessage = '';
+  private _errorMessage = '';
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  set errorMessage(message: string) {
+    this._errorMessage = message ?? '';
+
+    if (this._errorMessage) {
+      this.toast.error(this._errorMessage);
+    }
+  }
+
+  private _successMessage = '';
+  get successMessage(): string {
+    return this._successMessage;
+  }
+  set successMessage(message: string) {
+    this._successMessage = message ?? '';
+
+    if (this._successMessage) {
+      this.toast.success(this._successMessage);
+    }
+  }
+
   addUserErrorMessage = '';
 
   readonly commissionForm =
