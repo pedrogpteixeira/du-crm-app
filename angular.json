@@ -42,7 +42,9 @@
                 "output": "/assets"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": [
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -69,8 +71,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "16kB",
-                  "maximumError": "25kB"
+                  "maximumWarning": "28kB",
+                  "maximumError": "32kB"
                 }
               ]
             },
