@@ -266,8 +266,24 @@ export interface CreateMeoEnergiasContractRequest {
 }
 
 export type UpdateMeoEnergiasContractRequest = Partial<
-  Omit<CreateMeoEnergiasContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+  Omit<
+    CreateMeoEnergiasContractRequest,
+    | 'companyId'
+    | 'clientId'
+    | 'userId'
+    | 'teams'
+    | 'dataRegisto'
+    | 'dataAtivacaoCPE'
+    | 'dataBaixaCPE'
+    | 'dataAtivacaoCUI'
+    | 'dataBaixaCUI'
+  >
 > & {
+  dataRegisto?: string | null;
+  dataAtivacaoCPE?: string | null;
+  dataBaixaCPE?: string | null;
+  dataAtivacaoCUI?: string | null;
+  dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
   observacoes?: string;

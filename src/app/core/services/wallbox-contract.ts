@@ -290,8 +290,10 @@ export interface WallboxContractDetail {
 }
 
 export type UpdateWallboxContractRequest = Partial<
-  Omit<CreateWallboxContractRequest, 'clientId' | 'companyId'>
+  Omit<CreateWallboxContractRequest, 'clientId' | 'companyId' | 'dataRegisto' | 'dataAtivacao'>
 > & {
+  dataRegisto?: string | null;
+  dataAtivacao?: string | null;
   telefone?: number | null;
   email?: string;
   moradaInstalacao?: string;

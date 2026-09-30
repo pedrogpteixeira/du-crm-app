@@ -13,6 +13,8 @@ import {
   isDataAtivacaoRequiredError,
 } from '../../../core/config/contract-data-ativacao';
 
+import { assignChangedContractLifecycleDate } from '../../../core/config/contract-lifecycle-dates';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -155,7 +157,6 @@ export class WallboxContractDetail implements OnInit {
 
   private readonly auth = inject(Auth);
 
-
   private readonly wallboxContractService = inject(WallboxContractService);
 
   private readonly preferencesService = inject(PreferencesService);
@@ -246,7 +247,6 @@ export class WallboxContractDetail implements OnInit {
 
   readonly estadoOptions: readonly WallboxContractStatus[] = WALLBOX_CONTRACT_STATUSES;
 
-
   get isDataRegistoRequired(): boolean {
     const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
     return requiresDataRegisto('wallbox', estado);
@@ -295,10 +295,7 @@ export class WallboxContractDetail implements OnInit {
   get canMutateContract(): boolean {
     return (
       !!this.contract &&
-      canMutateContractByBusinessRule(
-        this.contract.estado,
-        this.isRequiredTeamMember,
-      )
+      canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
   }
 
@@ -314,9 +311,7 @@ export class WallboxContractDetail implements OnInit {
       return null;
     }
 
-    const isActiveOption = this.campaigns.some(
-      (campaign) => campaign.id === currentCampaignId,
-    );
+    const isActiveOption = this.campaigns.some((campaign) => campaign.id === currentCampaignId);
 
     if (isActiveOption) {
       return null;
@@ -476,11 +471,7 @@ export class WallboxContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return (
-      !!this.contract &&
-      this.canMutateContract &&
-      this.hasContractAccess(this.contract)
-    );
+    return !!this.contract && this.canMutateContract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -619,7 +610,6 @@ export class WallboxContractDetail implements OnInit {
     if (!this.validateActivationDateRequirement()) {
       return;
     }
-
 
     if (!this.editForm.nif) {
       this.showError('O NIF é obrigatório.');
@@ -777,7 +767,6 @@ export class WallboxContractDetail implements OnInit {
             return;
           }
 
-
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
@@ -814,7 +803,6 @@ export class WallboxContractDetail implements OnInit {
     this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
     return false;
   }
-
 
   onCampaignModeChange(): void {
     if (this.campaignSelectionMode === 'other') {
@@ -939,8 +927,7 @@ export class WallboxContractDetail implements OnInit {
       return;
     }
 
-    const teamIds =
-      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
+    const teamIds = currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
     const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
       (teamId): teamId is string => Boolean(teamId),
@@ -1450,7 +1437,7 @@ export class WallboxContractDetail implements OnInit {
       this.originalEditForm.dataContrato,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataRegisto',
       this.editForm.dataRegisto,
@@ -1464,7 +1451,7 @@ export class WallboxContractDetail implements OnInit {
       this.originalEditForm.dataInstalacao,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataAtivacao',
       this.editForm.dataAtivacao,

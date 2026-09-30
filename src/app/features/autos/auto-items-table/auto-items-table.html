@@ -152,6 +152,7 @@
                 class="movement-badge"
                 [class.refund]="item.movementType === 'refund'"
                 [class.zero]="item.movementType === 'zero'"
+                [attr.title]="refundContextLabel(item)"
               >
                 <span class="material-symbols-rounded" aria-hidden="true">
                   {{ item.movementType === 'payment' ? 'add_circle' : item.movementType === 'refund' ? 'undo' : 'remove_circle' }}
@@ -178,9 +179,10 @@
               <span
                 class="payment-badge"
                 [ngClass]="paymentStatusClass(view.paymentStatus)"
+                [attr.title]="view.paymentHint || null"
               >
                 <span class="material-symbols-rounded" aria-hidden="true">
-                  {{ view.paymentStatus === 'paid' ? 'check_circle' : view.paymentStatus === 'unpaid' ? 'schedule' : view.paymentStatus === 'loading' ? 'progress_activity' : view.paymentStatus === 'unavailable' ? 'cloud_off' : 'remove_circle' }}
+                  {{ view.paymentStatus === 'paid' ? 'check_circle' : view.paymentStatus === 'unpaid' ? 'schedule' : view.paymentStatus === 'refund-pending' ? 'pending_actions' : view.paymentStatus === 'refunded' ? 'undo' : view.paymentStatus === 'loading' ? 'progress_activity' : view.paymentStatus === 'unavailable' ? 'cloud_off' : 'remove_circle' }}
                 </span>
                 {{ view.paymentLabel }}
               </span>

@@ -283,6 +283,16 @@
   background: #f0fdf4;
   color: #166534;
 }
+.payment-refund-pending {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+.payment-refunded {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
 .payment-not-applicable,
 .payment-loading,
 .payment-unavailable {

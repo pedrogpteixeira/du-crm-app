@@ -490,7 +490,19 @@ export class AutoDetail implements OnInit {
             error,
             'Não foi possível registar o pagamento.',
           );
-          this.refreshPaymentForItem(itemId);
+
+          if (this.isPaymentEligibilityError(error)) {
+            // O AutoItem pode ter sido bloqueado por um refund entretanto.
+            // Recarrega Auto + payments para voltar à fonte de verdade do backend.
+            this.showRegisterPaymentModal = false;
+            this.selectedPaymentItem = null;
+            this.resetPaymentForm();
+            this.selectedPaymentFiles = [];
+            this.loadAuto(false);
+          } else {
+            this.refreshPaymentForItem(itemId);
+          }
+
           this.cdr.markForCheck();
         },
       });
@@ -903,11 +915,15 @@ export class AutoDetail implements OnInit {
   }
 
   private canManagePaymentForItem(item: AutoItem): boolean {
+    const itemId = this.getAutoItemId(item);
+
     return Boolean(
       this.canManagePayments &&
       item.movementType === 'payment' &&
       Number(item.commission) > 0 &&
-      this.getAutoItemId(item),
+      item.paymentBlocked !== true &&
+      itemId &&
+      !this.paymentsByAutoItemId.has(itemId),
     );
   }
 
@@ -1013,6 +1029,44 @@ export class AutoDetail implements OnInit {
     }
 
     return appended;
+  }
+
+  private isPaymentEligibilityError(error: unknown): boolean {
+    const code = this.getBackendErrorCode(error);
+    return (
+      code === 'auto-item-refund-pending' ||
+      code === 'auto-item-refunded' ||
+      code === 'auto-item-no-longer-payable'
+    );
+  }
+
+  private getBackendErrorCode(error: unknown): string {
+    if (!error || typeof error !== 'object') {
+      return '';
+    }
+
+    const directCode = (error as { code?: unknown }).code;
+    if (typeof directCode === 'string') {
+      return directCode;
+    }
+
+    const nested = (error as { error?: unknown }).error;
+    if (nested && typeof nested === 'object') {
+      const nestedCode = (nested as { code?: unknown }).code;
+      if (typeof nestedCode === 'string') {
+        return nestedCode;
+      }
+
+      const nestedError = (nested as { error?: unknown }).error;
+      if (nestedError && typeof nestedError === 'object') {
+        const deepCode = (nestedError as { code?: unknown }).code;
+        if (typeof deepCode === 'string') {
+          return deepCode;
+        }
+      }
+    }
+
+    return '';
   }
 
   private getOperationError(error: unknown, fallback: string): string {

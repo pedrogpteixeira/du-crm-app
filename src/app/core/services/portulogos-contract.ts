@@ -250,9 +250,26 @@ export interface CreatePortulogosContractRequest {
 export type UpdatePortulogosContractRequest = Partial<
   Omit<
     CreatePortulogosContractRequest,
-    'clientId' | 'companyId' | 'userId' | 'teams' | 'nif' | 'telefone' | 'potencia' | 'escalao'
+    | 'clientId'
+    | 'companyId'
+    | 'userId'
+    | 'teams'
+    | 'nif'
+    | 'telefone'
+    | 'potencia'
+    | 'escalao'
+    | 'dataRegisto'
+    | 'dataAtivacaoCPE'
+    | 'dataBaixaCPE'
+    | 'dataAtivacaoCUI'
+    | 'dataBaixaCUI'
   >
 > & {
+  dataRegisto?: string | null;
+  dataAtivacaoCPE?: string | null;
+  dataBaixaCPE?: string | null;
+  dataAtivacaoCUI?: string | null;
+  dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
   potencia?: string | number | null;

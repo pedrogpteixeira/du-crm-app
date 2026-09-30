@@ -1110,6 +1110,18 @@ html[data-theme='dark'] .payment-detail-status.paid {
   color: #86efac !important;
 }
 
+html[data-theme='dark'] .payment-refund-pending {
+  border-color: rgba(251, 146, 60, 0.38) !important;
+  background: rgba(251, 146, 60, 0.12) !important;
+  color: #fdba74 !important;
+}
+
+html[data-theme='dark'] .payment-refunded {
+  border-color: rgba(248, 113, 113, 0.38) !important;
+  background: rgba(248, 113, 113, 0.12) !important;
+  color: #fca5a5 !important;
+}
+
 /* Auto payment detail modal */
 html[data-theme='dark'] :is(
   .payment-detail-summary,

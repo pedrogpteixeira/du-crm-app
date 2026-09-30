@@ -207,8 +207,14 @@ export interface CreateIberdrolaSolarContractRequest {
 }
 
 export type UpdateIberdrolaSolarContractRequest = Partial<
-  Omit<CreateIberdrolaSolarContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
->;
+  Omit<
+    CreateIberdrolaSolarContractRequest,
+    'companyId' | 'clientId' | 'userId' | 'teams' | 'dataRegisto' | 'dataAtivacao'
+  >
+> & {
+  dataRegisto?: string | null;
+  dataAtivacao?: string | null;
+};
 
 export type IberdrolaSolarContractList = Pick<
   IberdrolaSolarContract,

@@ -13,6 +13,8 @@ import {
   isDataAtivacaoRequiredError,
 } from '../../../core/config/contract-data-ativacao';
 
+import { assignChangedContractLifecycleDate } from '../../../core/config/contract-lifecycle-dates';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -215,7 +217,6 @@ export class IberdrolaSolarContractDetail implements OnInit {
 
   readonly estadoOptions = IBERDROLA_SOLAR_CONTRACT_STATUSES;
 
-
   get isDataRegistoRequired(): boolean {
     const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
     return requiresDataRegisto('iberdrola-solar', estado);
@@ -254,10 +255,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   get canMutateContract(): boolean {
     return (
       !!this.contract &&
-      canMutateContractByBusinessRule(
-        this.contract.estado,
-        this.isRequiredTeamMember,
-      )
+      canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
   }
 
@@ -335,11 +333,11 @@ export class IberdrolaSolarContractDetail implements OnInit {
         }
 
         if (!this.canEditContract && this.isEditing) {
-        this.isEditing = false;
-        this.selectedFiles = [];
-      }
+          this.isEditing = false;
+          this.selectedFiles = [];
+        }
 
-      const currentTime = new Date().toLocaleTimeString('pt-PT');
+        const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
 
@@ -377,11 +375,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       });
   }
 
-  loadContract(
-    contractId: string,
-    showLoading = true,
-    loadCampaignOptions = false,
-  ): void {
+  loadContract(contractId: string, showLoading = true, loadCampaignOptions = false): void {
     if (!contractId) {
       this.showError('Contrato inválido.');
       return;
@@ -434,11 +428,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
   }
 
   get canSubmitObservation(): boolean {
-    return (
-      !!this.contract &&
-      this.canMutateContract &&
-      this.hasContractAccess(this.contract)
-    );
+    return !!this.contract && this.canMutateContract && this.hasContractAccess(this.contract);
   }
 
   submitObservation(message: string): void {
@@ -570,7 +560,6 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-
     if (!/^\d{9}$/.test(String(this.editForm.telefone ?? ''))) {
       this.showError('O telefone deve ter exatamente 9 dígitos.');
       return;
@@ -633,10 +622,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
             .uploadAttachments(this.contractId, this.selectedFiles)
             .pipe(
               map((contractWithFiles) => ({
-                contract: preserveContractAssignmentContext(
-                  contractWithFiles,
-                  updatedContract,
-                ),
+                contract: preserveContractAssignmentContext(contractWithFiles, updatedContract),
                 uploadFailed: false,
                 uploadError: null as unknown,
               })),
@@ -745,7 +731,6 @@ export class IberdrolaSolarContractDetail implements OnInit {
     return false;
   }
 
-
   onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files: File[] = input.files ? Array.from(input.files) : [];
@@ -847,7 +832,9 @@ export class IberdrolaSolarContractDetail implements OnInit {
     }
 
     this.documentPreview
-      .preview(document, () => this.iberdrolaSolarContractService.downloadAttachment(this.contract!.id, document.fileName))
+      .preview(document, () =>
+        this.iberdrolaSolarContractService.downloadAttachment(this.contract!.id, document.fileName),
+      )
       .subscribe({
         error: () => this.showError('Não foi possível pré-visualizar o anexo.'),
       });
@@ -994,8 +981,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       return;
     }
 
-    const teamIds =
-      currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
+    const teamIds = currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
 
     const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
       (teamId): teamId is string => Boolean(teamId),
@@ -1446,7 +1432,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       this.originalEditForm.dataContrato,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataRegisto',
       this.editForm.dataRegisto,
@@ -1460,7 +1446,7 @@ export class IberdrolaSolarContractDetail implements OnInit {
       this.originalEditForm.dataInstalacao,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataAtivacao',
       this.editForm.dataAtivacao,

@@ -182,8 +182,14 @@ export interface CreateGalpSolarContractRequest {
 }
 
 export type UpdateGalpSolarContractRequest = Partial<
-  Omit<CreateGalpSolarContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
->;
+  Omit<
+    CreateGalpSolarContractRequest,
+    'companyId' | 'clientId' | 'userId' | 'teams' | 'dataRegisto' | 'dataAtivacao'
+  >
+> & {
+  dataRegisto?: string | null;
+  dataAtivacao?: string | null;
+};
 
 export type GalpSolarContractList = Pick<
   GalpSolarContract,

@@ -42,6 +42,8 @@ const COLUMN_LABELS: Readonly<Record<AutoItemColumnKey, string>> = {
 export type AutoItemPaymentViewStatus =
   | 'unpaid'
   | 'paid'
+  | 'refund-pending'
+  | 'refunded'
   | 'not-applicable'
   | 'loading'
   | 'unavailable';
@@ -50,6 +52,7 @@ export interface AutoItemPaymentView {
   payment?: AutoItemPayment;
   paymentLabel: string;
   paymentStatus: AutoItemPaymentViewStatus;
+  paymentHint?: string;
 }
 
 export interface AutoItemPaymentActionEvent {
@@ -157,11 +160,7 @@ export class AutoItemsTable {
   }
 
   paymentView(item: AutoItem): AutoItemPaymentView {
-    const isFinanciallyApplicable =
-      item.movementType === 'payment' &&
-      Number(item.commission) > 0;
-
-    if (!isFinanciallyApplicable) {
+    if (Number(item.commission) <= 0) {
       return {
         paymentLabel: 'Não aplicável',
         paymentStatus: 'not-applicable',
@@ -185,18 +184,43 @@ export class AutoItemsTable {
     const itemId = this.autoItemId(item);
     const payment = itemId ? this.paymentsByAutoItemId.get(itemId) : undefined;
 
-    if (!payment) {
+    // Um pagamento já realizado tem sempre prioridade histórica sobre um refund posterior.
+    if (payment) {
       return {
-        paymentLabel: 'Por pagar',
-        paymentStatus: 'unpaid',
+        payment,
+        paymentLabel: 'Pago',
+        paymentStatus: 'paid',
+      };
+    }
+
+    if (item.paymentBlocked === true) {
+      if (item.paymentBlockReason === 'refunded') {
+        return {
+          paymentLabel: 'Reembolsado',
+          paymentStatus: 'refunded',
+          paymentHint: 'Esta comissão já foi revertida por um Auto posterior.',
+        };
+      }
+
+      return {
+        paymentLabel: 'Reembolso pendente',
+        paymentStatus: 'refund-pending',
+        paymentHint: 'Esta comissão está associada a um processo de reembolso e já não pode ser paga.',
       };
     }
 
     return {
-      payment,
-      paymentLabel: 'Pago',
-      paymentStatus: 'paid',
+      paymentLabel: 'Por pagar',
+      paymentStatus: 'unpaid',
     };
+  }
+
+  refundContextLabel(item: AutoItem): string | null {
+    if (item.movementType !== 'refund' || !item.refundOfAutoItemId) {
+      return null;
+    }
+
+    return 'Reembolso de comissão anterior';
   }
 
   paymentStatusClass(status: AutoItemPaymentViewStatus): string {

@@ -266,8 +266,24 @@ export interface CreateVodafoneContractRequest {
 }
 
 export type UpdateVodafoneContractRequest = Partial<
-  Omit<CreateVodafoneContractRequest, 'companyId' | 'clientId' | 'userId' | 'teams'>
+  Omit<
+    CreateVodafoneContractRequest,
+    | 'companyId'
+    | 'clientId'
+    | 'userId'
+    | 'teams'
+    | 'dataRegisto'
+    | 'dataAtivacaoCPE'
+    | 'dataBaixaCPE'
+    | 'dataAtivacaoCUI'
+    | 'dataBaixaCUI'
+  >
 > & {
+  dataRegisto?: string | null;
+  dataAtivacaoCPE?: string | null;
+  dataBaixaCPE?: string | null;
+  dataAtivacaoCUI?: string | null;
+  dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
   observacoes?: string;
@@ -332,7 +348,10 @@ export class VodafoneContractService {
   createVodafoneContract(
     payload: CreateVodafoneContractRequest,
   ): Observable<ContractCreationResponse<VodafoneContractDetail>> {
-    return this.http.post<ContractCreationResponse<VodafoneContractDetail>>(`${this.apiUrl}/api/contracts/vodafone`, payload);
+    return this.http.post<ContractCreationResponse<VodafoneContractDetail>>(
+      `${this.apiUrl}/api/contracts/vodafone`,
+      payload,
+    );
   }
 
   updateVodafoneContract(

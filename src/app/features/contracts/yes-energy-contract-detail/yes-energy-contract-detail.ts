@@ -19,6 +19,8 @@ import {
   isDataAtivacaoRequiredError,
 } from '../../../core/config/contract-data-ativacao';
 
+import { assignChangedContractLifecycleDate } from '../../../core/config/contract-lifecycle-dates';
+
 import {
   canManageQualityControl as canManageQualityControlRole,
   QUALITY_CONTROL_BACKOFFICE_OPTIONS,
@@ -410,7 +412,6 @@ export class YesEnergyContractDetail implements OnInit {
       (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
     );
   }
-
 
   readonly cicloHorarioOptions: YesEnergyCicloHorario[] = [
     'Simples',
@@ -1003,7 +1004,8 @@ export class YesEnergyContractDetail implements OnInit {
     }
 
     this.showError(
-      validation.message || 'É necessário preencher as datas de ativação exigidas para este estado.',
+      validation.message ||
+        'É necessário preencher as datas de ativação exigidas para este estado.',
     );
     return false;
   }
@@ -1885,35 +1887,35 @@ export class YesEnergyContractDetail implements OnInit {
       this.originalEditForm.dataContrato,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataRegisto',
       this.editForm.dataRegisto,
       this.originalEditForm.dataRegisto,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataAtivacaoCPE',
       this.editForm.dataAtivacaoCPE,
       this.originalEditForm.dataAtivacaoCPE,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataBaixaCPE',
       this.editForm.dataBaixaCPE,
       this.originalEditForm.dataBaixaCPE,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataAtivacaoCUI',
       this.editForm.dataAtivacaoCUI,
       this.originalEditForm.dataAtivacaoCUI,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
       'dataBaixaCUI',
       this.editForm.dataBaixaCUI,

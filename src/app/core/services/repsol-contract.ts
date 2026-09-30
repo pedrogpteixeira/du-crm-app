@@ -250,9 +250,26 @@ export interface CreateRepsolContractRequest {
 export type UpdateRepsolContractRequest = Partial<
   Omit<
     CreateRepsolContractRequest,
-    'clientId' | 'companyId' | 'userId' | 'teams' | 'nif' | 'telefone' | 'potencia' | 'escalao'
+    | 'clientId'
+    | 'companyId'
+    | 'userId'
+    | 'teams'
+    | 'nif'
+    | 'telefone'
+    | 'potencia'
+    | 'escalao'
+    | 'dataRegisto'
+    | 'dataAtivacaoCPE'
+    | 'dataBaixaCPE'
+    | 'dataAtivacaoCUI'
+    | 'dataBaixaCUI'
   >
 > & {
+  dataRegisto?: string | null;
+  dataAtivacaoCPE?: string | null;
+  dataBaixaCPE?: string | null;
+  dataAtivacaoCUI?: string | null;
+  dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
   potencia?: string | number | null;
@@ -324,8 +341,13 @@ export class RepsolContractService {
     return this.http.get<RepsolContractDetail>(`${this.apiUrl}/api/contracts/repsol/${contractId}`);
   }
 
-  createRepsolContract(payload: CreateRepsolContractRequest): Observable<ContractCreationResponse<RepsolContractDetail>> {
-    return this.http.post<ContractCreationResponse<RepsolContractDetail>>(`${this.apiUrl}/api/contracts/repsol`, payload);
+  createRepsolContract(
+    payload: CreateRepsolContractRequest,
+  ): Observable<ContractCreationResponse<RepsolContractDetail>> {
+    return this.http.post<ContractCreationResponse<RepsolContractDetail>>(
+      `${this.apiUrl}/api/contracts/repsol`,
+      payload,
+    );
   }
 
   updateRepsolContract(

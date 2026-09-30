@@ -258,7 +258,7 @@
 
           <div class="section-content" *ngIf="!collapsedSections.dates">
             <div class="status-sale-layout">
-              <div class="status-sale-state">
+              <div class="status-sale-row status-sale-row--two">
                 <label>
                   Estado
 
@@ -276,6 +276,22 @@
                     <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
                       {{ contract.estado }}
                     </span>
+                  </ng-template>
+                </label>
+
+                <label>
+                  ID Venda
+
+                  <input
+                    *ngIf="isEditing; else idVendaView"
+                    type="text"
+                    [(ngModel)]="editForm.idVenda"
+                  />
+
+                  <ng-template #idVendaView>
+                    <strong>
+                      {{ getValue(contract.idVenda) }}
+                    </strong>
                   </ng-template>
                 </label>
               </div>
@@ -592,6 +608,22 @@
                 <ng-template #nifView>
                   <strong>
                     {{ getValue(contract.nif) }}
+                  </strong>
+                </ng-template>
+              </label>
+
+              <label>
+                Cartão de Cidadão
+
+                <input
+                  *ngIf="isEditing; else cartaoCidadaoView"
+                  type="text"
+                  [(ngModel)]="editForm.cartaoCidadao"
+                />
+
+                <ng-template #cartaoCidadaoView>
+                  <strong>
+                    {{ getValue(contract.cartaoCidadao) }}
                   </strong>
                 </ng-template>
               </label>

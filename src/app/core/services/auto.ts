@@ -258,6 +258,9 @@ export interface AutoItem {
   previousSettledAmount?: number;
   teamId?: string;
   settled?: boolean;
+  refundOfAutoItemId?: string | null;
+  paymentBlocked?: boolean;
+  paymentBlockReason?: string | null;
   diagnostic?: string;
 }
 
