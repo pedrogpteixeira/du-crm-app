@@ -1,5 +1,4 @@
 import { inject } from '@angular/core';
-
 import {
   CanActivateFn,
   Router,
@@ -7,20 +6,18 @@ import {
 
 import { Auth } from '../services/auth';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const auth = inject(Auth);
   const router = inject(Router);
 
-  const authenticationState =
-    auth.getAuthenticationState();
+  const authenticationState = auth.getAuthenticationState();
+  const hasAccessToken = auth.getAccessToken() !== null;
 
-  const currentUser =
-    auth.getCurrentUser();
+  if (authenticationState === 'authenticated' && hasAccessToken) {
+    if (auth.isPasswordExpired() && !state.url.startsWith('/change-password')) {
+      return router.createUrlTree(['/change-password']);
+    }
 
-  if (
-    authenticationState === 'authenticated' &&
-    currentUser
-  ) {
     return true;
   }
 

@@ -60,6 +60,11 @@ export class Login {
       this.infoMessage =
         'A sua sessão expirou. Inicie sessão novamente.';
     }
+
+    if (params.get('sessionInvalidated') === 'true') {
+      this.infoMessage =
+        'A sua sessão terminou. Inicie sessão novamente.';
+    }
   }
 
   form = this.fb.nonNullable.group({
@@ -80,11 +85,18 @@ export class Login {
 
     this.auth.login(username, password).subscribe({
       next: () => {
+        if (this.auth.isPasswordExpired()) {
+          void this.router.navigate(['/change-password'], {
+            replaceUrl: true,
+          });
+          return;
+        }
+
         const target = this.auth.roleIncludes(['Super Admin', 'DU'])
           ? ['/home/dashboard']
           : ['/home/tickets'];
 
-        this.router.navigate(target);
+        void this.router.navigate(target);
       },
 
       error: (error) => {

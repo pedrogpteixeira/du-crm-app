@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
 import {
@@ -17,6 +17,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { AuthUser } from '../models/auth-user';
+import { PasswordPolicy } from '../models/password-policy';
 import { AppTheme, ThemeService } from './theme';
 
 export type AuthenticationState =
@@ -27,10 +28,12 @@ export type AuthenticationState =
 interface LoginResponse {
   accessToken: string;
   user: AuthUser;
+  passwordPolicy?: PasswordPolicy;
 }
 
 interface RefreshResponse {
   accessToken: string;
+  passwordPolicy?: PasswordPolicy;
 }
 
 interface ChangePasswordResponse {
@@ -63,6 +66,18 @@ export class Auth {
 
   private readonly currentUserSubject =
     new BehaviorSubject<AuthUser | null>(null);
+
+  private readonly passwordPolicySubject =
+    new BehaviorSubject<PasswordPolicy | null>(null);
+
+  readonly passwordPolicy$ = this.passwordPolicySubject
+    .asObservable()
+    .pipe(distinctUntilChanged());
+
+  readonly passwordExpired$ = this.passwordPolicy$.pipe(
+    map((policy) => policy?.expired === true),
+    distinctUntilChanged(),
+  );
 
   private readonly authenticationStateSubject =
     new BehaviorSubject<AuthenticationState>('initializing');
@@ -99,6 +114,7 @@ export class Auth {
         tap((response) => {
           this.setAccessToken(response.accessToken);
           this.setCurrentUser(response.user);
+          this.setPasswordPolicy(response.passwordPolicy ?? null);
           this.setAuthenticationState('authenticated');
 
           this.saveUserPreferences(response.user);
@@ -132,13 +148,22 @@ export class Auth {
     this.setAuthenticationState('initializing');
 
     return this.refresh().pipe(
-      switchMap(() => this.loadCurrentUser()),
+      switchMap(() => {
+        if (this.isPasswordExpired()) {
+          this.setAuthenticationState('authenticated');
+          return of(true);
+        }
 
-      map(() => true),
+        return this.loadCurrentUser().pipe(map(() => true));
+      }),
 
-      catchError(() => {
+      catchError((_error) => {
+        if (this.isPasswordExpired()) {
+          this.setAuthenticationState('authenticated');
+          return of(true);
+        }
+
         this.clearSession();
-
         return of(false);
       }),
     );
@@ -164,14 +189,22 @@ export class Auth {
         tap((response) => {
           this.setAccessToken(response.accessToken);
 
+          if (response.passwordPolicy !== undefined) {
+            this.setPasswordPolicy(response.passwordPolicy);
+          }
+
           this.refreshSubject.next(response.accessToken);
           this.refreshSubject.complete();
         }),
 
         map((response) => response.accessToken),
 
-        catchError((error) => {
-          this.clearSession();
+        catchError((error: HttpErrorResponse) => {
+          if (this.isPasswordExpiredError(error)) {
+            this.markPasswordExpired(this.getPasswordPolicyFromError(error));
+          } else {
+            this.clearSession();
+          }
 
           this.refreshSubject.error(error);
 
@@ -279,6 +312,43 @@ export class Auth {
   }
 
   // ---------------------------------------------------------------------------
+  // Password policy
+  // ---------------------------------------------------------------------------
+
+  setPasswordPolicy(policy: PasswordPolicy | null): void {
+    this.passwordPolicySubject.next(policy);
+  }
+
+  getPasswordPolicy(): PasswordPolicy | null {
+    return this.passwordPolicySubject.value;
+  }
+
+  isPasswordExpired(): boolean {
+    return this.passwordPolicySubject.value?.expired === true;
+  }
+
+  markPasswordExpired(policy?: PasswordPolicy | null): void {
+    const currentPolicy = this.passwordPolicySubject.value;
+    const nextPolicy = policy ?? currentPolicy;
+
+    this.passwordPolicySubject.next({
+      enabled: nextPolicy?.enabled ?? true,
+      maxAgeDays: nextPolicy?.maxAgeDays ?? 0,
+      expired: true,
+      expiresAt: nextPolicy?.expiresAt ?? null,
+      daysRemaining: 0,
+    });
+
+    if (this.getAccessToken()) {
+      this.setAuthenticationState('authenticated');
+    }
+  }
+
+  clearPasswordPolicy(): void {
+    this.passwordPolicySubject.next(null);
+  }
+
+  // ---------------------------------------------------------------------------
   // Authentication state
   // ---------------------------------------------------------------------------
 
@@ -316,6 +386,7 @@ export class Auth {
   clearSession(): void {
     this.clearAccessToken();
     this.setCurrentUser(null);
+    this.clearPasswordPolicy();
     this.setAuthenticationState('unauthenticated');
 
     localStorage.removeItem('preferences');
@@ -344,6 +415,24 @@ export class Auth {
 
   isSuperAdmin(): boolean {
     return this.roleIncludes('Super Admin');
+  }
+
+  private isPasswordExpiredError(error: HttpErrorResponse): boolean {
+    if (error.status !== 403 || !error.error || typeof error.error !== 'object') {
+      return false;
+    }
+
+    return (error.error as { code?: string }).code === 'PASSWORD_EXPIRED';
+  }
+
+  private getPasswordPolicyFromError(
+    error: HttpErrorResponse,
+  ): PasswordPolicy | null {
+    if (!error.error || typeof error.error !== 'object') {
+      return null;
+    }
+
+    return (error.error as { passwordPolicy?: PasswordPolicy }).passwordPolicy ?? null;
   }
 
   // ---------------------------------------------------------------------------

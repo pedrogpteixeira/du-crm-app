@@ -562,6 +562,17 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'system-notice',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/admin/system-notice-admin/system-notice-admin').then(
+            (m: any) => m.SystemNoticeAdmin ?? m.SystemNoticeAdminComponent,
+          ),
+      },
+      {
         path: 'knowledge-base/folders/:id',
         loadComponent: () =>
           import('./features/knowledge-base/knowledge-folder/knowledge-folder')

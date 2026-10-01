@@ -1,0 +1,169 @@
+<div class="notice-admin-page">
+  <article class="notice-admin-card">
+    <header class="notice-admin-header">
+      <span class="card-icon material-symbols-rounded" aria-hidden="true">campaign</span>
+      <div>
+        <span class="card-kicker">Super Admin</span>
+        <h2>Criar aviso geral</h2>
+        <p>
+          O aviso fica persistido como uma entidade ativa. Fechar o banner num browser é apenas uma
+          ação visual e não remove o aviso desta lista.
+        </p>
+      </div>
+    </header>
+
+    <div class="notice-form">
+      <label>
+        <span>Título</span>
+        <input
+          type="text"
+          maxlength="120"
+          [(ngModel)]="draft.title"
+          placeholder="Ex.: Manutenção programada"
+        />
+      </label>
+
+      <label class="full-width">
+        <span>Mensagem</span>
+        <textarea
+          rows="4"
+          maxlength="1500"
+          [(ngModel)]="draft.message"
+          placeholder="Escreva a mensagem que será apresentada no CRM."
+        ></textarea>
+      </label>
+
+      <label>
+        <span>Tipo</span>
+        <select [(ngModel)]="draft.type">
+          <option value="info">Informação</option>
+          <option value="warning">Aviso</option>
+          <option value="error">Erro</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Audiência</span>
+        <select [(ngModel)]="draft.audience">
+          <option value="authenticated">Utilizadores autenticados</option>
+          <option value="all">Todos</option>
+        </select>
+        <small class="field-help">{{ audienceHelpText }}</small>
+      </label>
+
+      <label>
+        <span>Data/hora de expiração</span>
+        <input type="datetime-local" [(ngModel)]="draft.expiresAt" />
+      </label>
+
+      <label class="defer-option">
+        <input type="checkbox" [(ngModel)]="draft.deferWhileCriticalRequest" />
+        <span>
+          <strong>Adiar durante operações críticas</strong>
+          <small>
+            Se chegar por socket durante POST, PUT, PATCH ou DELETE, espera pelo fim da operação antes
+            de apresentar o banner.
+          </small>
+        </span>
+      </label>
+    </div>
+
+    <footer class="notice-admin-actions">
+      <button
+        type="button"
+        class="publish-button"
+        [disabled]="!canSubmit || isSaving"
+        (click)="publish()"
+      >
+        {{ isSaving ? 'A criar...' : 'Criar aviso' }}
+      </button>
+    </footer>
+  </article>
+
+  <article class="notice-admin-card active-notices-card">
+    <header class="notice-admin-header active-notices-header">
+      <span class="card-icon material-symbols-rounded" aria-hidden="true">notifications_active</span>
+      <div>
+        <span class="card-kicker">Gestão</span>
+        <h2>Avisos ativos</h2>
+        <p>
+          Esta lista representa os avisos ativos devolvidos pelo backend. Fechar um banner não altera
+          esta coleção; apenas “Remover” desativa o aviso globalmente.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="refresh-button"
+        [disabled]="isLoading"
+        (click)="loadActiveNotices()"
+        aria-label="Atualizar avisos ativos"
+        title="Atualizar avisos ativos"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+      </button>
+    </header>
+
+    <ng-container *ngIf="activeNotices$ | async as activeNotices">
+      <div class="active-notices-loading" *ngIf="isLoading && activeNotices.length === 0">
+        A carregar avisos ativos...
+      </div>
+
+      <div class="active-notices-empty" *ngIf="!isLoading && activeNotices.length === 0">
+        <span class="material-symbols-rounded" aria-hidden="true">notifications_off</span>
+        <div>
+          <strong>Sem avisos ativos</strong>
+          <p>Os avisos criados aparecerão aqui enquanto estiverem ativos e não expirados.</p>
+        </div>
+      </div>
+
+      <div class="active-notices-list" *ngIf="activeNotices.length > 0">
+        <section
+          class="active-notice-row"
+          *ngFor="let notice of activeNotices; trackBy: trackByNoticeId"
+        >
+          <div class="active-notice-main">
+            <div class="active-notice-title-row">
+              <strong>{{ notice.title }}</strong>
+              <span
+                class="notice-type-badge"
+                [class.notice-type-badge--warning]="notice.type === 'warning'"
+                [class.notice-type-badge--error]="notice.type === 'error'"
+              >
+                {{ typeLabel(notice.type) }}
+              </span>
+              <span class="notice-audience-badge">{{ audienceLabel(notice.audience) }}</span>
+            </div>
+
+            <p>{{ notice.message }}</p>
+
+            <div class="active-notice-meta">
+              <span>
+                <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                Publicado em {{ notice.publishedAt | date: 'dd/MM/yyyy HH:mm' }}
+              </span>
+              <span>
+                <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
+                {{
+                  notice.expiresAt
+                    ? 'Expira em ' + (notice.expiresAt | date: 'dd/MM/yyyy HH:mm')
+                    : 'Sem expiração indicada'
+                }}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="remove-notice-button"
+            [disabled]="isDeleting(notice.id)"
+            (click)="removeNotice(notice)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+            {{ isDeleting(notice.id) ? 'A remover...' : 'Remover' }}
+          </button>
+        </section>
+      </div>
+    </ng-container>
+  </article>
+</div>

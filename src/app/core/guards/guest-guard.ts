@@ -1,5 +1,4 @@
 import { inject } from '@angular/core';
-
 import {
   CanActivateFn,
   Router,
@@ -11,17 +10,13 @@ export const guestGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
 
-  const authenticationState =
-    auth.getAuthenticationState();
+  const authenticationState = auth.getAuthenticationState();
+  const hasAccessToken = auth.getAccessToken() !== null;
 
-  const currentUser =
-    auth.getCurrentUser();
-
-  if (
-    authenticationState === 'authenticated' &&
-    currentUser
-  ) {
-    return router.createUrlTree(['/home']);
+  if (authenticationState === 'authenticated' && hasAccessToken) {
+    return auth.isPasswordExpired()
+      ? router.createUrlTree(['/change-password'])
+      : router.createUrlTree(['/home']);
   }
 
   return true;

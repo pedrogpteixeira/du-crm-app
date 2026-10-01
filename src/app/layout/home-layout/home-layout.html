@@ -1,3 +1,5 @@
+<app-system-notice />
+
 <div
   class="home-layout"
   [class.sidebar-collapsed]="isSidebarCollapsed"
@@ -36,6 +38,12 @@
         <app-notification-dropdown />
       </div>
     </header>
+
+    <aside class="password-expiry-banner" *ngIf="passwordWarningMessage">
+      <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+      <span>{{ passwordWarningMessage }}</span>
+      <button type="button" (click)="goToPasswordChange()">Alterar agora</button>
+    </aside>
 
     <main class="content">
       <router-outlet />

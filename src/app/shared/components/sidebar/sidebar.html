@@ -241,6 +241,16 @@
         <span class="icon material-symbols-rounded">domain</span>
         <span class="label">Comercializadoras</span>
       </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/system-notice"
+        routerLinkActive="active"
+        title="System Notice"
+      >
+        <span class="icon material-symbols-rounded">campaign</span>
+        <span class="label">Avisos do Sistema</span>
+      </a>
     </div>
 
     <!-- GERAL -->

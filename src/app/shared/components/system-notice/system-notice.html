@@ -1,0 +1,30 @@
+<div class="system-notice-layer" *ngIf="activeNotice$ | async as notice">
+  <section
+    class="system-notice"
+    [class.system-notice--info]="notice.type === 'info'"
+    [class.system-notice--warning]="notice.type === 'warning'"
+    [class.system-notice--error]="notice.type === 'error'"
+    [attr.role]="notice.type === 'error' ? 'alert' : 'status'"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <span class="system-notice__icon material-symbols-rounded" aria-hidden="true">
+      {{ notice.type === 'error' ? 'error' : notice.type === 'warning' ? 'warning' : 'info' }}
+    </span>
+
+    <div class="system-notice__content">
+      <strong>{{ notice.title }}</strong>
+      <p>{{ notice.message }}</p>
+    </div>
+
+    <button
+      type="button"
+      class="system-notice__dismiss"
+      aria-label="Fechar aviso"
+      title="Fechar aviso"
+      (click)="dismiss(notice.id)"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    </button>
+  </section>
+</div>

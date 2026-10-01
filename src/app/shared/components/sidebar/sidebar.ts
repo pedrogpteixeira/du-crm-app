@@ -24,7 +24,7 @@ import { AuthUser } from '../../../core/models/auth-user';
   imports: [
     CommonModule,
     RouterLink,
-    RouterLinkActive,
+    RouterLinkActive
   ],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
