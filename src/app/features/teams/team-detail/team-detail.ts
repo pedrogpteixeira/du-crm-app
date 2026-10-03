@@ -321,6 +321,12 @@ export class TeamDetail implements OnInit {
     );
   }
 
+  get canViewWalletBalance(): boolean {
+    return this.auth.roleIncludes(
+      'Super Admin',
+    );
+  }
+
   get powerCommissions():
     FormArray {
     return this.commissionForm.controls

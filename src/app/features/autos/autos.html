@@ -95,8 +95,9 @@
         <div>Comercializadora</div>
         <div>Período</div>
         <div>Contratos</div>
-        <div>A pagar</div>
-        <div>A devolver</div>
+        <div title="Valor que ainda falta pagar.">A pagar</div>
+        <div title="Valor já efetivamente pago.">Pago</div>
+        <div title="Valor correspondente a reembolsos.">A devolver</div>
         <div>Líquido</div>
         <div>Estado</div>
         <div>Criado em</div>
@@ -140,7 +141,11 @@
 
         <div class="money-cell">
           <span class="money-indicator positive" aria-hidden="true"></span>
-          <span class="money positive">{{ formatCurrency(auto.totalPositive) }}</span>
+          <span class="money positive">{{ formatCurrency(auto.totalPendingPayment) }}</span>
+        </div>
+        <div class="money-cell">
+          <span class="money-indicator paid" aria-hidden="true"></span>
+          <span class="money paid">{{ formatCurrency(auto.totalPaid) }}</span>
         </div>
         <div class="money-cell">
           <span class="money-indicator negative" aria-hidden="true"></span>
@@ -232,7 +237,7 @@
         <p>Escolhe a comercializadora e o período antes de criar o rascunho.</p>
       </div>
 
-      <button type="button" class="close-button" [disabled]="isPreviewing || isLoadingMore || isCreating" (click)="closeGenerateModal()">
+      <button type="button" class="close-button" [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating" (click)="closeGenerateModal()">
         <span class="material-symbols-rounded">close</span>
       </button>
     </header>
@@ -249,7 +254,7 @@
             type="button"
             class="date-preset-button"
             [class.is-active]="isDatePresetActive(preset.days)"
-            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating"
             (click)="applyDatePreset(preset.days)"
           >
             <span class="material-symbols-rounded" aria-hidden="true">date_range</span>
@@ -265,7 +270,7 @@
           Comercializadora
           <select
             [(ngModel)]="generateForm.provider"
-            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating"
             (ngModelChange)="onGenerateFormChanged()"
           >
             <option *ngFor="let option of providerOptions" [value]="option.id">{{ option.label }}</option>
@@ -277,7 +282,7 @@
           <input
             type="date"
             [(ngModel)]="generateForm.periodStart"
-            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating"
             (ngModelChange)="onGenerateFormChanged()"
           />
         </label>
@@ -287,7 +292,7 @@
           <input
             type="date"
             [(ngModel)]="generateForm.periodEnd"
-            [disabled]="isPreviewing || isLoadingMore || isCreating"
+            [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating"
             (ngModelChange)="onGenerateFormChanged()"
           />
         </label>
@@ -319,27 +324,89 @@
               <strong>Contratos do preview</strong>
               <span>{{ previewLoadedCount }} de {{ previewTotalCount }} carregados</span>
             </div>
-
           </div>
+
+          <app-auto-items-filters
+            [provider]="currentPreview.provider"
+            [items]="currentPreview.items"
+            [totalItems]="previewTotalCount"
+            [allItemsLoaded]="previewAllItemsLoaded"
+            [loadingAll]="isLoadingAllPreview"
+            [disabled]="isCreating || isPreviewing || isLoadingMore || isLoadingAllPreview"
+            [appliedFilters]="previewFilters"
+            (filtersApplied)="applyPreviewItemFilters($event)"
+            (loadAllRequested)="loadAllPreviewItems()"
+          />
+
+          <div class="selection-toolbar">
+            <div class="selection-counters">
+              <span><strong>{{ previewTotalCount }}</strong> no preview</span>
+              <span><strong>{{ filteredPreviewItems.length }}</strong> correspondem aos filtros carregados</span>
+              <span class="selected"><strong>{{ previewSelectedCount }}</strong> serão incluídos</span>
+              <span><strong>{{ previewExcludedCount }}</strong> excluídos</span>
+            </div>
+
+            <div class="selection-actions">
+              <button type="button" [disabled]="!filteredPreviewItems.length || isCreating" (click)="includePreviewFiltered()">
+                Incluir {{ previewAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+              </button>
+              <button type="button" [disabled]="!filteredPreviewItems.length || isCreating" (click)="excludePreviewFiltered()">
+                Excluir {{ previewAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+              </button>
+              <button type="button" [disabled]="previewSelectedCount === previewTotalCount || isCreating" (click)="includeAllPreview()">Incluir todos</button>
+              <button type="button" [disabled]="previewSelectedCount === 0 || isCreating" (click)="clearPreviewSelection()">Limpar seleção</button>
+            </div>
+          </div>
+
+          <div class="selection-financial" *ngIf="previewFinancialSummaryReliable; else previewFinancialUnavailable">
+            <span>Pagamentos <strong>{{ previewSelectedCount === previewTotalCount ? currentPreview.paymentCount : previewSelectionSummary.paymentCount }}</strong></span>
+            <span>Reembolsos <strong>{{ previewSelectedCount === previewTotalCount ? currentPreview.refundCount : previewSelectionSummary.refundCount }}</strong></span>
+            <span>Sem movimento <strong>{{ previewSelectedCount === previewTotalCount ? currentPreview.zeroCount : previewSelectionSummary.zeroCount }}</strong></span>
+            <span>A pagar <strong>{{ formatCurrency(previewSelectedCount === previewTotalCount ? currentPreview.totalPositive : previewSelectionSummary.totalPositive) }}</strong></span>
+            <span>A devolver <strong>{{ formatCurrency(previewSelectedCount === previewTotalCount ? currentPreview.totalNegative : previewSelectionSummary.totalNegative) }}</strong></span>
+            <span>Total líquido <strong>{{ formatCurrency(previewSelectedCount === previewTotalCount ? currentPreview.totalNet : previewSelectionSummary.totalNet) }}</strong></span>
+          </div>
+          <ng-template #previewFinancialUnavailable>
+            <div class="selection-financial unavailable">
+              O resumo financeiro da seleção fica disponível quando todos os itens forem carregados. A seleção por IDs continua válida.
+            </div>
+          </ng-template>
 
           <app-auto-items-table
             [provider]="currentPreview.provider"
-            [items]="currentPreview.items"
+            [items]="filteredPreviewItems"
+            [selectionEnabled]="true"
+            [selectionMode]="previewSelection.mode"
+            [selectionItemIds]="previewSelection.itemIds"
+            [selectionScopeLabel]="previewAllItemsLoaded ? 'resultados filtrados' : 'resultados filtrados carregados'"
             maxHeight="44vh"
+            (itemSelectionChange)="onPreviewItemSelectionChange($event)"
+            (visibleSelectionChange)="onPreviewVisibleSelectionChange($event)"
           />
 
           <div class="preview-load-more" *ngIf="canLoadMorePreview">
             <span>{{ previewLoadedCount }} de {{ previewTotalCount }} contratos</span>
 
-            <button
-              type="button"
-              class="secondary-button"
-              [disabled]="isLoadingMore || isCreating || isPreviewing"
-              (click)="loadMorePreview()"
-            >
-              <span class="spinner small" *ngIf="isLoadingMore"></span>
-              {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
-            </button>
+            <div class="preview-load-actions">
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="isLoadingMore || isLoadingAllPreview || isCreating || isPreviewing"
+                (click)="loadMorePreview()"
+              >
+                <span class="spinner small" *ngIf="isLoadingMore"></span>
+                {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+              </button>
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="isLoadingMore || isLoadingAllPreview || isCreating || isPreviewing"
+                (click)="loadAllPreviewItems()"
+              >
+                <span class="spinner small" *ngIf="isLoadingAllPreview"></span>
+                {{ isLoadingAllPreview ? 'A carregar todos...' : 'Carregar todos' }}
+              </button>
+            </div>
           </div>
 
           <div class="preview-load-complete" *ngIf="!canLoadMorePreview && previewTotalCount">
@@ -350,12 +417,12 @@
     </div>
 
     <footer class="modal-footer">
-      <button type="button" class="secondary-button" [disabled]="isPreviewing || isLoadingMore || isCreating" (click)="closeGenerateModal()">Cancelar</button>
+      <button type="button" class="secondary-button" [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating" (click)="closeGenerateModal()">Cancelar</button>
 
       <button
         type="button"
         class="secondary-button"
-        [disabled]="isPreviewing || isLoadingMore || isCreating || hasCurrentPreview"
+        [disabled]="isPreviewing || isLoadingMore || isLoadingAllPreview || isCreating || hasCurrentPreview"
         [title]="hasCurrentPreview ? 'Altera as datas ou a comercializadora para pré-visualizar novamente.' : 'Pré-visualizar o período selecionado'"
         (click)="previewAuto()"
       >
@@ -363,7 +430,39 @@
         {{ isPreviewing ? 'A pré-visualizar...' : (hasCurrentPreview ? 'Pré-visualização atual' : 'Pré-visualizar') }}
       </button>
 
-      <button *ngIf="preview" type="button" class="primary-button" [disabled]="isCreating || isPreviewing || isLoadingMore || !hasCurrentPreview" (click)="createAuto()">
+      <button *ngIf="preview" type="button" class="primary-button" [disabled]="isCreating || isPreviewing || isLoadingMore || isLoadingAllPreview || !hasCurrentPreview || previewSelectedCount === 0" (click)="createAuto()">
+        <span class="spinner small" *ngIf="isCreating"></span>
+        {{ isCreating ? 'A criar...' : 'Criar Auto' }}
+      </button>
+    </footer>
+  </section>
+</div>
+
+<!-- Confirmar criação com seleção -->
+<div class="modal-backdrop selection-confirm-backdrop" *ngIf="showCreateConfirm && preview as currentPreview" (click)="cancelCreateAuto()">
+  <section class="modal confirm-modal selection-confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">Confirmação</span>
+        <h2>Criar Auto?</h2>
+        <p>A seleção abaixo será enviada ao backend apenas através dos IDs dos itens.</p>
+      </div>
+    </header>
+
+    <div class="selection-confirm-summary">
+      <div><span>A preview contém</span><strong>{{ previewTotalCount }}</strong></div>
+      <div><span>Serão incluídos</span><strong>{{ previewSelectedCount }}</strong></div>
+      <div><span>Serão excluídos</span><strong>{{ previewExcludedCount }}</strong></div>
+      <div *ngIf="previewFinancialSummaryReliable"><span>Total líquido</span><strong>{{ formatCurrency(previewSelectedCount === previewTotalCount ? currentPreview.totalNet : previewSelectionSummary.totalNet) }}</strong></div>
+    </div>
+
+    <p class="selection-confirm-note" *ngIf="!previewAllItemsLoaded && previewSelectedCount !== previewTotalCount && previewSelection.mode !== 'include'">
+      Nem todos os itens estão carregados; por isso o resumo financeiro da seleção não é apresentado. A exclusão por IDs permanece global e segura.
+    </p>
+
+    <footer class="modal-footer">
+      <button type="button" class="secondary-button" [disabled]="isCreating" (click)="cancelCreateAuto()">Cancelar</button>
+      <button type="button" class="primary-button" [disabled]="isCreating || previewSelectedCount === 0" (click)="confirmCreateAuto()">
         <span class="spinner small" *ngIf="isCreating"></span>
         {{ isCreating ? 'A criar...' : 'Criar Auto' }}
       </button>

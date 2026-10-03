@@ -81,6 +81,13 @@ export type AutoType = 'manual' | 'automatic';
 export type AutoStatus = 'draft' | 'finalized';
 export type AutoMovementType = 'payment' | 'refund' | 'zero';
 
+export type AutoItemSelectionMode = 'include' | 'exclude';
+
+export interface AutoItemSelection {
+  mode: AutoItemSelectionMode;
+  itemIds: string[];
+}
+
 export type AutoItemColumnKey =
   | 'contractId'
   | 'clientName'
@@ -226,6 +233,8 @@ export interface Auto {
   finalizedAt?: string | null;
   contractsCount: number;
   totalPositive: number;
+  totalPaid?: number;
+  totalPendingPayment?: number;
   totalNegative: number;
   totalNet: number;
   fileKey?: string;
@@ -253,6 +262,7 @@ export interface AutoItem {
   registrationName?: string;
   tipoSegmento?: string;
   movementType: AutoMovementType;
+  movementDescription?: string;
   commission: number;
   calculatedCommission?: number;
   previousSettledAmount?: number;
@@ -368,6 +378,11 @@ export interface GenerateAutoRequest {
 
 export interface CreateAutoRequest extends GenerateAutoRequest {
   previewId: string;
+  selection?: AutoItemSelection;
+}
+
+export interface FinalizeAutoRequest {
+  selection?: AutoItemSelection;
 }
 
 interface AutosListEnvelope {
@@ -578,11 +593,14 @@ export class AutoService {
       );
   }
 
-  finalizeAuto(id: string): Observable<Auto> {
+  finalizeAuto(
+    id: string,
+    payload: FinalizeAutoRequest = {},
+  ): Observable<Auto> {
     return this.http
       .post<AutoResponse>(
         `${this.apiUrl}/api/autos/${encodeURIComponent(id)}/finalize`,
-        {},
+        payload,
       )
       .pipe(
         map((response) => this.normalizeAuto(response)),

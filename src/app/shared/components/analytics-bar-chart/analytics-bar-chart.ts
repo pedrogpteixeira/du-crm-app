@@ -5,6 +5,7 @@ import {
   EventEmitter,
   Input,
   Output,
+  signal,
 } from '@angular/core';
 
 import { AnalyticsBreakdownItem } from '../../../core/models/analytics.model';
@@ -44,12 +45,40 @@ export class AnalyticsBarChart {
   @Input() summaryLabel = '';
   @Input() summaryValue = '';
   @Input() summaryMeta = '';
+  @Input() filterEnabled = false;
+  @Input() filterActiveCount = 0;
+
+  readonly filterOpen = signal(false);
 
   @Output() readonly selectedViewChange = new EventEmitter<string>();
 
   selectView(viewId: string): void {
     if (viewId !== this.selectedView) {
       this.selectedViewChange.emit(viewId);
+    }
+  }
+
+  toggleFilter(): void {
+    if (!this.filterEnabled) {
+      return;
+    }
+
+    this.filterOpen.update((open) => !open);
+  }
+
+  closeFilter(): void {
+    this.filterOpen.set(false);
+  }
+
+  handleCardClick(event: MouseEvent): void {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    if (target.closest('[data-chart-filter-close]')) {
+      this.closeFilter();
     }
   }
 

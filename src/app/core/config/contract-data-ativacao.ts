@@ -32,6 +32,9 @@ export const DATA_ATIVACAO_REQUIRED_MESSAGE =
 export const DATA_ATIVACAO_DUAL_ACTIVE_REQUIRED_MESSAGE =
   'Para colocar o contrato como Ativo, pelo menos um dos fornecimentos deve ter uma Data de Ativação.';
 
+export const DATA_ATIVACAO_DUAL_PARTIAL_REQUIRED_MESSAGE =
+  'Para colocar um contrato Luz + Gás como Parcialmente Baixa, é obrigatório preencher pelo menos a Data de Ativação do CPE ou a Data de Ativação do CUI.';
+
 export const DATA_ATIVACAO_DUAL_CPE_REQUIRED_MESSAGE =
   'Para colocar o contrato como Ativo, indique a Data de Ativação do CPE ou a respetiva Data de Baixa.';
 
@@ -47,8 +50,9 @@ export function getEnergyActivationDateValidation(
   dataBaixaCUI: unknown,
 ): EnergyActivationDateValidation {
   const isActiveState = estado === 'Ativo';
+  const isPartialDualState = estado === 'Parcialmente Baixa' && tipoProduto === 'Luz + Gás';
 
-  if (!isActiveState) {
+  if (!isActiveState && !isPartialDualState) {
     return emptyEnergyValidation();
   }
 
@@ -56,6 +60,24 @@ export function getEnergyActivationDateValidation(
   const hasActivationCui = hasActivationDateValue(dataAtivacaoCUI);
   const hasTerminationCpe = hasActivationDateValue(dataBaixaCPE);
   const hasTerminationCui = hasActivationDateValue(dataBaixaCUI);
+
+  if (isPartialDualState) {
+    const missingActiveSupply = !hasActivationCpe && !hasActivationCui;
+
+    return {
+      isActiveState: false,
+      isDual: true,
+      requireCpe: false,
+      requireCui: false,
+      cpeResolved: hasActivationCpe,
+      cuiResolved: hasActivationCui,
+      missingCpe: false,
+      missingCui: false,
+      missingActiveSupply,
+      valid: !missingActiveSupply,
+      message: missingActiveSupply ? DATA_ATIVACAO_DUAL_PARTIAL_REQUIRED_MESSAGE : null,
+    };
+  }
 
   if (tipoProduto === 'Luz') {
     const missingCpe = !hasActivationCpe;

@@ -1,12 +1,31 @@
 <div class="table-wrap" [style.max-height]="maxHeight">
-  <table class="items-table">
+  <table class="items-table" [class.selection-enabled]="selectionEnabled">
     <thead>
       <tr>
+        <th *ngIf="selectionEnabled" class="selection-column">
+          <label class="selection-check" [title]="'Incluir/excluir ' + selectionScopeLabel">
+            <input
+              type="checkbox"
+              [checked]="allVisibleSelected"
+              [indeterminate]="someVisibleSelected"
+              [attr.aria-label]="'Incluir/excluir ' + selectionScopeLabel"
+              (change)="onVisibleSelectionChange($event)"
+            />
+          </label>
+        </th>
         <th
           *ngFor="let column of columns"
           [attr.data-column]="column"
         >
           {{ columnLabel(column) }}
+        </th>
+        <th
+          *ngIf="hasMovementDescriptions"
+          class="movement-detail-heading"
+          title="Descrição do movimento"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">info</span>
+          <span class="sr-only">Descrição do movimento</span>
         </th>
         <th *ngIf="showPayments" class="payment-column-heading">Pagamento</th>
       </tr>
@@ -16,7 +35,18 @@
       <tr
         *ngFor="let item of items; let index = index; trackBy: trackItem"
         class="contract-row"
+        [class.selection-excluded]="selectionEnabled && !isSelected(item)"
       >
+        <td *ngIf="selectionEnabled" class="selection-cell">
+          <label class="selection-check" [title]="isSelected(item) ? 'Item incluído no Auto' : 'Item excluído do Auto'">
+            <input
+              type="checkbox"
+              [checked]="isSelected(item)"
+              [attr.aria-label]="(isSelected(item) ? 'Excluir' : 'Incluir') + ' contrato ' + item.contractId"
+              (change)="onItemSelectionChange($event, item)"
+            />
+          </label>
+        </td>
         <td
           *ngFor="let column of columns"
           [ngSwitch]="column"
@@ -173,6 +203,19 @@
           </a>
         </td>
 
+        <td *ngIf="hasMovementDescriptions" class="movement-detail-cell">
+          <button
+            *ngIf="hasMovementDescription(item)"
+            type="button"
+            class="movement-info-button"
+            aria-label="Ver descrição do movimento"
+            title="Ver descrição do movimento"
+            (click)="openMovementDescription($event, item)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">info</span>
+          </button>
+        </td>
+
         <td *ngIf="showPayments" class="payment-cell">
           <ng-container *ngIf="paymentView(item) as view">
             <div class="payment-cell-content">
@@ -217,3 +260,12 @@
     </tbody>
   </table>
 </div>
+
+<app-auto-movement-description-modal
+  *ngIf="selectedMovementDescription as movement"
+  [description]="movement.description"
+  [movementType]="movement.movementType"
+  [amount]="movement.amount"
+  (closed)="closeMovementDescription()"
+/>
+

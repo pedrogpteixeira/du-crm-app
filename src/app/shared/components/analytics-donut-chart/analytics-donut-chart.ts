@@ -1,10 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  Input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
 
 import { AnalyticsBreakdownItem } from '../../../core/models/analytics.model';
 
@@ -27,8 +22,11 @@ export class AnalyticsDonutChart {
   @Input() centerValue: string | number = 0;
   @Input() centerLabel = 'contratos';
   @Input() unitLabel = 'contratos';
+  @Input() filterEnabled = false;
+  @Input() filterActiveCount = 0;
 
   readonly activeSegmentIndex = signal<number | null>(null);
+  readonly filterOpen = signal(false);
 
   private readonly palette = [
     '#008db1',
@@ -65,6 +63,30 @@ export class AnalyticsDonutChart {
     }
 
     return this.segments[index] ?? null;
+  }
+
+  toggleFilter(): void {
+    if (!this.filterEnabled) {
+      return;
+    }
+
+    this.filterOpen.update((open) => !open);
+  }
+
+  closeFilter(): void {
+    this.filterOpen.set(false);
+  }
+
+  handleCardClick(event: MouseEvent): void {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    if (target.closest('[data-chart-filter-close]')) {
+      this.closeFilter();
+    }
   }
 
   clearActiveSegment(): void {

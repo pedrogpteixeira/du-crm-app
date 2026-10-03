@@ -5,6 +5,7 @@
 }
 
 .chart-card {
+  position: relative;
   height: 100%;
   min-height: 330px;
   display: flex;
@@ -27,6 +28,13 @@
 .chart-header-copy {
   min-width: 0;
   flex: 1;
+}
+
+.chart-header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .chart-header h2 {
@@ -90,6 +98,76 @@
   outline-offset: 1px;
 }
 
+.chart-filter-button {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #dbe6eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #647786;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.chart-filter-button .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.chart-filter-button:hover,
+.chart-filter-button.is-open,
+.chart-filter-button.has-filters {
+  border-color: #9bcbd7;
+  background: #f4fbfd;
+  color: #007d9c;
+}
+
+.chart-filter-button.is-open {
+  box-shadow: 0 0 0 2px rgba(0, 141, 177, 0.1);
+}
+
+.chart-filter-button:focus-visible {
+  outline: 2px solid rgba(0, 141, 177, 0.28);
+  outline-offset: 2px;
+}
+
+.chart-filter-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #008db1;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.chart-filter-popover {
+  position: absolute;
+  top: 58px;
+  right: 20px;
+  z-index: 40;
+  width: min(330px, calc(100% - 40px));
+  border: 1px solid #d7e3e8;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+}
 
 .chart-summary {
   display: flex;
@@ -310,8 +388,19 @@
     gap: 10px;
   }
 
+  .chart-header-actions {
+    align-self: flex-start;
+    flex-wrap: wrap;
+  }
+
   .chart-view-switcher {
     align-self: flex-start;
+  }
+
+  .chart-filter-popover {
+    top: 62px;
+    right: 17px;
+    width: calc(100% - 34px);
   }
 
   .chart-card {

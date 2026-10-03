@@ -386,3 +386,118 @@
   .contract-row:hover .payment-cell { background: #f8fcfd !important; }
   .payment-action { padding: 0 7px; }
 }
+
+/* Seleção de AutoItems (Preview/Draft). */
+.selection-column,
+.selection-cell {
+  position: sticky;
+  left: 0;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  padding: 0 !important;
+  text-align: center !important;
+}
+.selection-column {
+  z-index: 10 !important;
+  background: var(--app-surface-muted) !important;
+}
+.selection-cell {
+  z-index: 6;
+  background: var(--app-surface) !important;
+}
+.selection-check {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.selection-cell .selection-check { min-height: 52px; }
+.selection-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--app-accent);
+  cursor: pointer;
+}
+.items-table.selection-enabled :is(th, td)[data-column='contractId'] { left: 44px; }
+.items-table.selection-enabled :is(th, td)[data-column='clientName'] { left: 156px; }
+.contract-row.selection-excluded td:not(.payment-cell) { background: var(--app-surface-muted); }
+.contract-row.selection-excluded .contract-cell-link { opacity: .48; }
+.contract-row.selection-excluded:hover td:not(.payment-cell) { background: var(--app-surface-muted); }
+.contract-row.selection-excluded:hover .contract-cell-link { opacity: .62; }
+
+@media (max-width: 700px) {
+  .selection-column { position: sticky; top: 0; left: auto; z-index: 6 !important; }
+  .selection-cell { position: static; left: auto; z-index: auto; }
+  .items-table.selection-enabled :is(th, td)[data-column='contractId'],
+  .items-table.selection-enabled :is(th, td)[data-column='clientName'] { left: auto; }
+}
+
+/* Descrição curta do movimento financeiro sem alargar a tabela com texto. */
+.movement-detail-heading,
+.movement-detail-cell {
+  width: 46px;
+  min-width: 46px;
+  max-width: 46px;
+  padding: 0 !important;
+  text-align: center !important;
+}
+
+.movement-detail-heading {
+  color: var(--app-text-subtle) !important;
+
+  .material-symbols-rounded {
+    font-size: 15px;
+    vertical-align: middle;
+  }
+}
+
+.movement-detail-cell {
+  background: var(--app-surface) !important;
+}
+
+.contract-row:hover .movement-detail-cell {
+  background: var(--app-surface-hover) !important;
+}
+
+.movement-info-button {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+  cursor: pointer;
+  transition: border-color .14s ease, background .14s ease, color .14s ease;
+
+  .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  &:hover {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface-hover);
+    color: var(--app-accent-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

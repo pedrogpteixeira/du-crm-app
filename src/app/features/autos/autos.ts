@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { ToastService } from '../../core/services/toast';
@@ -29,6 +29,22 @@ import {
   getAutoProviderLabel,
 } from '../../core/services/auto';
 import { AutoItemsTable } from './auto-items-table/auto-items-table';
+import { AutoItemsFilters } from './auto-items-filters/auto-items-filters';
+import {
+  AutoItemFilters,
+  AutoSelectionFinancialSummary,
+  LocalAutoSelection,
+  buildAutoItemSelection,
+  clearAutoSelection,
+  createDefaultAutoSelection,
+  createEmptyAutoItemFilters,
+  filterAutoItems,
+  getAutoItemId,
+  getSelectedAutoItemCount,
+  setAutoItemSelected,
+  setAutoItemsSelected,
+  summarizeSelectedLoadedItems,
+} from './auto-items-selection';
 
 interface AutoFilters {
   provider: '' | AutoProvider;
@@ -62,6 +78,7 @@ interface AutoDatePreset {
     FormsModule,
     RouterLink,
     AutoItemsTable,
+    AutoItemsFilters,
   ],
   templateUrl: './autos.html',
   styleUrl: './autos.scss',
@@ -70,6 +87,7 @@ interface AutoDatePreset {
 export class Autos implements OnInit {
   private readonly autoService = inject(AutoService);
   private readonly auth = inject(Auth);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -128,6 +146,12 @@ export class Autos implements OnInit {
   preview: AutoPreview | null = null;
   previewPayload: GenerateAutoRequest | null = null;
   currentPreviewId: string | null = null;
+  previewFilters: AutoItemFilters = createEmptyAutoItemFilters();
+  filteredPreviewItems: AutoItem[] = [];
+  previewSelection: LocalAutoSelection = createDefaultAutoSelection();
+  previewSelectionSummary: AutoSelectionFinancialSummary = summarizeSelectedLoadedItems([], this.previewSelection);
+  isLoadingAllPreview = false;
+  showCreateConfirm = false;
   autoPendingDeletion: Auto | null = null;
 
   filters: AutoFilters = this.createEmptyFilters();
@@ -186,11 +210,39 @@ export class Autos implements OnInit {
     return this.preview?.pagination.total ?? this.preview?.contractsCount ?? 0;
   }
 
+  get previewAllItemsLoaded(): boolean {
+    return Boolean(
+      this.preview &&
+      !this.preview.pagination.hasMore &&
+      this.preview.items.length >= this.previewTotalCount,
+    );
+  }
+
+  get previewSelectedCount(): number {
+    return getSelectedAutoItemCount(
+      this.previewSelection,
+      this.previewTotalCount,
+    );
+  }
+
+  get previewExcludedCount(): number {
+    return Math.max(0, this.previewTotalCount - this.previewSelectedCount);
+  }
+
+  get previewFinancialSummaryReliable(): boolean {
+    return Boolean(
+      this.preview &&
+      (this.previewSelectedCount === this.previewTotalCount ||
+        this.previewAllItemsLoaded ||
+        this.previewSelection.mode === 'include'),
+    );
+  }
+
   ngOnInit(): void {
     this.isSuperAdmin = this.auth.isSuperAdmin();
     this.observeAutosCache();
     this.observeAutosInvalidation();
-    this.loadAutos();
+    this.loadAutos(true);
   }
 
   loadAutos(forceRefresh = false): void {
@@ -277,7 +329,7 @@ export class Autos implements OnInit {
   }
 
   applyDatePreset(days: number): void {
-    if (this.isPreviewing || this.isLoadingMore || this.isCreating) {
+    if (this.isPreviewing || this.isLoadingMore || this.isLoadingAllPreview || this.isCreating) {
       return;
     }
 
@@ -306,7 +358,7 @@ export class Autos implements OnInit {
   }
 
   closeGenerateModal(): void {
-    if (this.isPreviewing || this.isLoadingMore || this.isCreating) {
+    if (this.isPreviewing || this.isLoadingMore || this.isLoadingAllPreview || this.isCreating) {
       return;
     }
 
@@ -320,6 +372,7 @@ export class Autos implements OnInit {
       this.isPreviewing ||
       this.isLoadingMore ||
       this.isCreating ||
+      this.isLoadingAllPreview ||
       this.hasCurrentPreview
     ) {
       return;
@@ -354,6 +407,9 @@ export class Autos implements OnInit {
           this.preview = preview;
           this.previewPayload = payload;
           this.currentPreviewId = preview.previewId;
+          this.previewFilters = createEmptyAutoItemFilters();
+          this.previewSelection = createDefaultAutoSelection();
+          this.refreshPreviewDerivedState();
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -377,7 +433,8 @@ export class Autos implements OnInit {
       !preview.pagination.hasMore ||
       this.isPreviewing ||
       this.isLoadingMore ||
-      this.isCreating
+      this.isCreating ||
+      this.isLoadingAllPreview
     ) {
       return;
     }
@@ -413,6 +470,7 @@ export class Autos implements OnInit {
             pagination: chunk.pagination,
             diagnostics: chunk.diagnostics ?? this.preview.diagnostics,
           };
+          this.refreshPreviewDerivedState();
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -431,16 +489,54 @@ export class Autos implements OnInit {
   }
 
   createAuto(): void {
+    if (
+      !this.isSuperAdmin ||
+      this.isCreating ||
+      this.isLoadingMore ||
+      this.isLoadingAllPreview ||
+      !this.previewPayload ||
+      !this.preview ||
+      !this.currentPreviewId ||
+      this.previewSelectedCount === 0
+    ) {
+      return;
+    }
+
+    this.showCreateConfirm = true;
+  }
+
+  cancelCreateAuto(): void {
+    if (!this.isCreating) {
+      this.showCreateConfirm = false;
+    }
+  }
+
+  confirmCreateAuto(): void {
     const previewId = this.currentPreviewId;
 
     if (
       !this.isSuperAdmin ||
       this.isCreating ||
-      this.isLoadingMore ||
       !this.previewPayload ||
       !this.preview ||
-      !previewId
+      !previewId ||
+      this.previewSelectedCount === 0
     ) {
+      return;
+    }
+
+    let selection;
+    try {
+      selection = buildAutoItemSelection(
+        this.previewSelection,
+        this.previewTotalCount,
+        this.previewAllItemsLoaded
+          ? this.preview.items.map((item) => getAutoItemId(item))
+          : undefined,
+      );
+    } catch {
+      this.modalErrorMessage = 'Selecione pelo menos uma linha.';
+      this.showCreateConfirm = false;
       return;
     }
 
@@ -451,6 +547,7 @@ export class Autos implements OnInit {
       .createAuto({
         ...this.previewPayload,
         previewId,
+        ...(selection ? { selection } : {}),
       })
       .pipe(
         finalize(() => {
@@ -459,13 +556,16 @@ export class Autos implements OnInit {
         }),
       )
       .subscribe({
-        next: () => {
+        next: (created) => {
+          this.showCreateConfirm = false;
           this.showGenerateModal = false;
           this.resetGeneratePreview();
           this.successMessage = 'Auto criado com sucesso.';
           this.cdr.markForCheck();
+          void this.router.navigate(['/home/autos', created.id]);
         },
         error: (error) => {
+          this.showCreateConfirm = false;
           if (this.isPreviewExpiredError(error)) {
             this.expireCurrentPreview();
           } else {
@@ -477,6 +577,69 @@ export class Autos implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  applyPreviewItemFilters(filters: AutoItemFilters): void {
+    this.previewFilters = filters;
+    this.refreshPreviewDerivedState();
+    this.cdr.markForCheck();
+  }
+
+  onPreviewItemSelectionChange(event: { itemId: string; selected: boolean }): void {
+    this.previewSelection = setAutoItemSelected(
+      this.previewSelection,
+      event.itemId,
+      event.selected,
+    );
+    this.refreshPreviewDerivedState();
+    this.cdr.markForCheck();
+  }
+
+  onPreviewVisibleSelectionChange(selected: boolean): void {
+    this.previewSelection = setAutoItemsSelected(
+      this.previewSelection,
+      this.filteredPreviewItems.map((item) => getAutoItemId(item)).filter(Boolean),
+      selected,
+    );
+    this.refreshPreviewDerivedState();
+    this.cdr.markForCheck();
+  }
+
+  includePreviewFiltered(): void {
+    this.onPreviewVisibleSelectionChange(true);
+  }
+
+  excludePreviewFiltered(): void {
+    this.onPreviewVisibleSelectionChange(false);
+  }
+
+  includeAllPreview(): void {
+    this.previewSelection = createDefaultAutoSelection();
+    this.refreshPreviewDerivedState();
+    this.cdr.markForCheck();
+  }
+
+  clearPreviewSelection(): void {
+    this.previewSelection = clearAutoSelection();
+    this.refreshPreviewDerivedState();
+    this.cdr.markForCheck();
+  }
+
+  loadAllPreviewItems(): void {
+    if (
+      !this.preview ||
+      !this.currentPreviewId ||
+      this.previewAllItemsLoaded ||
+      this.isLoadingAllPreview ||
+      this.isLoadingMore ||
+      this.isCreating
+    ) {
+      return;
+    }
+
+    this.isLoadingAllPreview = true;
+    this.modalErrorMessage = '';
+    this.loadNextPreviewChunkForAll(this.currentPreviewId);
   }
 
   requestDelete(auto: Auto): void {
@@ -670,7 +833,75 @@ export class Autos implements OnInit {
     this.preview = null;
     this.previewPayload = null;
     this.currentPreviewId = null;
+    this.previewFilters = createEmptyAutoItemFilters();
+    this.filteredPreviewItems = [];
+    this.previewSelection = createDefaultAutoSelection();
+    this.previewSelectionSummary = summarizeSelectedLoadedItems([], this.previewSelection);
+    this.isLoadingAllPreview = false;
+    this.showCreateConfirm = false;
     this.modalErrorMessage = '';
+  }
+
+  private refreshPreviewDerivedState(): void {
+    const items = this.preview?.items ?? [];
+    this.filteredPreviewItems = filterAutoItems(items, this.previewFilters);
+    this.previewSelectionSummary = summarizeSelectedLoadedItems(
+      items,
+      this.previewSelection,
+    );
+  }
+
+  private loadNextPreviewChunkForAll(previewId: string): void {
+    const preview = this.preview;
+
+    if (
+      !preview ||
+      this.currentPreviewId !== previewId ||
+      !preview.pagination.hasMore
+    ) {
+      this.isLoadingAllPreview = false;
+      this.refreshPreviewDerivedState();
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const nextOffset = preview.pagination.offset + preview.pagination.limit;
+    const nextLimit = 200;
+
+    this.autoService
+      .getPreviewChunk(previewId, nextOffset, nextLimit)
+      .subscribe({
+        next: (chunk) => {
+          if (this.currentPreviewId !== previewId || !this.preview) {
+            this.isLoadingAllPreview = false;
+            this.cdr.markForCheck();
+            return;
+          }
+
+          this.preview = {
+            ...this.preview,
+            expiresAt: chunk.expiresAt ?? this.preview.expiresAt,
+            items: this.appendUniquePreviewItems(this.preview.items, chunk.items),
+            pagination: chunk.pagination,
+            diagnostics: chunk.diagnostics ?? this.preview.diagnostics,
+          };
+          this.refreshPreviewDerivedState();
+          this.cdr.markForCheck();
+          this.loadNextPreviewChunkForAll(previewId);
+        },
+        error: (error) => {
+          this.isLoadingAllPreview = false;
+          if (this.isPreviewExpiredError(error)) {
+            this.expireCurrentPreview();
+          } else {
+            this.modalErrorMessage = this.getOperationError(
+              error,
+              'Não foi possível carregar todos os contratos.',
+            );
+          }
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private expireCurrentPreview(): void {
@@ -685,11 +916,11 @@ export class Autos implements OnInit {
   ): AutoItem[] {
     const items = [...current];
     const keys = new Set(
-      current.map((item) => item.id ?? item.contractId),
+      current.map((item) => getAutoItemId(item) || item.contractId),
     );
 
     for (const item of incoming) {
-      const key = item.id ?? item.contractId;
+      const key = getAutoItemId(item) || item.contractId;
       if (keys.has(key)) {
         continue;
       }
@@ -800,12 +1031,51 @@ export class Autos implements OnInit {
       return 'Não tem permissão para executar esta operação.';
     }
 
+    const code = this.getBackendErrorCode(error);
+    if (code === 'auto-selection-empty') {
+      return 'Selecione pelo menos uma linha antes de continuar.';
+    }
+    if (code === 'auto-selection-invalid') {
+      return 'A seleção contém linhas que já não pertencem a esta preview. Atualize a pré-visualização e tente novamente.';
+    }
+
     const nestedMessage = this.getNestedErrorMessage(error);
     if (nestedMessage) {
       return nestedMessage;
     }
 
     return fallback;
+  }
+
+  private getBackendErrorCode(error: unknown): string {
+    if (!error || typeof error !== 'object') {
+      return '';
+    }
+
+    const directCode = (error as { code?: unknown }).code;
+    if (typeof directCode === 'string') {
+      return directCode;
+    }
+
+    if ('error' in error) {
+      const nested = (error as { error?: unknown }).error;
+      if (nested && typeof nested === 'object') {
+        const nestedCode = (nested as { code?: unknown }).code;
+        if (typeof nestedCode === 'string') {
+          return nestedCode;
+        }
+
+        const deep = (nested as { error?: unknown }).error;
+        if (deep && typeof deep === 'object') {
+          const deepCode = (deep as { code?: unknown }).code;
+          if (typeof deepCode === 'string') {
+            return deepCode;
+          }
+        }
+      }
+    }
+
+    return '';
   }
 
   private getNestedErrorMessage(error: unknown): string | null {

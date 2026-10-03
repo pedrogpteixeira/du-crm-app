@@ -1,0 +1,55 @@
+<div class="movement-modal-backdrop" (click)="close()">
+  <section
+    class="movement-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="auto-movement-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="movement-modal-header">
+      <div>
+        <span class="movement-modal-kicker">Auto</span>
+        <h2 id="auto-movement-modal-title">Movimento financeiro</h2>
+      </div>
+
+      <button
+        #closeButton
+        type="button"
+        class="movement-modal-close"
+        aria-label="Fechar"
+        title="Fechar"
+        (click)="close()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="movement-modal-body">
+      <div class="movement-summary">
+        <span
+          class="movement-type-badge"
+          [class.payment]="movementType === 'payment'"
+          [class.refund]="movementType === 'refund'"
+          [class.zero]="!movementType || movementType === 'zero'"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">{{ movementIcon() }}</span>
+          {{ movementLabel() }}
+        </span>
+
+        <strong
+          class="movement-amount"
+          [class.positive]="(amount ?? 0) > 0"
+          [class.negative]="(amount ?? 0) < 0"
+        >
+          {{ formatAmount() }}
+        </strong>
+      </div>
+
+      <p class="movement-description">{{ description }}</p>
+    </div>
+
+    <footer class="movement-modal-actions">
+      <button type="button" class="movement-modal-button" (click)="close()">Fechar</button>
+    </footer>
+  </section>
+</div>

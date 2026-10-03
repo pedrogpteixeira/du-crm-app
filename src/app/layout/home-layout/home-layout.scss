@@ -1,7 +1,7 @@
 .home-layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   background: #f8fafc;
   transition: grid-template-columns 0.25s ease;
 

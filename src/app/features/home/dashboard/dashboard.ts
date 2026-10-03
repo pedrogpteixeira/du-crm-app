@@ -39,6 +39,26 @@ import { AnalyticsKpiCard } from '../../../shared/components/analytics-kpi-card/
 
 type DirectDebitView = 'crm-total' | 'team-rate';
 
+type BreakdownSort = 'count-desc' | 'count-asc' | 'alpha-asc' | 'alpha-desc';
+type DirectDebitSort =
+  'direct-debit-desc' | 'rate-desc' | 'rate-asc' | 'team-total-desc' | 'alpha-asc' | 'alpha-desc';
+type ChartTopLimit = 'all' | 5 | 10 | 20;
+type MinimumContracts = 0 | 2 | 5 | 10;
+
+interface BreakdownChartFilters {
+  selectedLabels: readonly string[] | null;
+  sort: BreakdownSort;
+  top: ChartTopLimit;
+}
+
+interface DirectDebitChartFilters {
+  selectedLabels: readonly string[] | null;
+  sort: DirectDebitSort;
+  top: ChartTopLimit;
+  minimumContracts: MinimumContracts;
+  hideWithoutDirectDebit: boolean;
+}
+
 interface AnalyticsProviderConfig {
   id: AnalyticsProviderId;
   label: string;
@@ -84,12 +104,7 @@ interface ProviderDashboardState {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [
-    CommonModule,
-    AnalyticsKpiCard,
-    AnalyticsBarChart,
-    AnalyticsDonutChart,
-  ],
+  imports: [CommonModule, AnalyticsKpiCard, AnalyticsBarChart, AnalyticsDonutChart],
   templateUrl: './dashboard.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard.scss',
@@ -117,6 +132,18 @@ export class Dashboard {
   readonly selectedPeriod = signal<AnalyticsPeriod>('all');
   readonly directDebitView = signal<DirectDebitView>('crm-total');
   readonly isExporting = signal(false);
+
+  readonly stateFilters = signal<BreakdownChartFilters>(this.defaultBreakdownFilters());
+  readonly stateFilterDraft = signal<BreakdownChartFilters>(this.defaultBreakdownFilters());
+  readonly registrationFilters = signal<BreakdownChartFilters>(this.defaultBreakdownFilters());
+  readonly registrationFilterDraft = signal<BreakdownChartFilters>(this.defaultBreakdownFilters());
+  readonly directDebitFilters = signal<DirectDebitChartFilters>(this.defaultDirectDebitFilters());
+  readonly directDebitFilterDraft = signal<DirectDebitChartFilters>(
+    this.defaultDirectDebitFilters(),
+  );
+
+  readonly registrationFilterSearch = signal('');
+  readonly directDebitFilterSearch = signal('');
 
   readonly directDebitViewOptions: readonly AnalyticsBarChartViewOption[] = [
     { id: 'crm-total', label: 'Peso no CRM' },
@@ -149,10 +176,38 @@ export class Dashboard {
   readonly providerLabel = computed(() => this.selectedProviderConfig().label);
   readonly periodLabel = computed(() => this.selectedPeriodConfig().fullLabel);
 
-  readonly states = computed(() => this.currentProviderState().states());
-  readonly registrationNames = computed(() =>
-    this.currentProviderState().registrationNames(),
+  readonly stateFilterOptions = computed(() => this.sortedUniqueLabels(this.states()?.items ?? []));
+
+  readonly registrationFilterOptions = computed(() =>
+    this.sortedUniqueLabels(this.registrationNames()?.items ?? []),
   );
+
+  readonly directDebitFilterOptions = computed(() =>
+    this.sortedUniqueLabels(this.directDebit()?.items ?? []),
+  );
+
+  readonly visibleRegistrationFilterOptions = computed(() =>
+    this.filterLabelsBySearch(this.registrationFilterOptions(), this.registrationFilterSearch()),
+  );
+
+  readonly visibleDirectDebitFilterOptions = computed(() =>
+    this.filterLabelsBySearch(this.directDebitFilterOptions(), this.directDebitFilterSearch()),
+  );
+
+  readonly stateFilterActiveCount = computed(() =>
+    this.countBreakdownActiveFilters(this.stateFilters()),
+  );
+
+  readonly registrationFilterActiveCount = computed(() =>
+    this.countBreakdownActiveFilters(this.registrationFilters()),
+  );
+
+  readonly directDebitFilterActiveCount = computed(() =>
+    this.countDirectDebitActiveFilters(this.directDebitFilters()),
+  );
+
+  readonly states = computed(() => this.currentProviderState().states());
+  readonly registrationNames = computed(() => this.currentProviderState().registrationNames());
   readonly products = computed(() => this.currentProviderState().products());
   readonly segments = computed(() => this.currentProviderState().segments());
   readonly directDebit = computed(() => this.currentProviderState().directDebit());
@@ -164,9 +219,7 @@ export class Dashboard {
   );
   readonly productsLoading = computed(() => this.currentProviderState().productsLoading());
   readonly segmentsLoading = computed(() => this.currentProviderState().segmentsLoading());
-  readonly directDebitLoading = computed(() =>
-    this.currentProviderState().directDebitLoading(),
-  );
+  readonly directDebitLoading = computed(() => this.currentProviderState().directDebitLoading());
   readonly svaLoading = computed(() => this.currentProviderState().svaLoading());
 
   readonly statesError = computed(() => this.currentProviderState().statesError());
@@ -175,9 +228,7 @@ export class Dashboard {
   );
   readonly productsError = computed(() => this.currentProviderState().productsError());
   readonly segmentsError = computed(() => this.currentProviderState().segmentsError());
-  readonly directDebitError = computed(() =>
-    this.currentProviderState().directDebitError(),
-  );
+  readonly directDebitError = computed(() => this.currentProviderState().directDebitError());
   readonly svaError = computed(() => this.currentProviderState().svaError());
 
   readonly isLoadingAny = computed(
@@ -249,17 +300,22 @@ export class Dashboard {
   );
 
   /** Dados completos transformados para o período, sem alterar a cache. */
+  readonly stateItemsForSelectedPeriod = computed(() =>
+    this.mapDistributionItems(this.states()?.items ?? []),
+  );
+
   readonly registrationNamesForSelectedPeriod = computed(() =>
     this.mapDistributionItems(this.registrationNames()?.items ?? [], false),
   );
 
   readonly byState = computed(() =>
-    this.sortByCount(this.mapDistributionItems(this.states()?.items ?? [])),
+    this.applyBreakdownFilters(this.stateItemsForSelectedPeriod(), this.stateFilters()),
   );
 
   readonly byNomeRegistoCE = computed(() =>
-    this.sortByCount(
+    this.applyBreakdownFilters(
       this.registrationNamesForSelectedPeriod().filter((item) => item.count > 0),
+      this.registrationFilters(),
     ),
   );
 
@@ -272,12 +328,12 @@ export class Dashboard {
   );
 
   readonly stateUsesDonut = computed(() => {
-    const length = this.byState().length;
+    const length = this.stateItemsForSelectedPeriod().length;
     return length > 0 && length <= 6;
   });
 
-  readonly directDebitTotalContracts = computed(() =>
-    this.getTotalForPeriod(this.directDebit(), this.selectedPeriod()) ?? 0,
+  readonly directDebitTotalContracts = computed(
+    () => this.getTotalForPeriod(this.directDebit(), this.selectedPeriod()) ?? 0,
   );
 
   readonly totalWithDirectDebit = computed(() => {
@@ -318,10 +374,10 @@ export class Dashboard {
   readonly directDebitByNomeRegistoCE = computed<AnalyticsBarChartItem[]>(() => {
     const view = this.directDebitView();
 
-    return this.directDebitForSelectedPeriod()
-      .filter((item) => item.directDebitCount > 0)
-      .sort((a, b) => b.directDebitCount - a.directDebitCount)
-      .map((item) => this.toDirectDebitChartItem(item, view));
+    return this.filterDirectDebitItems(
+      this.directDebitForSelectedPeriod(),
+      this.directDebitFilters(),
+    ).map((item) => this.toDirectDebitChartItem(item, view));
   });
 
   readonly directDebitDescription = computed(() => {
@@ -335,15 +391,13 @@ export class Dashboard {
 
   readonly directDebitSummaryMeta = computed(() => {
     const sampleLabel =
-      this.selectedPeriod() === 'all'
-        ? 'contratos analisados'
-        : 'contratos registados no período';
+      this.selectedPeriod() === 'all' ? 'contratos analisados' : 'contratos registados no período';
 
     return `${this.formatNumber(this.totalWithDirectDebit())} de ${this.formatNumber(this.directDebitTotalContracts())} ${sampleLabel}`;
   });
 
-  readonly svaTotalContracts = computed(() =>
-    this.getTotalForPeriod(this.sva(), this.selectedPeriod()) ?? 0,
+  readonly svaTotalContracts = computed(
+    () => this.getTotalForPeriod(this.sva(), this.selectedPeriod()) ?? 0,
   );
 
   readonly totalWithSva = computed(() => {
@@ -352,11 +406,7 @@ export class Dashboard {
       return 0;
     }
 
-    return this.getPeriodValue(
-      data.totalWithSvaByPeriod,
-      this.selectedPeriod(),
-      data.totalWithSva,
-    );
+    return this.getPeriodValue(data.totalWithSvaByPeriod, this.selectedPeriod(), data.totalWithSva);
   });
 
   readonly percentageWithSva = computed(() => {
@@ -410,6 +460,7 @@ export class Dashboard {
     }
 
     this.selectedProvider.set(provider);
+    this.resetChartFilters();
     this.loadAnalytics();
   }
 
@@ -422,6 +473,168 @@ export class Dashboard {
     if (viewId === 'crm-total' || viewId === 'team-rate') {
       this.directDebitView.set(viewId);
     }
+  }
+
+  isFilterLabelSelected(selectedLabels: readonly string[] | null, label: string): boolean {
+    return selectedLabels === null || selectedLabels.includes(label);
+  }
+
+  filterSelectionLabel(selectedLabels: readonly string[] | null, total: number): string {
+    if (selectedLabels === null) {
+      return `Todas (${this.formatNumber(total)})`;
+    }
+
+    return `${this.formatNumber(selectedLabels.length)} de ${this.formatNumber(total)}`;
+  }
+
+  toggleStateFilterLabel(label: string): void {
+    this.stateFilterDraft.update((filters) => ({
+      ...filters,
+      selectedLabels: this.toggleLabelSelection(
+        filters.selectedLabels,
+        label,
+        this.stateFilterOptions(),
+      ),
+    }));
+  }
+
+  selectAllStateFilterLabels(): void {
+    this.stateFilterDraft.update((filters) => ({ ...filters, selectedLabels: null }));
+  }
+
+  clearStateFilterLabels(): void {
+    this.stateFilterDraft.update((filters) => ({ ...filters, selectedLabels: [] }));
+  }
+
+  setStateFilterSort(event: Event): void {
+    const value = this.eventValue(event);
+    if (this.isBreakdownSort(value)) {
+      this.stateFilterDraft.update((filters) => ({ ...filters, sort: value }));
+    }
+  }
+
+  setStateFilterTop(event: Event): void {
+    const value = this.parseTopLimit(this.eventValue(event));
+    this.stateFilterDraft.update((filters) => ({ ...filters, top: value }));
+  }
+
+  applyStateFilters(): void {
+    this.stateFilters.set(this.cloneBreakdownFilters(this.stateFilterDraft()));
+  }
+
+  clearStateFilters(): void {
+    const defaults = this.defaultBreakdownFilters();
+    this.stateFilterDraft.set(defaults);
+    this.stateFilters.set(this.cloneBreakdownFilters(defaults));
+  }
+
+  setRegistrationFilterSearch(event: Event): void {
+    this.registrationFilterSearch.set(this.eventValue(event));
+  }
+
+  toggleRegistrationFilterLabel(label: string): void {
+    this.registrationFilterDraft.update((filters) => ({
+      ...filters,
+      selectedLabels: this.toggleLabelSelection(
+        filters.selectedLabels,
+        label,
+        this.registrationFilterOptions(),
+      ),
+    }));
+  }
+
+  selectAllRegistrationFilterLabels(): void {
+    this.registrationFilterDraft.update((filters) => ({ ...filters, selectedLabels: null }));
+  }
+
+  clearRegistrationFilterLabels(): void {
+    this.registrationFilterDraft.update((filters) => ({ ...filters, selectedLabels: [] }));
+  }
+
+  setRegistrationFilterSort(event: Event): void {
+    const value = this.eventValue(event);
+    if (this.isBreakdownSort(value)) {
+      this.registrationFilterDraft.update((filters) => ({ ...filters, sort: value }));
+    }
+  }
+
+  setRegistrationFilterTop(event: Event): void {
+    const value = this.parseTopLimit(this.eventValue(event));
+    this.registrationFilterDraft.update((filters) => ({ ...filters, top: value }));
+  }
+
+  applyRegistrationFilters(): void {
+    this.registrationFilters.set(this.cloneBreakdownFilters(this.registrationFilterDraft()));
+  }
+
+  clearRegistrationFilters(): void {
+    const defaults = this.defaultBreakdownFilters();
+    this.registrationFilterSearch.set('');
+    this.registrationFilterDraft.set(defaults);
+    this.registrationFilters.set(this.cloneBreakdownFilters(defaults));
+  }
+
+  setDirectDebitFilterSearch(event: Event): void {
+    this.directDebitFilterSearch.set(this.eventValue(event));
+  }
+
+  toggleDirectDebitFilterLabel(label: string): void {
+    this.directDebitFilterDraft.update((filters) => ({
+      ...filters,
+      selectedLabels: this.toggleLabelSelection(
+        filters.selectedLabels,
+        label,
+        this.directDebitFilterOptions(),
+      ),
+    }));
+  }
+
+  selectAllDirectDebitFilterLabels(): void {
+    this.directDebitFilterDraft.update((filters) => ({ ...filters, selectedLabels: null }));
+  }
+
+  clearDirectDebitFilterLabels(): void {
+    this.directDebitFilterDraft.update((filters) => ({ ...filters, selectedLabels: [] }));
+  }
+
+  setDirectDebitFilterSort(event: Event): void {
+    const value = this.eventValue(event);
+    if (this.isDirectDebitSort(value)) {
+      this.directDebitFilterDraft.update((filters) => ({ ...filters, sort: value }));
+    }
+  }
+
+  setDirectDebitFilterTop(event: Event): void {
+    const value = this.parseTopLimit(this.eventValue(event));
+    this.directDebitFilterDraft.update((filters) => ({ ...filters, top: value }));
+  }
+
+  setDirectDebitMinimumContracts(event: Event): void {
+    const value = Number(this.eventValue(event));
+    if (value === 0 || value === 2 || value === 5 || value === 10) {
+      this.directDebitFilterDraft.update((filters) => ({
+        ...filters,
+        minimumContracts: value,
+      }));
+    }
+  }
+
+  toggleDirectDebitHideWithoutDirectDebit(): void {
+    this.directDebitFilterDraft.update((filters) => ({
+      ...filters,
+      hideWithoutDirectDebit: !filters.hideWithoutDirectDebit,
+    }));
+  }
+
+  applyDirectDebitFilters(): void {
+    this.directDebitFilters.set(this.cloneDirectDebitFilters(this.directDebitFilterDraft()));
+  }
+
+  clearDirectDebitFilters(): void {
+    const defaults = this.defaultDirectDebitFilters();
+    this.directDebitFilterSearch.set('');
+    this.directDebitFilterDraft.set(defaults);
+    this.directDebitFilters.set(this.cloneDirectDebitFilters(defaults));
   }
 
   async exportAnalytics(): Promise<void> {
@@ -490,10 +703,7 @@ export class Dashboard {
     this.loadSva(forceRefresh, provider);
   }
 
-  loadStates(
-    forceRefresh = false,
-    provider: AnalyticsProviderId = this.selectedProvider(),
-  ): void {
+  loadStates(forceRefresh = false, provider: AnalyticsProviderId = this.selectedProvider()): void {
     const state = this.providerStates[provider];
 
     this.loadResource(
@@ -565,10 +775,7 @@ export class Dashboard {
     );
   }
 
-  loadSva(
-    forceRefresh = false,
-    provider: AnalyticsProviderId = this.selectedProvider(),
-  ): void {
+  loadSva(forceRefresh = false, provider: AnalyticsProviderId = this.selectedProvider()): void {
     const state = this.providerStates[provider];
 
     this.loadResource(
@@ -668,11 +875,7 @@ export class Dashboard {
     const mapped = items.map((item) => ({
       label: item.label,
       count: this.getPeriodValue(item.counts, period, item.count),
-      percentage: this.getPeriodValue(
-        item.percentages,
-        period,
-        item.percentage,
-      ),
+      percentage: this.getPeriodValue(item.percentages, period, item.percentage),
     }));
 
     return hideEmpty ? mapped.filter((item) => item.count > 0) : mapped;
@@ -682,11 +885,7 @@ export class Dashboard {
     item: AnalyticsDirectDebitItem,
     period: AnalyticsPeriod,
   ): DirectDebitPeriodItem {
-    const directDebitCount = this.getPeriodValue(
-      item.directDebitCount,
-      period,
-      item.count,
-    );
+    const directDebitCount = this.getPeriodValue(item.directDebitCount, period, item.count);
     const teamTotalContracts = this.getPeriodValue(
       item.teamTotalContracts,
       period,
@@ -697,11 +896,7 @@ export class Dashboard {
       label: item.label,
       directDebitCount,
       teamTotalContracts,
-      percentage: this.getPeriodValue(
-        item.percentageByPeriod,
-        period,
-        item.percentage,
-      ),
+      percentage: this.getPeriodValue(item.percentageByPeriod, period, item.percentage),
       percentageOfTotalContracts: this.getPeriodValue(
         item.percentageOfTotalContractsByPeriod,
         period,
@@ -709,11 +904,7 @@ export class Dashboard {
       ),
       directDebitRate:
         teamTotalContracts > 0
-          ? this.getPeriodValue(
-              item.directDebitRateByPeriod,
-              period,
-              item.directDebitRate,
-            )
+          ? this.getPeriodValue(item.directDebitRateByPeriod, period, item.directDebitRate)
           : 0,
     };
   }
@@ -783,5 +974,218 @@ export class Dashboard {
 
   private sortByCount(items: AnalyticsBreakdownItem[]): AnalyticsBreakdownItem[] {
     return [...items].sort((a, b) => b.count - a.count);
+  }
+
+  private defaultBreakdownFilters(): BreakdownChartFilters {
+    return {
+      selectedLabels: null,
+      sort: 'count-desc',
+      top: 'all',
+    };
+  }
+
+  private defaultDirectDebitFilters(): DirectDebitChartFilters {
+    return {
+      selectedLabels: null,
+      sort: 'direct-debit-desc',
+      top: 'all',
+      minimumContracts: 0,
+      hideWithoutDirectDebit: true,
+    };
+  }
+
+  private cloneBreakdownFilters(filters: BreakdownChartFilters): BreakdownChartFilters {
+    return {
+      ...filters,
+      selectedLabels: filters.selectedLabels === null ? null : [...filters.selectedLabels],
+    };
+  }
+
+  private cloneDirectDebitFilters(filters: DirectDebitChartFilters): DirectDebitChartFilters {
+    return {
+      ...filters,
+      selectedLabels: filters.selectedLabels === null ? null : [...filters.selectedLabels],
+    };
+  }
+
+  private applyBreakdownFilters(
+    items: readonly AnalyticsBreakdownItem[],
+    filters: BreakdownChartFilters,
+  ): AnalyticsBreakdownItem[] {
+    let result = [...items];
+
+    if (filters.selectedLabels !== null) {
+      const selected = new Set(filters.selectedLabels);
+      result = result.filter((item) => selected.has(item.label));
+    }
+
+    result.sort((a, b) => {
+      switch (filters.sort) {
+        case 'count-asc':
+          return a.count - b.count;
+        case 'alpha-asc':
+          return a.label.localeCompare(b.label, 'pt-PT');
+        case 'alpha-desc':
+          return b.label.localeCompare(a.label, 'pt-PT');
+        case 'count-desc':
+        default:
+          return b.count - a.count;
+      }
+    });
+
+    return filters.top === 'all' ? result : result.slice(0, filters.top);
+  }
+
+  private filterDirectDebitItems(
+    items: readonly DirectDebitPeriodItem[],
+    filters: DirectDebitChartFilters,
+  ): DirectDebitPeriodItem[] {
+    let result = [...items];
+
+    if (filters.selectedLabels !== null) {
+      const selected = new Set(filters.selectedLabels);
+      result = result.filter((item) => selected.has(item.label));
+    }
+
+    if (filters.minimumContracts > 0) {
+      result = result.filter((item) => item.teamTotalContracts >= filters.minimumContracts);
+    }
+
+    if (filters.hideWithoutDirectDebit) {
+      result = result.filter((item) => item.directDebitCount > 0);
+    }
+
+    result.sort((a, b) => {
+      switch (filters.sort) {
+        case 'rate-desc':
+          return (
+            b.directDebitRate - a.directDebitRate || b.teamTotalContracts - a.teamTotalContracts
+          );
+        case 'rate-asc':
+          return (
+            a.directDebitRate - b.directDebitRate || b.teamTotalContracts - a.teamTotalContracts
+          );
+        case 'team-total-desc':
+          return (
+            b.teamTotalContracts - a.teamTotalContracts || b.directDebitCount - a.directDebitCount
+          );
+        case 'alpha-asc':
+          return a.label.localeCompare(b.label, 'pt-PT');
+        case 'alpha-desc':
+          return b.label.localeCompare(a.label, 'pt-PT');
+        case 'direct-debit-desc':
+        default:
+          return b.directDebitCount - a.directDebitCount;
+      }
+    });
+
+    return filters.top === 'all' ? result : result.slice(0, filters.top);
+  }
+
+  private toggleLabelSelection(
+    selectedLabels: readonly string[] | null,
+    label: string,
+    allLabels: readonly string[],
+  ): readonly string[] | null {
+    const selected = selectedLabels === null ? new Set(allLabels) : new Set(selectedLabels);
+
+    if (selected.has(label)) {
+      selected.delete(label);
+    } else {
+      selected.add(label);
+    }
+
+    if (selected.size === allLabels.length && allLabels.every((item) => selected.has(item))) {
+      return null;
+    }
+
+    return allLabels.filter((item) => selected.has(item));
+  }
+
+  private sortedUniqueLabels(items: readonly { label: string }[]): string[] {
+    return [...new Set(items.map((item) => item.label))].sort((a, b) =>
+      a.localeCompare(b, 'pt-PT'),
+    );
+  }
+
+  private filterLabelsBySearch(labels: readonly string[], search: string): string[] {
+    const normalized = search.trim().toLocaleLowerCase('pt-PT');
+    if (!normalized) {
+      return [...labels];
+    }
+
+    return labels.filter((label) => label.toLocaleLowerCase('pt-PT').includes(normalized));
+  }
+
+  private countBreakdownActiveFilters(filters: BreakdownChartFilters): number {
+    return (
+      Number(filters.selectedLabels !== null) +
+      Number(filters.sort !== 'count-desc') +
+      Number(filters.top !== 'all')
+    );
+  }
+
+  private countDirectDebitActiveFilters(filters: DirectDebitChartFilters): number {
+    return (
+      Number(filters.selectedLabels !== null) +
+      Number(filters.sort !== 'direct-debit-desc') +
+      Number(filters.top !== 'all') +
+      Number(filters.minimumContracts !== 0) +
+      Number(!filters.hideWithoutDirectDebit)
+    );
+  }
+
+  private resetChartFilters(): void {
+    const breakdownDefaults = this.defaultBreakdownFilters();
+    const directDebitDefaults = this.defaultDirectDebitFilters();
+
+    this.stateFilterDraft.set(breakdownDefaults);
+    this.stateFilters.set(this.cloneBreakdownFilters(breakdownDefaults));
+    this.registrationFilterDraft.set(this.defaultBreakdownFilters());
+    this.registrationFilters.set(this.defaultBreakdownFilters());
+    this.directDebitFilterDraft.set(directDebitDefaults);
+    this.directDebitFilters.set(this.cloneDirectDebitFilters(directDebitDefaults));
+    this.registrationFilterSearch.set('');
+    this.directDebitFilterSearch.set('');
+  }
+
+  private eventValue(event: Event): string {
+    const target = event.target;
+    return target instanceof HTMLInputElement || target instanceof HTMLSelectElement
+      ? target.value
+      : '';
+  }
+
+  private parseTopLimit(value: string): ChartTopLimit {
+    if (value === '5') {
+      return 5;
+    }
+    if (value === '10') {
+      return 10;
+    }
+    if (value === '20') {
+      return 20;
+    }
+    return 'all';
+  }
+
+  private isBreakdownSort(value: string): value is BreakdownSort {
+    return (
+      value === 'count-desc' ||
+      value === 'count-asc' ||
+      value === 'alpha-asc' ||
+      value === 'alpha-desc'
+    );
+  }
+
+  private isDirectDebitSort(value: string): value is DirectDebitSort {
+    return (
+      value === 'direct-debit-desc' ||
+      value === 'rate-desc' ||
+      value === 'rate-asc' ||
+      value === 'team-total-desc' ||
+      value === 'alpha-asc' ||
+      value === 'alpha-desc'
+    );
   }
 }

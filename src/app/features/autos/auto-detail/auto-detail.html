@@ -56,7 +56,14 @@
           Eliminar Auto
         </button>
 
-        <button *ngIf="canFinalize" type="button" class="primary-button" (click)="requestFinalize()">
+        <button
+          *ngIf="isSuperAdmin && currentAuto.status === 'draft'"
+          type="button"
+          class="primary-button"
+          [disabled]="!canFinalize || isFinalizing || isLoadingAllItems"
+          [title]="draftSelectedCount === 0 ? 'Selecione pelo menos uma linha.' : 'Finalizar apenas os itens incluídos'"
+          (click)="requestFinalize()"
+        >
           <span class="material-symbols-rounded">task_alt</span>
           Finalizar Auto
         </button>
@@ -135,16 +142,72 @@
         </span>
       </div>
 
+      <ng-container *ngIf="currentAuto.status === 'draft'">
+        <app-auto-items-filters
+          [provider]="currentAuto.provider"
+          [items]="currentAuto.items"
+          [totalItems]="totalItemsCount"
+          [allItemsLoaded]="draftAllItemsLoaded"
+          [loadingAll]="isLoadingAllItems"
+          [disabled]="isFinalizing || isLoadingAuto || isLoadingMore || isLoadingAllItems"
+          [appliedFilters]="draftFilters"
+          (filtersApplied)="applyDraftItemFilters($event)"
+          (loadAllRequested)="loadAllDraftItems()"
+        />
+
+        <div class="selection-toolbar">
+          <div class="selection-counters">
+            <span><strong>{{ formatInteger(totalItemsCount) }}</strong> no Auto</span>
+            <span><strong>{{ formatInteger(filteredDraftItems.length) }}</strong> correspondem aos filtros carregados</span>
+            <span class="selected"><strong>{{ formatInteger(draftSelectedCount) }}</strong> serão finalizados</span>
+            <span><strong>{{ formatInteger(draftExcludedCount) }}</strong> removidos</span>
+          </div>
+
+          <div class="selection-actions">
+            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing" (click)="includeDraftFiltered()">
+              Incluir {{ draftAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+            </button>
+            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing" (click)="excludeDraftFiltered()">
+              Excluir {{ draftAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+            </button>
+            <button type="button" [disabled]="draftSelectedCount === totalItemsCount || isFinalizing" (click)="includeAllDraft()">Incluir todos</button>
+            <button type="button" [disabled]="draftSelectedCount === 0 || isFinalizing" (click)="clearDraftSelection()">Limpar seleção</button>
+          </div>
+        </div>
+
+        <div class="selection-financial" *ngIf="draftFinancialSummaryReliable; else draftFinancialUnavailable">
+          <span>A pagar <strong>{{ formatCurrency(draftSelectedCount === totalItemsCount ? currentAuto.totalPositive : draftSelectionSummary.totalPositive) }}</strong></span>
+          <span>A devolver <strong>{{ formatCurrency(draftSelectedCount === totalItemsCount ? currentAuto.totalNegative : draftSelectionSummary.totalNegative) }}</strong></span>
+          <span>Total líquido <strong>{{ formatCurrency(draftSelectedCount === totalItemsCount ? auto?.totalNet : draftSelectionSummary.totalNet) }}</strong></span>
+        </div>
+        <ng-template #draftFinancialUnavailable>
+          <div class="selection-financial unavailable">
+            O resumo financeiro da seleção fica disponível quando todos os itens forem carregados. A seleção por IDs continua válida.
+          </div>
+        </ng-template>
+
+        <div class="selection-zero-warning" *ngIf="draftSelectedCount === 0">
+          <span class="material-symbols-rounded">warning</span>
+          Selecione pelo menos uma linha para finalizar o Auto.
+        </div>
+      </ng-container>
+
       <app-auto-items-table
         *ngIf="currentAuto.items.length; else emptyItems"
         [provider]="currentAuto.provider"
-        [items]="currentAuto.items"
+        [items]="currentAuto.status === 'draft' ? filteredDraftItems : currentAuto.items"
+        [selectionEnabled]="currentAuto.status === 'draft'"
+        [selectionMode]="draftSelection.mode"
+        [selectionItemIds]="draftSelection.itemIds"
+        [selectionScopeLabel]="draftAllItemsLoaded ? 'resultados filtrados' : 'resultados filtrados carregados'"
         [showPayments]="currentAuto.status === 'finalized'"
         [canManagePayments]="canManagePayments"
         [paymentsByAutoItemId]="paymentsByAutoItemId"
         [paymentsLoading]="isLoadingPayments"
         [paymentsUnavailable]="paymentsUnavailable"
         maxHeight="calc(100vh - 300px)"
+        (itemSelectionChange)="onDraftItemSelectionChange($event)"
+        (visibleSelectionChange)="onDraftVisibleSelectionChange($event)"
         (registerPayment)="openRegisterPayment($event)"
         (viewPayment)="openPaymentDetail($event)"
       />
@@ -160,17 +223,30 @@
           </div>
         </div>
 
-        <button
-          *ngIf="hasMoreItems"
-          type="button"
-          class="secondary-button load-more-button"
-          [disabled]="isLoadingMore || isLoadingAuto"
-          (click)="loadMore()"
-        >
-          <span class="spinner small" *ngIf="isLoadingMore"></span>
-          <span class="material-symbols-rounded" *ngIf="!isLoadingMore">expand_more</span>
-          {{ isLoadingMore ? 'A carregar...' : 'Carregar mais contratos' }}
-        </button>
+        <div class="items-load-actions" *ngIf="hasMoreItems">
+          <button
+            type="button"
+            class="secondary-button load-more-button"
+            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto"
+            (click)="loadMore()"
+          >
+            <span class="spinner small" *ngIf="isLoadingMore"></span>
+            <span class="material-symbols-rounded" *ngIf="!isLoadingMore">expand_more</span>
+            {{ isLoadingMore ? 'A carregar...' : 'Carregar mais contratos' }}
+          </button>
+
+          <button
+            *ngIf="currentAuto.status === 'draft'"
+            type="button"
+            class="secondary-button load-more-button"
+            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto"
+            (click)="loadAllDraftItems()"
+          >
+            <span class="spinner small" *ngIf="isLoadingAllItems"></span>
+            <span class="material-symbols-rounded" *ngIf="!isLoadingAllItems">unfold_more</span>
+            {{ isLoadingAllItems ? 'A carregar todos...' : 'Carregar todos' }}
+          </button>
+        </div>
       </div>
 
       <div class="load-more-error" *ngIf="loadMoreErrorMessage">
@@ -191,16 +267,24 @@
   <section class="confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
     <span class="modal-icon warning material-symbols-rounded">warning</span>
     <h2>Finalizar Auto?</h2>
-    <p>
-      Depois de finalizado, os movimentos deste Auto passam a fazer parte do histórico financeiro dos contratos e serão considerados nos Autos seguintes.
+    <p>Depois da finalização, apenas as linhas selecionadas farão parte deste Auto e produzirão os respetivos movimentos financeiros.</p>
+
+    <div class="selection-confirm-summary">
+      <div><span>O draft contém</span><strong>{{ formatInteger(totalItemsCount) }}</strong></div>
+      <div><span>Serão finalizadas</span><strong>{{ formatInteger(draftSelectedCount) }}</strong></div>
+      <div><span>Serão removidas</span><strong>{{ formatInteger(draftExcludedCount) }}</strong></div>
+      <div *ngIf="draftFinancialSummaryReliable"><span>Total líquido</span><strong>{{ formatCurrency(draftSelectedCount === totalItemsCount ? auto?.totalNet : draftSelectionSummary.totalNet) }}</strong></div>
+    </div>
+
+    <p class="selection-confirm-note" *ngIf="!draftAllItemsLoaded && draftSelectedCount !== totalItemsCount && draftSelection.mode !== 'include'">
+      Nem todos os itens estão carregados; o resumo financeiro parcial não é usado como total global. A seleção enviada ao backend contém apenas IDs.
     </p>
-    <p>Esta operação não deve ser tratada como uma simples pré-visualização.</p>
 
     <div class="modal-actions">
       <button type="button" class="secondary-button" [disabled]="isFinalizing" (click)="cancelFinalize()">Cancelar</button>
-      <button type="button" class="primary-button" [disabled]="isFinalizing" (click)="confirmFinalize()">
+      <button type="button" class="primary-button" [disabled]="isFinalizing || draftSelectedCount === 0" (click)="confirmFinalize()">
         <span class="spinner small" *ngIf="isFinalizing"></span>
-        {{ isFinalizing ? 'A finalizar...' : 'Finalizar' }}
+        {{ isFinalizing ? 'A finalizar...' : 'Finalizar Auto' }}
       </button>
     </div>
   </section>

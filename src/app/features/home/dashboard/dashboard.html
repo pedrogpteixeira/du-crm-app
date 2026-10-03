@@ -4,7 +4,8 @@
       <span class="eyebrow">Analytics · {{ providerLabel() }}</span>
       <h1>Dashboard administrativa</h1>
       <p>
-        Visão agregada dos contratos {{ providerLabel() }}, distribuição comercial e adesão a serviços.
+        Visão agregada dos contratos {{ providerLabel() }}, distribuição comercial e adesão a
+        serviços.
       </p>
     </div>
 
@@ -15,13 +16,15 @@
         (click)="exportAnalytics()"
         [disabled]="!canExport() || isExporting()"
         [attr.aria-label]="'Exportar analytics de ' + providerLabel() + ' para Excel'"
-        [title]="canExport() ? 'Exportar o período selecionado para Excel' : 'A aguardar os dados da dashboard'"
+        [title]="
+          canExport()
+            ? 'Exportar o período selecionado para Excel'
+            : 'A aguardar os dados da dashboard'
+        "
       >
-        <span
-          class="material-symbols-rounded"
-          aria-hidden="true"
-          *ngIf="!isExporting()"
-        >download</span>
+        <span class="material-symbols-rounded" aria-hidden="true" *ngIf="!isExporting()"
+          >download</span
+        >
         <span class="export-button-spinner" *ngIf="isExporting()"></span>
         <span>{{ isExporting() ? 'A gerar Excel…' : 'Exportar Excel' }}</span>
       </button>
@@ -180,6 +183,291 @@
     </div>
   </div>
 
+  <ng-template #stateChartFilters>
+    <div class="chart-filter-panel">
+      <div class="chart-filter-section">
+        <div class="chart-filter-section-header">
+          <div>
+            <strong>Estados</strong>
+            <span>{{
+              filterSelectionLabel(stateFilterDraft().selectedLabels, stateFilterOptions().length)
+            }}</span>
+          </div>
+          <div class="chart-filter-inline-actions">
+            <button type="button" (click)="selectAllStateFilterLabels()">Todos</button>
+            <button type="button" (click)="clearStateFilterLabels()">Nenhum</button>
+          </div>
+        </div>
+
+        <div class="chart-filter-options compact-options">
+          <label class="chart-filter-option" *ngFor="let option of stateFilterOptions()">
+            <input
+              type="checkbox"
+              [checked]="isFilterLabelSelected(stateFilterDraft().selectedLabels, option)"
+              (change)="toggleStateFilterLabel(option)"
+            />
+            <span>{{ option }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="chart-filter-grid">
+        <label class="chart-filter-field">
+          <span>Ordenar</span>
+          <select [value]="stateFilterDraft().sort" (change)="setStateFilterSort($event)">
+            <option value="count-desc">Maior quantidade</option>
+            <option value="count-asc">Menor quantidade</option>
+            <option value="alpha-asc">Nome A–Z</option>
+            <option value="alpha-desc">Nome Z–A</option>
+          </select>
+        </label>
+
+        <label class="chart-filter-field">
+          <span>Mostrar</span>
+          <select [value]="stateFilterDraft().top" (change)="setStateFilterTop($event)">
+            <option value="all">Todos</option>
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="chart-filter-footer">
+        <button
+          type="button"
+          class="filter-clear-button"
+          data-chart-filter-close
+          (click)="clearStateFilters()"
+        >
+          Limpar
+        </button>
+        <button
+          type="button"
+          class="filter-apply-button"
+          data-chart-filter-close
+          (click)="applyStateFilters()"
+        >
+          Aplicar
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #registrationChartFilters>
+    <div class="chart-filter-panel">
+      <div class="chart-filter-section">
+        <div class="chart-filter-section-header">
+          <div>
+            <strong>Nome Registo C.U.</strong>
+            <span>{{
+              filterSelectionLabel(
+                registrationFilterDraft().selectedLabels,
+                registrationFilterOptions().length
+              )
+            }}</span>
+          </div>
+          <div class="chart-filter-inline-actions">
+            <button type="button" (click)="selectAllRegistrationFilterLabels()">Todos</button>
+            <button type="button" (click)="clearRegistrationFilterLabels()">Nenhum</button>
+          </div>
+        </div>
+
+        <label class="chart-filter-search">
+          <span class="material-symbols-rounded" aria-hidden="true">search</span>
+          <input
+            type="search"
+            placeholder="Pesquisar equipa"
+            [value]="registrationFilterSearch()"
+            (input)="setRegistrationFilterSearch($event)"
+          />
+        </label>
+
+        <div class="chart-filter-options">
+          <label
+            class="chart-filter-option"
+            *ngFor="let option of visibleRegistrationFilterOptions()"
+          >
+            <input
+              type="checkbox"
+              [checked]="isFilterLabelSelected(registrationFilterDraft().selectedLabels, option)"
+              (change)="toggleRegistrationFilterLabel(option)"
+            />
+            <span [title]="option">{{ option }}</span>
+          </label>
+
+          <span class="chart-filter-no-results" *ngIf="!visibleRegistrationFilterOptions().length">
+            Nenhuma equipa encontrada.
+          </span>
+        </div>
+      </div>
+
+      <div class="chart-filter-grid">
+        <label class="chart-filter-field">
+          <span>Ordenar</span>
+          <select
+            [value]="registrationFilterDraft().sort"
+            (change)="setRegistrationFilterSort($event)"
+          >
+            <option value="count-desc">Mais contratos</option>
+            <option value="count-asc">Menos contratos</option>
+            <option value="alpha-asc">Nome A–Z</option>
+            <option value="alpha-desc">Nome Z–A</option>
+          </select>
+        </label>
+
+        <label class="chart-filter-field">
+          <span>Mostrar</span>
+          <select
+            [value]="registrationFilterDraft().top"
+            (change)="setRegistrationFilterTop($event)"
+          >
+            <option value="all">Todos</option>
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="chart-filter-footer">
+        <button
+          type="button"
+          class="filter-clear-button"
+          data-chart-filter-close
+          (click)="clearRegistrationFilters()"
+        >
+          Limpar
+        </button>
+        <button
+          type="button"
+          class="filter-apply-button"
+          data-chart-filter-close
+          (click)="applyRegistrationFilters()"
+        >
+          Aplicar
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template #directDebitChartFilters>
+    <div class="chart-filter-panel">
+      <div class="chart-filter-section">
+        <div class="chart-filter-section-header">
+          <div>
+            <strong>Nome Registo C.U.</strong>
+            <span>{{
+              filterSelectionLabel(
+                directDebitFilterDraft().selectedLabels,
+                directDebitFilterOptions().length
+              )
+            }}</span>
+          </div>
+          <div class="chart-filter-inline-actions">
+            <button type="button" (click)="selectAllDirectDebitFilterLabels()">Todos</button>
+            <button type="button" (click)="clearDirectDebitFilterLabels()">Nenhum</button>
+          </div>
+        </div>
+
+        <label class="chart-filter-search">
+          <span class="material-symbols-rounded" aria-hidden="true">search</span>
+          <input
+            type="search"
+            placeholder="Pesquisar equipa"
+            [value]="directDebitFilterSearch()"
+            (input)="setDirectDebitFilterSearch($event)"
+          />
+        </label>
+
+        <div class="chart-filter-options">
+          <label
+            class="chart-filter-option"
+            *ngFor="let option of visibleDirectDebitFilterOptions()"
+          >
+            <input
+              type="checkbox"
+              [checked]="isFilterLabelSelected(directDebitFilterDraft().selectedLabels, option)"
+              (change)="toggleDirectDebitFilterLabel(option)"
+            />
+            <span [title]="option">{{ option }}</span>
+          </label>
+
+          <span class="chart-filter-no-results" *ngIf="!visibleDirectDebitFilterOptions().length">
+            Nenhuma equipa encontrada.
+          </span>
+        </div>
+      </div>
+
+      <div class="chart-filter-grid direct-debit-filter-grid">
+        <label class="chart-filter-field">
+          <span>Ordenar</span>
+          <select
+            [value]="directDebitFilterDraft().sort"
+            (change)="setDirectDebitFilterSort($event)"
+          >
+            <option value="direct-debit-desc">Mais contratos com DD</option>
+            <option value="rate-desc">Maior taxa DD</option>
+            <option value="rate-asc">Menor taxa DD</option>
+            <option value="team-total-desc">Maior nº de contratos</option>
+            <option value="alpha-asc">Nome A–Z</option>
+            <option value="alpha-desc">Nome Z–A</option>
+          </select>
+        </label>
+
+        <label class="chart-filter-field">
+          <span>Mín. contratos</span>
+          <select
+            [value]="directDebitFilterDraft().minimumContracts"
+            (change)="setDirectDebitMinimumContracts($event)"
+          >
+            <option value="0">Todos</option>
+            <option value="2">≥ 2</option>
+            <option value="5">≥ 5</option>
+            <option value="10">≥ 10</option>
+          </select>
+        </label>
+
+        <label class="chart-filter-field">
+          <span>Mostrar</span>
+          <select [value]="directDebitFilterDraft().top" (change)="setDirectDebitFilterTop($event)">
+            <option value="all">Todos</option>
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="chart-filter-toggle">
+        <input
+          type="checkbox"
+          [checked]="directDebitFilterDraft().hideWithoutDirectDebit"
+          (change)="toggleDirectDebitHideWithoutDirectDebit()"
+        />
+        <span>Ocultar equipas sem Débito Direto</span>
+      </label>
+
+      <div class="chart-filter-footer">
+        <button
+          type="button"
+          class="filter-clear-button"
+          data-chart-filter-close
+          (click)="clearDirectDebitFilters()"
+        >
+          Limpar
+        </button>
+        <button
+          type="button"
+          class="filter-apply-button"
+          data-chart-filter-close
+          (click)="applyDirectDebitFilters()"
+        >
+          Aplicar
+        </button>
+      </div>
+    </div>
+  </ng-template>
+
   <div class="charts-grid">
     <div class="analytics-block-shell">
       <ng-container *ngIf="states() as statesData; else statesState">
@@ -190,7 +478,13 @@
           [items]="byState()"
           [centerValue]="formatNumber(statesTotal() ?? 0)"
           centerLabel="contratos"
-        />
+          [filterEnabled]="true"
+          [filterActiveCount]="stateFilterActiveCount()"
+        >
+          <div chart-filter-panel>
+            <ng-container *ngTemplateOutlet="stateChartFilters"></ng-container>
+          </div>
+        </app-analytics-donut-chart>
 
         <ng-template #stateBarChart>
           <app-analytics-bar-chart
@@ -198,7 +492,13 @@
             [description]="statesDescription()"
             [items]="byState()"
             [totalCount]="statesTotal() ?? 0"
-          />
+            [filterEnabled]="true"
+            [filterActiveCount]="stateFilterActiveCount()"
+          >
+            <div chart-filter-panel>
+              <ng-container *ngTemplateOutlet="stateChartFilters"></ng-container>
+            </div>
+          </app-analytics-bar-chart>
         </ng-template>
 
         <div class="block-refresh-warning" *ngIf="statesError()">
@@ -219,7 +519,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ statesError() }}</span>
-          <button type="button" class="retry-button" (click)="loadStates(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadStates(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -231,7 +533,13 @@
           [description]="registrationNamesDescription()"
           [items]="byNomeRegistoCE()"
           [totalCount]="registrationNamesTotal() ?? 0"
-        />
+          [filterEnabled]="true"
+          [filterActiveCount]="registrationFilterActiveCount()"
+        >
+          <div chart-filter-panel>
+            <ng-container *ngTemplateOutlet="registrationChartFilters"></ng-container>
+          </div>
+        </app-analytics-bar-chart>
 
         <div class="block-refresh-warning" *ngIf="registrationNamesError()">
           <span>{{ registrationNamesError() }}</span>
@@ -251,7 +559,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ registrationNamesError() }}</span>
-          <button type="button" class="retry-button" (click)="loadRegistrationNames(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadRegistrationNames(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -284,7 +594,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ productsError() }}</span>
-          <button type="button" class="retry-button" (click)="loadProducts(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadProducts(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -316,7 +628,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ segmentsError() }}</span>
-          <button type="button" class="retry-button" (click)="loadSegments(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadSegments(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -333,8 +647,14 @@
           [summaryLabel]="'Total ' + providerLabel() + ' com Débito Direto'"
           [summaryValue]="formatPercentage(percentageWithDirectDebit())"
           [summaryMeta]="directDebitSummaryMeta()"
+          [filterEnabled]="true"
+          [filterActiveCount]="directDebitFilterActiveCount()"
           (selectedViewChange)="selectDirectDebitView($event)"
-        />
+        >
+          <div chart-filter-panel>
+            <ng-container *ngTemplateOutlet="directDebitChartFilters"></ng-container>
+          </div>
+        </app-analytics-bar-chart>
 
         <div class="block-refresh-warning" *ngIf="directDebitError()">
           <span>{{ directDebitError() }}</span>
@@ -354,7 +674,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ directDebitError() }}</span>
-          <button type="button" class="retry-button" (click)="loadDirectDebit(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadDirectDebit(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -387,7 +709,9 @@
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
           <strong>Não foi possível carregar estes dados</strong>
           <span>{{ svaError() }}</span>
-          <button type="button" class="retry-button" (click)="loadSva(true)">Tentar novamente</button>
+          <button type="button" class="retry-button" (click)="loadSva(true)">
+            Tentar novamente
+          </button>
         </div>
       </ng-template>
     </div>
@@ -400,8 +724,8 @@
       <strong>A gerar o ficheiro Excel</strong>
 
       <p>
-        Estamos a preparar os dados e as visualizações gráficas.
-        Este processo poderá demorar alguns segundos.
+        Estamos a preparar os dados e as visualizações gráficas. Este processo poderá demorar alguns
+        segundos.
       </p>
     </div>
   </div>

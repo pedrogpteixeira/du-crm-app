@@ -1,0 +1,220 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1350;
+}
+
+.movement-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: var(--app-overlay);
+}
+
+.movement-modal {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 36px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--app-border);
+  border-radius: 16px;
+  background: var(--app-surface-raised);
+  color: var(--app-text);
+  box-shadow: var(--app-shadow-md);
+}
+
+.movement-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--app-border);
+
+  > div {
+    min-width: 0;
+  }
+
+  h2 {
+    margin: 2px 0 0;
+    color: var(--app-text-strong);
+    font-size: 17px;
+    line-height: 1.3;
+  }
+}
+
+.movement-modal-kicker {
+  color: var(--app-text-subtle);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.movement-modal-close {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--app-text-muted);
+  cursor: pointer;
+
+  .material-symbols-rounded {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: var(--app-surface-hover);
+    color: var(--app-text-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+  }
+}
+
+.movement-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.movement-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.movement-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
+  font-size: 10px;
+  font-weight: 850;
+
+  .material-symbols-rounded {
+    font-size: 14px;
+  }
+
+  &.payment {
+    background: var(--app-success-soft);
+    color: var(--app-success);
+  }
+
+  &.refund {
+    background: var(--app-danger-soft);
+    color: var(--app-danger);
+  }
+
+  &.zero {
+    background: var(--app-surface-muted);
+    color: var(--app-text-muted);
+  }
+}
+
+.movement-amount {
+  color: var(--app-text-strong);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &.positive {
+    color: var(--app-success);
+  }
+
+  &.negative {
+    color: var(--app-danger);
+  }
+}
+
+.movement-description {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.movement-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 13px 18px 16px;
+  border-top: 1px solid var(--app-border);
+}
+
+.movement-modal-button {
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid var(--app-border-strong);
+  border-radius: 9px;
+  background: var(--app-surface);
+  color: var(--app-text-strong);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--app-surface-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-accent);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 520px) {
+  .movement-modal-backdrop {
+    padding: 10px;
+  }
+
+  .movement-modal {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    border-radius: 14px;
+  }
+
+  .movement-modal-header,
+  .movement-modal-body {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .movement-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .movement-modal-actions {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .movement-modal-button {
+    width: 100%;
+  }
+}

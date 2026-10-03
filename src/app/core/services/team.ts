@@ -31,6 +31,7 @@ export interface Team {
   role: string;
   positionList: string[];
   active: boolean;
+  walletBalance?: number;
 }
 
 export interface TeamUser {

@@ -17,6 +17,7 @@ export interface TerminationDateValidation extends TerminationDateRequirements {
   missingCpe: boolean;
   missingCui: boolean;
   missingAtLeastOne: boolean;
+  multiplePartialDates: boolean;
   valid: boolean;
   message: string | null;
 }
@@ -28,7 +29,10 @@ export const DATA_BAIXA_CUI_REQUIRED_MESSAGE =
   'A Data de Baixa do CUI é obrigatória para este estado.';
 
 export const DATA_BAIXA_PARTIAL_DUAL_REQUIRED_MESSAGE =
-  'Para uma baixa parcial de Luz + Gás, é obrigatório preencher pelo menos a Data de Baixa do CPE ou a Data de Baixa do CUI.';
+  'Para uma baixa parcial de Luz + Gás, é obrigatório preencher a Data de Baixa do CPE ou a Data de Baixa do CUI.';
+
+export const DATA_BAIXA_PARTIAL_DUAL_EXCLUSIVE_MESSAGE =
+  'Para colocar um contrato Luz + Gás como Parcialmente Baixa, deve preencher apenas uma das Datas de Baixa: CPE ou CUI, não ambas.';
 
 const PROVIDERS_WITH_PARTIAL_TERMINATION = new Set<DataBaixaProvider>([
   'repsol',
@@ -99,11 +103,14 @@ export function getTerminationDateValidation(
   const missingCpe = requirements.requireCpe && !hasCpe;
   const missingCui = requirements.requireCui && !hasCui;
   const missingAtLeastOne = requirements.requireAtLeastOne && !hasCpe && !hasCui;
+  const multiplePartialDates = requirements.requireAtLeastOne && hasCpe && hasCui;
 
   let message: string | null = null;
 
   if (missingAtLeastOne) {
     message = DATA_BAIXA_PARTIAL_DUAL_REQUIRED_MESSAGE;
+  } else if (multiplePartialDates) {
+    message = DATA_BAIXA_PARTIAL_DUAL_EXCLUSIVE_MESSAGE;
   } else if (missingCpe) {
     message = DATA_BAIXA_CPE_REQUIRED_MESSAGE;
   } else if (missingCui) {
@@ -115,7 +122,8 @@ export function getTerminationDateValidation(
     missingCpe,
     missingCui,
     missingAtLeastOne,
-    valid: !missingCpe && !missingCui && !missingAtLeastOne,
+    multiplePartialDates,
+    valid: !missingCpe && !missingCui && !missingAtLeastOne && !multiplePartialDates,
     message,
   };
 }

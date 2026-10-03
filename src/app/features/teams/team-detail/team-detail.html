@@ -91,6 +91,20 @@
             </strong>
           </label>
 
+          <label *ngIf="canViewWalletBalance">
+            Saldo da Wallet
+
+            <strong>
+              {{
+                team.walletBalance == null
+                  ? '—'
+                  : formatCommission(
+                      team.walletBalance
+                    )
+              }}
+            </strong>
+          </label>
+
           <label>
             Cargos
 
