@@ -34,7 +34,9 @@ type MultiSelectFilterKey =
   | 'registrationNames'
   | 'campaigns'
   | 'tipoSegmentos'
+  | 'productTypes'
   | 'movementTypes'
+  | 'calculationStatuses'
   | 'powerValues';
 
 @Component({
@@ -47,14 +49,11 @@ type MultiSelectFilterKey =
 export class AutoItemsFilters implements OnChanges {
   @Input({ required: true }) provider!: AutoProvider;
   @Input() items: readonly AutoItem[] = [];
-  @Input() totalItems = 0;
-  @Input() allItemsLoaded = false;
-  @Input() loadingAll = false;
   @Input() disabled = false;
+  @Input() label = 'Filtros';
   @Input() appliedFilters: AutoItemFilters = createEmptyAutoItemFilters();
 
   @Output() filtersApplied = new EventEmitter<AutoItemFilters>();
-  @Output() loadAllRequested = new EventEmitter<void>();
 
   showPanel = false;
   draftFilters = createEmptyAutoItemFilters();
@@ -63,12 +62,16 @@ export class AutoItemsFilters implements OnChanges {
   campaignOptions: FilterOption[] = [];
   stateOptions: FilterOption[] = [];
   segmentOptions: FilterOption[] = [];
+  productTypeOptions: FilterOption[] = [];
+  calculationStatusOptions: FilterOption[] = [];
   powerOptions: FilterOption[] = [];
 
   hasRegistrationName = false;
   hasCampaign = false;
   hasState = false;
   hasSegment = false;
+  hasProductType = false;
+  hasCalculationStatus = false;
   hasDirectDebit = false;
   hasElectronicInvoice = false;
   hasSva = false;
@@ -77,7 +80,6 @@ export class AutoItemsFilters implements OnChanges {
   hasMgi = false;
   hasPower = false;
   hasPreviousSettled = false;
-  hasDiagnostic = false;
   hasSignatureDate = false;
 
   readonly movementOptions: ReadonlyArray<{
@@ -166,12 +168,6 @@ export class AutoItemsFilters implements OnChanges {
     this.filtersApplied.emit(next);
   }
 
-  requestLoadAll(): void {
-    if (!this.disabled && !this.loadingAll && !this.allItemsLoaded) {
-      this.loadAllRequested.emit();
-    }
-  }
-
   trackOption(_: number, option: FilterOption): string {
     return option.value;
   }
@@ -224,8 +220,14 @@ export class AutoItemsFilters implements OnChanges {
       case 'tipoSegmentos':
         this.draftFilters.tipoSegmentos = values;
         break;
+      case 'productTypes':
+        this.draftFilters.productTypes = values;
+        break;
       case 'movementTypes':
         this.draftFilters.movementTypes = values as AutoMovementType[];
+        break;
+      case 'calculationStatuses':
+        this.draftFilters.calculationStatuses = values;
         break;
       case 'powerValues':
         this.draftFilters.powerValues = values;
@@ -252,10 +254,8 @@ export class AutoItemsFilters implements OnChanges {
       case 'pel':
       case 'pelPlus':
       case 'mgi':
+      case 'refundOutsideChargeback':
         filters[key] = 'all';
-        break;
-      case 'diagnostic':
-        filters.diagnostic = 'all';
         break;
       default:
         (filters[key] as unknown[]) = [];
@@ -266,24 +266,39 @@ export class AutoItemsFilters implements OnChanges {
     const columns = new Set(AUTO_COLUMNS_BY_PROVIDER[this.provider] ?? []);
     this.registrationNameOptions = this.buildStringOptions(
       this.items.map((item) => item.registrationName),
+      this.appliedFilters.registrationNames,
     );
     this.campaignOptions = this.buildStringOptions(
       this.items.map((item) => item.campaign),
+      this.appliedFilters.campaigns,
     );
     this.stateOptions = this.buildStringOptions(
       this.items.map((item) => item.state),
+      this.appliedFilters.states,
     );
     this.segmentOptions = this.buildStringOptions(
       this.items.map((item) => item.tipoSegmento),
+      this.appliedFilters.tipoSegmentos,
+    );
+    this.productTypeOptions = this.buildStringOptions(
+      this.items.map((item) => item.tipoProduto),
+      this.appliedFilters.productTypes,
+    );
+    this.calculationStatusOptions = this.buildStringOptions(
+      this.items.map((item) => item.calculationStatus),
+      this.appliedFilters.calculationStatuses,
     );
     this.powerOptions = this.buildStringOptions(
       this.items.map((item) => String(item.power ?? '').trim()),
+      this.appliedFilters.powerValues,
     );
 
     this.hasRegistrationName = columns.has('registrationName') && this.registrationNameOptions.length > 0;
     this.hasCampaign = columns.has('campaign') && this.campaignOptions.length > 0;
     this.hasState = columns.has('state') && this.stateOptions.length > 0;
     this.hasSegment = columns.has('tipoSegmento') && this.segmentOptions.length > 0;
+    this.hasProductType = this.productTypeOptions.length > 0;
+    this.hasCalculationStatus = this.calculationStatusOptions.length > 0;
     this.hasDirectDebit = columns.has('directDebit') && this.items.some((item) => item.directDebit !== undefined);
     this.hasElectronicInvoice = columns.has('electronicInvoice') && this.items.some((item) => item.electronicInvoice !== undefined);
     this.hasSva = columns.has('sva') && this.items.some((item) => item.sva !== undefined && item.sva !== null);
@@ -292,13 +307,19 @@ export class AutoItemsFilters implements OnChanges {
     this.hasMgi = columns.has('MGI') && this.items.some((item) => item.MGI !== undefined);
     this.hasPower = columns.has('power') && this.powerOptions.length > 0;
     this.hasPreviousSettled = this.items.some((item) => item.previousSettledAmount !== undefined);
-    this.hasDiagnostic = this.items.some((item) => item.diagnostic !== undefined);
     this.hasSignatureDate = columns.has('signatureDate') && this.items.some((item) => Boolean(item.signatureDate));
   }
 
-  private buildStringOptions(values: readonly (string | null | undefined)[]): FilterOption[] {
+  private buildStringOptions(
+    values: readonly (string | null | undefined)[],
+    selected: readonly string[] = [],
+  ): FilterOption[] {
     return Array.from(
-      new Set(values.map((value) => String(value ?? '').trim()).filter(Boolean)),
+      new Set(
+        [...values, ...selected]
+          .map((value) => String(value ?? '').trim())
+          .filter(Boolean),
+      ),
     )
       .sort((a, b) => a.localeCompare(b, 'pt-PT', { numeric: true }))
       .map((value) => ({ value, label: value }));

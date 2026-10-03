@@ -3,9 +3,11 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormArray,
   FormBuilder,
@@ -108,6 +110,9 @@ export class TeamDetail implements OnInit {
 
   private readonly cdr =
     inject(ChangeDetectorRef);
+
+  private readonly destroyRef =
+    inject(DestroyRef);
 
   teamId: string | null = null;
 
@@ -287,8 +292,11 @@ export class TeamDetail implements OnInit {
     });
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(
-      (params) => {
+    this.observeTeamsCache();
+
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
         const teamId =
           params.get('id');
 
@@ -419,7 +427,47 @@ export class TeamDetail implements OnInit {
     teamId: string,
   ): void {
     this.resetCommissionsLazyState();
+    this.syncTeamFromCache();
+
+    // Join the globally shared cache request if it is still warming.
+    this.teamService.ensureTeamsLoaded().subscribe({
+      error: () => undefined,
+    });
+
+    // TeamUsers remain a dedicated endpoint because the global /teams cache
+    // intentionally stores Team entities, not the membership list.
     this.loadTeam(teamId);
+  }
+
+  private observeTeamsCache(): void {
+    this.teamService.teamsState$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.syncTeamFromCache();
+      });
+  }
+
+  private syncTeamFromCache(): void {
+    if (!this.teamId) {
+      return;
+    }
+
+    const cachedTeam = this.teamService
+      .getTeamsSnapshot()
+      .find((team) => team.id === this.teamId);
+
+    if (!cachedTeam) {
+      return;
+    }
+
+    this.team = this.team
+      ? {
+          ...this.team,
+          ...cachedTeam,
+        }
+      : cachedTeam;
+
+    this.cdr.detectChanges();
   }
 
   toggleCommissions(): void {
@@ -493,6 +541,10 @@ export class TeamDetail implements OnInit {
               firstUser.positionIndex -
               secondUser.positionIndex,
           );
+
+          // If the global cache refreshed while this request was in flight,
+          // keep the most recent Team entity (for example walletBalance).
+          this.syncTeamFromCache();
         },
 
         error: () => {

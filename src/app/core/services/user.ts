@@ -131,10 +131,12 @@ export class UserService {
   private assignableUsersRequest$: Observable<ProfileUser[]> | null = null;
   private refreshUsersAfterCurrentRequest = false;
   private refreshAssignableUsersAfterCurrentRequest = false;
+  private hasObservedAuthenticatedSocketConnection = false;
 
   constructor() {
     this.observeAuthentication();
     this.observeAssignableUsersInvalidation();
+    this.observeSocketReconnect();
   }
 
   getUserById(id: string): Observable<ProfileUser> {
@@ -142,9 +144,9 @@ export class UserService {
   }
 
   /**
-   * Full user list cache. The large GET /users request is lazy: it only runs
-   * when a screen actually needs the complete list and is then reused for the
-   * remainder of the authenticated session.
+   * Full user list cache. For Super Admin sessions it is warmed in the
+   * background as soon as authentication completes, so screens that depend on
+   * the complete list do not have to wait for the large GET /users request.
    */
   getUsers(): Observable<ProfileUser[]> {
     return this.ensureUsersLoaded();
@@ -428,15 +430,30 @@ export class UserService {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((state) => {
         if (state === 'authenticated') {
-          // Assignable users are intentionally warmed in the background because
-          // several create/edit flows need them. The large /users list stays lazy.
+          this.hasObservedAuthenticatedSocketConnection =
+            this.socketService.isConnected();
+
+          // Assignable users are used by several create/edit flows, so keep
+          // warming this lightweight cache for every authenticated session.
           this.ensureAssignableUsersLoaded().subscribe({
             error: () => undefined,
           });
+
+          // The full users list is only available/needed by Super Admin flows.
+          // Warm it immediately after login/session restoration so opening Users
+          // or Team Details does not have to wait for the production GET /users.
+          // Once loaded, users:assignable:invalidated keeps this cache fresh.
+          if (this.auth.isSuperAdmin()) {
+            this.ensureUsersLoaded().subscribe({
+              error: () => undefined,
+            });
+          }
+
           return;
         }
 
         if (state === 'unauthenticated') {
+          this.hasObservedAuthenticatedSocketConnection = false;
           this.clearAssignableUsersCache();
           this.clearUsersCache();
         }
@@ -462,6 +479,38 @@ export class UserService {
         // The same backend invalidation event is emitted when user/team/role
         // assignment data changes. Only refresh the expensive full list if it
         // has already been requested in this session.
+        if (
+          this.usersStateSubject.value.loaded ||
+          this.usersRequest$
+        ) {
+          this.refreshUsers().subscribe({
+            error: () => undefined,
+          });
+        }
+      });
+  }
+
+  private observeSocketReconnect(): void {
+    this.socketService
+      .listenConnected()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.auth.isAuthenticated()) {
+          return;
+        }
+
+        if (!this.hasObservedAuthenticatedSocketConnection) {
+          this.hasObservedAuthenticatedSocketConnection = true;
+          return;
+        }
+
+        // A reconnect can mean an invalidation event was missed while offline.
+        // Assignable users are always warmed; refresh the expensive full list
+        // only when this session has already loaded (or is loading) it.
+        this.refreshAssignableUsers().subscribe({
+          error: () => undefined,
+        });
+
         if (
           this.usersStateSubject.value.loaded ||
           this.usersRequest$

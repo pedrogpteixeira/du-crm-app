@@ -1,19 +1,20 @@
 import {
   AutoItem,
+  AutoItemFilterRequest,
   AutoItemSelection,
   AutoMovementType,
 } from '../../core/services/auto';
 
 export type AutoTriStateFilter = 'all' | 'yes' | 'no';
-export type AutoDiagnosticFilter = 'all' | 'with' | 'without';
-
 export interface AutoItemFilters {
   search: string;
   registrationNames: string[];
   campaigns: string[];
   states: string[];
   tipoSegmentos: string[];
+  productTypes: string[];
   movementTypes: AutoMovementType[];
+  calculationStatuses: string[];
   sva: AutoTriStateFilter;
   powerValues: string[];
   directDebit: AutoTriStateFilter;
@@ -21,11 +22,11 @@ export interface AutoItemFilters {
   pel: AutoTriStateFilter;
   pelPlus: AutoTriStateFilter;
   mgi: AutoTriStateFilter;
+  refundOutsideChargeback: AutoTriStateFilter;
   commissionMin: number | null;
   commissionMax: number | null;
   previousSettledMin: number | null;
   previousSettledMax: number | null;
-  diagnostic: AutoDiagnosticFilter;
   signatureDateFrom: string;
   signatureDateTo: string;
 }
@@ -54,7 +55,9 @@ export function createEmptyAutoItemFilters(): AutoItemFilters {
     campaigns: [],
     states: [],
     tipoSegmentos: [],
+    productTypes: [],
     movementTypes: [],
+    calculationStatuses: [],
     sva: 'all',
     powerValues: [],
     directDebit: 'all',
@@ -62,11 +65,11 @@ export function createEmptyAutoItemFilters(): AutoItemFilters {
     pel: 'all',
     pelPlus: 'all',
     mgi: 'all',
+    refundOutsideChargeback: 'all',
     commissionMin: null,
     commissionMax: null,
     previousSettledMin: null,
     previousSettledMax: null,
-    diagnostic: 'all',
     signatureDateFrom: '',
     signatureDateTo: '',
   };
@@ -79,7 +82,9 @@ export function cloneAutoItemFilters(filters: AutoItemFilters): AutoItemFilters 
     campaigns: [...filters.campaigns],
     states: [...filters.states],
     tipoSegmentos: [...filters.tipoSegmentos],
+    productTypes: [...filters.productTypes],
     movementTypes: [...filters.movementTypes],
+    calculationStatuses: [...filters.calculationStatuses],
     powerValues: [...filters.powerValues],
   };
 }
@@ -91,7 +96,9 @@ export function hasActiveAutoItemFilters(filters: AutoItemFilters): boolean {
     filters.campaigns.length ||
     filters.states.length ||
     filters.tipoSegmentos.length ||
+    filters.productTypes.length ||
     filters.movementTypes.length ||
+    filters.calculationStatuses.length ||
     filters.sva !== 'all' ||
     filters.powerValues.length ||
     filters.directDebit !== 'all' ||
@@ -99,11 +106,11 @@ export function hasActiveAutoItemFilters(filters: AutoItemFilters): boolean {
     filters.pel !== 'all' ||
     filters.pelPlus !== 'all' ||
     filters.mgi !== 'all' ||
+    filters.refundOutsideChargeback !== 'all' ||
     filters.commissionMin !== null ||
     filters.commissionMax !== null ||
     filters.previousSettledMin !== null ||
     filters.previousSettledMax !== null ||
-    filters.diagnostic !== 'all' ||
     filters.signatureDateFrom ||
     filters.signatureDateTo,
   );
@@ -116,7 +123,9 @@ export function countActiveAutoItemFilters(filters: AutoItemFilters): number {
   if (filters.campaigns.length) count += 1;
   if (filters.states.length) count += 1;
   if (filters.tipoSegmentos.length) count += 1;
+  if (filters.productTypes.length) count += 1;
   if (filters.movementTypes.length) count += 1;
+  if (filters.calculationStatuses.length) count += 1;
   if (filters.sva !== 'all') count += 1;
   if (filters.powerValues.length) count += 1;
   if (filters.directDebit !== 'all') count += 1;
@@ -124,155 +133,57 @@ export function countActiveAutoItemFilters(filters: AutoItemFilters): number {
   if (filters.pel !== 'all') count += 1;
   if (filters.pelPlus !== 'all') count += 1;
   if (filters.mgi !== 'all') count += 1;
+  if (filters.refundOutsideChargeback !== 'all') count += 1;
   if (filters.commissionMin !== null || filters.commissionMax !== null) count += 1;
   if (filters.previousSettledMin !== null || filters.previousSettledMax !== null) count += 1;
-  if (filters.diagnostic !== 'all') count += 1;
   if (filters.signatureDateFrom || filters.signatureDateTo) count += 1;
   return count;
 }
 
-export function filterAutoItems(
-  items: readonly AutoItem[],
+export function toAutoItemFilterRequest(
   filters: AutoItemFilters,
-): AutoItem[] {
-  if (!hasActiveAutoItemFilters(filters)) {
-    return [...items];
+): AutoItemFilterRequest | undefined {
+  const request: AutoItemFilterRequest = {};
+  const search = filters.search.trim();
+
+  if (search) request.search = search;
+  if (filters.registrationNames.length) request.registrationNames = [...filters.registrationNames];
+  if (filters.campaigns.length) request.campaigns = [...filters.campaigns];
+  if (filters.states.length) request.states = [...filters.states];
+  if (filters.tipoSegmentos.length) request.tipoSegmentos = [...filters.tipoSegmentos];
+  if (filters.productTypes.length) request.productTypes = [...filters.productTypes];
+  if (filters.movementTypes.length) request.movementTypes = [...filters.movementTypes];
+  if (filters.calculationStatuses.length) request.calculationStatuses = [...filters.calculationStatuses];
+  if (filters.powerValues.length) request.powers = [...filters.powerValues];
+
+  assignTriState(request, 'directDebit', filters.directDebit);
+  assignTriState(request, 'electronicInvoice', filters.electronicInvoice);
+  assignTriState(request, 'sva', filters.sva);
+  assignTriState(request, 'PEL', filters.pel);
+  assignTriState(request, 'PELPlus', filters.pelPlus);
+  assignTriState(request, 'MGI', filters.mgi);
+  assignTriState(request, 'refundOutsideChargeback', filters.refundOutsideChargeback);
+
+  if (filters.commissionMin !== null) request.commissionMin = filters.commissionMin;
+  if (filters.commissionMax !== null) request.commissionMax = filters.commissionMax;
+  if (filters.previousSettledMin !== null) request.previousSettledAmountMin = filters.previousSettledMin;
+  if (filters.previousSettledMax !== null) request.previousSettledAmountMax = filters.previousSettledMax;
+  if (filters.signatureDateFrom) request.signatureDateFrom = filters.signatureDateFrom;
+  if (filters.signatureDateTo) request.signatureDateTo = filters.signatureDateTo;
+
+  return Object.keys(request).length ? request : undefined;
+}
+
+function assignTriState<K extends keyof AutoItemFilterRequest>(
+  target: AutoItemFilterRequest,
+  key: K,
+  value: AutoTriStateFilter,
+): void {
+  if (value === 'all') {
+    return;
   }
 
-  const search = normalizeText(filters.search);
-  const registrationNames = new Set(filters.registrationNames);
-  const campaigns = new Set(filters.campaigns);
-  const states = new Set(filters.states);
-  const segments = new Set(filters.tipoSegmentos);
-  const movementTypes = new Set(filters.movementTypes);
-  const powerValues = new Set(filters.powerValues);
-  const signatureFrom = parseDateBoundary(filters.signatureDateFrom, false);
-  const signatureTo = parseDateBoundary(filters.signatureDateTo, true);
-
-  return items.filter((item) => {
-    if (search && !matchesSearch(item, search)) {
-      return false;
-    }
-
-    if (
-      registrationNames.size &&
-      (!item.registrationName || !registrationNames.has(item.registrationName))
-    ) {
-      return false;
-    }
-
-    if (campaigns.size && (!item.campaign || !campaigns.has(item.campaign))) {
-      return false;
-    }
-
-    if (states.size && (!item.state || !states.has(item.state))) {
-      return false;
-    }
-
-    if (
-      segments.size &&
-      (!item.tipoSegmento || !segments.has(item.tipoSegmento))
-    ) {
-      return false;
-    }
-
-    if (movementTypes.size && !movementTypes.has(item.movementType)) {
-      return false;
-    }
-
-    if (!matchesSvaTriState(item.sva, filters.sva)) {
-      return false;
-    }
-
-    if (powerValues.size && !powerValues.has(String(item.power ?? '').trim())) {
-      return false;
-    }
-
-    if (!matchesTriState(item.directDebit, filters.directDebit)) {
-      return false;
-    }
-
-    if (!matchesTriState(item.electronicInvoice, filters.electronicInvoice)) {
-      return false;
-    }
-
-    if (!matchesTriState(item.PEL, filters.pel)) {
-      return false;
-    }
-
-    if (!matchesTriState(item.PELPlus, filters.pelPlus)) {
-      return false;
-    }
-
-    if (!matchesTriState(item.MGI, filters.mgi)) {
-      return false;
-    }
-
-    const commission = Number(item.commission ?? 0);
-    if (
-      filters.commissionMin !== null &&
-      commission < filters.commissionMin
-    ) {
-      return false;
-    }
-    if (
-      filters.commissionMax !== null &&
-      commission > filters.commissionMax
-    ) {
-      return false;
-    }
-
-    if (
-      filters.previousSettledMin !== null ||
-      filters.previousSettledMax !== null
-    ) {
-      if (item.previousSettledAmount === undefined) {
-        return false;
-      }
-
-      const previousSettled = Number(item.previousSettledAmount);
-      if (
-        filters.previousSettledMin !== null &&
-        previousSettled < filters.previousSettledMin
-      ) {
-        return false;
-      }
-      if (
-        filters.previousSettledMax !== null &&
-        previousSettled > filters.previousSettledMax
-      ) {
-        return false;
-      }
-    }
-
-    if (filters.diagnostic !== 'all') {
-      const hasDiagnostic = Boolean(item.diagnostic?.trim());
-      if (filters.diagnostic === 'with' && !hasDiagnostic) {
-        return false;
-      }
-      if (filters.diagnostic === 'without' && hasDiagnostic) {
-        return false;
-      }
-    }
-
-    if (signatureFrom !== null || signatureTo !== null) {
-      if (!item.signatureDate) {
-        return false;
-      }
-      const signatureDate = new Date(item.signatureDate).getTime();
-      if (Number.isNaN(signatureDate)) {
-        return false;
-      }
-      if (signatureFrom !== null && signatureDate < signatureFrom) {
-        return false;
-      }
-      if (signatureTo !== null && signatureDate > signatureTo) {
-        return false;
-      }
-    }
-
-    return true;
-  });
+  (target as Record<string, unknown>)[key] = value === 'yes';
 }
 
 export function createDefaultAutoSelection(): LocalAutoSelection {
@@ -500,85 +411,4 @@ export function summarizeSelectedLoadedItems(
 
 export function getAutoItemId(item: AutoItem): string {
   return item.domainId ?? item.id ?? '';
-}
-
-function matchesSvaTriState(
-  value: AutoItem['sva'],
-  filter: AutoTriStateFilter,
-): boolean {
-  if (filter === 'all') {
-    return true;
-  }
-
-  const normalized = normalizeSvaBoolean(value);
-  return filter === 'yes' ? normalized === true : normalized === false;
-}
-
-function normalizeSvaBoolean(value: AutoItem['sva']): boolean | undefined {
-  if (value === true || value === false) {
-    return value;
-  }
-
-  const normalized = normalizeText(value);
-  if (!normalized) {
-    return undefined;
-  }
-
-  if (['nao', 'não', 'false', '0', 'no', 'sem sva'].includes(normalized)) {
-    return false;
-  }
-
-  if (['sim', 'true', '1', 'yes', 'com sva'].includes(normalized)) {
-    return true;
-  }
-
-  // Alguns providers devolvem o nome/descrição do SVA em vez de um booleano.
-  // Um valor textual não vazio significa que existe SVA associado.
-  return true;
-}
-
-function matchesSearch(item: AutoItem, normalizedSearch: string): boolean {
-  return [
-    item.clientName,
-    item.contractId,
-    item.cpe,
-    item.cui,
-    item.campaign,
-    item.registrationName,
-    item.state,
-    item.tipoSegmento,
-    item.power,
-    item.nif,
-    item.movementType,
-  ].some((value) => normalizeText(value).includes(normalizedSearch));
-}
-
-function matchesTriState(
-  value: boolean | undefined,
-  filter: AutoTriStateFilter,
-): boolean {
-  if (filter === 'all') {
-    return true;
-  }
-  return filter === 'yes' ? value === true : value === false;
-}
-
-function normalizeText(value: unknown): string {
-  return String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLocaleLowerCase('pt-PT');
-}
-
-function parseDateBoundary(value: string, endOfDay: boolean): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(
-    `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}`,
-  ).getTime();
-
-  return Number.isNaN(parsed) ? null : parsed;
 }

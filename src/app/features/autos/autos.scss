@@ -508,3 +508,18 @@ button:disabled { cursor: not-allowed; opacity: .58; }
   .selection-confirm-summary { grid-template-columns: 1fr; padding: 14px; }
   .selection-confirm-note { margin: 0 14px 14px; }
 }
+
+/* Filtros server-side da geração/visualização da Preview */
+app-auto-generation-filters { display: block; margin-top: 12px; }
+.generation-filter-readonly {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface-muted);
+}
+.generation-filter-readonly-title { display: flex; align-items: center; gap: 6px; color: var(--app-text-muted); font-size: 9px; }
+.generation-filter-readonly-title .material-symbols-rounded { color: var(--app-accent); font-size: 15px; }
+.generation-filter-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.generation-filter-chips span { padding: 4px 7px; border: 1px solid var(--app-border); border-radius: 999px; background: var(--app-surface); color: var(--app-text-muted); font-size: 8px; font-weight: 800; }
+.preview-filter-loading { display: flex; align-items: center; gap: 7px; padding: 8px 12px; border-bottom: 1px solid var(--app-border); background: var(--app-accent-soft); color: var(--app-accent-strong); font-size: 9px; font-weight: 800; }

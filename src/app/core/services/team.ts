@@ -8,7 +8,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
   Observable,
-  Subject,
   catchError,
   debounceTime,
   finalize,
@@ -20,10 +19,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { Auth } from './auth';
-import {
-  SocketService,
-  TeamsInvalidationEvent,
-} from './socket';
+import { SocketService } from './socket';
 
 export interface Team {
   id: string;
@@ -91,12 +87,6 @@ export class TeamService {
 
   readonly teamsState$ = this.teamsStateSubject.asObservable();
 
-  private readonly teamsInvalidatedSubject =
-    new Subject<TeamsInvalidationEvent>();
-
-  readonly teamsInvalidated$ =
-    this.teamsInvalidatedSubject.asObservable();
-
   private teamsRequest$: Observable<Team[]> | null = null;
   private refreshTeamsAfterCurrentRequest = false;
   private hasObservedAuthenticatedSocketConnection = false;
@@ -111,9 +101,9 @@ export class TeamService {
   }
 
   /**
-   * Session cache for the complete Team list. The first consumer triggers
-   * GET /teams and every subsequent consumer reuses the same cached value
-   * until the backend invalidates it through teams:invalidated.
+   * Session cache for the complete Team list. It is warmed when authentication
+   * completes and reused by every consumer. teams:invalidated forces a silent
+   * background refresh so the cached list stays current across routes.
    */
   getTeams(): Observable<Team[]> {
     return this.ensureTeamsLoaded();
@@ -146,9 +136,7 @@ export class TeamService {
     return this.teamsStateSubject.value.loaded;
   }
 
-  invalidateTeamsCache(
-    event?: TeamsInvalidationEvent,
-  ): void {
+  invalidateTeamsCache(): void {
     const state = this.teamsStateSubject.value;
 
     this.teamsStateSubject.next({
@@ -161,9 +149,6 @@ export class TeamService {
       this.refreshTeamsAfterCurrentRequest = true;
     }
 
-    if (event) {
-      this.teamsInvalidatedSubject.next(event);
-    }
   }
 
   clearTeamsCache(): void {
@@ -293,6 +278,15 @@ export class TeamService {
         if (state === 'authenticated') {
           this.hasObservedAuthenticatedSocketConnection =
             this.socketService.isConnected();
+
+          // Teams are used throughout the authenticated CRM (contracts,
+          // tickets, users, Autos, filters, etc.). Warm the shared cache as
+          // soon as the session is ready so later consumers do not wait for
+          // the first GET /teams.
+          this.ensureTeamsLoaded().subscribe({
+            error: () => undefined,
+          });
+
           return;
         }
 
@@ -310,14 +304,16 @@ export class TeamService {
         debounceTime(300),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((event) => {
+      .subscribe(() => {
         if (!this.auth.isAuthenticated()) {
           return;
         }
 
-        // Deliberately do not request /teams here. The cache becomes stale and
-        // the next consumer decides whether fresh data is actually needed.
-        this.invalidateTeamsCache(event);
+        // teams:invalidated is global. Mark the shared cache as stale and
+        // refresh it immediately in the background so every consumer sees the
+        // updated Team data even when the Teams page is not mounted.
+        this.invalidateTeamsCache();
+        this.refreshTeamsInBackground();
       });
   }
 
@@ -335,11 +331,17 @@ export class TeamService {
           return;
         }
 
-        this.invalidateTeamsCache({
-          reason: 'socket:reconnected',
-          timestamp: new Date().toISOString(),
-        });
+        // A reconnect may mean an invalidation event was missed while the
+        // browser was offline or suspended. Force one silent refresh.
+        this.invalidateTeamsCache();
+        this.refreshTeamsInBackground();
       });
+  }
+
+  private refreshTeamsInBackground(): void {
+    this.refreshTeams().subscribe({
+      error: () => undefined,
+    });
   }
 
   private upsertTeamInCache(team: Team): void {

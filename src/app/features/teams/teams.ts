@@ -127,7 +127,6 @@ export class Teams implements OnInit {
   ngOnInit(): void {
     this.resolvePermissions();
     this.observeTeamsCache();
-    this.observeTeamsInvalidation();
     this.loadTeams();
   }
 
@@ -376,17 +375,6 @@ export class Teams implements OnInit {
         }
 
         this.cdr.detectChanges();
-      });
-  }
-
-  private observeTeamsInvalidation(): void {
-    this.teamService.teamsInvalidated$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        // The socket listener itself is centralized in TeamService. Only the
-        // currently mounted Teams page opts into an immediate refresh so the
-        // list stays live without making every cache invalidation hit /teams.
-        this.loadTeams(true);
       });
   }
 

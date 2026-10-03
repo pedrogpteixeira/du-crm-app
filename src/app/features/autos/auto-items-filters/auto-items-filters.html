@@ -8,7 +8,7 @@
       (click)="togglePanel()"
     >
       <span class="material-symbols-rounded" aria-hidden="true">filter_alt</span>
-      Filtros
+      {{ label }}
       <span class="filter-count" *ngIf="activeFilterCount">{{ activeFilterCount }}</span>
     </button>
 
@@ -28,8 +28,14 @@
       <button *ngIf="appliedFilters.tipoSegmentos.length" type="button" (click)="removeFilter('tipoSegmentos')">
         Segmento: {{ appliedFilters.tipoSegmentos.length }} <span aria-hidden="true">×</span>
       </button>
+      <button *ngIf="appliedFilters.productTypes.length" type="button" (click)="removeFilter('productTypes')">
+        Produto: {{ appliedFilters.productTypes.length }} <span aria-hidden="true">×</span>
+      </button>
       <button *ngIf="appliedFilters.movementTypes.length" type="button" (click)="removeFilter('movementTypes')">
         Movimento: {{ appliedFilters.movementTypes.length }} <span aria-hidden="true">×</span>
+      </button>
+      <button *ngIf="appliedFilters.calculationStatuses.length" type="button" (click)="removeFilter('calculationStatuses')">
+        Cálculo: {{ appliedFilters.calculationStatuses.length }} <span aria-hidden="true">×</span>
       </button>
       <button *ngIf="appliedFilters.directDebit !== 'all'" type="button" (click)="removeFilter('directDebit')">
         DD: {{ appliedFilters.directDebit === 'yes' ? 'Sim' : 'Não' }} <span aria-hidden="true">×</span>
@@ -40,11 +46,11 @@
       <button *ngIf="appliedFilters.sva !== 'all'" type="button" (click)="removeFilter('sva')">
         SVA: {{ appliedFilters.sva === 'yes' ? 'Sim' : 'Não' }} <span aria-hidden="true">×</span>
       </button>
+      <button *ngIf="appliedFilters.refundOutsideChargeback !== 'all'" type="button" (click)="removeFilter('refundOutsideChargeback')">
+        Fora do chargeback: {{ appliedFilters.refundOutsideChargeback === 'yes' ? 'Sim' : 'Não' }} <span aria-hidden="true">×</span>
+      </button>
       <button *ngIf="appliedFilters.commissionMin !== null || appliedFilters.commissionMax !== null" type="button" (click)="removeFilters(['commissionMin', 'commissionMax'])">
         Comissão <span aria-hidden="true">×</span>
-      </button>
-      <button *ngIf="appliedFilters.diagnostic !== 'all'" type="button" (click)="removeFilter('diagnostic')">
-        Avisos <span aria-hidden="true">×</span>
       </button>
       <button *ngIf="appliedFilters.signatureDateFrom || appliedFilters.signatureDateTo" type="button" (click)="removeFilters(['signatureDateFrom', 'signatureDateTo'])">
         Assinatura <span aria-hidden="true">×</span>
@@ -53,16 +59,12 @@
   </div>
 
   <section class="filters-panel" *ngIf="showPanel">
-    <div class="scope-warning" *ngIf="!allItemsLoaded">
-      <span class="material-symbols-rounded" aria-hidden="true">info</span>
+    <div class="scope-warning server-side">
+      <span class="material-symbols-rounded" aria-hidden="true">cloud_done</span>
       <div>
-        <strong>Filtros sobre {{ items.length }} de {{ totalItems }} itens carregados.</strong>
-        <span>Para filtrar o Auto completo, carrega primeiro todos os itens.</span>
+        <strong>Filtros aplicados ao conjunto completo.</strong>
+        <span>A paginação e os filtros são processados pelo backend; não é necessário carregar todas as linhas.</span>
       </div>
-      <button type="button" [disabled]="loadingAll" (click)="requestLoadAll()">
-        <span class="spinner small" *ngIf="loadingAll"></span>
-        {{ loadingAll ? 'A carregar...' : 'Carregar todos' }}
-      </button>
     </div>
 
     <div class="filter-grid">
@@ -147,6 +149,24 @@
         </details>
       </div>
 
+      <div class="filter-field" *ngIf="hasProductType">
+        <span>Tipo de Produto</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('productTypes') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of productTypeOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('productTypes', option.value)"
+                (change)="toggleMultiValue('productTypes', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.productTypes.length" (click)="clearDraftMultiFilter('productTypes')">Limpar seleção</button>
+          </div>
+        </details>
+      </div>
+
       <div class="filter-field">
         <span>Tipo de movimento</span>
         <details class="multi-select">
@@ -161,6 +181,24 @@
               <span>{{ option.label }}</span>
             </label>
             <button type="button" class="multi-select-clear" *ngIf="draftFilters.movementTypes.length" (click)="clearDraftMultiFilter('movementTypes')">Limpar seleção</button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field" *ngIf="hasCalculationStatus">
+        <span>Estado do cálculo</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('calculationStatuses') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of calculationStatusOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('calculationStatuses', option.value)"
+                (change)="toggleMultiValue('calculationStatuses', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.value === 'chargeback-window-expired' ? 'Chargeback expirado' : option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.calculationStatuses.length" (click)="clearDraftMultiFilter('calculationStatuses')">Limpar seleção</button>
           </div>
         </details>
       </div>
@@ -186,6 +224,15 @@
       <label class="filter-field compact" *ngIf="hasSva">
         <span>SVA</span>
         <select [(ngModel)]="draftFilters.sva">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact">
+        <span>Reembolso fora do chargeback</span>
+        <select [(ngModel)]="draftFilters.refundOutsideChargeback">
           <option value="all">Todos</option>
           <option value="yes">Sim</option>
           <option value="no">Não</option>
@@ -234,15 +281,6 @@
           <option value="all">Todos</option>
           <option value="yes">Sim</option>
           <option value="no">Não</option>
-        </select>
-      </label>
-
-      <label class="filter-field compact" *ngIf="hasDiagnostic">
-        <span>Avisos / diagnóstico</span>
-        <select [(ngModel)]="draftFilters.diagnostic">
-          <option value="all">Todos</option>
-          <option value="with">Com aviso</option>
-          <option value="without">Sem aviso</option>
         </select>
       </label>
 

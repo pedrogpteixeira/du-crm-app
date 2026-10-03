@@ -1,0 +1,287 @@
+<section class="generation-filters">
+  <button
+    type="button"
+    class="generation-filter-toggle"
+    [class.is-active]="activeFilterCount > 0"
+    [disabled]="disabled"
+    (click)="togglePanel()"
+  >
+    <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+    <span>Filtros da Preview</span>
+    <span class="filter-count" *ngIf="activeFilterCount">{{ activeFilterCount }}</span>
+    <span class="material-symbols-rounded chevron" aria-hidden="true">
+      {{ showPanel ? 'expand_less' : 'expand_more' }}
+    </span>
+  </button>
+
+  <div class="generation-filter-summary" *ngIf="activeFilterCount && !showPanel">
+    {{ activeFilterCount }} {{ activeFilterCount === 1 ? 'filtro aplicado' : 'filtros aplicados' }} à geração da Preview.
+  </div>
+
+  <div class="generation-filter-panel" *ngIf="showPanel">
+    <div class="generation-filter-intro">
+      <span class="material-symbols-rounded" aria-hidden="true">filter_alt</span>
+      <div>
+        <strong>Estes filtros definem o universo da Preview.</strong>
+        <span>Seleciona uma ou várias opções. Não é necessário escrever valores manualmente.</span>
+      </div>
+    </div>
+
+    <div class="filter-grid">
+      <label class="filter-field span-2">
+        <span>Pesquisa</span>
+        <input type="search" [(ngModel)]="draftFilters.search" placeholder="Cliente, contrato, CPE, CUI..." />
+      </label>
+
+      <div class="filter-field" *ngIf="supportsState">
+        <span>Estado do contrato</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('states') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of stateOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('states', option.value)"
+                (change)="toggleMultiValue('states', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.states.length" (click)="clearDraftMultiFilter('states')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field" *ngIf="supportsRegistrationName">
+        <span>Nome Registo CE</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('registrationNames') }}</summary>
+          <div class="multi-select-panel">
+            <p class="multi-select-state" *ngIf="isLoadingTeams">A carregar equipas...</p>
+            <label class="multi-select-option" *ngFor="let option of registrationNameOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('registrationNames', option.value)"
+                (change)="toggleMultiValue('registrationNames', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <p class="multi-select-state" *ngIf="!isLoadingTeams && !registrationNameOptions.length">Sem equipas disponíveis.</p>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.registrationNames.length" (click)="clearDraftMultiFilter('registrationNames')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field" *ngIf="supportsCampaign">
+        <span>Campanha</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('campaigns') }}</summary>
+          <div class="multi-select-panel">
+            <p class="multi-select-state" *ngIf="isLoadingCampaigns">A carregar campanhas...</p>
+            <label class="multi-select-option" *ngFor="let option of campaignOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('campaigns', option.value)"
+                (change)="toggleMultiValue('campaigns', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <p class="multi-select-state" *ngIf="!isLoadingCampaigns && !campaignOptions.length">Sem campanhas disponíveis.</p>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.campaigns.length" (click)="clearDraftMultiFilter('campaigns')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field" *ngIf="supportsSegment">
+        <span>Tipo Segmento</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('tipoSegmentos') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of segmentOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('tipoSegmentos', option.value)"
+                (change)="toggleMultiValue('tipoSegmentos', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.tipoSegmentos.length" (click)="clearDraftMultiFilter('tipoSegmentos')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field">
+        <span>Tipo de Produto</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('productTypes') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of productTypeOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('productTypes', option.value)"
+                (change)="toggleMultiValue('productTypes', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.productTypes.length" (click)="clearDraftMultiFilter('productTypes')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field" *ngIf="supportsPower">
+        <span>Potência</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('powerValues') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of powerOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('powerValues', option.value)"
+                (change)="toggleMultiValue('powerValues', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }} kVA</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.powerValues.length" (click)="clearDraftMultiFilter('powerValues')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="filter-field movement-field">
+        <span>Tipo de movimento</span>
+        <div class="movement-options">
+          <label *ngFor="let option of movementOptions">
+            <input
+              type="checkbox"
+              [checked]="isMovementSelected(option.value)"
+              (change)="toggleMovement(option.value, $any($event.target).checked)"
+            />
+            <span>{{ option.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-field">
+        <span>Estado do cálculo</span>
+        <details class="multi-select">
+          <summary>{{ getMultiSelectLabel('calculationStatuses') }}</summary>
+          <div class="multi-select-panel">
+            <label class="multi-select-option" *ngFor="let option of calculationStatusOptions; trackBy: trackOption">
+              <input
+                type="checkbox"
+                [checked]="isMultiValueSelected('calculationStatuses', option.value)"
+                (change)="toggleMultiValue('calculationStatuses', option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+            <button type="button" class="multi-select-clear" *ngIf="draftFilters.calculationStatuses.length" (click)="clearDraftMultiFilter('calculationStatuses')">
+              Limpar seleção
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <label class="filter-field compact" *ngIf="supportsDirectDebit">
+        <span>Débito Direto</span>
+        <select [(ngModel)]="draftFilters.directDebit">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact" *ngIf="supportsElectronicInvoice">
+        <span>Fatura Eletrónica</span>
+        <select [(ngModel)]="draftFilters.electronicInvoice">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact" *ngIf="supportsSva">
+        <span>SVA</span>
+        <select [(ngModel)]="draftFilters.sva">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact" *ngIf="supportsPel">
+        <span>PEL</span>
+        <select [(ngModel)]="draftFilters.pel">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact" *ngIf="supportsPelPlus">
+        <span>PEL Plus</span>
+        <select [(ngModel)]="draftFilters.pelPlus">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact" *ngIf="supportsMgi">
+        <span>MGI</span>
+        <select [(ngModel)]="draftFilters.mgi">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <label class="filter-field compact">
+        <span>Reembolso fora do chargeback</span>
+        <select [(ngModel)]="draftFilters.refundOutsideChargeback">
+          <option value="all">Todos</option>
+          <option value="yes">Sim</option>
+          <option value="no">Não</option>
+        </select>
+      </label>
+
+      <div class="filter-range">
+        <span>Comissão</span>
+        <div>
+          <input type="number" step="0.01" [(ngModel)]="draftFilters.commissionMin" placeholder="Mínimo €" />
+          <input type="number" step="0.01" [(ngModel)]="draftFilters.commissionMax" placeholder="Máximo €" />
+        </div>
+      </div>
+
+      <div class="filter-range">
+        <span>Liquidação anterior</span>
+        <div>
+          <input type="number" step="0.01" [(ngModel)]="draftFilters.previousSettledMin" placeholder="Mínimo €" />
+          <input type="number" step="0.01" [(ngModel)]="draftFilters.previousSettledMax" placeholder="Máximo €" />
+        </div>
+      </div>
+
+      <div class="filter-range">
+        <span>Data de assinatura</span>
+        <div>
+          <input type="date" [(ngModel)]="draftFilters.signatureDateFrom" aria-label="Assinatura desde" />
+          <input type="date" [(ngModel)]="draftFilters.signatureDateTo" aria-label="Assinatura até" />
+        </div>
+      </div>
+    </div>
+
+    <div class="generation-filter-actions">
+      <button type="button" class="clear-button" [disabled]="disabled" (click)="clear()">Limpar filtros</button>
+      <button type="button" class="apply-button" [disabled]="disabled" (click)="apply()">Aplicar filtros</button>
+    </div>
+  </div>
+</section>

@@ -49,6 +49,7 @@ export type AutoItemPaymentViewStatus =
   | 'paid'
   | 'refund-pending'
   | 'refunded'
+  | 'blocked'
   | 'not-applicable'
   | 'loading'
   | 'unavailable';
@@ -112,6 +113,7 @@ export class AutoItemsTable {
     description: string;
     movementType: AutoItem['movementType'];
     amount: number;
+    refundOutsideChargeback: boolean;
   } | null = null;
 
   private movementDescriptionTrigger: HTMLElement | null = null;
@@ -126,7 +128,7 @@ export class AutoItemsTable {
 
   movementLabel(type: AutoItem['movementType']): string {
     if (type === 'payment') {
-      return 'Comissão';
+      return 'Pagamento';
     }
 
     if (type === 'refund') {
@@ -252,7 +254,7 @@ export class AutoItemsTable {
   }
 
   paymentView(item: AutoItem): AutoItemPaymentView {
-    if (Number(item.commission) <= 0) {
+    if (item.movementType !== 'payment') {
       return {
         paymentLabel: 'Não aplicável',
         paymentStatus: 'not-applicable',
@@ -276,7 +278,7 @@ export class AutoItemsTable {
     const itemId = this.autoItemId(item);
     const payment = itemId ? this.paymentsByAutoItemId.get(itemId) : undefined;
 
-    // Um pagamento já realizado tem sempre prioridade histórica sobre um refund posterior.
+    // Um pagamento efetivamente registado tem prioridade sobre qualquer estado posterior.
     if (payment) {
       return {
         payment,
@@ -285,26 +287,70 @@ export class AutoItemsTable {
       };
     }
 
-    if (item.paymentBlocked === true) {
-      if (item.paymentBlockReason === 'refunded') {
-        return {
-          paymentLabel: 'Reembolsado',
-          paymentStatus: 'refunded',
-          paymentHint: 'Esta comissão já foi revertida por um Auto posterior.',
-        };
-      }
+    const allowed = this.isPaymentAllowed(item);
+    const payableAmount = this.getPayableAmount(item);
 
+    if (allowed && payableAmount > 0) {
+      return {
+        paymentLabel: 'Por pagar',
+        paymentStatus: 'unpaid',
+        paymentHint: `Valor por pagar: ${this.formatCurrency(payableAmount)}.`,
+      };
+    }
+
+    if (item.paymentBlockReason === 'refunded') {
+      return {
+        paymentLabel: 'Reembolsado',
+        paymentStatus: 'refunded',
+        paymentHint: 'O backend indica que esta comissão já foi reembolsada.',
+      };
+    }
+
+    if (item.paymentBlockReason === 'refund-pending') {
       return {
         paymentLabel: 'Reembolso pendente',
         paymentStatus: 'refund-pending',
-        paymentHint: 'Esta comissão está associada a um processo de reembolso e já não pode ser paga.',
+        paymentHint: 'O backend indica que existe um reembolso pendente.',
+      };
+    }
+
+    if (item.paymentAllowed === false || item.paymentBlocked === true || item.paymentBlockReason) {
+      return {
+        paymentLabel: 'Bloqueado',
+        paymentStatus: 'blocked',
+        paymentHint: 'O backend não permite o pagamento desta comissão.',
       };
     }
 
     return {
-      paymentLabel: 'Por pagar',
-      paymentStatus: 'unpaid',
+      paymentLabel: 'Não aplicável',
+      paymentStatus: 'not-applicable',
     };
+  }
+
+  private isPaymentAllowed(item: AutoItem): boolean {
+    if (item.paymentAllowed !== undefined) {
+      return item.paymentAllowed === true;
+    }
+
+    // Compatibilidade com respostas antigas: só usar a regra legada quando
+    // o backend ainda não devolver explicitamente paymentAllowed.
+    return (
+      item.paymentBlockReason == null &&
+      item.paymentBlocked !== true &&
+      Number(item.commission) > 0
+    );
+  }
+
+  private getPayableAmount(item: AutoItem): number {
+    if (item.payableAmount !== undefined && item.payableAmount !== null) {
+      const payableAmount = Number(item.payableAmount);
+      return Number.isFinite(payableAmount) ? payableAmount : 0;
+    }
+
+    // Fallback apenas para payloads antigos sem payableAmount.
+    const commission = Number(item.commission);
+    return Number.isFinite(commission) && commission > 0 ? commission : 0;
   }
 
   refundContextLabel(item: AutoItem): string | null {
@@ -349,6 +395,7 @@ export class AutoItemsTable {
       description: item.movementDescription,
       movementType: item.movementType,
       amount: item.commission,
+      refundOutsideChargeback: item.refundOutsideChargeback === true,
     };
   }
 

@@ -261,14 +261,19 @@ export interface AutoItem {
   state?: string;
   registrationName?: string;
   tipoSegmento?: string;
+  tipoProduto?: string;
   movementType: AutoMovementType;
   movementDescription?: string;
+  calculationStatus?: string;
+  refundOutsideChargeback?: boolean;
   commission: number;
   calculatedCommission?: number;
   previousSettledAmount?: number;
   teamId?: string;
   settled?: boolean;
   refundOfAutoItemId?: string | null;
+  payableAmount?: number;
+  paymentAllowed?: boolean;
   paymentBlocked?: boolean;
   paymentBlockReason?: string | null;
   diagnostic?: string;
@@ -336,6 +341,38 @@ export interface AutoPagination {
 
 export type AutoPreviewPagination = AutoPagination;
 
+export interface AutoItemFilterRequest {
+  search?: string;
+  contractIds?: string[];
+  teamIds?: string[];
+  teamRegistrationNumbers?: number[];
+  campaigns?: string[];
+  powers?: string[];
+  states?: string[];
+  registrationNames?: string[];
+  productTypes?: string[];
+  tipoSegmentos?: string[];
+  movementTypes?: AutoMovementType[];
+  calculationStatuses?: string[];
+  electronicInvoice?: boolean;
+  directDebit?: boolean;
+  sva?: boolean;
+  PEL?: boolean;
+  PELPlus?: boolean;
+  MGI?: boolean;
+  refundOutsideChargeback?: boolean;
+  commissionMin?: number;
+  commissionMax?: number;
+  calculatedCommissionMin?: number;
+  calculatedCommissionMax?: number;
+  previousSettledAmountMin?: number;
+  previousSettledAmountMax?: number;
+  signatureDateFrom?: string;
+  signatureDateTo?: string;
+  contractUpdatedFrom?: string;
+  contractUpdatedTo?: string;
+}
+
 export interface AutoPreview {
   previewId: string;
   provider: AutoProvider;
@@ -351,6 +388,7 @@ export interface AutoPreview {
   refundCount: number;
   zeroCount: number;
   warningCount: number;
+  generationFilters?: AutoItemFilterRequest;
   pagination: AutoPreviewPagination;
   items: AutoPreviewItem[];
   diagnostics?: AutoDiagnosticEntry[];
@@ -359,6 +397,7 @@ export interface AutoPreview {
 export interface AutoPreviewChunk {
   previewId?: string;
   expiresAt?: string;
+  generationFilters?: AutoItemFilterRequest;
   pagination: AutoPreviewPagination;
   items: AutoPreviewItem[];
   diagnostics?: AutoDiagnosticEntry[];
@@ -374,9 +413,13 @@ export interface GenerateAutoRequest {
   provider: AutoProvider;
   periodStart: string;
   periodEnd: string;
+  filters?: AutoItemFilterRequest;
 }
 
-export interface CreateAutoRequest extends GenerateAutoRequest {
+export interface CreateAutoRequest {
+  provider: AutoProvider;
+  periodStart: string;
+  periodEnd: string;
   previewId: string;
   selection?: AutoItemSelection;
 }
@@ -523,12 +566,11 @@ export class AutoService {
     id: string,
     offset = 0,
     limit = 50,
+    filters?: AutoItemFilterRequest,
   ): Observable<AutoDetail> {
     const safeOffset = Math.max(0, offset);
     const safeLimit = Math.min(200, Math.max(1, limit));
-    const params = new HttpParams()
-      .set('offset', String(safeOffset))
-      .set('limit', String(safeLimit));
+    const params = this.buildAutoItemParams(safeOffset, safeLimit, filters);
 
     return this.http
       .get<AutoDetailResponse>(
@@ -568,10 +610,9 @@ export class AutoService {
     previewId: string,
     offset: number,
     limit: number,
+    filters?: AutoItemFilterRequest,
   ): Observable<AutoPreviewChunk> {
-    const params = new HttpParams()
-      .set('offset', String(offset))
-      .set('limit', String(limit));
+    const params = this.buildAutoItemParams(offset, limit, filters);
 
     return this.http
       .get<AutoPreviewChunkResponse>(
@@ -869,6 +910,70 @@ export class AutoService {
   private normalizeAuto(response: AutoResponse): Auto {
     const auto = 'auto' in response ? response.auto : response;
     return this.normalizeLegacyProvider(auto);
+  }
+
+  private buildAutoItemParams(
+    offset: number,
+    limit: number,
+    filters?: AutoItemFilterRequest,
+  ): HttpParams {
+    let params = new HttpParams()
+      .set('offset', String(Math.max(0, offset)))
+      .set('limit', String(Math.min(200, Math.max(1, limit))));
+
+    if (!filters) {
+      return params;
+    }
+
+    const appendArray = (key: string, values?: readonly (string | number)[]) => {
+      for (const value of values ?? []) {
+        const normalized = String(value).trim();
+        if (normalized) {
+          params = params.append(key, normalized);
+        }
+      }
+    };
+
+    const appendScalar = (key: string, value: unknown) => {
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      params = params.set(key, String(value));
+    };
+
+    appendScalar('search', filters.search);
+    appendArray('contractIds', filters.contractIds);
+    appendArray('teamIds', filters.teamIds);
+    appendArray('teamRegistrationNumbers', filters.teamRegistrationNumbers);
+    appendArray('campaigns', filters.campaigns);
+    appendArray('powers', filters.powers);
+    appendArray('states', filters.states);
+    appendArray('registrationNames', filters.registrationNames);
+    appendArray('productTypes', filters.productTypes);
+    appendArray('tipoSegmentos', filters.tipoSegmentos);
+    appendArray('movementTypes', filters.movementTypes);
+    appendArray('calculationStatuses', filters.calculationStatuses);
+
+    appendScalar('electronicInvoice', filters.electronicInvoice);
+    appendScalar('directDebit', filters.directDebit);
+    appendScalar('sva', filters.sva);
+    appendScalar('PEL', filters.PEL);
+    appendScalar('PELPlus', filters.PELPlus);
+    appendScalar('MGI', filters.MGI);
+    appendScalar('refundOutsideChargeback', filters.refundOutsideChargeback);
+
+    appendScalar('commissionMin', filters.commissionMin);
+    appendScalar('commissionMax', filters.commissionMax);
+    appendScalar('calculatedCommissionMin', filters.calculatedCommissionMin);
+    appendScalar('calculatedCommissionMax', filters.calculatedCommissionMax);
+    appendScalar('previousSettledAmountMin', filters.previousSettledAmountMin);
+    appendScalar('previousSettledAmountMax', filters.previousSettledAmountMax);
+    appendScalar('signatureDateFrom', filters.signatureDateFrom);
+    appendScalar('signatureDateTo', filters.signatureDateTo);
+    appendScalar('contractUpdatedFrom', filters.contractUpdatedFrom);
+    appendScalar('contractUpdatedTo', filters.contractUpdatedTo);
+
+    return params;
   }
 
   private normalizePreview(response: AutoPreviewResponse): AutoPreview {

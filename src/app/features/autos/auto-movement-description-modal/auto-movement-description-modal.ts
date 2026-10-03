@@ -24,6 +24,7 @@ export class AutoMovementDescriptionModal implements AfterViewInit {
   @Input({ required: true }) description = '';
   @Input() movementType?: AutoMovementType;
   @Input() amount?: number | null;
+  @Input() refundOutsideChargeback = false;
 
   @Output() closed = new EventEmitter<void>();
 

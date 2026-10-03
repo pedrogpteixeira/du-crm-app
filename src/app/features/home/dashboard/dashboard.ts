@@ -124,7 +124,7 @@ export class Dashboard {
   readonly periods: readonly AnalyticsPeriodOption[] = [
     { id: 'last7Days', label: '7 dias', fullLabel: 'Últimos 7 dias' },
     { id: 'last30Days', label: '30 dias', fullLabel: 'Últimos 30 dias' },
-    { id: 'currentYear', label: 'Este ano', fullLabel: 'Este ano' },
+    { id: 'currentYear', label: 'Ano atual', fullLabel: 'Ano atual' },
     { id: 'all', label: 'Sempre', fullLabel: 'Sempre' },
   ];
 
@@ -274,29 +274,31 @@ export class Dashboard {
   readonly statesKpiLabel = computed(() =>
     this.selectedPeriod() === 'all'
       ? `Total contratos ${this.providerLabel()}`
-      : 'Contratos com atividade de estado',
+      : 'Contratos criados no período',
   );
 
-  readonly statesDescription = computed(() => {
-    const total = this.statesTotal() ?? 0;
-
-    if (this.selectedPeriod() === 'all') {
-      return `Estado atual de todos os contratos. ${this.formatNumber(total)} contratos.`;
-    }
-
-    return `Baseado na última alteração de estado no período selecionado. ${this.formatNumber(total)} contratos com atividade de estado.`;
-  });
+  readonly statesDescription = computed(() =>
+    this.selectedPeriod() === 'all'
+      ? 'Estado atual de todos os contratos.'
+      : 'Estado atual dos contratos criados no período selecionado.',
+  );
 
   readonly registrationNamesDescription = computed(() =>
-    this.getCommercialSampleDescription(this.registrationNamesTotal() ?? 0),
+    this.selectedPeriod() === 'all'
+      ? 'Distribuição dos contratos por registo C.U.'
+      : 'Distribuição dos contratos criados no período por registo C.U.',
   );
 
   readonly productsDescription = computed(() =>
-    this.getCommercialSampleDescription(this.productsTotal() ?? 0),
+    this.selectedPeriod() === 'all'
+      ? 'Distribuição atual dos contratos por produto.'
+      : 'Distribuição por produto dos contratos criados no período selecionado.',
   );
 
   readonly segmentsDescription = computed(() =>
-    this.getCommercialSampleDescription(this.segmentsTotal() ?? 0),
+    this.selectedPeriod() === 'all'
+      ? 'Distribuição atual dos contratos por segmento.'
+      : 'Distribuição por segmento dos contratos criados no período selecionado.',
   );
 
   /** Dados completos transformados para o período, sem alterar a cache. */
@@ -381,17 +383,19 @@ export class Dashboard {
   });
 
   readonly directDebitDescription = computed(() => {
-    const viewDescription =
-      this.directDebitView() === 'crm-total'
-        ? `Percentagem dos contratos analisados ${this.providerLabel()} correspondente a contratos com débito direto de cada Nome Registo C.U.`
-        : 'Percentagem de contratos com débito direto dentro do total de contratos analisados de cada equipa.';
+    const periodDescription =
+      this.selectedPeriod() === 'all'
+        ? 'todos os contratos'
+        : 'os contratos criados no período selecionado';
 
-    return `${viewDescription} ${this.getCommercialSampleDescription(this.directDebitTotalContracts())}`;
+    return this.directDebitView() === 'crm-total'
+      ? `Peso atual do Débito Direto de cada Nome Registo C.U. em ${periodDescription}.`
+      : `Percentagem atual de contratos com Débito Direto dentro de cada equipa, considerando ${periodDescription}.`;
   });
 
   readonly directDebitSummaryMeta = computed(() => {
     const sampleLabel =
-      this.selectedPeriod() === 'all' ? 'contratos analisados' : 'contratos registados no período';
+      this.selectedPeriod() === 'all' ? 'contratos' : 'contratos criados no período';
 
     return `${this.formatNumber(this.totalWithDirectDebit())} de ${this.formatNumber(this.directDebitTotalContracts())} ${sampleLabel}`;
   });
@@ -427,7 +431,9 @@ export class Dashboard {
   );
 
   readonly svaDescription = computed(() =>
-    this.getCommercialSampleDescription(this.svaTotalContracts()),
+    this.selectedPeriod() === 'all'
+      ? 'SVA atual em todos os contratos.'
+      : 'SVA atual nos contratos criados no período selecionado.',
   );
 
   readonly hasNoDataForSelectedPeriod = computed(() => {
@@ -933,18 +939,14 @@ export class Dashboard {
       chartPercentage: item.percentageOfTotalContracts,
       tooltipLines: [
         `${this.formatNumber(item.directDebitCount)} contratos com débito direto`,
-        `${this.formatPercentage(item.percentageOfTotalContracts)} do total de contratos analisados`,
+        `${this.formatPercentage(item.percentageOfTotalContracts)} ${
+          this.selectedPeriod() === 'all'
+            ? 'do total de contratos'
+            : 'do total de contratos criados no período'
+        }`,
         `Total da equipa: ${this.formatNumber(item.teamTotalContracts)} contratos`,
       ],
     };
-  }
-
-  private getCommercialSampleDescription(total: number): string {
-    if (this.selectedPeriod() === 'all') {
-      return `Baseado na Data de Registo. ${this.formatNumber(total)} contratos analisados.`;
-    }
-
-    return `Baseado na Data de Registo. ${this.formatNumber(total)} contratos registados no período.`;
   }
 
   private getTotalForPeriod(

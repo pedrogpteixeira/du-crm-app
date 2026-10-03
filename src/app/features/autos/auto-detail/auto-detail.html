@@ -138,7 +138,7 @@
         </div>
 
         <span class="items-count-badge">
-          {{ formatInteger(loadedItemsCount) }} / {{ formatInteger(totalItemsCount) }}
+          {{ formatInteger(loadedItemsCount) }} / {{ formatInteger(hasDraftViewFilters ? viewItemsCount : totalItemsCount) }}
         </span>
       </div>
 
@@ -146,32 +146,29 @@
         <app-auto-items-filters
           [provider]="currentAuto.provider"
           [items]="currentAuto.items"
-          [totalItems]="totalItemsCount"
-          [allItemsLoaded]="draftAllItemsLoaded"
-          [loadingAll]="isLoadingAllItems"
-          [disabled]="isFinalizing || isLoadingAuto || isLoadingMore || isLoadingAllItems"
+          label="Filtrar resultados"
+          [disabled]="isFinalizing || isLoadingAuto || isLoadingMore || isLoadingAllItems || isFilteringItems"
           [appliedFilters]="draftFilters"
           (filtersApplied)="applyDraftItemFilters($event)"
-          (loadAllRequested)="loadAllDraftItems()"
         />
 
         <div class="selection-toolbar">
           <div class="selection-counters">
             <span><strong>{{ formatInteger(totalItemsCount) }}</strong> no Auto</span>
-            <span><strong>{{ formatInteger(filteredDraftItems.length) }}</strong> correspondem aos filtros carregados</span>
+            <span><strong>{{ formatInteger(viewItemsCount) }}</strong> correspondem aos filtros</span>
             <span class="selected"><strong>{{ formatInteger(draftSelectedCount) }}</strong> serão finalizados</span>
             <span><strong>{{ formatInteger(draftExcludedCount) }}</strong> removidos</span>
           </div>
 
           <div class="selection-actions">
-            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing" (click)="includeDraftFiltered()">
-              Incluir {{ draftAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing || isFilteringItems" (click)="includeDraftFiltered()">
+              Incluir {{ draftViewAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
             </button>
-            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing" (click)="excludeDraftFiltered()">
-              Excluir {{ draftAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
+            <button type="button" [disabled]="!filteredDraftItems.length || isFinalizing || isFilteringItems" (click)="excludeDraftFiltered()">
+              Excluir {{ draftViewAllItemsLoaded ? 'filtrados' : 'filtrados carregados' }}
             </button>
-            <button type="button" [disabled]="draftSelectedCount === totalItemsCount || isFinalizing" (click)="includeAllDraft()">Incluir todos</button>
-            <button type="button" [disabled]="draftSelectedCount === 0 || isFinalizing" (click)="clearDraftSelection()">Limpar seleção</button>
+            <button type="button" [disabled]="draftSelectedCount === totalItemsCount || isFinalizing || isFilteringItems" (click)="includeAllDraft()">Incluir todos</button>
+            <button type="button" [disabled]="draftSelectedCount === 0 || isFinalizing || isFilteringItems" (click)="clearDraftSelection()">Limpar seleção</button>
           </div>
         </div>
 
@@ -199,7 +196,7 @@
         [selectionEnabled]="currentAuto.status === 'draft'"
         [selectionMode]="draftSelection.mode"
         [selectionItemIds]="draftSelection.itemIds"
-        [selectionScopeLabel]="draftAllItemsLoaded ? 'resultados filtrados' : 'resultados filtrados carregados'"
+        [selectionScopeLabel]="draftViewAllItemsLoaded ? 'resultados filtrados' : 'resultados filtrados carregados'"
         [showPayments]="currentAuto.status === 'finalized'"
         [canManagePayments]="canManagePayments"
         [paymentsByAutoItemId]="paymentsByAutoItemId"
@@ -216,10 +213,10 @@
         <div class="items-pagination-info">
           <div>
             <strong>{{ formatInteger(loadedItemsCount) }}</strong>
-            <span>de {{ formatInteger(totalItemsCount) }} contratos carregados</span>
+            <span>de {{ formatInteger(viewItemsCount) }} resultados carregados</span>
           </div>
           <div class="items-progress" aria-hidden="true">
-            <span [style.width.%]="totalItemsCount ? (loadedItemsCount / totalItemsCount) * 100 : 0"></span>
+            <span [style.width.%]="viewItemsCount ? (loadedItemsCount / viewItemsCount) * 100 : 0"></span>
           </div>
         </div>
 
@@ -227,7 +224,7 @@
           <button
             type="button"
             class="secondary-button load-more-button"
-            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto"
+            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto || isFilteringItems"
             (click)="loadMore()"
           >
             <span class="spinner small" *ngIf="isLoadingMore"></span>
@@ -239,12 +236,12 @@
             *ngIf="currentAuto.status === 'draft'"
             type="button"
             class="secondary-button load-more-button"
-            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto"
+            [disabled]="isLoadingMore || isLoadingAllItems || isLoadingAuto || isFilteringItems"
             (click)="loadAllDraftItems()"
           >
             <span class="spinner small" *ngIf="isLoadingAllItems"></span>
             <span class="material-symbols-rounded" *ngIf="!isLoadingAllItems">unfold_more</span>
-            {{ isLoadingAllItems ? 'A carregar todos...' : 'Carregar todos' }}
+            {{ isLoadingAllItems ? 'A carregar resultados...' : (hasDraftViewFilters ? 'Carregar todos os filtrados' : 'Carregar todos') }}
           </button>
         </div>
       </div>
@@ -351,7 +348,7 @@
 
         <div class="payment-register-amount">
           <span>Valor a registar</span>
-          <strong>{{ formatCurrency(item.commission) }}</strong>
+          <strong>{{ formatCurrency(paymentAmount(item)) }}</strong>
         </div>
       </section>
 

@@ -219,6 +219,13 @@
 .movement-badge .material-symbols-rounded { font-size: 13px; }
 .movement-badge.refund { background: #fef2f2; color: #991b1b; }
 .movement-badge.zero { background: #f1f5f9; color: #64748b; }
+.movement-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.chargeback-expired-badge {
+  display: inline-flex; align-items: center; gap: 4px; width: fit-content; padding: 3px 6px;
+  border: 1px solid var(--app-border); border-radius: 999px; background: var(--app-surface-muted);
+  color: var(--app-text-muted); font-size: 8px; font-weight: 850; white-space: nowrap;
+}
+.chargeback-expired-badge .material-symbols-rounded { font-size: 11px; }
 
 .money {
   font-weight: 900;
@@ -292,6 +299,11 @@
   border-color: #fecaca;
   background: #fef2f2;
   color: #991b1b;
+}
+.payment-blocked {
+  border-color: var(--app-border);
+  background: var(--app-surface-muted);
+  color: var(--app-text-muted);
 }
 .payment-not-applicable,
 .payment-loading,

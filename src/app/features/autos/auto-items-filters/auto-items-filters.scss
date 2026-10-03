@@ -16,13 +16,11 @@
 .active-filter-chips button:hover { border-color: var(--app-border-strong); color: var(--app-accent-strong); }
 
 .filters-panel { padding: 12px; border-top: 1px solid var(--app-border); background: var(--app-surface-muted); }
-.scope-warning { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; align-items: center; gap: 9px; margin-bottom: 11px; padding: 9px 10px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); color: var(--app-text-muted); }
+.scope-warning { display: grid; grid-template-columns: 22px minmax(0,1fr); align-items: center; gap: 9px; margin-bottom: 11px; padding: 9px 10px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); color: var(--app-text-muted); }
 .scope-warning > .material-symbols-rounded { color: var(--app-accent); font-size: 18px; }
 .scope-warning > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .scope-warning strong { color: var(--app-text); font-size: 10px; }
 .scope-warning span:not(.material-symbols-rounded):not(.spinner) { font-size: 9px; line-height: 1.35; }
-.scope-warning button { min-height: 30px; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid var(--app-border-strong); border-radius: 8px; background: var(--app-surface); color: var(--app-accent-strong); font: inherit; font-size: 9px; font-weight: 850; cursor: pointer; }
-.scope-warning button:disabled { opacity: .6; cursor: not-allowed; }
 
 .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .filter-field, .filter-range { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
@@ -47,7 +45,6 @@
   .filters-toolbar { align-items: flex-start; flex-direction: column; }
   .active-filter-chips { width: 100%; }
   .scope-warning { grid-template-columns: 20px minmax(0,1fr); }
-  .scope-warning button { grid-column: 1 / -1; width: 100%; justify-content: center; }
   .filter-grid { grid-template-columns: 1fr; }
   .filter-field.span-2 { grid-column: auto; }
   .filters-actions button { flex: 1 1 0; }

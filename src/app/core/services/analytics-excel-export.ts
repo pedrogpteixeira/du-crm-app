@@ -102,7 +102,7 @@ export class AnalyticsExcelExportService {
     );
 
     const statesTotalLabel =
-      period === 'all' ? 'Total de contratos' : 'Contratos com atividade de estado';
+      period === 'all' ? 'Total de contratos' : 'Contratos criados no período';
 
     const summarySheet: ExcelSheetDefinition = {
       name: 'Resumo',

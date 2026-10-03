@@ -218,3 +218,10 @@
     width: 100%;
   }
 }
+
+.chargeback-modal-badge {
+  width: fit-content; display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; padding: 5px 8px;
+  border: 1px solid var(--app-border); border-radius: 999px; background: var(--app-surface-muted);
+  color: var(--app-text-muted); font-size: 9px; font-weight: 850;
+}
+.chargeback-modal-badge .material-symbols-rounded { font-size: 13px; }

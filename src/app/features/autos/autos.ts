@@ -20,6 +20,7 @@ import {
   Auto,
   AutoDiagnosticEntry,
   AutoItem,
+  AutoItemFilterRequest,
   AutoPreview,
   AutoProvider,
   AutoService,
@@ -30,6 +31,7 @@ import {
 } from '../../core/services/auto';
 import { AutoItemsTable } from './auto-items-table/auto-items-table';
 import { AutoItemsFilters } from './auto-items-filters/auto-items-filters';
+import { AutoGenerationFilters } from './auto-generation-filters/auto-generation-filters';
 import {
   AutoItemFilters,
   AutoSelectionFinancialSummary,
@@ -38,12 +40,13 @@ import {
   clearAutoSelection,
   createDefaultAutoSelection,
   createEmptyAutoItemFilters,
-  filterAutoItems,
+  hasActiveAutoItemFilters,
   getAutoItemId,
   getSelectedAutoItemCount,
   setAutoItemSelected,
   setAutoItemsSelected,
   summarizeSelectedLoadedItems,
+  toAutoItemFilterRequest,
 } from './auto-items-selection';
 
 interface AutoFilters {
@@ -79,6 +82,7 @@ interface AutoDatePreset {
     RouterLink,
     AutoItemsTable,
     AutoItemsFilters,
+    AutoGenerationFilters,
   ],
   templateUrl: './autos.html',
   styleUrl: './autos.scss',
@@ -145,12 +149,14 @@ export class Autos implements OnInit {
 
   preview: AutoPreview | null = null;
   previewPayload: GenerateAutoRequest | null = null;
+  generationFilters: AutoItemFilters = createEmptyAutoItemFilters();
   currentPreviewId: string | null = null;
   previewFilters: AutoItemFilters = createEmptyAutoItemFilters();
   filteredPreviewItems: AutoItem[] = [];
   previewSelection: LocalAutoSelection = createDefaultAutoSelection();
   previewSelectionSummary: AutoSelectionFinancialSummary = summarizeSelectedLoadedItems([], this.previewSelection);
   isLoadingAllPreview = false;
+  isFilteringPreview = false;
   showCreateConfirm = false;
   autoPendingDeletion: Auto | null = null;
 
@@ -207,15 +213,32 @@ export class Autos implements OnInit {
   }
 
   get previewTotalCount(): number {
-    return this.preview?.pagination.total ?? this.preview?.contractsCount ?? 0;
+    return this.preview?.contractsCount ?? 0;
+  }
+
+  get previewViewTotalCount(): number {
+    return this.preview?.pagination.total ?? 0;
+  }
+
+  get previewViewAllItemsLoaded(): boolean {
+    return Boolean(
+      this.preview &&
+      !this.preview.pagination.hasMore &&
+      this.preview.items.length >= this.previewViewTotalCount,
+    );
   }
 
   get previewAllItemsLoaded(): boolean {
     return Boolean(
       this.preview &&
-      !this.preview.pagination.hasMore &&
+      !hasActiveAutoItemFilters(this.previewFilters) &&
+      this.previewViewAllItemsLoaded &&
       this.preview.items.length >= this.previewTotalCount,
     );
+  }
+
+  get hasPreviewViewFilters(): boolean {
+    return hasActiveAutoItemFilters(this.previewFilters);
   }
 
   get previewSelectedCount(): number {
@@ -233,8 +256,7 @@ export class Autos implements OnInit {
     return Boolean(
       this.preview &&
       (this.previewSelectedCount === this.previewTotalCount ||
-        this.previewAllItemsLoaded ||
-        this.previewSelection.mode === 'include'),
+        this.previewAllItemsLoaded),
     );
   }
 
@@ -324,6 +346,7 @@ export class Autos implements OnInit {
       periodStart: '',
       periodEnd: '',
     };
+    this.generationFilters = createEmptyAutoItemFilters();
     this.resetGeneratePreview();
     this.showGenerateModal = true;
   }
@@ -357,6 +380,32 @@ export class Autos implements OnInit {
     this.resetGeneratePreview();
   }
 
+  onGenerateProviderChanged(): void {
+    this.generationFilters = createEmptyAutoItemFilters();
+    this.resetGeneratePreview();
+  }
+
+  applyGenerationFilters(filters: AutoItemFilters): void {
+    this.generationFilters = filters;
+    this.resetGeneratePreview();
+    this.cdr.markForCheck();
+  }
+
+  startNewPreview(): void {
+    if (
+      this.isPreviewing ||
+      this.isLoadingMore ||
+      this.isLoadingAllPreview ||
+      this.isFilteringPreview ||
+      this.isCreating
+    ) {
+      return;
+    }
+
+    this.resetGeneratePreview();
+    this.cdr.markForCheck();
+  }
+
   closeGenerateModal(): void {
     if (this.isPreviewing || this.isLoadingMore || this.isLoadingAllPreview || this.isCreating) {
       return;
@@ -364,6 +413,7 @@ export class Autos implements OnInit {
 
     this.showGenerateModal = false;
     this.resetGeneratePreview();
+    this.generationFilters = createEmptyAutoItemFilters();
   }
 
   previewAuto(): void {
@@ -373,6 +423,7 @@ export class Autos implements OnInit {
       this.isLoadingMore ||
       this.isCreating ||
       this.isLoadingAllPreview ||
+      this.isFilteringPreview ||
       this.hasCurrentPreview
     ) {
       return;
@@ -404,7 +455,10 @@ export class Autos implements OnInit {
             return;
           }
 
-          this.preview = preview;
+          this.preview = {
+            ...preview,
+            generationFilters: preview.generationFilters ?? payload.filters,
+          };
           this.previewPayload = payload;
           this.currentPreviewId = preview.previewId;
           this.previewFilters = createEmptyAutoItemFilters();
@@ -434,7 +488,8 @@ export class Autos implements OnInit {
       this.isPreviewing ||
       this.isLoadingMore ||
       this.isCreating ||
-      this.isLoadingAllPreview
+      this.isLoadingAllPreview ||
+      this.isFilteringPreview
     ) {
       return;
     }
@@ -447,7 +502,12 @@ export class Autos implements OnInit {
     this.modalErrorMessage = '';
 
     this.autoService
-      .getPreviewChunk(previewId, nextOffset, nextLimit)
+      .getPreviewChunk(
+        previewId,
+        nextOffset,
+        nextLimit,
+        toAutoItemFilterRequest(this.previewFilters),
+      )
       .pipe(
         finalize(() => {
           this.isLoadingMore = false;
@@ -463,6 +523,7 @@ export class Autos implements OnInit {
           this.preview = {
             ...this.preview,
             expiresAt: chunk.expiresAt ?? this.preview.expiresAt,
+            generationFilters: chunk.generationFilters ?? this.preview.generationFilters,
             items: this.appendUniquePreviewItems(
               this.preview.items,
               chunk.items,
@@ -494,6 +555,7 @@ export class Autos implements OnInit {
       this.isCreating ||
       this.isLoadingMore ||
       this.isLoadingAllPreview ||
+      this.isFilteringPreview ||
       !this.previewPayload ||
       !this.preview ||
       !this.currentPreviewId ||
@@ -517,6 +579,7 @@ export class Autos implements OnInit {
     if (
       !this.isSuperAdmin ||
       this.isCreating ||
+      this.isFilteringPreview ||
       !this.previewPayload ||
       !this.preview ||
       !previewId ||
@@ -543,9 +606,11 @@ export class Autos implements OnInit {
     this.isCreating = true;
     this.modalErrorMessage = '';
 
+    const { filters: _generationFilters, ...createPayload } = this.previewPayload;
+
     this.autoService
       .createAuto({
-        ...this.previewPayload,
+        ...createPayload,
         previewId,
         ...(selection ? { selection } : {}),
       })
@@ -560,6 +625,7 @@ export class Autos implements OnInit {
           this.showCreateConfirm = false;
           this.showGenerateModal = false;
           this.resetGeneratePreview();
+          this.generationFilters = createEmptyAutoItemFilters();
           this.successMessage = 'Auto criado com sucesso.';
           this.cdr.markForCheck();
           void this.router.navigate(['/home/autos', created.id]);
@@ -580,9 +646,12 @@ export class Autos implements OnInit {
   }
 
   applyPreviewItemFilters(filters: AutoItemFilters): void {
+    if (!this.preview || !this.currentPreviewId || this.isFilteringPreview) {
+      return;
+    }
+
     this.previewFilters = filters;
-    this.refreshPreviewDerivedState();
-    this.cdr.markForCheck();
+    this.reloadPreviewView();
   }
 
   onPreviewItemSelectionChange(event: { itemId: string; selected: boolean }): void {
@@ -632,7 +701,8 @@ export class Autos implements OnInit {
       this.previewAllItemsLoaded ||
       this.isLoadingAllPreview ||
       this.isLoadingMore ||
-      this.isCreating
+      this.isCreating ||
+      this.isFilteringPreview
     ) {
       return;
     }
@@ -829,6 +899,115 @@ export class Autos implements OnInit {
       });
   }
 
+  generationFilterChips(filters: AutoItemFilterRequest | undefined): string[] {
+    if (!filters) {
+      return [];
+    }
+
+    const chips: string[] = [];
+    const list = (label: string, values?: readonly (string | number)[]) => {
+      if (values?.length) chips.push(`${label}: ${values.join(', ')}`);
+    };
+    const bool = (label: string, value: boolean | undefined) => {
+      if (value !== undefined) chips.push(`${label}: ${value ? 'Sim' : 'Não'}`);
+    };
+
+    if (filters.search) chips.push(`Pesquisa: ${filters.search}`);
+    list('Estado', filters.states);
+    list('Nome Registo CE', filters.registrationNames);
+    list('Campanha', filters.campaigns);
+    list('Segmento', filters.tipoSegmentos);
+    list('Produto', filters.productTypes);
+    list('Potência', filters.powers?.map((value) => `${value} kVA`));
+    const movementLabels: Record<string, string> = {
+      payment: 'Pagamento',
+      refund: 'Reembolso',
+      zero: 'Sem movimento',
+    };
+    list(
+      'Movimento',
+      filters.movementTypes?.map((value) => movementLabels[value] ?? value),
+    );
+    list(
+      'Cálculo',
+      filters.calculationStatuses?.map((value) =>
+        value === 'chargeback-window-expired'
+          ? 'Chargeback expirado'
+          : value,
+      ),
+    );
+    bool('DD', filters.directDebit);
+    bool('FE', filters.electronicInvoice);
+    bool('SVA', filters.sva);
+    bool('PEL', filters.PEL);
+    bool('PEL Plus', filters.PELPlus);
+    bool('MGI', filters.MGI);
+    bool('Fora do chargeback', filters.refundOutsideChargeback);
+    if (filters.commissionMin !== undefined) chips.push(`Comissão ≥ ${this.formatCurrency(filters.commissionMin)}`);
+    if (filters.commissionMax !== undefined) chips.push(`Comissão ≤ ${this.formatCurrency(filters.commissionMax)}`);
+    if (filters.previousSettledAmountMin !== undefined) chips.push(`Liquidação anterior ≥ ${this.formatCurrency(filters.previousSettledAmountMin)}`);
+    if (filters.previousSettledAmountMax !== undefined) chips.push(`Liquidação anterior ≤ ${this.formatCurrency(filters.previousSettledAmountMax)}`);
+    if (filters.signatureDateFrom) chips.push(`Assinatura desde ${filters.signatureDateFrom}`);
+    if (filters.signatureDateTo) chips.push(`Assinatura até ${filters.signatureDateTo}`);
+
+    return chips;
+  }
+
+  private reloadPreviewView(): void {
+    const previewId = this.currentPreviewId;
+    if (!previewId || !this.preview) {
+      return;
+    }
+
+    this.isFilteringPreview = true;
+    this.isLoadingMore = false;
+    this.isLoadingAllPreview = false;
+    this.modalErrorMessage = '';
+
+    this.autoService
+      .getPreviewChunk(
+        previewId,
+        0,
+        this.previewPageSize,
+        toAutoItemFilterRequest(this.previewFilters),
+      )
+      .pipe(
+        finalize(() => {
+          this.isFilteringPreview = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (chunk) => {
+          if (!this.preview || this.currentPreviewId !== previewId) {
+            return;
+          }
+
+          this.preview = {
+            ...this.preview,
+            expiresAt: chunk.expiresAt ?? this.preview.expiresAt,
+            generationFilters: chunk.generationFilters ?? this.preview.generationFilters,
+            items: chunk.items,
+            pagination: chunk.pagination,
+            diagnostics: chunk.diagnostics ?? this.preview.diagnostics,
+          };
+          this.refreshPreviewDerivedState();
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          if (this.isPreviewExpiredError(error)) {
+            this.expireCurrentPreview();
+          } else {
+            this.modalErrorMessage = this.getOperationError(
+              error,
+              'Não foi possível aplicar os filtros à Preview.',
+            );
+          }
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   private resetGeneratePreview(): void {
     this.preview = null;
     this.previewPayload = null;
@@ -838,13 +1017,14 @@ export class Autos implements OnInit {
     this.previewSelection = createDefaultAutoSelection();
     this.previewSelectionSummary = summarizeSelectedLoadedItems([], this.previewSelection);
     this.isLoadingAllPreview = false;
+    this.isFilteringPreview = false;
     this.showCreateConfirm = false;
     this.modalErrorMessage = '';
   }
 
   private refreshPreviewDerivedState(): void {
     const items = this.preview?.items ?? [];
-    this.filteredPreviewItems = filterAutoItems(items, this.previewFilters);
+    this.filteredPreviewItems = [...items];
     this.previewSelectionSummary = summarizeSelectedLoadedItems(
       items,
       this.previewSelection,
@@ -869,7 +1049,12 @@ export class Autos implements OnInit {
     const nextLimit = 200;
 
     this.autoService
-      .getPreviewChunk(previewId, nextOffset, nextLimit)
+      .getPreviewChunk(
+        previewId,
+        nextOffset,
+        nextLimit,
+        toAutoItemFilterRequest(this.previewFilters),
+      )
       .subscribe({
         next: (chunk) => {
           if (this.currentPreviewId !== previewId || !this.preview) {
@@ -881,6 +1066,7 @@ export class Autos implements OnInit {
           this.preview = {
             ...this.preview,
             expiresAt: chunk.expiresAt ?? this.preview.expiresAt,
+            generationFilters: chunk.generationFilters ?? this.preview.generationFilters,
             items: this.appendUniquePreviewItems(this.preview.items, chunk.items),
             pagination: chunk.pagination,
             diagnostics: chunk.diagnostics ?? this.preview.diagnostics,
@@ -985,10 +1171,13 @@ export class Autos implements OnInit {
       return null;
     }
 
+    const filters = toAutoItemFilterRequest(this.generationFilters);
+
     return {
       provider: this.generateForm.provider,
       periodStart: start,
       periodEnd: end,
+      ...(filters ? { filters } : {}),
     };
   }
 

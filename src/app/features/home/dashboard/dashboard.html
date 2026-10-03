@@ -57,7 +57,12 @@
       </button>
     </div>
 
-    <div class="period-switcher" role="tablist" aria-label="Período dos analytics">
+    <div
+      class="period-switcher"
+      role="tablist"
+      aria-label="Período dos analytics"
+      title="Os filtros temporais utilizam a data de criação do contrato."
+    >
       <button
         *ngFor="let period of periods"
         type="button"
@@ -179,7 +184,13 @@
     <span class="material-symbols-rounded" aria-hidden="true">query_stats</span>
     <div>
       <strong>Sem dados para o período selecionado</strong>
-      <p>Não existem dados agregados {{ providerLabel() }} para {{ periodLabel() | lowercase }}.</p>
+      <p>
+        {{
+          selectedPeriod() === 'all'
+            ? 'Ainda não existem contratos.'
+            : 'Não existem contratos criados neste período.'
+        }}
+      </p>
     </div>
   </div>
 
@@ -473,7 +484,7 @@
       <ng-container *ngIf="states() as statesData; else statesState">
         <app-analytics-donut-chart
           *ngIf="stateUsesDonut(); else stateBarChart"
-          [title]="'Clientes ' + providerLabel() + ' por Estado'"
+          title="Contratos por Estado"
           [description]="statesDescription()"
           [items]="byState()"
           [centerValue]="formatNumber(statesTotal() ?? 0)"
@@ -488,7 +499,7 @@
 
         <ng-template #stateBarChart>
           <app-analytics-bar-chart
-            [title]="'Clientes ' + providerLabel() + ' por Estado'"
+            title="Contratos por Estado"
             [description]="statesDescription()"
             [items]="byState()"
             [totalCount]="statesTotal() ?? 0"
@@ -529,7 +540,7 @@
     <div class="analytics-block-shell">
       <ng-container *ngIf="registrationNames() as registrationData; else registrationState">
         <app-analytics-bar-chart
-          [title]="'Clientes ' + providerLabel() + ' por Nome Registo C.U.'"
+          title="Contratos por Registo C.U."
           [description]="registrationNamesDescription()"
           [items]="byNomeRegistoCE()"
           [totalCount]="registrationNamesTotal() ?? 0"
@@ -569,7 +580,7 @@
     <div class="analytics-block-shell">
       <ng-container *ngIf="products() as productsData; else productsState">
         <app-analytics-donut-chart
-          [title]="'Clientes ' + providerLabel() + ' por Tipo de Produto'"
+          title="Contratos por Produto"
           [description]="productsDescription()"
           [items]="byTipoProduto()"
           [centerValue]="formatNumber(productsTotal() ?? 0)"
@@ -604,7 +615,7 @@
     <div class="analytics-block-shell">
       <ng-container *ngIf="segments() as segmentsData; else segmentsState">
         <app-analytics-bar-chart
-          [title]="'Clientes ' + providerLabel() + ' por Segmento'"
+          title="Contratos por Segmento"
           [description]="segmentsDescription()"
           [items]="byTipoSegmento()"
           [totalCount]="segmentsTotal() ?? 0"
@@ -638,7 +649,7 @@
     <div class="analytics-block-shell">
       <ng-container *ngIf="directDebit() as directDebitData; else directDebitState">
         <app-analytics-bar-chart
-          [title]="'Débito Direto ' + providerLabel() + ' por Nome Registo C.U.'"
+          title="Débito Direto por Registo C.U."
           [description]="directDebitDescription()"
           [items]="directDebitByNomeRegistoCE()"
           [totalCount]="directDebitTotalContracts()"
@@ -684,7 +695,7 @@
     <div class="analytics-block-shell">
       <ng-container *ngIf="sva() as svaData; else svaState">
         <app-analytics-donut-chart
-          [title]="'SVA · ' + providerLabel()"
+          title="SVA"
           [description]="svaDescription()"
           [items]="svaDistribution()"
           [centerValue]="formatNumber(svaTotalContracts())"

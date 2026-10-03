@@ -48,11 +48,12 @@ import {
   clearAutoSelection,
   createDefaultAutoSelection,
   createEmptyAutoItemFilters,
-  filterAutoItems,
+  hasActiveAutoItemFilters,
   getSelectedAutoItemCount,
   setAutoItemSelected,
   setAutoItemsSelected,
   summarizeSelectedLoadedItems,
+  toAutoItemFilterRequest,
 } from '../auto-items-selection';
 
 @Component({
@@ -116,6 +117,7 @@ export class AutoDetail implements OnInit {
   isLoadingAuto = false;
   isLoadingMore = false;
   isLoadingAllItems = false;
+  isFilteringItems = false;
   isFinalizing = false;
   isDeleting = false;
   isExporting = false;
@@ -229,7 +231,14 @@ export class AutoDetail implements OnInit {
     this.errorMessage = '';
 
     this.autoService
-      .getAuto(requestedAutoId, 0, this.itemsPageSize)
+      .getAuto(
+        requestedAutoId,
+        0,
+        this.itemsPageSize,
+        this.auto?.status === 'draft'
+          ? toAutoItemFilterRequest(this.draftFilters)
+          : undefined,
+      )
       .pipe(
         finalize(() => {
           if (requestId !== this.autoLoadRequestId) {
@@ -305,7 +314,14 @@ export class AutoDetail implements OnInit {
     this.loadMoreErrorMessage = '';
 
     this.autoService
-      .getAuto(requestedAutoId, nextOffset, nextLimit)
+      .getAuto(
+        requestedAutoId,
+        nextOffset,
+        nextLimit,
+        currentAuto.status === 'draft'
+          ? toAutoItemFilterRequest(this.draftFilters)
+          : undefined,
+      )
       .pipe(
         finalize(() => {
           if (
@@ -699,9 +715,12 @@ export class AutoDetail implements OnInit {
   }
 
   applyDraftItemFilters(filters: AutoItemFilters): void {
+    if (!this.auto || this.auto.status !== 'draft' || this.isFilteringItems) {
+      return;
+    }
+
     this.draftFilters = filters;
-    this.refreshDraftDerivedState();
-    this.cdr.markForCheck();
+    this.reloadDraftView();
   }
 
   onDraftItemSelectionChange(event: { itemId: string; selected: boolean }): void {
@@ -748,11 +767,12 @@ export class AutoDetail implements OnInit {
     if (
       !this.auto ||
       this.auto.status !== 'draft' ||
-      this.draftAllItemsLoaded ||
+      this.draftViewAllItemsLoaded ||
       this.isLoadingAllItems ||
       this.isLoadingMore ||
       this.isLoadingAuto ||
-      this.isFinalizing
+      this.isFinalizing ||
+      this.isFilteringItems
     ) {
       return;
     }
@@ -922,17 +942,30 @@ export class AutoDetail implements OnInit {
   }
 
   get totalItemsCount(): number {
-    return this.auto?.pagination.total ?? this.auto?.contractsCount ?? 0;
+    return this.auto?.contractsCount ?? 0;
+  }
+
+  get viewItemsCount(): number {
+    return this.auto?.pagination.total ?? 0;
   }
 
   get hasMoreItems(): boolean {
     return Boolean(this.auto?.pagination.hasMore);
   }
 
-  get draftAllItemsLoaded(): boolean {
+  get draftViewAllItemsLoaded(): boolean {
     return Boolean(
       this.auto?.status === 'draft' &&
       !this.auto.pagination.hasMore &&
+      this.auto.items.length >= this.viewItemsCount,
+    );
+  }
+
+  get draftAllItemsLoaded(): boolean {
+    return Boolean(
+      this.auto?.status === 'draft' &&
+      !hasActiveAutoItemFilters(this.draftFilters) &&
+      this.draftViewAllItemsLoaded &&
       this.auto.items.length >= this.totalItemsCount,
     );
   }
@@ -949,16 +982,20 @@ export class AutoDetail implements OnInit {
     return Boolean(
       this.auto?.status === 'draft' &&
       (this.draftSelectedCount === this.totalItemsCount ||
-        this.draftAllItemsLoaded ||
-        this.draftSelection.mode === 'include'),
+        this.draftAllItemsLoaded),
     );
+  }
+
+  get hasDraftViewFilters(): boolean {
+    return hasActiveAutoItemFilters(this.draftFilters);
   }
 
   get canFinalize(): boolean {
     return Boolean(
       this.isSuperAdmin &&
       this.auto?.status === 'draft' &&
-      this.draftSelectedCount > 0,
+      this.draftSelectedCount > 0 &&
+      !this.isFilteringItems,
     );
   }
 
@@ -1054,14 +1091,34 @@ export class AutoDetail implements OnInit {
     }).format(date);
   }
 
+  paymentAmount(item: AutoItem): number {
+    if (item.payableAmount !== undefined && item.payableAmount !== null) {
+      const payableAmount = Number(item.payableAmount);
+      return Number.isFinite(payableAmount) ? payableAmount : 0;
+    }
+
+    const commission = Number(item.commission);
+    return Number.isFinite(commission) ? commission : 0;
+  }
+
   private canManagePaymentForItem(item: AutoItem): boolean {
     const itemId = this.getAutoItemId(item);
+    const paymentAllowed =
+      item.paymentAllowed !== undefined
+        ? item.paymentAllowed === true
+        : item.paymentBlockReason == null &&
+          item.paymentBlocked !== true &&
+          Number(item.commission) > 0;
+    const payableAmount =
+      item.payableAmount !== undefined && item.payableAmount !== null
+        ? Number(item.payableAmount)
+        : Number(item.commission);
 
     return Boolean(
       this.canManagePayments &&
-      item.movementType === 'payment' &&
-      Number(item.commission) > 0 &&
-      item.paymentBlocked !== true &&
+      paymentAllowed &&
+      Number.isFinite(payableAmount) &&
+      payableAmount > 0 &&
       itemId &&
       !this.paymentsByAutoItemId.has(itemId),
     );
@@ -1097,18 +1154,76 @@ export class AutoDetail implements OnInit {
     });
   }
 
+  private reloadDraftView(): void {
+    const autoId = this.auto?.id;
+    if (!autoId || this.auto?.status !== 'draft') {
+      return;
+    }
+
+    const revision = ++this.itemsRevision;
+    this.isFilteringItems = true;
+    this.isLoadingMore = false;
+    this.isLoadingAllItems = false;
+    this.loadMoreErrorMessage = '';
+
+    this.autoService
+      .getAuto(
+        autoId,
+        0,
+        this.itemsPageSize,
+        toAutoItemFilterRequest(this.draftFilters),
+      )
+      .pipe(
+        finalize(() => {
+          if (revision !== this.itemsRevision) {
+            return;
+          }
+          this.isFilteringItems = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!this.auto || this.auto.id !== autoId || revision !== this.itemsRevision) {
+            return;
+          }
+
+          this.auto = {
+            ...this.auto,
+            ...response,
+            items: response.items,
+            pagination: response.pagination,
+            diagnostics: response.diagnostics ?? this.auto.diagnostics,
+          };
+          this.refreshDraftDerivedState();
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          if (revision !== this.itemsRevision) {
+            return;
+          }
+          this.loadMoreErrorMessage = this.getOperationError(
+            error,
+            'Não foi possível aplicar os filtros ao Auto.',
+          );
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   private resetDraftControls(): void {
     this.draftFilters = createEmptyAutoItemFilters();
     this.filteredDraftItems = [];
     this.draftSelection = createDefaultAutoSelection();
     this.draftSelectionSummary = summarizeSelectedLoadedItems([], this.draftSelection);
     this.isLoadingAllItems = false;
+    this.isFilteringItems = false;
     this.showFinalizeConfirm = false;
   }
 
   private refreshDraftDerivedState(): void {
     const items = this.auto?.items ?? [];
-    this.filteredDraftItems = filterAutoItems(items, this.draftFilters);
+    this.filteredDraftItems = [...items];
     this.draftSelectionSummary = summarizeSelectedLoadedItems(
       items,
       this.draftSelection,
@@ -1135,7 +1250,12 @@ export class AutoDetail implements OnInit {
     const nextOffset = auto.pagination.offset + auto.pagination.limit;
 
     this.autoService
-      .getAuto(autoId, nextOffset, 200)
+      .getAuto(
+        autoId,
+        nextOffset,
+        200,
+        toAutoItemFilterRequest(this.draftFilters),
+      )
       .subscribe({
         next: (response) => {
           if (

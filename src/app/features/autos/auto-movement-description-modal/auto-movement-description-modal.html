@@ -45,6 +45,11 @@
         </strong>
       </div>
 
+      <div class="chargeback-modal-badge" *ngIf="refundOutsideChargeback">
+        <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+        Fora do período de chargeback
+      </div>
+
       <p class="movement-description">{{ description }}</p>
     </div>
 

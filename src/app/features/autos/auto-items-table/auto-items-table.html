@@ -178,17 +178,28 @@
             </ng-container>
 
             <ng-container *ngSwitchCase="'movementType'">
-              <span
-                class="movement-badge"
-                [class.refund]="item.movementType === 'refund'"
-                [class.zero]="item.movementType === 'zero'"
-                [attr.title]="refundContextLabel(item)"
-              >
-                <span class="material-symbols-rounded" aria-hidden="true">
-                  {{ item.movementType === 'payment' ? 'add_circle' : item.movementType === 'refund' ? 'undo' : 'remove_circle' }}
+              <div class="movement-stack">
+                <span
+                  class="movement-badge"
+                  [class.refund]="item.movementType === 'refund'"
+                  [class.zero]="item.movementType === 'zero'"
+                  [attr.title]="refundContextLabel(item)"
+                >
+                  <span class="material-symbols-rounded" aria-hidden="true">
+                    {{ item.movementType === 'payment' ? 'add_circle' : item.movementType === 'refund' ? 'undo' : 'remove_circle' }}
+                  </span>
+                  {{ movementLabel(item.movementType) }}
                 </span>
-                {{ movementLabel(item.movementType) }}
-              </span>
+
+                <span
+                  *ngIf="item.refundOutsideChargeback === true"
+                  class="chargeback-expired-badge"
+                  title="Reembolso registado sem impacto financeiro porque ocorreu fora do período de chargeback."
+                >
+                  <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                  Fora do chargeback
+                </span>
+              </div>
             </ng-container>
 
             <ng-container *ngSwitchCase="'commission'">
@@ -225,7 +236,7 @@
                 [attr.title]="view.paymentHint || null"
               >
                 <span class="material-symbols-rounded" aria-hidden="true">
-                  {{ view.paymentStatus === 'paid' ? 'check_circle' : view.paymentStatus === 'unpaid' ? 'schedule' : view.paymentStatus === 'refund-pending' ? 'pending_actions' : view.paymentStatus === 'refunded' ? 'undo' : view.paymentStatus === 'loading' ? 'progress_activity' : view.paymentStatus === 'unavailable' ? 'cloud_off' : 'remove_circle' }}
+                  {{ view.paymentStatus === 'paid' ? 'check_circle' : view.paymentStatus === 'unpaid' ? 'schedule' : view.paymentStatus === 'refund-pending' ? 'pending_actions' : view.paymentStatus === 'refunded' ? 'undo' : view.paymentStatus === 'blocked' ? 'block' : view.paymentStatus === 'loading' ? 'progress_activity' : view.paymentStatus === 'unavailable' ? 'cloud_off' : 'remove_circle' }}
                 </span>
                 {{ view.paymentLabel }}
               </span>
@@ -266,6 +277,7 @@
   [description]="movement.description"
   [movementType]="movement.movementType"
   [amount]="movement.amount"
+  [refundOutsideChargeback]="movement.refundOutsideChargeback"
   (closed)="closeMovementDescription()"
 />
 
