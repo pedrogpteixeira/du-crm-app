@@ -77,9 +77,11 @@ export type IberdrolaCicloHorario =
   | 'Bi-Horário Semanal'
   | 'Tri-Horário Diário'
   | 'Tri-Horário Semanal'
-  | 'Tetra-Horário';
+  | 'Tetra-Horário'
+  | (string & {});
 
-export type IberdrolaNivelTensao = 'Monofásico' | 'Trifásico';
+export type IberdrolaNivelTensao = 'Monofásico' | 'Trifásico'
+  | (string & {});
 
 export const IBERDROLA_POWER_SUGGESTIONS = [
   '1.15',

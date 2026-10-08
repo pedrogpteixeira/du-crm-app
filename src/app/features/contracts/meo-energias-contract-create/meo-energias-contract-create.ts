@@ -140,13 +140,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-meo-energias-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
   templateUrl: './meo-energias-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './meo-energias-contract-create.scss',
@@ -660,6 +662,7 @@ export class MeoEnergiasContractCreate implements OnInit {
       {
         validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
         validateCui: this.isProLayout() && this.shouldShowGasFields(),
+        ibanMode: 'international',
       },
     );
 

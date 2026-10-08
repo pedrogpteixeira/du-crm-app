@@ -5,7 +5,6 @@ import type { IberdrolaSolarContractStatus } from '../services/iberdrola-solar-c
 import type { MeoEnergiasContractStatus } from '../services/meo-energias-contract';
 import type { PortulogosContractStatus } from '../services/portulogos-contract';
 import type { RepsolContractStatus } from '../services/repsol-contract';
-import type { VodafoneContractStatus } from '../services/vodafone-contract';
 import type { WallboxContractStatus } from '../services/wallbox-contract';
 import type { YesEnergyContractStatus } from '../services/yes-energy-contract';
 
@@ -18,7 +17,6 @@ export type DataRegistoProvider =
   | 'yes-energy'
   | 'iberdrola'
   | 'iberdrola-solar'
-  | 'vodafone'
   | 'meo-energias';
 
 interface DataRegistoTriggerStateMap {
@@ -30,7 +28,6 @@ interface DataRegistoTriggerStateMap {
   'yes-energy': readonly YesEnergyContractStatus[];
   iberdrola: readonly IberdrolaContractStatus[];
   'iberdrola-solar': readonly IberdrolaSolarContractStatus[];
-  vodafone: readonly VodafoneContractStatus[];
   'meo-energias': readonly MeoEnergiasContractStatus[];
 }
 
@@ -43,7 +40,6 @@ export const DATA_REGISTO_TRIGGER_STATES: DataRegistoTriggerStateMap = {
   'yes-energy': ['Pendente (ATR)'],
   iberdrola: ['BackOffice', 'Controle'],
   'iberdrola-solar': ['Proposta Enviada'],
-  vodafone: ['Registo VODAFONE'],
   'meo-energias': ['Registo MEO'],
 };
 

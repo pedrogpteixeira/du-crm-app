@@ -205,15 +205,56 @@
         <label *ngIf="isProLayout()">
           Controle de Qualidade
 
-          <select
-            [(ngModel)]="contractForm.controleQualidade"
-            [disabled]="!canManageQualityControl()"
+          <div
+            class="editable-select-combobox"
+            [class.is-open]="isEditableSelectOpen('qualityControl')"
+            [class.is-disabled]="!canManageQualityControl()"
           >
-            <option value="">Sem seleção</option>
-            <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+            <input
+              type="text"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="none"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isEditableSelectOpen('qualityControl')"
+              [(ngModel)]="contractForm.controleQualidade"
+              [disabled]="!canManageQualityControl()"
+              (focus)="openEditableSelect('qualityControl')"
+              (click)="openEditableSelect('qualityControl')"
+              (blur)="closeEditableSelect('qualityControl')"
+              (keydown.escape)="closeEditableSelect('qualityControl')"
+            />
+
+            <button
+              type="button"
+              class="editable-select-toggle"
+              tabindex="-1"
+              [disabled]="!canManageQualityControl()"
+              [attr.aria-label]="isEditableSelectOpen('qualityControl') ? 'Fechar opções' : 'Abrir opções'"
+              (mousedown)="$event.preventDefault()"
+              (click)="toggleEditableSelect('qualityControl')"
+            >
+              <span class="editable-select-arrow" aria-hidden="true"></span>
+            </button>
+
+            <div
+              class="editable-select-options"
+              role="listbox"
+              *ngIf="isEditableSelectOpen('qualityControl') && canManageQualityControl()"
+            >
+              <button
+                type="button"
+                role="option"
+                *ngFor="let option of qualityControlBackofficeOptions"
+                [class.is-selected]="contractForm.controleQualidade === option"
+                [attr.aria-selected]="contractForm.controleQualidade === option"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectQualityControlOption(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
         </label>
 
         <label *ngIf="isProLayout()">
@@ -338,13 +379,13 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" />
+          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
         </label>
 
         <label *ngIf="isProLayout()">
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" />
+          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -356,7 +397,7 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" />
+          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
         </label>
       </div>
     </article>
@@ -403,6 +444,7 @@
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
                 appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -434,6 +476,7 @@
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
                 appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -476,7 +519,7 @@
         <label>
           IBAN
 
-          <input type="text" [(ngModel)]="contractForm.iban" appContractMask="iban" />
+          <input type="text" [(ngModel)]="contractForm.iban" appContractMask="ibanInternational" appContractMaskPlaceholder="" />
         </label>
       </div>
     </article>
@@ -510,7 +553,7 @@
         <label *ngIf="campaignSelectionMode === 'other'">
           Nome da campanha *
 
-          <input type="text" [(ngModel)]="customCampaign" placeholder="Nome da campanha" />
+          <input type="text" [(ngModel)]="customCampaign" />
         </label>
       </div>
 
@@ -526,10 +569,10 @@
 
           <input
             type="text"
-            placeholder="PT 0002 123456789012 AA"
             [(ngModel)]="contractForm.cpe"
             [required]="shouldShowLuzFields()"
             appContractMask="cpe"
+            appContractMaskPlaceholder=""
           />
         </label>
 
@@ -538,78 +581,235 @@
 
           <input
             type="text"
-            placeholder="PT 1601 12345678 AA"
             [(ngModel)]="contractForm.cui"
             [required]="shouldShowGasFields()"
             appContractMask="cui"
+            appContractMaskPlaceholder=""
           />
         </label>
 
         <label>
           Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
-          <select [(ngModel)]="contractForm.potencia" [required]="shouldShowLuzFields()">
-            <option [ngValue]="''" disabled>Selecionar potência</option>
-            <option *ngFor="let power of availablePowers" [ngValue]="formatPowerValue(power)">
-              {{ power.toFixed(2) }}
-              kVA
-            </option>
+          <div
+            class="editable-select-combobox"
+            [class.is-open]="isEditableSelectOpen('power')"
+          >
+            <input
+              type="text"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="none"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isEditableSelectOpen('power')"
+              [(ngModel)]="contractForm.potencia"
+              [required]="shouldShowLuzFields()"
+              (focus)="openEditableSelect('power')"
+              (click)="openEditableSelect('power')"
+              (blur)="closeEditableSelect('power')"
+              (keydown.escape)="closeEditableSelect('power')"
+            />
 
-            <option [ngValue]="otherPowerValue">Outra...</option>
-          </select>
-        </label>
+            <button
+              type="button"
+              class="editable-select-toggle"
+              tabindex="-1"
+              [attr.aria-label]="isEditableSelectOpen('power') ? 'Fechar opções' : 'Abrir opções'"
+              (mousedown)="$event.preventDefault()"
+              (click)="toggleEditableSelect('power')"
+            >
+              <span class="editable-select-arrow" aria-hidden="true"></span>
+            </button>
 
-        <label *ngIf="contractForm.potencia === otherPowerValue">
-          Outra potência
-
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Ex.: 9.20"
-            [(ngModel)]="customPower"
-          />
+            <div
+              class="editable-select-options"
+              role="listbox"
+              *ngIf="isEditableSelectOpen('power')"
+            >
+              <button
+                type="button"
+                role="option"
+                *ngFor="let power of availablePowers"
+                [class.is-selected]="contractForm.potencia === formatPowerValue(power)"
+                [attr.aria-selected]="contractForm.potencia === formatPowerValue(power)"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectPowerOption(power)"
+              >
+                {{ power.toFixed(2) }} kVA
+              </button>
+            </div>
+          </div>
         </label>
 
         <label>
           Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
-          <select [(ngModel)]="contractForm.escalao" [required]="shouldShowGasFields()">
-            <option [ngValue]="null" disabled>Selecionar escalão</option>
-            <option *ngFor="let level of availableGasLevels" [ngValue]="level">
-              Escalão {{ level }}
-            </option>
+          <div
+            class="editable-select-combobox"
+            [class.is-open]="isEditableSelectOpen('gasLevel')"
+          >
+            <input
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="none"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isEditableSelectOpen('gasLevel')"
+              [ngModel]="gasLevelInput"
+              (ngModelChange)="onGasLevelInputChange($event)"
+              [required]="shouldShowGasFields()"
+              (focus)="openEditableSelect('gasLevel')"
+              (click)="openEditableSelect('gasLevel')"
+              (blur)="closeEditableSelect('gasLevel')"
+              (keydown.escape)="closeEditableSelect('gasLevel')"
+            />
 
-            <option [ngValue]="otherGasLevelValue">Outro...</option>
-          </select>
-        </label>
+            <button
+              type="button"
+              class="editable-select-toggle"
+              tabindex="-1"
+              [attr.aria-label]="isEditableSelectOpen('gasLevel') ? 'Fechar opções' : 'Abrir opções'"
+              (mousedown)="$event.preventDefault()"
+              (click)="toggleEditableSelect('gasLevel')"
+            >
+              <span class="editable-select-arrow" aria-hidden="true"></span>
+            </button>
 
-        <label *ngIf="contractForm.escalao === otherGasLevelValue">
-          Outro escalão
-
-          <input type="number" min="1" placeholder="Ex.: 5" [(ngModel)]="customGasLevel" />
+            <div
+              class="editable-select-options"
+              role="listbox"
+              *ngIf="isEditableSelectOpen('gasLevel')"
+            >
+              <button
+                type="button"
+                role="option"
+                *ngFor="let level of availableGasLevels"
+                [class.is-selected]="contractForm.escalao === level"
+                [attr.aria-selected]="contractForm.escalao === level"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectGasLevelOption(level)"
+              >
+                Escalão {{ level }}
+              </button>
+            </div>
+          </div>
         </label>
 
         <label>
           Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
-          <select [(ngModel)]="contractForm.cicloHorario" [required]="shouldShowLuzFields()">
-            <option value="" disabled>Selecionar ciclo horário</option>
-            <option *ngFor="let option of cicloHorarioOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+          <div
+            class="editable-select-combobox"
+            [class.is-open]="isEditableSelectOpen('cycle')"
+          >
+            <input
+              type="text"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="none"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isEditableSelectOpen('cycle')"
+              [(ngModel)]="contractForm.cicloHorario"
+              [required]="shouldShowLuzFields()"
+              (focus)="openEditableSelect('cycle')"
+              (click)="openEditableSelect('cycle')"
+              (blur)="closeEditableSelect('cycle')"
+              (keydown.escape)="closeEditableSelect('cycle')"
+            />
+
+            <button
+              type="button"
+              class="editable-select-toggle"
+              tabindex="-1"
+              [attr.aria-label]="isEditableSelectOpen('cycle') ? 'Fechar opções' : 'Abrir opções'"
+              (mousedown)="$event.preventDefault()"
+              (click)="toggleEditableSelect('cycle')"
+            >
+              <span class="editable-select-arrow" aria-hidden="true"></span>
+            </button>
+
+            <div
+              class="editable-select-options"
+              role="listbox"
+              *ngIf="isEditableSelectOpen('cycle')"
+            >
+              <button
+                type="button"
+                role="option"
+                *ngFor="let option of cicloHorarioOptions"
+                [class.is-selected]="contractForm.cicloHorario === option"
+                [attr.aria-selected]="contractForm.cicloHorario === option"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectCycleOption(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
         </label>
 
         <label>
           Nível Tensão
 
-          <select [(ngModel)]="contractForm.nivelTensao">
-            <option value="">Sem valor</option>
-            <option *ngFor="let option of nivelTensaoOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+          <div
+            class="editable-select-combobox"
+            [class.is-open]="isEditableSelectOpen('voltage')"
+          >
+            <input
+              type="text"
+              autocomplete="off"
+              role="combobox"
+              aria-autocomplete="none"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isEditableSelectOpen('voltage')"
+              [(ngModel)]="contractForm.nivelTensao"
+              (focus)="openEditableSelect('voltage')"
+              (click)="openEditableSelect('voltage')"
+              (blur)="closeEditableSelect('voltage')"
+              (keydown.escape)="closeEditableSelect('voltage')"
+            />
+
+            <button
+              type="button"
+              class="editable-select-toggle"
+              tabindex="-1"
+              [attr.aria-label]="isEditableSelectOpen('voltage') ? 'Fechar opções' : 'Abrir opções'"
+              (mousedown)="$event.preventDefault()"
+              (click)="toggleEditableSelect('voltage')"
+            >
+              <span class="editable-select-arrow" aria-hidden="true"></span>
+            </button>
+
+            <div
+              class="editable-select-options"
+              role="listbox"
+              *ngIf="isEditableSelectOpen('voltage')"
+            >
+              <button
+                type="button"
+                role="option"
+                [class.is-selected]="!contractForm.nivelTensao"
+                [attr.aria-selected]="!contractForm.nivelTensao"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectVoltageOption('')"
+              >
+                Sem valor
+              </button>
+
+              <button
+                type="button"
+                role="option"
+                *ngFor="let option of nivelTensaoOptions"
+                [class.is-selected]="contractForm.nivelTensao === option"
+                [attr.aria-selected]="contractForm.nivelTensao === option"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectVoltageOption(option)"
+              >
+                {{ option }}
+              </button>
+            </div>
+          </div>
         </label>
       </div>
     </article>
@@ -648,7 +848,6 @@
         <textarea
           rows="6"
           [(ngModel)]="contractForm.observacoesInternas"
-          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>

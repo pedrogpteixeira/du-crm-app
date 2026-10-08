@@ -165,15 +165,12 @@
         <label *ngIf="isProLayout()">
           Controle de Qualidade
 
-          <select
-            [(ngModel)]="contractForm.controleQualidade"
+          <app-editable-select-combobox
             [disabled]="!canManageQualityControl()"
-          >
-            <option value="">Sem seleção</option>
-            <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+            [(ngModel)]="contractForm.controleQualidade"
+            [options]="qualityControlBackofficeOptions"
+            emptyOptionLabel="Sem seleção"
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -296,7 +293,7 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" />
+          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
         </label>
       </div>
     </article>
@@ -341,7 +338,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -372,7 +369,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -410,20 +407,18 @@
         <label *ngIf="campaignSelectionMode === 'other'">
           Nome da campanha *
 
-          <input type="text" [(ngModel)]="customCampaign" placeholder="Nome da campanha" />
+          <input type="text" [(ngModel)]="customCampaign" />
         </label>
 
         <ng-container *ngIf="isProLayout()">
           <label>
             Nível Tensão
 
-            <select [(ngModel)]="contractForm.nivelTensao">
-              <option value="">Sem valor</option>
-
-              <option *ngFor="let option of nivelTensaoOptions" [value]="option">
-                {{ option }}
-              </option>
-            </select>
+            <app-editable-select-combobox
+              [(ngModel)]="contractForm.nivelTensao"
+              [options]="nivelTensaoOptions"
+              emptyOptionLabel="Sem valor"
+            />
           </label>
 
           <label>
@@ -507,7 +502,6 @@
         <textarea
           rows="6"
           [(ngModel)]="contractForm.observacoesInternas"
-          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>

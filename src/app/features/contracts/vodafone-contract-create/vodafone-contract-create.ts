@@ -18,9 +18,7 @@ import {
   DEFAULT_CUI_PREFIX,
 } from '../../../core/constants/contract-energy-options';
 
-import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
-import { resolveLightContractRegistration } from '../../../core/utils/contract-light-registration';
 
 import { Auth } from '../../../core/services/auth';
 
@@ -42,7 +40,7 @@ import { ProfileUser, UserService } from '../../../core/services/user';
 import {
   CreateVodafoneContractRequest,
   VODAFONE_COMPANY_ID,
-  VODAFONE_CONTRACT_STATUSES,
+  VODAFONE_STATES,
   VODAFONE_GAS_LEVEL_SUGGESTIONS,
   VODAFONE_POWER_SUGGESTIONS,
   VodafoneCicloHorario,
@@ -53,7 +51,6 @@ import {
   VodafoneContratacao,
   VodafoneNivelTensao,
   VodafoneTipoContratacao,
-  VodafoneTipoProduto,
   VodafoneTipoSegmento,
 } from '../../../core/services/vodafone-contract';
 
@@ -72,7 +69,7 @@ interface VodafoneContractCreateForm {
   companyId: typeof VODAFONE_COMPANY_ID;
 
   tipoSegmento: VodafoneTipoSegmento;
-  tipoProduto: VodafoneTipoProduto;
+  tipoProduto: string;
   contratacao: VodafoneContratacao;
 
   tipoContratacaoLuz: VodafoneTipoContratacao | '';
@@ -139,13 +136,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-vodafone-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
   templateUrl: './vodafone-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './vodafone-contract-create.scss',
@@ -189,8 +188,6 @@ export class VodafoneContractCreate implements OnInit {
   assignedUserId = '';
   selectedTeamIds: string[] = [];
   teamToAddId = '';
-
-  selectedRegistrationTeamId = '';
 
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
@@ -249,7 +246,6 @@ export class VodafoneContractCreate implements OnInit {
 
   readonly tipoSegmentoOptions: VodafoneTipoSegmento[] = ['Residencial', 'Empresarial'];
 
-  readonly tipoProdutoOptions: VodafoneTipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
   readonly contratacaoOptions: VodafoneContratacao[] = [
     'Contratação Digital',
@@ -262,7 +258,7 @@ export class VodafoneContractCreate implements OnInit {
     'Entrada Direta',
   ];
 
-  readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_CONTRACT_STATUSES;
+  readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_STATES;
 
   readonly cicloHorarioOptions: VodafoneCicloHorario[] = [
     'Simples',
@@ -285,7 +281,7 @@ export class VodafoneContractCreate implements OnInit {
     companyId: VODAFONE_COMPANY_ID,
 
     tipoSegmento: 'Residencial',
-    tipoProduto: 'Luz + Gás',
+    tipoProduto: '',
     contratacao: 'Contratação Digital',
 
     tipoContratacaoLuz: 'Mudança de Comercializadora',
@@ -296,7 +292,7 @@ export class VodafoneContractCreate implements OnInit {
     nomeRegistoCE: '',
     codigoRegistoCE: '',
 
-    estado: 'Pedido de Chamada',
+    estado: 'Em validação',
 
     agendamento: '',
     dataAssinatura: '',
@@ -383,31 +379,7 @@ export class VodafoneContractCreate implements OnInit {
       return;
     }
 
-    this.clearRegistrationFields();
-
     this.loadAssignedUserTeams(this.assignedUserId);
-  }
-
-  onTipoProdutoChange(): void {
-    if (!this.shouldShowLuzFields()) {
-      this.clearElectricityFields();
-    } else if (!this.contractForm.cpe.trim()) {
-      this.contractForm.cpe = DEFAULT_CPE_PREFIX;
-    }
-
-    if (!this.shouldShowGasFields()) {
-      this.clearGasFields();
-    } else if (!this.contractForm.cui.trim()) {
-      this.contractForm.cui = DEFAULT_CUI_PREFIX;
-    }
-  }
-
-  shouldShowLuzFields(): boolean {
-    return this.contractForm.tipoProduto === 'Luz' || this.contractForm.tipoProduto === 'Luz + Gás';
-  }
-
-  shouldShowGasFields(): boolean {
-    return this.contractForm.tipoProduto === 'Gás' || this.contractForm.tipoProduto === 'Luz + Gás';
   }
 
   addSelectedTeam(): void {
@@ -616,23 +588,6 @@ export class VodafoneContractCreate implements OnInit {
       return;
     }
 
-    if (this.isProLayout()) {
-      const energyValidationError = getContractEnergyValidationError({
-        requiresElectricity: this.shouldShowLuzFields(),
-        requiresGas: this.shouldShowGasFields(),
-        cpe: this.contractForm.cpe,
-        cui: this.contractForm.cui,
-        potencia: this.contractForm.potencia,
-        escalao: this.contractForm.escalao,
-        cicloHorario: this.contractForm.cicloHorario,
-      });
-
-      if (energyValidationError) {
-        this.errorMessage = energyValidationError;
-        return;
-      }
-    }
-
     const campaignIsMissing =
       this.campaignSelectionMode === 'existing'
         ? !this.contractForm.campanha
@@ -651,14 +606,15 @@ export class VodafoneContractCreate implements OnInit {
     }
 
     if (this.isLightLayout()) {
-      this.contractForm.estado = 'Pedido de Chamada';
+      this.contractForm.estado = 'Em validação';
     }
 
     const fieldValidationError = getContractFormValidationError(
       this.contractForm as unknown as Record<string, unknown>,
       {
-        validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
-        validateCui: this.isProLayout() && this.shouldShowGasFields(),
+        validateCpe: this.hasCpeValue(),
+        validateCui: this.hasCuiValue(),
+        ibanMode: 'international',
       },
     );
 
@@ -673,11 +629,18 @@ export class VodafoneContractCreate implements OnInit {
   }
 
   private runPreflight(payload: CreateVodafoneContractRequest): void {
+    const preflightProductType = this.resolvePreflightProductType();
+
+    if (!preflightProductType) {
+      this.createContractAfterPreflight(payload, []);
+      return;
+    }
+
     const preflightPayload = buildContractPreflightRequest({
       companyId: this.contractForm.companyId,
-      tipoProduto: this.contractForm.tipoProduto,
-      cpe: this.contractForm.cpe,
-      cui: this.contractForm.cui,
+      tipoProduto: preflightProductType,
+      cpe: this.hasCpeValue() ? this.contractForm.cpe : '',
+      cui: this.hasCuiValue() ? this.contractForm.cui : '',
     });
 
     this.isPreflightLoading = true;
@@ -852,7 +815,7 @@ export class VodafoneContractCreate implements OnInit {
     this.contractLayout = this.preferencesService.getContractLayout();
 
     if (this.isLightLayout()) {
-      this.contractForm.estado = 'Pedido de Chamada';
+      this.contractForm.estado = 'Em validação';
     }
   }
 
@@ -932,8 +895,6 @@ export class VodafoneContractCreate implements OnInit {
 
   private refreshAssignmentFromCache(user: ProfileUser): void {
     const previousSelectedTeamIds = [...this.selectedTeamIds];
-    const previousRegistrationTeamId = this.selectedRegistrationTeamId;
-
     this.availableTeams = this.resolveAssignableTeams(user);
 
     const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
@@ -943,15 +904,6 @@ export class VodafoneContractCreate implements OnInit {
 
     if (!this.selectedTeamIds.length) {
       this.selectedTeamIds = this.resolveInitialTeamIds(user);
-    }
-
-    if (
-      previousRegistrationTeamId &&
-      availableTeamIds.has(previousRegistrationTeamId)
-    ) {
-      this.onRegistrationTeamChange(previousRegistrationTeamId);
-    } else {
-      this.syncRegistrationFields(user);
     }
 
     if (this.teamToAddId && !availableTeamIds.has(this.teamToAddId)) {
@@ -978,9 +930,6 @@ export class VodafoneContractCreate implements OnInit {
     this.availableTeams = [];
     this.selectedTeamIds = [];
     this.teamToAddId = '';
-    this.selectedRegistrationTeamId = '';
-    this.clearRegistrationFields();
-
     const selectedUser = this.assignableUsers.find((user) => user.id === userId) ?? null;
 
     if (!selectedUser) {
@@ -1001,8 +950,6 @@ export class VodafoneContractCreate implements OnInit {
     this.availableTeams = this.resolveAssignableTeams(user);
 
     this.selectedTeamIds = this.resolveInitialTeamIds(user);
-
-    this.syncRegistrationFields(user);
 
     this.teamToAddId = '';
   }
@@ -1042,50 +989,6 @@ export class VodafoneContractCreate implements OnInit {
         : this.availableTeams[0]?.id;
 
     return initialTeamId ? [initialTeamId] : [];
-  }
-
-  onRegistrationTeamChange(teamId: string): void {
-    this.selectedRegistrationTeamId = teamId;
-
-    const team = this.availableTeams.find((availableTeam) => availableTeam.id === teamId);
-
-    if (!team) {
-      this.clearRegistrationFields();
-      return;
-    }
-
-    this.contractForm.codigoRegistoCE =
-      team.registrationNumber !== null && team.registrationNumber !== undefined
-        ? String(team.registrationNumber)
-        : '';
-
-    this.contractForm.nomeRegistoCE = team.name?.trim() ?? '';
-  }
-
-  private syncRegistrationFields(user: ProfileUser): void {
-    const userWithTeams = user as ProfileUserWithTeamPositions;
-
-    const defaultTeamId = userWithTeams.defaultTeam?.id;
-
-    const initialTeamId =
-      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
-        ? defaultTeamId
-        : (this.availableTeams[0]?.id ?? '');
-
-    if (!initialTeamId) {
-      this.clearRegistrationFields();
-      return;
-    }
-
-    this.onRegistrationTeamChange(initialTeamId);
-  }
-
-  private clearRegistrationFields(): void {
-    this.selectedRegistrationTeamId = '';
-
-    this.contractForm.codigoRegistoCE = '';
-
-    this.contractForm.nomeRegistoCE = '';
   }
 
   private getRequiredTeamIds(): string[] {
@@ -1150,8 +1053,6 @@ export class VodafoneContractCreate implements OnInit {
         ? this.customCampaign.trim()
         : this.contractForm.campanha;
 
-    const estado: VodafoneContractStatus = this.estadoOptions[0];
-
     const payload: CreateVodafoneContractRequest = {
       companyId: VODAFONE_COMPANY_ID,
 
@@ -1162,8 +1063,6 @@ export class VodafoneContractCreate implements OnInit {
       tipoProduto: this.contractForm.tipoProduto,
 
       contratacao: this.contractForm.contratacao,
-
-      estado,
 
       nomeClienteEmpresa: this.client.name,
 
@@ -1194,19 +1093,8 @@ export class VodafoneContractCreate implements OnInit {
       this.addIfFilled(payload, 'controleQualidade', this.contractForm.controleQualidade.trim());
     }
 
-    if (this.isLightLayout()) {
-      const registration = resolveLightContractRegistration(
-        this.selectedTeamIds,
-        this.availableTeams,
-        this.getRequiredTeamIds(),
-      );
-
-      payload.codigoRegistoCE = registration.codigoRegistoCE;
-      payload.nomeRegistoCE = registration.nomeRegistoCE;
-    } else {
-      this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE.trim());
-      this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE.trim());
-    }
+    this.addIfFilled(payload, 'nomeRegistoCE', this.contractForm.nomeRegistoCE.trim());
+    this.addIfFilled(payload, 'codigoRegistoCE', this.contractForm.codigoRegistoCE.trim());
 
     this.addIfFilled(payload, 'agendamento', this.contractForm.agendamento);
 
@@ -1228,33 +1116,18 @@ export class VodafoneContractCreate implements OnInit {
       this.contractForm.antigaComercializadora.trim(),
     );
 
-    if (this.shouldShowLuzFields()) {
-      this.addIfFilled(payload, 'tipoContratacaoLuz', this.contractForm.tipoContratacaoLuz);
-
-      this.addIfFilled(payload, 'cpe', this.contractForm.cpe.trim());
-
-      this.addIfFilled(payload, 'potencia', this.contractForm.potencia.trim());
-
-      this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
-
-      this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
-
-      this.addIfFilled(payload, 'dataAtivacaoCPE', this.contractForm.dataAtivacaoCPE);
-
-      this.addIfFilled(payload, 'dataBaixaCPE', this.contractForm.dataBaixaCPE);
-    }
-
-    if (this.shouldShowGasFields()) {
-      this.addIfFilled(payload, 'tipoContratacaoGas', this.contractForm.tipoContratacaoGas);
-
-      this.addIfFilled(payload, 'cui', this.contractForm.cui.trim());
-
-      this.addIfFilled(payload, 'escalao', this.contractForm.escalao.trim());
-
-      this.addIfFilled(payload, 'dataAtivacaoCUI', this.contractForm.dataAtivacaoCUI);
-
-      this.addIfFilled(payload, 'dataBaixaCUI', this.contractForm.dataBaixaCUI);
-    }
+    this.addIfFilled(payload, 'tipoContratacaoLuz', this.contractForm.tipoContratacaoLuz);
+    this.addIfFilled(payload, 'tipoContratacaoGas', this.contractForm.tipoContratacaoGas);
+    this.addIfFilled(payload, 'cpe', this.hasCpeValue() ? this.contractForm.cpe.trim() : '');
+    this.addIfFilled(payload, 'cui', this.hasCuiValue() ? this.contractForm.cui.trim() : '');
+    this.addIfFilled(payload, 'potencia', this.contractForm.potencia.trim());
+    this.addIfFilled(payload, 'escalao', this.contractForm.escalao.trim());
+    this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
+    this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
+    this.addIfFilled(payload, 'dataAtivacaoCPE', this.contractForm.dataAtivacaoCPE);
+    this.addIfFilled(payload, 'dataBaixaCPE', this.contractForm.dataBaixaCPE);
+    this.addIfFilled(payload, 'dataAtivacaoCUI', this.contractForm.dataAtivacaoCUI);
+    this.addIfFilled(payload, 'dataBaixaCUI', this.contractForm.dataBaixaCUI);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 
@@ -1306,30 +1179,6 @@ export class VodafoneContractCreate implements OnInit {
     );
   }
 
-  private clearElectricityFields(): void {
-    this.contractForm.tipoContratacaoLuz = '';
-
-    this.contractForm.cpe = '';
-    this.contractForm.potencia = '';
-    this.contractForm.cicloHorario = '';
-    this.contractForm.nivelTensao = '';
-
-    this.contractForm.dataAtivacaoCPE = '';
-
-    this.contractForm.dataBaixaCPE = '';
-  }
-
-  private clearGasFields(): void {
-    this.contractForm.tipoContratacaoGas = '';
-
-    this.contractForm.cui = '';
-    this.contractForm.escalao = '';
-
-    this.contractForm.dataAtivacaoCUI = '';
-
-    this.contractForm.dataBaixaCUI = '';
-  }
-
   private buildInitialObservation(): string {
     return this.buildInitialObservationEntry(this.contractForm.observacoes);
   }
@@ -1371,6 +1220,35 @@ export class VodafoneContractCreate implements OnInit {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}/${month}/${year} ${hours}:${minutes}`;
+  }
+
+  private hasCpeValue(): boolean {
+    const value = this.contractForm.cpe.trim();
+    return Boolean(value && value !== DEFAULT_CPE_PREFIX);
+  }
+
+  private hasCuiValue(): boolean {
+    const value = this.contractForm.cui.trim();
+    return Boolean(value && value !== DEFAULT_CUI_PREFIX);
+  }
+
+  private resolvePreflightProductType(): 'Luz' | 'Luz + Gás' | 'Gás' | null {
+    const hasCpe = this.hasCpeValue();
+    const hasCui = this.hasCuiValue();
+
+    if (hasCpe && hasCui) {
+      return 'Luz + Gás';
+    }
+
+    if (hasCpe) {
+      return 'Luz';
+    }
+
+    if (hasCui) {
+      return 'Gás';
+    }
+
+    return null;
   }
 
   private addIfFilled<Key extends keyof CreateVodafoneContractRequest>(

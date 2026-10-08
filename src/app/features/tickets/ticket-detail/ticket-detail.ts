@@ -849,7 +849,6 @@ export class TicketDetail implements OnInit {
       this.socketService.listenIberdrolaContractUpdated(),
       this.socketService.listenIberdrolaSolarContractUpdated(),
       this.socketService.listenMeoEnergiasContractUpdated(),
-      this.socketService.listenVodafoneContractUpdated(),
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {

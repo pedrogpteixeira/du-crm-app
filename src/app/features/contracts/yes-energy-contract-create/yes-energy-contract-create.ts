@@ -141,13 +141,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-yes-energy-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
   templateUrl: './yes-energy-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './yes-energy-contract-create.scss',
@@ -666,6 +668,7 @@ export class YesEnergyContractCreate implements OnInit {
       {
         validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
         validateCui: this.isProLayout() && this.shouldShowGasFields(),
+        ibanMode: 'international',
       },
     );
 

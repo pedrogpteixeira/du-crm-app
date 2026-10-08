@@ -1,24 +1,5 @@
 import { ToastService } from '../../../core/services/toast';
 
-import {
-  DATA_REGISTO_REQUIRED_MESSAGE,
-  hasDataRegistoValue,
-  isDataRegistoRequiredError,
-  requiresDataRegisto,
-} from '../../../core/config/contract-data-registo';
-
-import {
-  getDataBaixaBackendMessage,
-  getTerminationDateValidation,
-  isDataBaixaRequiredError,
-} from '../../../core/config/contract-data-baixa';
-
-import {
-  getDataAtivacaoBackendMessage,
-  getEnergyActivationDateValidation,
-  isDataAtivacaoRequiredError,
-} from '../../../core/config/contract-data-ativacao';
-
 import { assignChangedContractLifecycleDate } from '../../../core/config/contract-lifecycle-dates';
 
 import {
@@ -35,7 +16,6 @@ import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
-import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
@@ -56,7 +36,7 @@ import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import {
   UpdateVodafoneContractRequest,
-  VODAFONE_CONTRACT_STATUSES,
+  VODAFONE_STATES,
   VODAFONE_GAS_LEVEL_SUGGESTIONS,
   VODAFONE_POWER_SUGGESTIONS,
   VodafoneCicloHorario,
@@ -64,10 +44,10 @@ import {
   VodafoneContractDocument,
   VodafoneContractService,
   VodafoneContractStatus,
+  isVodafoneContractStatus,
   VodafoneContratacao,
   VodafoneNivelTensao,
   VodafoneTipoContratacao,
-  VodafoneTipoProduto,
   VodafoneTipoSegmento,
 } from '../../../core/services/vodafone-contract';
 
@@ -82,7 +62,7 @@ interface EditableContractForm {
   crc: string;
 
   tipoSegmento: VodafoneTipoSegmento;
-  tipoProduto: VodafoneTipoProduto;
+  tipoProduto: string;
   contratacao: VodafoneContratacao;
 
   tipoContratacaoLuz: VodafoneTipoContratacao | '';
@@ -93,7 +73,7 @@ interface EditableContractForm {
   codigoRegistoCE: string;
   nomeRegistoCE: string;
 
-  estado: VodafoneContractStatus;
+  estado: string;
 
   agendamento: string;
   dataAssinatura: string;
@@ -153,12 +133,14 @@ import { ContractActivityPanel } from '../../../shared/components/contract-activ
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-vodafone-contract-detail',
   imports: [
+    EditableSelectCombobox,
     CommonModule,
     FormsModule,
     ContractFieldMaskDirective,
@@ -228,8 +210,6 @@ export class VodafoneContractDetail implements OnInit {
 
   canAccessInternalObservations = false;
   private readonly toast = inject(ToastService);
-  private dataBaixaBackendInvalid = false;
-  private dataAtivacaoBackendInvalid = false;
 
   private _errorMessage = '';
   get errorMessage(): string {
@@ -262,7 +242,6 @@ export class VodafoneContractDetail implements OnInit {
 
   readonly tipoSegmentoOptions: VodafoneTipoSegmento[] = ['Residencial', 'Empresarial'];
 
-  readonly tipoProdutoOptions: VodafoneTipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
   readonly contratacaoOptions: VodafoneContratacao[] = ['Contratação Digital', 'Contratação Papel'];
 
@@ -272,138 +251,7 @@ export class VodafoneContractDetail implements OnInit {
     'Entrada Direta',
   ];
 
-  readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_CONTRACT_STATUSES;
-
-  get isDataRegistoRequired(): boolean {
-    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
-    return requiresDataRegisto('vodafone', estado);
-  }
-
-  get isDataRegistoMissing(): boolean {
-    const dataRegisto = this.isEditing ? this.editForm.dataRegisto : this.contract?.dataRegisto;
-    return this.isDataRegistoRequired && !hasDataRegistoValue(dataRegisto);
-  }
-
-  get terminationDateValidation() {
-    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
-    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
-    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
-    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
-
-    return getTerminationDateValidation(
-      'vodafone',
-      estado,
-      tipoProduto,
-      dataBaixaCPE,
-      dataBaixaCUI,
-    );
-  }
-
-  get isDataBaixaCpeRequired(): boolean {
-    return this.terminationDateValidation.requireCpe;
-  }
-
-  get isDataBaixaCuiRequired(): boolean {
-    return this.terminationDateValidation.requireCui;
-  }
-
-  get isPartialDataBaixaRequirement(): boolean {
-    return this.terminationDateValidation.requireAtLeastOne;
-  }
-
-  get isDataBaixaCpeMissing(): boolean {
-    return this.terminationDateValidation.missingCpe;
-  }
-
-  get isDataBaixaCuiMissing(): boolean {
-    return this.terminationDateValidation.missingCui;
-  }
-
-  get isPartialDataBaixaMissing(): boolean {
-    return this.terminationDateValidation.missingAtLeastOne;
-  }
-
-  get isDataBaixaCpeInvalid(): boolean {
-    return (
-      this.isDataBaixaCpeMissing ||
-      (this.dataBaixaBackendInvalid &&
-        (this.isDataBaixaCpeRequired || this.isPartialDataBaixaRequirement))
-    );
-  }
-
-  get isDataBaixaCuiInvalid(): boolean {
-    return (
-      this.isDataBaixaCuiMissing ||
-      (this.dataBaixaBackendInvalid &&
-        (this.isDataBaixaCuiRequired || this.isPartialDataBaixaRequirement))
-    );
-  }
-
-  clearDataBaixaBackendError(): void {
-    this.dataBaixaBackendInvalid = false;
-  }
-
-  get activationDateValidation() {
-    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
-    const tipoProduto = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
-    const dataAtivacaoCPE = this.isEditing
-      ? this.editForm.dataAtivacaoCPE
-      : this.contract?.dataAtivacaoCPE;
-    const dataAtivacaoCUI = this.isEditing
-      ? this.editForm.dataAtivacaoCUI
-      : this.contract?.dataAtivacaoCUI;
-    const dataBaixaCPE = this.isEditing ? this.editForm.dataBaixaCPE : this.contract?.dataBaixaCPE;
-    const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
-
-    return getEnergyActivationDateValidation(
-      estado,
-      tipoProduto,
-      dataAtivacaoCPE,
-      dataAtivacaoCUI,
-      dataBaixaCPE,
-      dataBaixaCUI,
-    );
-  }
-
-  get isDataAtivacaoCpeRequired(): boolean {
-    return this.activationDateValidation.requireCpe;
-  }
-
-  get isDataAtivacaoCuiRequired(): boolean {
-    return this.activationDateValidation.requireCui;
-  }
-
-  get isDualDataAtivacaoRequirement(): boolean {
-    return this.activationDateValidation.isDual;
-  }
-
-  get isDataAtivacaoCpeMissing(): boolean {
-    return this.activationDateValidation.missingCpe;
-  }
-
-  get isDataAtivacaoCuiMissing(): boolean {
-    return this.activationDateValidation.missingCui;
-  }
-
-  get isDataAtivacaoActiveSupplyMissing(): boolean {
-    return this.activationDateValidation.missingActiveSupply;
-  }
-
-  get isDataAtivacaoCpeInvalid(): boolean {
-    return (
-      this.activationDateValidation.missingCpe ||
-      this.activationDateValidation.missingActiveSupply ||
-      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
-    );
-  }
-
-  get isDataAtivacaoCuiInvalid(): boolean {
-    return (
-      this.activationDateValidation.missingCui ||
-      this.activationDateValidation.missingActiveSupply ||
-      (this.dataAtivacaoBackendInvalid && !this.activationDateValidation.valid)
-    );
-  }
+  readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_STATES;
 
   readonly cicloHorarioOptions: VodafoneCicloHorario[] = [
     'Simples',
@@ -477,7 +325,9 @@ export class VodafoneContractDetail implements OnInit {
           return;
         }
 
-        const activityUpdate = mergeContractActivitySocketPayload(this.contract, event);
+        const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
+          fluxo: event.fluxo,
+        });
 
         if (activityUpdate.updated) {
           this.contract = activityUpdate.contract;
@@ -499,7 +349,7 @@ export class VodafoneContractDetail implements OnInit {
         const stateUpdate = mergeContractStateSocketPayload(
           this.contract,
           event,
-          this.estadoOptions,
+          this.estadoOptions as readonly string[],
         );
 
         if (stateUpdate.updated && stateUpdate.contract) {
@@ -530,14 +380,6 @@ export class VodafoneContractDetail implements OnInit {
         const currentTime = new Date().toLocaleTimeString('pt-PT');
 
         this.lastSocketUpdate = currentTime;
-
-        if (event.ticketEvent && Array.isArray(event.tickets)) {
-          if (!Array.isArray(event.fluxo)) {
-            this.refreshContractActivity();
-          }
-
-          return;
-        }
 
         const eventUserId = this.getSocketEventUserId(event);
 
@@ -699,8 +541,6 @@ export class VodafoneContractDetail implements OnInit {
     }
 
     this.initializeEditForm(this.contract);
-    this.dataBaixaBackendInvalid = false;
-
     this.internalObservationDraft = '';
 
     this.selectedFiles = [];
@@ -714,7 +554,6 @@ export class VodafoneContractDetail implements OnInit {
   cancelEditing(): void {
     if (this.contract) {
       this.initializeEditForm(this.contract);
-      this.dataBaixaBackendInvalid = false;
     }
 
     this.internalObservationDraft = '';
@@ -727,28 +566,6 @@ export class VodafoneContractDetail implements OnInit {
     this.successMessage = '';
   }
 
-  onTipoProdutoChange(): void {
-    if (!this.shouldShowLuzFields()) {
-      this.clearElectricityFields();
-    }
-
-    if (!this.shouldShowGasFields()) {
-      this.clearGasFields();
-    }
-  }
-
-  shouldShowLuzFields(): boolean {
-    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
-
-    return product === 'Luz' || product === 'Luz + Gás';
-  }
-
-  shouldShowGasFields(): boolean {
-    const product = this.isEditing ? this.editForm.tipoProduto : this.contract?.tipoProduto;
-
-    return product === 'Gás' || product === 'Luz + Gás';
-  }
-
   onPhoneInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const digits = input.value.replace(/\D/g, '').slice(0, 9);
@@ -759,18 +576,6 @@ export class VodafoneContractDetail implements OnInit {
 
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
-      return;
-    }
-
-    if (!this.validateDataRegistoRequirement()) {
-      return;
-    }
-
-    if (!this.validateActivationDateRequirement()) {
-      return;
-    }
-
-    if (!this.validateTerminationDateRequirement()) {
       return;
     }
 
@@ -791,44 +596,12 @@ export class VodafoneContractDetail implements OnInit {
       return;
     }
 
-    const energyValidationError = getContractEnergyValidationError({
-      requiresElectricity: this.shouldShowLuzFields(),
-      requiresGas: this.shouldShowGasFields(),
-      cpe: this.editForm.cpe,
-      cui: this.editForm.cui,
-      potencia: this.editForm.potencia,
-      escalao: this.editForm.escalao,
-      cicloHorario: this.editForm.cicloHorario,
-    });
-
-    if (energyValidationError) {
-      this.showError(energyValidationError);
-      return;
-    }
-
-    if (this.editForm.email.trim() && !this.isValidEmail(this.editForm.email)) {
-      this.showError('Indica um email válido.');
-
-      return;
-    }
-
-    const campaignValue = this.getCurrentCampaignValue();
-
-    if (!campaignValue) {
-      this.showError(
-        this.campaignSelectionMode === 'other'
-          ? 'O nome da campanha é obrigatório.'
-          : 'É obrigatório selecionar uma campanha.',
-      );
-
-      return;
-    }
-
     const fieldValidationError = getContractFormValidationError(
       this.editForm as unknown as Record<string, unknown>,
       {
-        validateCpe: this.shouldShowLuzFields(),
-        validateCui: this.shouldShowGasFields(),
+        validateCpe: this.hasCpeValue(),
+        validateCui: this.hasCuiValue(),
+        ibanMode: 'international',
       },
     );
 
@@ -945,31 +718,6 @@ export class VodafoneContractDetail implements OnInit {
         error: (error: HttpErrorResponse) => {
           this.clearOwnSocketSuppression();
 
-          if (isDataAtivacaoRequiredError(error)) {
-            this.dataAtivacaoBackendInvalid = true;
-            this.showError(
-              getDataAtivacaoBackendMessage(error) ||
-                this.activationDateValidation.message ||
-                'É necessário preencher as datas de ativação exigidas para este estado.',
-            );
-            return;
-          }
-
-          if (isDataBaixaRequiredError(error)) {
-            this.dataBaixaBackendInvalid = true;
-            this.showError(
-              getDataBaixaBackendMessage(error) ||
-                this.terminationDateValidation.message ||
-                'É necessário preencher as datas de baixa exigidas para este estado.',
-            );
-            return;
-          }
-
-          if (isDataRegistoRequiredError(error)) {
-            this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
-            return;
-          }
-
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
@@ -977,62 +725,6 @@ export class VodafoneContractDetail implements OnInit {
           );
         },
       });
-  }
-
-  private validateActivationDateRequirement(): boolean {
-    const validation = getEnergyActivationDateValidation(
-      this.editForm.estado,
-      this.editForm.tipoProduto,
-      this.editForm.dataAtivacaoCPE,
-      this.editForm.dataAtivacaoCUI,
-      this.editForm.dataBaixaCPE,
-      this.editForm.dataBaixaCUI,
-    );
-
-    this.dataAtivacaoBackendInvalid = !validation.valid;
-
-    if (validation.valid) {
-      return true;
-    }
-
-    this.showError(
-      validation.message ||
-        'É necessário preencher as datas de ativação exigidas para este estado.',
-    );
-    return false;
-  }
-
-  private validateTerminationDateRequirement(): boolean {
-    const validation = getTerminationDateValidation(
-      'vodafone',
-      this.editForm.estado,
-      this.editForm.tipoProduto,
-      this.editForm.dataBaixaCPE,
-      this.editForm.dataBaixaCUI,
-    );
-
-    this.dataBaixaBackendInvalid = !validation.valid;
-
-    if (validation.valid) {
-      return true;
-    }
-
-    this.showError(
-      validation.message || 'É necessário preencher as datas de baixa exigidas para este estado.',
-    );
-    return false;
-  }
-
-  private validateDataRegistoRequirement(): boolean {
-    if (
-      !requiresDataRegisto('vodafone', this.editForm.estado) ||
-      hasDataRegistoValue(this.editForm.dataRegisto)
-    ) {
-      return true;
-    }
-
-    this.showError(DATA_REGISTO_REQUIRED_MESSAGE);
-    return false;
   }
 
   onCampaignModeChange(): void {
@@ -1195,20 +887,20 @@ export class VodafoneContractDetail implements OnInit {
     this.collapsedSections[section] = !this.collapsedSections[section];
   }
 
-  getStatusClass(status: VodafoneContractStatus): string {
-    const classes: Record<VodafoneContractStatus, string> = {
-      'Pedido de Chamada': 'status-call-request',
+  getStatusClass(status: string): string {
+    const classes: Record<string, string> = {
       'Em validação': 'status-validation',
-      'Não Conformidade': 'status-non-compliance',
-      'Pendente Docs': 'status-docs',
-      'Documentos Enviados': 'status-docs-sent',
-      'Registo VODAFONE': 'status-vodafone-registration',
-      Anulado: 'status-cancelled',
+      'Sem efeito': 'status-cancelled',
+      Pendente: 'status-docs',
       Ativo: 'status-active',
-      Baixa: 'status-low',
+      Anulado: 'status-cancelled',
     };
 
-    return classes[status];
+    return classes[status] ?? '';
+  }
+
+  isLegacyStatus(status: string): boolean {
+    return Boolean(status) && !isVodafoneContractStatus(status);
   }
 
   formatBoolean(value: boolean | null | undefined): string {
@@ -1337,7 +1029,6 @@ export class VodafoneContractDetail implements OnInit {
 
         const activityUpdate = mergeContractActivitySocketPayload(this.contract, {
           fluxo: latestContract.fluxo,
-          tickets: latestContract.tickets,
         });
 
         if (activityUpdate.updated) {
@@ -1833,7 +1524,12 @@ export class VodafoneContractDetail implements OnInit {
       this.originalEditForm.nomeRegistoCE,
     );
 
-    this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
+    if (
+      this.editForm.estado !== this.originalEditForm.estado &&
+      isVodafoneContractStatus(this.editForm.estado)
+    ) {
+      payload.estado = this.editForm.estado;
+    }
 
     this.assignChangedValue(
       payload,
@@ -2009,28 +1705,14 @@ export class VodafoneContractDetail implements OnInit {
     return typeof value === 'string' ? value.trim() : value;
   }
 
-  private clearElectricityFields(): void {
-    this.editForm.tipoContratacaoLuz = '';
-
-    this.editForm.cpe = '';
-    this.editForm.potencia = '';
-    this.editForm.cicloHorario = '';
-    this.editForm.nivelTensao = '';
-
-    this.editForm.dataAtivacaoCPE = '';
-
-    this.editForm.dataBaixaCPE = '';
+  private hasCpeValue(): boolean {
+    const value = this.editForm.cpe.trim();
+    return Boolean(value && value !== DEFAULT_CPE_PREFIX);
   }
 
-  private clearGasFields(): void {
-    this.editForm.tipoContratacaoGas = '';
-
-    this.editForm.cui = '';
-    this.editForm.escalao = '';
-
-    this.editForm.dataAtivacaoCUI = '';
-
-    this.editForm.dataBaixaCUI = '';
+  private hasCuiValue(): boolean {
+    const value = this.editForm.cui.trim();
+    return Boolean(value && value !== DEFAULT_CUI_PREFIX);
   }
 
   private toDateInput(value: string | null | undefined): string {
@@ -2068,7 +1750,7 @@ export class VodafoneContractDetail implements OnInit {
 
       tipoSegmento: 'Residencial',
 
-      tipoProduto: 'Luz + Gás',
+      tipoProduto: '',
 
       contratacao: 'Contratação Digital',
 
@@ -2079,7 +1761,7 @@ export class VodafoneContractDetail implements OnInit {
       codigoRegistoCE: '',
       nomeRegistoCE: '',
 
-      estado: 'Pedido de Chamada',
+      estado: 'Em validação',
 
       agendamento: '',
       dataAssinatura: '',

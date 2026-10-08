@@ -174,16 +174,12 @@
         </label>
 
         <label>
-          Tipo Produto *
+          Tipo de Produto *
 
-          <select [(ngModel)]="contractForm.tipoProduto" (ngModelChange)="onTipoProdutoChange()">
-            <option *ngFor="let option of tipoProdutoOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+          <input type="text" [(ngModel)]="contractForm.tipoProduto" />
         </label>
 
-        <label *ngIf="shouldShowLuzFields()">
+        <label>
           Tipo Contração LUZ
 
           <select [(ngModel)]="contractForm.tipoContratacaoLuz">
@@ -195,7 +191,7 @@
           </select>
         </label>
 
-        <label *ngIf="shouldShowGasFields()">
+        <label>
           Tipo Contração Gás
 
           <select [(ngModel)]="contractForm.tipoContratacaoGas">
@@ -208,53 +204,26 @@
         </label>
 
         <label *ngIf="isProLayout()">
-          Controle de Qualidade
+          Controlo de Qualidade
 
-          <select
-            [(ngModel)]="contractForm.controleQualidade"
+          <app-editable-select-combobox
             [disabled]="!canManageQualityControl()"
-          >
-            <option value="">Sem seleção</option>
-            <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+            [(ngModel)]="contractForm.controleQualidade"
+            [options]="qualityControlBackofficeOptions"
+            emptyOptionLabel="Sem seleção"
+          />
         </label>
 
-        <label *ngIf="isProLayout()">
+        <label>
           Código Registo C.E.
 
-          <select
-            [(ngModel)]="selectedRegistrationTeamId"
-            (ngModelChange)="onRegistrationTeamChange($event)"
-            [disabled]="!availableTeams.length"
-          >
-            <option value="">Sem equipa disponível</option>
-
-            <option *ngFor="let team of availableTeams" [value]="team.id">
-              {{
-                team.registrationNumber !== null && team.registrationNumber !== undefined
-                  ? team.registrationNumber
-                  : 'Sem código'
-              }}
-            </option>
-          </select>
+          <input type="text" [(ngModel)]="contractForm.codigoRegistoCE" />
         </label>
 
-        <label *ngIf="isProLayout()">
+        <label>
           Nome Registo C.E.
 
-          <select
-            [(ngModel)]="selectedRegistrationTeamId"
-            (ngModelChange)="onRegistrationTeamChange($event)"
-            [disabled]="!availableTeams.length"
-          >
-            <option value="">Sem equipa disponível</option>
-
-            <option *ngFor="let team of availableTeams" [value]="team.id">
-              {{ team.name }}
-            </option>
-          </select>
+          <input type="text" [(ngModel)]="contractForm.nomeRegistoCE" />
         </label>
       </div>
     </article>
@@ -295,13 +264,13 @@
         </div>
 
         <div class="status-sale-row status-sale-row--two" *ngIf="isProLayout()">
-          <label *ngIf="shouldShowLuzFields()">
+          <label>
             Data de Ativação CPE
 
             <input type="date" [(ngModel)]="contractForm.dataAtivacaoCPE" />
           </label>
 
-          <label *ngIf="shouldShowGasFields()">
+          <label>
             Data de Ativação CUI
 
             <input type="date" [(ngModel)]="contractForm.dataAtivacaoCUI" />
@@ -309,13 +278,13 @@
         </div>
 
         <div class="status-sale-row status-sale-row--two" *ngIf="isProLayout()">
-          <label *ngIf="shouldShowLuzFields()">
+          <label>
             Data Baixa CPE
 
             <input type="date" [(ngModel)]="contractForm.dataBaixaCPE" />
           </label>
 
-          <label *ngIf="shouldShowGasFields()">
+          <label>
             Data Baixa CUI
 
             <input type="date" [(ngModel)]="contractForm.dataBaixaCUI" />
@@ -343,13 +312,13 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" />
+          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
         </label>
 
         <label>
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" />
+          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -361,7 +330,7 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" />
+          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
         </label>
       </div>
     </article>
@@ -406,7 +375,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -437,7 +406,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -483,8 +452,7 @@
             type="text"
             [(ngModel)]="contractForm.iban"
             autocomplete="off"
-            placeholder="PT50..."
-            appContractMask="iban"
+            appContractMask="ibanInternational" appContractMaskPlaceholder=""
           />
         </label>
       </div>
@@ -519,7 +487,7 @@
         <label *ngIf="campaignSelectionMode === 'other'">
           Nome da campanha *
 
-          <input type="text" [(ngModel)]="customCampaign" placeholder="Nome da campanha" />
+          <input type="text" [(ngModel)]="customCampaign" />
         </label>
       </div>
 
@@ -530,95 +498,67 @@
           <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
         </label>
 
-        <ng-container *ngIf="shouldShowLuzFields()">
-          <label>
-            CPE{{ shouldShowLuzFields() ? ' *' : '' }}
+        <label>
+          CPE
 
-            <input
-              type="text"
-              placeholder="PT 0002 123456789012 AA"
-              [(ngModel)]="contractForm.cpe"
-              [required]="shouldShowLuzFields()"
-              appContractMask="cpe"
-            />
-          </label>
-        </ng-container>
+          <input
+            type="text"
+            [(ngModel)]="contractForm.cpe"
+            appContractMask="cpe"
+            appContractMaskPlaceholder=""
+          />
+        </label>
 
-        <ng-container *ngIf="shouldShowGasFields()">
-          <label>
-            CUI{{ shouldShowGasFields() ? ' *' : '' }}
+        <label>
+          CUI
 
-            <input
-              type="text"
-              placeholder="PT 1601 12345678 AA"
-              [(ngModel)]="contractForm.cui"
-              [required]="shouldShowGasFields()"
-              appContractMask="cui"
-            />
-          </label>
-        </ng-container>
+          <input
+            type="text"
+            [(ngModel)]="contractForm.cui"
+            appContractMask="cui"
+            appContractMaskPlaceholder=""
+          />
+        </label>
 
-        <ng-container *ngIf="shouldShowLuzFields()">
-          <label>
-            Potência{{ shouldShowLuzFields() ? ' *' : '' }}
+        <label>
+          Potência
 
-            <input
-              type="text"
-              list="vodafone-power-options"
-              [(ngModel)]="contractForm.potencia"
-              placeholder="Ex.: 6.90"
-              [required]="shouldShowLuzFields()"
-            />
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.potencia"
+            [options]="powerSuggestions"
+            inputMode="decimal"
+          />
+        </label>
 
-            <datalist id="vodafone-power-options">
-              <option *ngFor="let option of powerSuggestions" [value]="option"></option>
-            </datalist>
-          </label>
-        </ng-container>
+        <label>
+          Escalão
 
-        <ng-container *ngIf="shouldShowGasFields()">
-          <label>
-            Escalão{{ shouldShowGasFields() ? ' *' : '' }}
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.escalao"
+            [options]="gasLevelSuggestions"
+            inputMode="decimal"
+          />
+        </label>
 
-            <input
-              type="text"
-              list="vodafone-gas-level-options"
-              [(ngModel)]="contractForm.escalao"
-              placeholder="Ex.: 1"
-              [required]="shouldShowGasFields()"
-            />
+        <label>
+          Ciclo Horário
 
-            <datalist id="vodafone-gas-level-options">
-              <option *ngFor="let option of gasLevelSuggestions" [value]="option"></option>
-            </datalist>
-          </label>
-        </ng-container>
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.cicloHorario"
+            [options]="cicloHorarioOptions"
+            emptyOptionLabel="Sem valor"
+          />
+        </label>
 
-        <ng-container *ngIf="shouldShowLuzFields()">
-          <label>
-            Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
+        <label>
+          Nível Tensão
 
-            <select [(ngModel)]="contractForm.cicloHorario" [required]="shouldShowLuzFields()">
-              <option value="">Sem valor</option>
-
-              <option *ngFor="let option of cicloHorarioOptions" [value]="option">
-                {{ option }}
-              </option>
-            </select>
-          </label>
-
-          <label>
-            Nível Tensão
-
-            <select [(ngModel)]="contractForm.nivelTensao">
-              <option value="">Sem valor</option>
-
-              <option *ngFor="let option of nivelTensaoOptions" [value]="option">
-                {{ option }}
-              </option>
-            </select>
-          </label>
-        </ng-container>
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.nivelTensao"
+            [options]="nivelTensaoOptions"
+            emptyOptionLabel="Sem valor"
+          />
+        </label>
       </div>
     </article>
 
@@ -662,7 +602,6 @@
         <textarea
           rows="6"
           [(ngModel)]="contractForm.observacoesInternas"
-          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>

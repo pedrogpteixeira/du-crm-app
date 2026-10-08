@@ -73,12 +73,14 @@ interface SegmentOption {
   label: string;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-wallbox-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone],
   templateUrl: './wallbox-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './wallbox-contract-create.scss',

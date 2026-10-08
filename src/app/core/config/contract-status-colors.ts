@@ -9,7 +9,6 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Registo Plataforma Galp': '#6d28d9',
   'Pendente Validação Comercial': '#6d28d9',
   'Registo MEO': '#6d28d9',
-  'Registo VODAFONE': '#6d28d9',
   'Envio Quality Check': '#6d28d9',
   'Atribuído': '#6d28d9',
   'Acesso RPE': '#0369a1',
@@ -34,6 +33,7 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Não Conformidade': '#b45309',
   'Não conformidade': '#b45309',
   'Pendente Docs': '#b45309',
+  'Pendente': '#b45309',
 
   'Documentos Enviados': '#15803d',
   'Ativo': '#15803d',
@@ -46,6 +46,7 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
   'Sem Registo': '#475569',
   'Baixa': '#475569',
 
+  'Sem efeito': '#b91c1c',
   'Cancelado': '#b91c1c',
   'Anulado': '#b91c1c',
 };

@@ -60,9 +60,11 @@ export type MeoEnergiasCicloHorario =
   | 'Bi-Horário Semanal'
   | 'Tri-Horário Diário'
   | 'Tri-Horário Semanal'
-  | 'Tetra-Horário';
+  | 'Tetra-Horário'
+  | (string & {});
 
-export type MeoEnergiasNivelTensao = 'Monofásico' | 'Trifásico';
+export type MeoEnergiasNivelTensao = 'Monofásico' | 'Trifásico'
+  | (string & {});
 
 export const MEO_ENERGIAS_POWER_SUGGESTIONS = [
   '1.15',

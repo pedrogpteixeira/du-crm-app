@@ -4,7 +4,6 @@ export type DataBaixaProvider =
   | 'galp-power-gas'
   | 'yes-energy'
   | 'iberdrola'
-  | 'vodafone'
   | 'meo-energias';
 
 export interface TerminationDateRequirements {

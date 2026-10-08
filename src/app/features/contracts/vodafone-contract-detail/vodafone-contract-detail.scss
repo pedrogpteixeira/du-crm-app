@@ -346,29 +346,17 @@ strong {
   white-space: nowrap;
 }
 
-.status-call-request {
-  background: #0097b2;
-}
 
 .status-validation {
   background: #2563eb;
 }
 
-.status-non-compliance {
-  background: #f59e0b;
-}
 
 .status-docs {
   background: #f59e0b;
 }
 
-.status-docs-sent {
-  background: #0f766e;
-}
 
-.status-vodafone-registration {
-  background: #7c3aed;
-}
 
 .status-cancelled {
   background: #dc2626;
@@ -378,9 +366,6 @@ strong {
   background: #16a34a;
 }
 
-.status-low {
-  background: #64748b;
-}
 
 /* =========================
    ATTACHMENTS
@@ -734,21 +719,6 @@ strong {
 }
 
 /* =========================
-   CORES DO FLUXO POR ESTADO
-========================= */
-
-.contract-detail-page {
-  --contract-status-pedido-de-chamada: #0097b2;
-  --contract-status-em-validacao: #2563eb;
-  --contract-status-nao-conformidade: #f59e0b;
-  --contract-status-docs-enviados: #0f766e;
-  --contract-status-registo-vodafone: #7c3aed;
-  --contract-status-anulado: #dc2626;
-  --contract-status-ativo: #16a34a;
-  --contract-status-baixa: #64748b;
-}
-
-/* =========================
    ESTADO DA VENDA
 ========================= */
 
@@ -860,16 +830,6 @@ strong {
   }
 }
 
-/* GLOBAL STATUS NORMALIZATION VARS */
-
-.contract-detail-page {
-  --contract-status-pendente-docs: #f59e0b;
-  --contract-status-documentos-enviados: #16a34a;
-  --contract-status-cancelado: #dc2626;
-  --contract-status-cancelada: #dc2626;
-  --contract-status-anulado: #dc2626;
-}
-
 .editing-label {
   display: inline-flex;
   align-items: center;
@@ -892,105 +852,4 @@ strong {
   .editing-label {
     display: none;
   }
-}
-
-/* Dynamic Data de Registo validation */
-.data-registo-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.data-registo-required-marker,
-.data-registo-validation-message,
-.data-registo-missing-value {
-  color: #dc2626;
-}
-
-.data-registo-required-marker {
-  font-weight: 900;
-}
-
-.data-registo-input[aria-invalid='true'] {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
-}
-
-.data-registo-validation-message {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-/* Dynamic Data de Baixa CPE/CUI validation */
-.data-baixa-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.data-baixa-required-marker,
-.data-baixa-validation-message {
-  color: #dc2626;
-}
-
-.data-baixa-required-marker {
-  font-weight: 900;
-}
-
-.data-baixa-input[aria-invalid='true'] {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
-}
-
-.data-baixa-validation-message,
-.data-baixa-partial-helper {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.data-baixa-partial-helper {
-  grid-column: 1 / -1;
-  margin-top: -2px;
-  color: currentColor;
-  opacity: 0.72;
-}
-
-.data-baixa-partial-helper.data-baixa-validation-message {
-  color: #dc2626;
-  opacity: 1;
-}
-
-/* Dynamic Data de Ativação validation */
-.data-ativacao-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.data-ativacao-required-marker,
-.data-ativacao-validation-message,
-.data-ativacao-missing-value {
-  color: #dc2626;
-}
-
-.data-ativacao-required-marker {
-  font-weight: 900;
-}
-
-.data-ativacao-input[aria-invalid='true'] {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
-}
-
-.data-ativacao-validation-message {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.data-ativacao-dual-error {
-  grid-column: 1 / -1;
-  margin-top: -2px;
 }

@@ -43,7 +43,8 @@ export const WALLBOX_CONTRACT_STATUSES: readonly WallboxContractStatus[] = [
   'Anulado',
 ];
 
-export type WallboxNivelTensao = 'Manter' | 'Monofásico' | 'Trifásico';
+export type WallboxNivelTensao = 'Manter' | 'Monofásico' | 'Trifásico'
+  | (string & {});
 
 export type WallboxTipoLocalInstalacao =
   'Moradia' | 'Condomínio Ligação a QE comum' | 'Condomínio Ligação a QE cliente';

@@ -134,12 +134,14 @@ import { ContractActivityPanel } from '../../../shared/components/contract-activ
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
 import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachments.pipe';
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-repsol-contract-detail',
   imports: [
+    EditableSelectCombobox,
     CommonModule,
     FormsModule,
     ContractFieldMaskDirective,
@@ -740,6 +742,7 @@ export class RepsolContractDetail implements OnInit {
       {
         validateCpe: this.shouldShowLuzFields(),
         validateCui: this.shouldShowGasFields(),
+        ibanMode: 'international',
       },
     );
 

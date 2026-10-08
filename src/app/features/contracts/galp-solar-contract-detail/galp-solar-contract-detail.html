@@ -122,15 +122,12 @@
               <label>
                 Controle de Qualidade
 
-                <select
+                <app-editable-select-combobox
                   *ngIf="isEditing && canManageQualityControl(); else qualidadeView"
                   [(ngModel)]="editForm.controleQualidade"
-                >
-                  <option value="">Sem seleção</option>
-                  <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
+                  [options]="qualityControlBackofficeOptions"
+                  emptyOptionLabel="Sem seleção"
+                />
 
                 <ng-template #qualidadeView>
                   <strong>
@@ -452,13 +449,12 @@
                   inputmode="numeric"
                   maxlength="9"
                   pattern="[0-9]{9}"
-                  placeholder="9 dígitos"
                   (input)="onPhoneInput($event)"
                   *ngIf="isEditing; else telefoneView"
                   type="tel"
                   required
                   [(ngModel)]="editForm.telefone"
-                  appContractMask="phone"
+                  appContractMask="phone" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #telefoneView>
@@ -475,7 +471,7 @@
                   *ngIf="isEditing; else emailView"
                   type="email"
                   [(ngModel)]="editForm.email"
-                  appContractMask="email"
+                  appContractMask="email" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #emailView>
@@ -504,7 +500,7 @@
                   *ngIf="isEditing; else crcView"
                   type="text"
                   [(ngModel)]="editForm.crc"
-                  appContractMask="crc"
+                  appContractMask="crc" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #crcView>
@@ -829,7 +825,6 @@
             [internal]="true"
             [canSubmit]="canEditContract && canAccessInternalObservations && !isSaving"
             [isSubmitting]="isSubmittingInternalObservation || isSaving"
-            placeholder="Escrever uma observação interna..."
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>

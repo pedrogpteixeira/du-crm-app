@@ -1,0 +1,61 @@
+<div
+  class="editable-select-combobox"
+  [class.is-open]="isOpen"
+  [class.is-disabled]="disabled"
+>
+  <input
+    type="text"
+    autocomplete="off"
+    role="combobox"
+    aria-autocomplete="none"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="isOpen"
+    [attr.inputmode]="inputMode"
+    [required]="required"
+    [disabled]="disabled"
+    [ngModel]="displayValue"
+    (ngModelChange)="onInput($event)"
+    (focus)="open()"
+    (click)="open()"
+    (blur)="close()"
+    (keydown.escape)="close()"
+  />
+
+  <button
+    type="button"
+    class="editable-select-toggle"
+    tabindex="-1"
+    [disabled]="disabled"
+    [attr.aria-label]="isOpen ? 'Fechar opções' : 'Abrir opções'"
+    (mousedown)="$event.preventDefault()"
+    (click)="toggle()"
+  >
+    <span class="editable-select-arrow" aria-hidden="true"></span>
+  </button>
+
+  <div class="editable-select-options" role="listbox" *ngIf="isOpen && !disabled">
+    <button
+      *ngIf="emptyOptionLabel !== null"
+      type="button"
+      role="option"
+      [class.is-selected]="displayValue === ''"
+      [attr.aria-selected]="displayValue === ''"
+      (mousedown)="$event.preventDefault()"
+      (click)="selectEmpty()"
+    >
+      {{ emptyOptionLabel }}
+    </button>
+
+    <button
+      type="button"
+      role="option"
+      *ngFor="let option of options"
+      [class.is-selected]="isSelected(option)"
+      [attr.aria-selected]="isSelected(option)"
+      (mousedown)="$event.preventDefault()"
+      (click)="selectOption(option)"
+    >
+      {{ formatOption(option) }}
+    </button>
+  </div>
+</div>

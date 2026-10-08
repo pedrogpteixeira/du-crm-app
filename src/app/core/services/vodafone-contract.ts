@@ -6,7 +6,7 @@ import type { Campaign } from './campaign';
 
 import { ContractCreationResponse } from './contract-preflight';
 
-import type { ContractFlowEntry, ContractTicketSummary } from '../models/contract-activity';
+import type { ContractFlowEntry } from '../models/contract-activity';
 
 import { environment } from '../../../environments/environment';
 
@@ -24,35 +24,26 @@ export const VODAFONE_COMPANY_ID = 'cmp_UL2eeL1SvE' as const;
 
 export type VodafoneTipoSegmento = 'Residencial' | 'Empresarial';
 
-export type VodafoneTipoProduto = 'Luz' | 'Luz + Gás' | 'Gás';
+export type VodafoneTipoProduto = string;
 
 export type VodafoneContratacao = 'Contratação Digital' | 'Contratação Papel';
 
 export type VodafoneTipoContratacao =
   'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
 
-export type VodafoneContractStatus =
-  | 'Pedido de Chamada'
-  | 'Em validação'
-  | 'Não Conformidade'
-  | 'Pendente Docs'
-  | 'Documentos Enviados'
-  | 'Registo VODAFONE'
-  | 'Anulado'
-  | 'Ativo'
-  | 'Baixa';
-
-export const VODAFONE_CONTRACT_STATUSES: readonly VodafoneContractStatus[] = [
-  'Pedido de Chamada',
+export const VODAFONE_STATES = [
   'Em validação',
-  'Não Conformidade',
-  'Pendente Docs',
-  'Documentos Enviados',
-  'Registo VODAFONE',
-  'Anulado',
+  'Sem efeito',
+  'Pendente',
   'Ativo',
-  'Baixa',
-];
+  'Anulado',
+] as const;
+
+export type VodafoneContractStatus = (typeof VODAFONE_STATES)[number];
+
+export function isVodafoneContractStatus(value: string): value is VodafoneContractStatus {
+  return (VODAFONE_STATES as readonly string[]).includes(value);
+}
 
 export type VodafoneCicloHorario =
   | 'Simples'
@@ -60,9 +51,11 @@ export type VodafoneCicloHorario =
   | 'Bi-Horário Semanal'
   | 'Tri-Horário Diário'
   | 'Tri-Horário Semanal'
-  | 'Tetra-Horário';
+  | 'Tetra-Horário'
+  | (string & {});
 
-export type VodafoneNivelTensao = 'Monofásico' | 'Trifásico';
+export type VodafoneNivelTensao = 'Monofásico' | 'Trifásico'
+  | (string & {});
 
 export const VODAFONE_POWER_SUGGESTIONS = [
   '1.15',
@@ -91,9 +84,9 @@ export interface VodafoneContract {
   id: string;
   nomeClienteEmpresa: string;
   nif: number;
-  estado: VodafoneContractStatus;
+  estado: string;
   tipoSegmento?: VodafoneTipoSegmento;
-  tipoProduto?: VodafoneTipoProduto;
+  tipoProduto?: string;
   nomeRegistoCE?: string;
   user: VodafoneContractListUser | null;
   observacoes?: string;
@@ -149,7 +142,7 @@ export interface VodafoneContractDetail {
   clientId: string;
 
   tipoSegmento: VodafoneTipoSegmento;
-  tipoProduto: VodafoneTipoProduto;
+  tipoProduto: string;
   contratacao: VodafoneContratacao;
   tipoContratacaoLuz?: VodafoneTipoContratacao;
   tipoContratacaoGas?: VodafoneTipoContratacao;
@@ -161,7 +154,7 @@ export interface VodafoneContractDetail {
   controleQualidade?: string;
   nomeRegistoCE?: string;
   codigoRegistoCE?: string;
-  estado: VodafoneContractStatus;
+  estado: string;
 
   agendamento?: string;
   dataAssinatura?: string;
@@ -208,7 +201,6 @@ export interface VodafoneContractDetail {
   updatedAt: string;
 
   fluxo?: ContractFlowEntry[];
-  tickets?: ContractTicketSummary[];
 }
 
 export interface CreateVodafoneContractRequest {
@@ -216,7 +208,7 @@ export interface CreateVodafoneContractRequest {
   clientId: string;
 
   tipoSegmento: VodafoneTipoSegmento;
-  tipoProduto: VodafoneTipoProduto;
+  tipoProduto: string;
   contratacao: VodafoneContratacao;
   tipoContratacaoLuz?: VodafoneTipoContratacao;
   tipoContratacaoGas?: VodafoneTipoContratacao;
@@ -301,7 +293,6 @@ export type VodafoneContractList = Omit<VodafoneContract, 'observacoes' | 'obser
       | 'observacoes'
       | 'observacoesInternas'
       | 'fluxo'
-      | 'tickets'
       | 'moradaInstalacao'
       | 'moradaFaturacao'
       | 'followers'

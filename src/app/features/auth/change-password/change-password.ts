@@ -139,34 +139,22 @@ export class ChangePassword {
         error: (error: HttpErrorResponse) => {
           const backendMessage = this.getBackendMessage(error);
 
-          if (backendMessage === 'Current password is incorrect.') {
-            this.currentPasswordError = 'A password atual está incorreta.';
+          if (this.isCurrentPasswordIncorrectError(backendMessage)) {
+            this.currentPasswordError =
+              backendMessage || 'A palavra-passe atual está incorreta.';
             return;
           }
 
-          if (
-            backendMessage ===
-            'New password must be different from the current password.'
-          ) {
+          if (this.isSamePasswordError(backendMessage)) {
             this.newPasswordError =
-              'A nova password tem de ser diferente da atual.';
-            return;
-          }
-
-          if (error.status === 401) {
-            this.auth.clearSession();
-            void this.router.navigate(['/login'], {
-              replaceUrl: true,
-              queryParams: {
-                sessionExpired: 'true',
-              },
-            });
+              backendMessage ||
+              'A nova palavra-passe tem de ser diferente da atual.';
             return;
           }
 
           this.toast.error(
             backendMessage ||
-              'Não foi possível alterar a password. Tente novamente.',
+              'Não foi possível alterar a palavra-passe. Tente novamente.',
           );
         },
       });
@@ -190,6 +178,26 @@ export class ChangePassword {
         ? null
         : { passwordMismatch: true };
     };
+  }
+
+
+  private isCurrentPasswordIncorrectError(message: string): boolean {
+    return (
+      message === 'A palavra-passe atual está incorreta.' ||
+      message === 'A password atual está incorreta.' ||
+      message === 'Current password is incorrect.'
+    );
+  }
+
+  private isSamePasswordError(message: string): boolean {
+    return (
+      message ===
+        'A nova palavra-passe tem de ser diferente da palavra-passe atual.' ||
+      message === 'A nova palavra-passe tem de ser diferente da atual.' ||
+      message === 'A nova password tem de ser diferente da atual.' ||
+      message ===
+        'New password must be different from the current password.'
+    );
   }
 
   private getBackendMessage(error: HttpErrorResponse): string {

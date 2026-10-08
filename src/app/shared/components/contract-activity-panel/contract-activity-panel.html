@@ -18,6 +18,7 @@
       </button>
 
       <button
+        *ngIf="showTickets"
         type="button"
         class="activity-tab"
         role="tab"
@@ -31,7 +32,7 @@
     </div>
 
     <button
-      *ngIf="activeTab === 'tickets'"
+      *ngIf="showTickets && activeTab === 'tickets'"
       type="button"
       class="create-ticket-button"
       [disabled]="!canCreateTicket || !contractId || !companyId"
@@ -43,7 +44,7 @@
   </div>
 
   <div class="activity-content">
-    <ng-container *ngIf="activeTab === 'flow'; else ticketsView">
+    <ng-container *ngIf="activeTab === 'flow' || !showTickets; else ticketsView">
       <div
         class="flow-list"
         *ngIf="flowEntries.length; else emptyFlow"
@@ -166,7 +167,7 @@
 </section>
 
 <app-ticket-create-modal
-  *ngIf="isCreateTicketModalOpen && canCreateTicket"
+  *ngIf="showTickets && isCreateTicketModalOpen && canCreateTicket"
   [contractId]="contractId"
   [companyId]="companyId"
   (closed)="closeCreateTicketModal()"

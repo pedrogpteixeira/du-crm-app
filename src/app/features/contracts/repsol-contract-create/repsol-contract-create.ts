@@ -48,12 +48,7 @@ import { ProfileUser, UserService } from '../../../core/services/user';
 
 import { ContractLayout, PreferencesService } from '../../../core/services/preferences';
 
-import {
-  ELECTRICITY_POWERS,
-  GAS_LEVELS,
-  OTHER_GAS_LEVEL,
-  OTHER_POWER,
-} from '../../../core/constants/energy';
+import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
 
 type TipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 
@@ -66,7 +61,7 @@ type TipoContratacao =
 
 type MoradaFaturacaoSelecao = 'Igual à de Instalação' | 'Outra';
 
-type ContractPowerSelection = string | typeof OTHER_POWER;
+type EditableSelectField = 'qualityControl' | 'power' | 'gasLevel' | 'cycle' | 'voltage';
 
 interface AssignableContractTeam {
   id: string;
@@ -113,6 +108,8 @@ export class RepsolContractCreate implements OnInit {
   private readonly router = inject(Router);
 
   contractLayout: ContractLayout = 'light';
+
+  openEditableSelectField: EditableSelectField | null = null;
 
   nif: number | null = null;
   clientName = '';
@@ -183,14 +180,9 @@ export class RepsolContractCreate implements OnInit {
 
   readonly availablePowers = ELECTRICITY_POWERS;
 
-  readonly otherPowerValue = OTHER_POWER;
-
   readonly availableGasLevels = GAS_LEVELS;
 
-  readonly otherGasLevelValue = OTHER_GAS_LEVEL;
-
-  customGasLevel: number | null = null;
-  customPower: number | null = null;
+  gasLevelInput = '';
 
   campaignSelectionMode: 'existing' | 'other' = 'existing';
 
@@ -280,9 +272,9 @@ export class RepsolContractCreate implements OnInit {
     cpe: DEFAULT_CPE_PREFIX,
     cui: DEFAULT_CUI_PREFIX,
 
-    potencia: '' as ContractPowerSelection,
+    potencia: '',
 
-    escalao: null as number | typeof OTHER_GAS_LEVEL | null,
+    escalao: null as number | null,
 
     cicloHorario: '',
     nivelTensao: '',
@@ -307,6 +299,63 @@ export class RepsolContractCreate implements OnInit {
 
   canManageQualityControl(): boolean {
     return canManageQualityControlRole(this.currentUser?.role);
+  }
+
+  isEditableSelectOpen(field: EditableSelectField): boolean {
+    return this.openEditableSelectField === field;
+  }
+
+  openEditableSelect(field: EditableSelectField): void {
+    if (field === 'qualityControl' && !this.canManageQualityControl()) {
+      return;
+    }
+
+    this.openEditableSelectField = field;
+  }
+
+  closeEditableSelect(field: EditableSelectField): void {
+    if (this.openEditableSelectField === field) {
+      this.openEditableSelectField = null;
+    }
+  }
+
+  toggleEditableSelect(field: EditableSelectField): void {
+    if (field === 'qualityControl' && !this.canManageQualityControl()) {
+      return;
+    }
+
+    this.openEditableSelectField = this.isEditableSelectOpen(field) ? null : field;
+  }
+
+  selectQualityControlOption(option: string): void {
+    this.contractForm.controleQualidade = option;
+    this.openEditableSelectField = null;
+  }
+
+  selectPowerOption(power: number): void {
+    this.contractForm.potencia = this.formatPowerValue(power);
+    this.openEditableSelectField = null;
+  }
+
+  onGasLevelInputChange(value: string): void {
+    this.gasLevelInput = value;
+    this.contractForm.escalao = this.parseGasLevel(value);
+  }
+
+  selectGasLevelOption(level: number): void {
+    this.gasLevelInput = String(level);
+    this.contractForm.escalao = level;
+    this.openEditableSelectField = null;
+  }
+
+  selectCycleOption(option: string): void {
+    this.contractForm.cicloHorario = option;
+    this.openEditableSelectField = null;
+  }
+
+  selectVoltageOption(option: string): void {
+    this.contractForm.nivelTensao = option;
+    this.openEditableSelectField = null;
   }
   canAssignOtherUsers(): boolean {
     return this.assignableUsers.length > 1;
@@ -799,10 +848,7 @@ export class RepsolContractCreate implements OnInit {
         cpe: this.contractForm.cpe,
         cui: this.contractForm.cui,
         potencia: this.getContractPowerValue(),
-        escalao:
-          this.contractForm.escalao === OTHER_GAS_LEVEL
-            ? this.customGasLevel
-            : this.contractForm.escalao,
+        escalao: this.getContractGasLevelValue(),
         cicloHorario: this.contractForm.cicloHorario,
       });
 
@@ -840,6 +886,7 @@ export class RepsolContractCreate implements OnInit {
       {
         validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
         validateCui: this.isProLayout() && this.shouldShowGasFields(),
+        ibanMode: 'international',
       },
     );
 
@@ -1034,7 +1081,6 @@ export class RepsolContractCreate implements OnInit {
       this.contractForm.potencia = '';
       this.contractForm.cicloHorario = '';
       this.contractForm.nivelTensao = '';
-      this.customPower = null;
     }
 
     if (this.shouldShowGasFields()) {
@@ -1044,7 +1090,7 @@ export class RepsolContractCreate implements OnInit {
     } else {
       this.contractForm.cui = '';
       this.contractForm.escalao = null;
-      this.customGasLevel = null;
+      this.gasLevelInput = '';
     }
   }
 
@@ -1233,10 +1279,7 @@ export class RepsolContractCreate implements OnInit {
 
     this.addIfFilled(payload, 'potencia', this.getContractPowerValue());
 
-    const gasLevel =
-      this.contractForm.escalao === OTHER_GAS_LEVEL
-        ? this.customGasLevel
-        : this.contractForm.escalao;
+    const gasLevel = this.getContractGasLevelValue();
 
     this.addIfFilled(payload, 'escalao', gasLevel);
 
@@ -1246,11 +1289,25 @@ export class RepsolContractCreate implements OnInit {
   }
 
   private getContractPowerValue(): string | number | null {
-    if (this.contractForm.potencia === OTHER_POWER) {
-      return this.customPower;
+    const value = this.contractForm.potencia.trim();
+
+    return value ? value.replace(',', '.') : null;
+  }
+
+  private getContractGasLevelValue(): number | null {
+    return this.parseGasLevel(this.gasLevelInput);
+  }
+
+  private parseGasLevel(value: string): number | null {
+    const normalized = value.trim().replace(',', '.');
+
+    if (!normalized) {
+      return null;
     }
 
-    return this.contractForm.potencia;
+    const parsed = Number(normalized);
+
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   private buildAddress(

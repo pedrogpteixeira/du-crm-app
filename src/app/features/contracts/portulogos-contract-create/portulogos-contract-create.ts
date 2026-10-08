@@ -51,8 +51,6 @@ import { ContractLayout, PreferencesService } from '../../../core/services/prefe
 import {
   ELECTRICITY_POWERS,
   GAS_LEVELS,
-  OTHER_GAS_LEVEL,
-  OTHER_POWER,
 } from '../../../core/constants/energy';
 
 type TipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
@@ -66,7 +64,7 @@ type TipoContratacao =
 
 type MoradaFaturacaoSelecao = 'Igual à de Instalação' | 'Outra';
 
-type ContractPowerSelection = string | typeof OTHER_POWER;
+type ContractPowerSelection = string;
 
 interface AssignableContractTeam {
   id: string;
@@ -82,13 +80,15 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-portulogos-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone, ContractPreflightModal],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone, ContractPreflightModal],
   templateUrl: './portulogos-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './portulogos-contract-create.scss',
@@ -183,14 +183,10 @@ export class PortulogosContractCreate implements OnInit {
 
   readonly availablePowers = ELECTRICITY_POWERS;
 
-  readonly otherPowerValue = OTHER_POWER;
 
   readonly availableGasLevels = GAS_LEVELS;
 
-  readonly otherGasLevelValue = OTHER_GAS_LEVEL;
 
-  customGasLevel: number | null = null;
-  customPower: number | null = null;
 
   campaignSelectionMode: 'existing' | 'other' = 'existing';
 
@@ -282,7 +278,7 @@ export class PortulogosContractCreate implements OnInit {
 
     potencia: '' as ContractPowerSelection,
 
-    escalao: null as number | typeof OTHER_GAS_LEVEL | null,
+    escalao: null as number | null,
 
     cicloHorario: '',
     nivelTensao: '',
@@ -799,10 +795,7 @@ export class PortulogosContractCreate implements OnInit {
         cpe: this.contractForm.cpe,
         cui: this.contractForm.cui,
         potencia: this.getContractPowerValue(),
-        escalao:
-          this.contractForm.escalao === OTHER_GAS_LEVEL
-            ? this.customGasLevel
-            : this.contractForm.escalao,
+        escalao: this.contractForm.escalao,
         cicloHorario: this.contractForm.cicloHorario,
       });
 
@@ -840,6 +833,7 @@ export class PortulogosContractCreate implements OnInit {
       {
         validateCpe: this.isProLayout() && this.shouldShowLuzFields(),
         validateCui: this.isProLayout() && this.shouldShowGasFields(),
+        ibanMode: 'international',
       },
     );
 
@@ -1034,7 +1028,6 @@ export class PortulogosContractCreate implements OnInit {
       this.contractForm.potencia = '';
       this.contractForm.cicloHorario = '';
       this.contractForm.nivelTensao = '';
-      this.customPower = null;
     }
 
     if (this.shouldShowGasFields()) {
@@ -1044,7 +1037,6 @@ export class PortulogosContractCreate implements OnInit {
     } else {
       this.contractForm.cui = '';
       this.contractForm.escalao = null;
-      this.customGasLevel = null;
     }
   }
 
@@ -1060,9 +1052,6 @@ export class PortulogosContractCreate implements OnInit {
     return this.contractForm.moradaFaturacaoSelecao === 'Outra';
   }
 
-  formatPowerValue(power: number): string {
-    return power.toFixed(2);
-  }
 
   private buildContractPayload(): CreatePortulogosContractRequest {
     if (!this.client) {
@@ -1233,12 +1222,7 @@ export class PortulogosContractCreate implements OnInit {
 
     this.addIfFilled(payload, 'potencia', this.getContractPowerValue());
 
-    const gasLevel =
-      this.contractForm.escalao === OTHER_GAS_LEVEL
-        ? this.customGasLevel
-        : this.contractForm.escalao;
-
-    this.addIfFilled(payload, 'escalao', gasLevel);
+    this.addIfFilled(payload, 'escalao', this.contractForm.escalao);
 
     this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
 
@@ -1246,11 +1230,9 @@ export class PortulogosContractCreate implements OnInit {
   }
 
   private getContractPowerValue(): string | number | null {
-    if (this.contractForm.potencia === OTHER_POWER) {
-      return this.customPower;
-    }
+    const value = this.contractForm.potencia.trim();
 
-    return this.contractForm.potencia;
+    return value ? value.replace(',', '.') : null;
   }
 
   private buildAddress(

@@ -53,12 +53,14 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-iberdrola-solar-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone],
+  imports: [
+    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone],
   templateUrl: './iberdrola-solar-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './iberdrola-solar-contract-create.scss',

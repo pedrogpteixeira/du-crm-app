@@ -193,15 +193,12 @@
               <label>
                 Controle de Qualidade
 
-                <select
+                <app-editable-select-combobox
                   *ngIf="isEditing && canManageQualityControl(); else qualidadeView"
                   [(ngModel)]="editForm.controleQualidade"
-                >
-                  <option value="">Sem seleção</option>
-                  <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
+                  [options]="qualityControlBackofficeOptions"
+                  emptyOptionLabel="Sem seleção"
+                />
 
                 <ng-template #qualidadeView>
                   <strong>
@@ -619,12 +616,11 @@
                   inputmode="numeric"
                   maxlength="9"
                   pattern="[0-9]{9}"
-                  placeholder="9 dígitos"
                   (input)="onPhoneInput($event)"
                   *ngIf="isEditing; else telefoneView"
                   type="tel"
                   [(ngModel)]="editForm.telefone"
-                  appContractMask="phone"
+                  appContractMask="phone" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #telefoneView>
@@ -641,7 +637,7 @@
                   *ngIf="isEditing; else emailView"
                   type="email"
                   [(ngModel)]="editForm.email"
-                  appContractMask="email"
+                  appContractMask="email" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #emailView>
@@ -670,7 +666,7 @@
                   *ngIf="isEditing; else crcView"
                   type="text"
                   [(ngModel)]="editForm.crc"
-                  appContractMask="crc"
+                  appContractMask="crc" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #crcView>
@@ -789,7 +785,7 @@
                   *ngIf="isEditing; else ibanView"
                   type="text"
                   [(ngModel)]="editForm.iban"
-                  appContractMask="iban"
+                  appContractMask="ibanInternational" appContractMaskPlaceholder=""
                 />
 
                 <ng-template #ibanView>
@@ -896,10 +892,9 @@
                   <input
                     *ngIf="isEditing; else cpeView"
                     type="text"
-                    placeholder="PT 0002 123456789012 AA"
                     [(ngModel)]="editForm.cpe"
                     [required]="shouldShowLuzFields()"
-                    appContractMask="cpe"
+                    appContractMask="cpe" appContractMaskPlaceholder=""
                   />
 
                   <ng-template #cpeView>
@@ -912,19 +907,13 @@
                 <label>
                   Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
-                  <ng-container *ngIf="isEditing; else potenciaView">
-                    <input
-                      type="text"
-                      list="yes-energy-detail-power-options"
-                      [(ngModel)]="editForm.potencia"
-                      [required]="shouldShowLuzFields()"
-                      placeholder="Selecionar ou escrever"
-                    />
-
-                    <datalist id="yes-energy-detail-power-options">
-                      <option *ngFor="let option of powerSuggestions" [value]="option"></option>
-                    </datalist>
-                  </ng-container>
+                  <app-editable-select-combobox
+                    *ngIf="isEditing; else potenciaView"
+                    [(ngModel)]="editForm.potencia"
+                    [options]="powerSuggestions"
+                    [required]="shouldShowLuzFields()"
+                    inputMode="decimal"
+                  />
 
                   <ng-template #potenciaView>
                     <strong>{{ getValue(contract.potencia) }}</strong>
@@ -934,17 +923,13 @@
                 <label>
                   Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
-                  <select
+                  <app-editable-select-combobox
                     *ngIf="isEditing; else cicloView"
                     [(ngModel)]="editForm.cicloHorario"
+                    [options]="cicloHorarioOptions"
+                    emptyOptionLabel="Sem valor"
                     [required]="shouldShowLuzFields()"
-                  >
-                    <option value="" disabled>Selecionar ciclo horário</option>
-
-                    <option *ngFor="let option of cicloHorarioOptions" [value]="option">
-                      {{ option }}
-                    </option>
-                  </select>
+                  />
 
                   <ng-template #cicloView>
                     <strong>{{ getValue(contract.cicloHorario) }}</strong>
@@ -954,13 +939,12 @@
                 <label>
                   Nível Tensão
 
-                  <select *ngIf="isEditing; else tensaoView" [(ngModel)]="editForm.nivelTensao">
-                    <option value="">Sem valor</option>
-
-                    <option *ngFor="let option of nivelTensaoOptions" [value]="option">
-                      {{ option }}
-                    </option>
-                  </select>
+                  <app-editable-select-combobox
+                    *ngIf="isEditing; else tensaoView"
+                    [(ngModel)]="editForm.nivelTensao"
+                    [options]="nivelTensaoOptions"
+                    emptyOptionLabel="Sem valor"
+                  />
 
                   <ng-template #tensaoView>
                     <strong>{{ getValue(contract.nivelTensao) }}</strong>
@@ -980,10 +964,9 @@
                   <input
                     *ngIf="isEditing; else cuiView"
                     type="text"
-                    placeholder="PT 1601 12345678 AA"
                     [(ngModel)]="editForm.cui"
                     [required]="shouldShowGasFields()"
-                    appContractMask="cui"
+                    appContractMask="cui" appContractMaskPlaceholder=""
                   />
 
                   <ng-template #cuiView>
@@ -996,19 +979,13 @@
                 <label>
                   Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
-                  <ng-container *ngIf="isEditing; else escalaoView">
-                    <input
-                      type="text"
-                      list="yes-energy-detail-gas-level-options"
-                      [(ngModel)]="editForm.escalao"
-                      [required]="shouldShowGasFields()"
-                      placeholder="Selecionar ou escrever"
-                    />
-
-                    <datalist id="yes-energy-detail-gas-level-options">
-                      <option *ngFor="let option of gasLevelSuggestions" [value]="option"></option>
-                    </datalist>
-                  </ng-container>
+                  <app-editable-select-combobox
+                    *ngIf="isEditing; else escalaoView"
+                    [(ngModel)]="editForm.escalao"
+                    [options]="gasLevelSuggestions"
+                    [required]="shouldShowGasFields()"
+                    inputMode="decimal"
+                  />
 
                   <ng-template #escalaoView>
                     <strong>{{ getValue(contract.escalao) }}</strong>
@@ -1120,7 +1097,6 @@
             [internal]="true"
             [canSubmit]="canEditContract && canAccessInternalObservations && !isSaving"
             [isSubmitting]="isSubmittingInternalObservation || isSaving"
-            placeholder="Escrever uma observação interna..."
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>

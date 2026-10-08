@@ -1,8 +1,17 @@
-export type ContractFieldMask = 'crc' | 'iban' | 'cpe' | 'cui' | 'postalCode' | 'phone' | 'email';
+export type ContractFieldMask =
+  | 'crc'
+  | 'iban'
+  | 'ibanInternational'
+  | 'cpe'
+  | 'cui'
+  | 'postalCode'
+  | 'phone'
+  | 'email';
 
 export interface ContractFormValidationOptions {
   validateCpe?: boolean;
   validateCui?: boolean;
+  ibanMode?: 'portuguese' | 'international';
 }
 
 const CPE_PREFIX = 'PT 0002';
@@ -35,6 +44,15 @@ export function formatPortugueseIban(value: unknown): string {
   const withoutCountry = raw.startsWith('PT') ? raw.slice(2) : raw;
   const digits = digitsOnly(withoutCountry).slice(0, 23);
   const compact = `PT${digits}`;
+
+  return compact.match(/.{1,4}/g)?.join(' ') ?? compact;
+}
+
+export function formatInternationalIban(value: unknown): string {
+  const compact = String(value ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 34);
 
   return compact.match(/.{1,4}/g)?.join(' ') ?? compact;
 }
@@ -97,6 +115,8 @@ export function formatContractField(mask: ContractFieldMask, value: unknown): st
       return formatCrc(value);
     case 'iban':
       return formatPortugueseIban(value);
+    case 'ibanInternational':
+      return formatInternationalIban(value);
     case 'cpe':
       return formatCpe(value);
     case 'cui':
@@ -118,6 +138,31 @@ export function isValidCrc(value: unknown): boolean {
 export function isValidPortugueseIban(value: unknown): boolean {
   const normalized = formatPortugueseIban(value);
   return /^PT\d{2}(?: \d{4}){5} \d$/.test(normalized);
+}
+
+export function isValidInternationalIban(value: unknown): boolean {
+  const compact = String(value ?? '')
+    .toUpperCase()
+    .replace(/\s/g, '');
+
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(compact)) {
+    return false;
+  }
+
+  const rearranged = `${compact.slice(4)}${compact.slice(0, 4)}`;
+  let remainder = 0;
+
+  for (const character of rearranged) {
+    const numericValue = /\d/.test(character)
+      ? character
+      : String(character.charCodeAt(0) - 55);
+
+    for (const digit of numericValue) {
+      remainder = (remainder * 10 + Number(digit)) % 97;
+    }
+  }
+
+  return remainder === 1;
 }
 
 export function isValidCpe(value: unknown): boolean {
@@ -168,8 +213,18 @@ export function getContractFormValidationError(
     return 'O CRC deve seguir o formato 1234-5678-9012.';
   }
 
-  if (hasValue(form['iban']) && !isValidPortugueseIban(form['iban'])) {
-    return 'O IBAN deve seguir o formato PT50 0033 0000 1234 5678 9012 3.';
+  if (hasValue(form['iban'])) {
+    const ibanMode = options.ibanMode ?? 'portuguese';
+    const ibanIsValid =
+      ibanMode === 'international'
+        ? isValidInternationalIban(form['iban'])
+        : isValidPortugueseIban(form['iban']);
+
+    if (!ibanIsValid) {
+      return ibanMode === 'international'
+        ? 'Indique um IBAN válido.'
+        : 'O IBAN deve seguir o formato PT50 0033 0000 1234 5678 9012 3.';
+    }
   }
 
   const installationPostalCode = form['moradaInstalacaoCodigoPostal'];

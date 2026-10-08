@@ -3,6 +3,7 @@ import {
   formatCrc,
   formatCui,
   formatPhone,
+  formatInternationalIban,
   formatPortugueseIban,
   formatPostalCode,
   getContractFormValidationError,
@@ -11,6 +12,7 @@ import {
   isValidCui,
   isValidEmail,
   isValidPhone,
+  isValidInternationalIban,
   isValidPortugueseIban,
   isValidPostalCode,
 } from './contract-field-formatting';
@@ -27,6 +29,14 @@ describe('contract field formatting', () => {
       'PT50 0033 0000 1234 5678 9012 3',
     );
     expect(isValidPortugueseIban('PT50 0033 0000 1234 5678 9012 3')).toBeTrue();
+  });
+
+  it('formats and validates international IBANs without forcing PT', () => {
+    expect(formatInternationalIban('DE89370400440532013000')).toBe(
+      'DE89 3704 0044 0532 0130 00',
+    );
+    expect(isValidInternationalIban('DE89 3704 0044 0532 0130 00')).toBeTrue();
+    expect(isValidInternationalIban('DE89 3704 0044 0532 0130 01')).toBeFalse();
   });
 
   it('forces the CPE prefix and accepts complete or suffix-only pasted values', () => {
@@ -46,6 +56,19 @@ describe('contract field formatting', () => {
     expect(isValidCui('PT 1601 12345678 AA')).toBeTrue();
     expect(isValidPostalCode('4510-507')).toBeTrue();
     expect(isValidPhone('912345678')).toBeTrue();
+  });
+
+  it('uses international IBAN validation only when explicitly requested', () => {
+    expect(
+      getContractFormValidationError(
+        { iban: 'DE89 3704 0044 0532 0130 00' },
+        { ibanMode: 'international' },
+      ),
+    ).toBeNull();
+
+    expect(getContractFormValidationError({ iban: 'DE89 3704 0044 0532 0130 00' })).toBe(
+      'O IBAN deve seguir o formato PT50 0033 0000 1234 5678 9012 3.',
+    );
   });
 
   it('validates emails and returns readable field errors', () => {

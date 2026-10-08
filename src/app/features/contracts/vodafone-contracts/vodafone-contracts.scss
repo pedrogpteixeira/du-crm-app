@@ -196,29 +196,17 @@
   white-space: nowrap;
 }
 
-.status-call-request {
-  background: #0097b2;
-}
 
 .status-validation {
   background: #2563eb;
 }
 
-.status-non-compliance {
-  background: #f59e0b;
-}
 
 .status-docs {
   background: #f59e0b;
 }
 
-.status-docs-sent {
-  background: #0f766e;
-}
 
-.status-vodafone-registration {
-  background: #7c3aed;
-}
 
 .status-cancelled {
   background: #dc2626;
@@ -228,9 +216,6 @@
   background: #16a34a;
 }
 
-.status-low {
-  background: #64748b;
-}
 
 /* =========================
    KANBAN
@@ -378,29 +363,17 @@
    KANBAN STATUS HEADERS
 ========================= */
 
-.kanban-column-header.status-call-request {
-  background: #0097b2;
-}
 
 .kanban-column-header.status-validation {
   background: #2563eb;
 }
 
-.kanban-column-header.status-non-compliance {
-  background: #f59e0b;
-}
 
 .kanban-column-header.status-docs {
   background: #f59e0b;
 }
 
-.kanban-column-header.status-docs-sent {
-  background: #0f766e;
-}
 
-.kanban-column-header.status-vodafone-registration {
-  background: #7c3aed;
-}
 
 .kanban-column-header.status-cancelled {
   background: #dc2626;
@@ -410,9 +383,6 @@
   background: #16a34a;
 }
 
-.kanban-column-header.status-low {
-  background: #64748b;
-}
 
 /* =========================
    TABLE PAGINATION

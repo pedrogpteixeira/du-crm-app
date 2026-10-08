@@ -9,7 +9,7 @@ import { Auth } from '../../../core/services/auth';
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 import {
-  VODAFONE_CONTRACT_STATUSES,
+  VODAFONE_STATES,
   VodafoneContractList,
   VodafoneContractService,
   VodafoneContractStatus,
@@ -85,10 +85,7 @@ export class VodafoneContracts implements OnInit {
   }
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
-  readonly statuses: VodafoneContractStatus[] = [
-    ...VODAFONE_CONTRACT_STATUSES.filter((status) => status !== 'Anulado'),
-    'Anulado',
-  ];
+  readonly statuses: VodafoneContractStatus[] = [...VODAFONE_STATES];
 
   ngOnInit(): void {
     this.refreshFilterFields();
@@ -352,20 +349,16 @@ export class VodafoneContracts implements OnInit {
       });
   }
 
-  getStatusClass(status: VodafoneContractStatus): string {
-    const classes: Record<VodafoneContractStatus, string> = {
-      'Pedido de Chamada': 'status-call-request',
+  getStatusClass(status: string): string {
+    const classes: Record<string, string> = {
       'Em validação': 'status-validation',
-      'Não Conformidade': 'status-non-compliance',
-      'Pendente Docs': 'status-docs',
-      'Documentos Enviados': 'status-docs-sent',
-      'Registo VODAFONE': 'status-vodafone-registration',
-      Anulado: 'status-cancelled',
+      'Sem efeito': 'status-cancelled',
+      Pendente: 'status-docs',
       Ativo: 'status-active',
-      Baixa: 'status-low',
+      Anulado: 'status-cancelled',
     };
 
-    return classes[status];
+    return classes[status] ?? '';
   }
 
   setViewMode(mode: 'table' | 'kanban'): void {

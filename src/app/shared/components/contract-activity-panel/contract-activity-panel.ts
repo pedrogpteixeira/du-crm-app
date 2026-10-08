@@ -44,6 +44,7 @@ export class ContractActivityPanel implements OnChanges {
   @Input() companyId = '';
   @Input() statusOptions: readonly string[] | null | undefined = [];
   @Input() canCreateTicket = true;
+  @Input() showTickets = true;
 
   activeTab: ContractActivityTab = 'flow';
   isCreateTicketModalOpen = false;
@@ -54,6 +55,12 @@ export class ContractActivityPanel implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['canCreateTicket'] && !this.canCreateTicket) {
       this.isCreateTicketModalOpen = false;
+    }
+
+    if (changes['showTickets'] && !this.showTickets) {
+      this.activeTab = 'flow';
+      this.isCreateTicketModalOpen = false;
+      this.ticketCreateFeedback = '';
     }
   }
 
@@ -87,6 +94,10 @@ export class ContractActivityPanel implements OnChanges {
   }
 
   setActiveTab(tab: ContractActivityTab): void {
+    if (tab === 'tickets' && !this.showTickets) {
+      return;
+    }
+
     this.activeTab = tab;
   }
 
@@ -177,7 +188,7 @@ export class ContractActivityPanel implements OnChanges {
   }
 
   openCreateTicketModal(): void {
-    if (!this.canCreateTicket || !this.contractId || !this.companyId) {
+    if (!this.showTickets || !this.canCreateTicket || !this.contractId || !this.companyId) {
       return;
     }
 
@@ -191,7 +202,7 @@ export class ContractActivityPanel implements OnChanges {
 
   onTicketCreated(result: TicketCreateModalResult): void {
     this.isCreateTicketModalOpen = false;
-    this.activeTab = 'tickets';
+    this.activeTab = this.showTickets ? 'tickets' : 'flow';
 
     if (result.attachmentUploadFailed) {
       this.ticketCreateFeedbackType = 'warning';

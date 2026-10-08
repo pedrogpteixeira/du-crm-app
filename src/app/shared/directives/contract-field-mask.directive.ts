@@ -23,6 +23,7 @@ export class ContractFieldMaskDirective implements AfterViewInit {
   });
 
   @Input({ required: true }) appContractMask!: ContractFieldMask;
+  @Input() appContractMaskPlaceholder: string | null = null;
 
   @HostBinding('attr.inputmode')
   get inputMode(): string | null {
@@ -38,11 +39,17 @@ export class ContractFieldMaskDirective implements AfterViewInit {
 
   @HostBinding('attr.placeholder')
   get placeholder(): string | null {
+    if (this.appContractMaskPlaceholder !== null) {
+      return this.appContractMaskPlaceholder;
+    }
+
     switch (this.appContractMask) {
       case 'crc':
         return '1234-5678-9012';
       case 'iban':
         return 'PT50 0033 0000 1234 5678 9012 3';
+      case 'ibanInternational':
+        return 'IBAN';
       case 'cpe':
         return 'PT 0002 123456789012 AA';
       case 'cui':
@@ -63,6 +70,8 @@ export class ContractFieldMaskDirective implements AfterViewInit {
         return 14;
       case 'iban':
         return 31;
+      case 'ibanInternational':
+        return 42;
       case 'cpe':
         return 25;
       case 'cui':

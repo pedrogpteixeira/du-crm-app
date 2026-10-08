@@ -183,15 +183,12 @@
         <label>
           Controle de Qualidade
 
-          <select
-            [(ngModel)]="contractForm.controleQualidade"
+          <app-editable-select-combobox
             [disabled]="!canManageQualityControl()"
-          >
-            <option value="">Sem seleção</option>
-            <option *ngFor="let option of qualityControlBackofficeOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
+            [(ngModel)]="contractForm.controleQualidade"
+            [options]="qualityControlBackofficeOptions"
+            emptyOptionLabel="Sem seleção"
+          />
         </label>
 
         <label>
@@ -314,13 +311,13 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" required appContractMask="phone" />
+          <input type="tel" [(ngModel)]="contractForm.telefone" required appContractMask="phone" appContractMaskPlaceholder="" />
         </label>
 
         <label>
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" />
+          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
         </label>
 
         <label>
@@ -332,7 +329,7 @@
         <label>
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" />
+          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
         </label>
       </div>
     </article>
@@ -377,7 +374,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -408,7 +405,7 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-              appContractMask="postalCode"
+              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -517,7 +514,6 @@
         <textarea
           rows="6"
           [(ngModel)]="contractForm.observacoes"
-          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>
@@ -533,7 +529,6 @@
         <textarea
           rows="6"
           [(ngModel)]="contractForm.observacoesInternas"
-          placeholder="Escreva a observação interna. A data, a hora e o seu nome serão adicionados automaticamente."
         ></textarea>
       </label>
     </article>

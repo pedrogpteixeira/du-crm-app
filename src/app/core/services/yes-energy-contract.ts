@@ -66,9 +66,11 @@ export type YesEnergyCicloHorario =
   | 'Bi-Horário Semanal'
   | 'Tri-Horário Diário'
   | 'Tri-Horário Semanal'
-  | 'Tetra-Horário';
+  | 'Tetra-Horário'
+  | (string & {});
 
-export type YesEnergyNivelTensao = 'Monofásico' | 'Trifásico';
+export type YesEnergyNivelTensao = 'Monofásico' | 'Trifásico'
+  | (string & {});
 
 export const YES_ENERGY_POWER_SUGGESTIONS = [
   '1.15',
