@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -14,11 +22,10 @@ import {
 
 import { Auth } from '../../../core/services/auth';
 import { IndexedEnergyAverageService } from '../../../core/services/indexed-energy-average';
-import { MibgasPrices } from '../mibgas-prices/mibgas-prices';
 
 @Component({
   selector: 'app-omie-averages',
-  imports: [CommonModule, ReactiveFormsModule, MibgasPrices],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './omie-averages.html',
   styleUrl: './omie-averages.scss',
 })
@@ -30,10 +37,10 @@ export class OmieAverages implements OnInit {
 
   private readonly indexedEnergyAverageService = inject(IndexedEnergyAverageService);
 
-  @ViewChild(MibgasPrices)
-  private mibgasPricesComponent?: MibgasPrices;
-
   isLoading = false;
+
+  @Output()
+  readonly loadingChange = new EventEmitter<boolean>();
   isSaving = false;
   private readonly toast = inject(ToastService);
 
@@ -91,10 +98,6 @@ export class OmieAverages implements OnInit {
     return role.toLowerCase().includes('super admin');
   }
 
-  get isRefreshing(): boolean {
-    return this.isLoading || !!this.mibgasPricesComponent?.isLoading;
-  }
-
   ngOnInit(): void {
     this.indexedEnergyAverageService.latestAveragesInvalidated$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -105,20 +108,15 @@ export class OmieAverages implements OnInit {
     this.loadAverages();
   }
 
-  refreshAll(): void {
-    this.loadAverages(true);
-    this.mibgasPricesComponent?.loadPrices(true);
-  }
-
   loadAverages(forceRefresh = false): void {
-    this.isLoading = true;
+    this.setLoading(true);
     this.errorMessage = '';
 
     this.indexedEnergyAverageService
       .getLatestAverages(forceRefresh)
       .pipe(
         finalize(() => {
-          this.isLoading = false;
+          this.setLoading(false);
           this.cdr.detectChanges();
         }),
       )
@@ -330,6 +328,15 @@ export class OmieAverages implements OnInit {
     return new Intl.DateTimeFormat('pt-PT', {
       month: 'long',
     }).format(new Date(2026, month - 1, 1));
+  }
+
+  private setLoading(value: boolean): void {
+    if (this.isLoading === value) {
+      return;
+    }
+
+    this.isLoading = value;
+    this.loadingChange.emit(value);
   }
 
   private showSuccess(message: string): void {

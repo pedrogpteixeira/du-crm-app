@@ -74,12 +74,12 @@
     <div class="detail-grid">
       <div class="main-column">
         <!-- =========================
-             1. TIPO DE SEGMENTO
+             1. DADOS DO CONTRATO
         ========================== -->
 
         <article class="card">
           <button type="button" class="section-toggle" (click)="toggleSection('contract')">
-            <span>Tipo de Segmento</span>
+            <span>Dados do Contrato</span>
 
             <span class="chevron" [class.collapsed]="collapsedSections.contract"> ⌄ </span>
           </button>
@@ -119,43 +119,20 @@
               </label>
 
               <label>
-                Tipo Contração LUZ
+                Contratação *
 
                 <select
-                  *ngIf="isEditing; else contratacaoLuzView"
-                  [(ngModel)]="editForm.tipoContratacaoLuz"
+                  *ngIf="isEditing; else contratacaoView"
+                  [(ngModel)]="editForm.contratacao"
                 >
-                  <option value="">Sem valor</option>
-
-                  <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
+                  <option *ngFor="let option of contratacaoOptions" [value]="option">
                     {{ option }}
                   </option>
                 </select>
 
-                <ng-template #contratacaoLuzView>
+                <ng-template #contratacaoView>
                   <strong>
-                    {{ getValue(contract.tipoContratacaoLuz) }}
-                  </strong>
-                </ng-template>
-              </label>
-
-              <label>
-                Tipo Contração Gás
-
-                <select
-                  *ngIf="isEditing; else contratacaoGasView"
-                  [(ngModel)]="editForm.tipoContratacaoGas"
-                >
-                  <option value="">Sem valor</option>
-
-                  <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
-
-                <ng-template #contratacaoGasView>
-                  <strong>
-                    {{ getValue(contract.tipoContratacaoGas) }}
+                    {{ contract.contratacao }}
                   </strong>
                 </ng-template>
               </label>
@@ -257,40 +234,78 @@
                   <ng-template #agendamentoView><strong>{{ formatDateTime(contract.agendamento) }}</strong></ng-template>
                 </label>
                 <label>
-                  Data Contrato
-                  <input *ngIf="isEditing; else dataContratoView" type="date" [(ngModel)]="editForm.dataContrato" />
-                  <ng-template #dataContratoView><strong>{{ formatDateOnly(contract.dataContrato) }}</strong></ng-template>
+                  Data de Assinatura
+                  <input *ngIf="isEditing; else dataAssinaturaView" type="date" [(ngModel)]="editForm.dataAssinatura" />
+                  <ng-template #dataAssinaturaView><strong>{{ formatDateOnly(contract.dataAssinatura) }}</strong></ng-template>
                 </label>
                 <label>
                   Data de Registo
                   <input *ngIf="isEditing; else dataRegistoView" type="date" [(ngModel)]="editForm.dataRegisto" />
                   <ng-template #dataRegistoView><strong>{{ formatDateOnly(contract.dataRegisto) }}</strong></ng-template>
                 </label>
-              </div>
-
-              <div class="status-sale-row status-sale-row--two">
                 <label>
-                  Data de Ativação CPE
-                  <input *ngIf="isEditing; else ativacaoCPEView" type="date" [(ngModel)]="editForm.dataAtivacaoCPE" />
-                  <ng-template #ativacaoCPEView><strong>{{ formatDateOnly(contract.dataAtivacaoCPE) }}</strong></ng-template>
+                  <span class="data-ativacao-label">
+                    Data de Ativação
+                    <span
+                      *ngIf="isDataAtivacaoRequired"
+                      class="data-ativacao-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
+                  <input
+                    *ngIf="isEditing; else dataAtivacaoView"
+                    class="data-ativacao-input"
+                    type="date"
+                    [(ngModel)]="editForm.dataAtivacao"
+                    [required]="isDataAtivacaoRequired"
+                    [attr.aria-invalid]="isDataAtivacaoMissing ? 'true' : null"
+                    [attr.aria-describedby]="isDataAtivacaoMissing ? 'vodafone-data-ativacao-error' : null"
+                  />
+                  <ng-template #dataAtivacaoView>
+                    <strong [class.data-ativacao-missing-value]="isDataAtivacaoMissing">
+                      {{ isDataAtivacaoMissing ? 'Em falta' : formatDateOnly(contract.dataAtivacao) }}
+                    </strong>
+                  </ng-template>
+                  <small
+                    *ngIf="isDataAtivacaoMissing"
+                    id="vodafone-data-ativacao-error"
+                    class="data-ativacao-validation-message"
+                  >
+                    A Data de Ativação é obrigatória para o estado Ativo.
+                  </small>
                 </label>
                 <label>
-                  Data de Ativação CUI
-                  <input *ngIf="isEditing; else ativacaoCUIView" type="date" [(ngModel)]="editForm.dataAtivacaoCUI" />
-                  <ng-template #ativacaoCUIView><strong>{{ formatDateOnly(contract.dataAtivacaoCUI) }}</strong></ng-template>
-                </label>
-              </div>
-
-              <div class="status-sale-row status-sale-row--two">
-                <label>
-                  Data Baixa CPE
-                  <input *ngIf="isEditing; else baixaCPEView" type="date" [(ngModel)]="editForm.dataBaixaCPE" />
-                  <ng-template #baixaCPEView><strong>{{ formatDateOnly(contract.dataBaixaCPE) }}</strong></ng-template>
-                </label>
-                <label>
-                  Data Baixa CUI
-                  <input *ngIf="isEditing; else baixaCUIView" type="date" [(ngModel)]="editForm.dataBaixaCUI" />
-                  <ng-template #baixaCUIView><strong>{{ formatDateOnly(contract.dataBaixaCUI) }}</strong></ng-template>
+                  <span class="data-baixa-label">
+                    Data de Baixa
+                    <span
+                      *ngIf="isDataBaixaRequired"
+                      class="data-baixa-required-marker"
+                      aria-hidden="true"
+                      >*</span
+                    >
+                  </span>
+                  <input
+                    *ngIf="isEditing; else dataBaixaView"
+                    class="data-baixa-input"
+                    type="date"
+                    [(ngModel)]="editForm.dataBaixa"
+                    [required]="isDataBaixaRequired"
+                    [attr.aria-invalid]="isDataBaixaMissing ? 'true' : null"
+                    [attr.aria-describedby]="isDataBaixaMissing ? 'vodafone-data-baixa-error' : null"
+                  />
+                  <ng-template #dataBaixaView>
+                    <strong [class.data-baixa-missing-value]="isDataBaixaMissing">
+                      {{ isDataBaixaMissing ? 'Em falta' : formatDateOnly(contract.dataBaixa) }}
+                    </strong>
+                  </ng-template>
+                  <small
+                    *ngIf="isDataBaixaMissing"
+                    id="vodafone-data-baixa-error"
+                    class="data-baixa-validation-message"
+                  >
+                    A Data de Baixa é obrigatória para o estado Anulado.
+                  </small>
                 </label>
               </div>
             </div>
@@ -486,25 +501,6 @@
               </label>
 
               <label>
-                Tarifa Social
-
-                <select
-                  *ngIf="isEditing; else tarifaSocialView"
-                  [(ngModel)]="editForm.tarifaSocial"
-                >
-                  <option [ngValue]="false">Não</option>
-
-                  <option [ngValue]="true">Sim</option>
-                </select>
-
-                <ng-template #tarifaSocialView>
-                  <strong>
-                    {{ formatBoolean(contract.tarifaSocial) }}
-                  </strong>
-                </ng-template>
-              </label>
-
-              <label>
                 Débito Direto
 
                 <select
@@ -544,17 +540,17 @@
         </article>
 
         <!-- =========================
-             5. DADOS PRODUTO
+             5. DADOS COMERCIAIS
         ========================== -->
 
         <article class="card">
-          <button type="button" class="section-toggle" (click)="toggleSection('energy')">
-            <span>Dados Produto</span>
+          <button type="button" class="section-toggle" (click)="toggleSection('commercial')">
+            <span>Dados Comerciais</span>
 
-            <span class="chevron" [class.collapsed]="collapsedSections.energy"> ⌄ </span>
+            <span class="chevron" [class.collapsed]="collapsedSections.commercial"> ⌄ </span>
           </button>
 
-          <div class="section-content" *ngIf="!collapsedSections.energy">
+          <div class="section-content" *ngIf="!collapsedSections.commercial">
             <div class="info-grid">
               <label *ngIf="isEditing">
                 Tipo de campanha *
@@ -623,42 +619,6 @@
                     {{ getValue(contract.antigaComercializadora) }}
                   </strong>
                 </ng-template>
-              </label>
-
-              <label>
-                CPE
-                <input *ngIf="isEditing; else cpeView" type="text" [(ngModel)]="editForm.cpe" appContractMask="cpe" appContractMaskPlaceholder="" />
-                <ng-template #cpeView><strong>{{ getValue(contract.cpe) }}</strong></ng-template>
-              </label>
-
-              <label>
-                CUI
-                <input *ngIf="isEditing; else cuiView" type="text" [(ngModel)]="editForm.cui" appContractMask="cui" appContractMaskPlaceholder="" />
-                <ng-template #cuiView><strong>{{ getValue(contract.cui) }}</strong></ng-template>
-              </label>
-
-              <label>
-                Potência
-                <app-editable-select-combobox *ngIf="isEditing; else potenciaView" [(ngModel)]="editForm.potencia" [options]="powerSuggestions" inputMode="decimal" />
-                <ng-template #potenciaView><strong>{{ getValue(contract.potencia) }}</strong></ng-template>
-              </label>
-
-              <label>
-                Escalão
-                <app-editable-select-combobox *ngIf="isEditing; else escalaoView" [(ngModel)]="editForm.escalao" [options]="gasLevelSuggestions" inputMode="decimal" />
-                <ng-template #escalaoView><strong>{{ getValue(contract.escalao) }}</strong></ng-template>
-              </label>
-
-              <label>
-                Ciclo Horário
-                <app-editable-select-combobox *ngIf="isEditing; else cicloView" [(ngModel)]="editForm.cicloHorario" [options]="cicloHorarioOptions" emptyOptionLabel="Sem valor" />
-                <ng-template #cicloView><strong>{{ getValue(contract.cicloHorario) }}</strong></ng-template>
-              </label>
-
-              <label>
-                Nível Tensão
-                <app-editable-select-combobox *ngIf="isEditing; else tensaoView" [(ngModel)]="editForm.nivelTensao" [options]="nivelTensaoOptions" emptyOptionLabel="Sem valor" />
-                <ng-template #tensaoView><strong>{{ getValue(contract.nivelTensao) }}</strong></ng-template>
               </label>
             </div>
           </div>

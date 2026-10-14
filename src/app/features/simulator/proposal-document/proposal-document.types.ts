@@ -1,5 +1,7 @@
 import {
   InvoiceComparisonOffer,
+  SimulationCalculationProfile,
+  SimulationCommercialContext,
   SimulationDiscountConditions,
 } from '../../../core/services/simulator';
 
@@ -28,6 +30,13 @@ export interface ProposalCurrent {
   days: number;
 }
 
+export interface ProposalComparisonMeta {
+  periodDays?: number | null;
+  normalizedMonthDays?: number | null;
+  normalizedYearMonths?: number | null;
+  methodology?: string;
+}
+
 export interface ProposalData {
   offer: InvoiceComparisonOffer;
   current: ProposalCurrent;
@@ -37,4 +46,12 @@ export interface ProposalData {
 
   discountConditions?:
     SimulationDiscountConditions;
+
+  commercialContext?:
+    SimulationCommercialContext | null;
+
+  comparisonMeta?: ProposalComparisonMeta | null;
+
+  calculationProfile?:
+    SimulationCalculationProfile | null;
 }

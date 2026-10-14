@@ -1,0 +1,266 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.market-regulatory-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  h1 {
+    margin: 4px 0 6px;
+    color: #243646;
+    font-size: 32px;
+    line-height: 1.15;
+  }
+
+  p {
+    margin: 0;
+    max-width: 760px;
+    color: #64748b;
+    font-size: 15px;
+  }
+}
+
+.breadcrumb {
+  color: #008db1;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.refresh-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 20px;
+  background: #00b894;
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .material-symbols-rounded {
+    font-size: 19px;
+  }
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+.pricing-context {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: #f8fbff;
+
+  > .material-symbols-rounded {
+    color: #008db1;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+}
+
+.dataset-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: #fff;
+  scrollbar-width: thin;
+
+  button {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    border: 0;
+    border-radius: 13px;
+    padding: 9px 14px;
+    background: transparent;
+    color: #64748b;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #243646;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+
+    &.active {
+      background: #e6f8f4;
+      color: #008f78;
+    }
+
+    &.pending:not(.active) {
+      color: #94a3b8;
+    }
+
+    .material-symbols-rounded {
+      font-size: 19px;
+    }
+
+    small {
+      border-radius: 999px;
+      padding: 2px 6px;
+      background: #fff7ed;
+      color: #c2410c;
+      font-size: 9px;
+      letter-spacing: 0.04em;
+    }
+  }
+}
+
+.tab-content {
+  min-width: 0;
+
+  > [hidden] {
+    display: none !important;
+  }
+}
+
+.pending-dataset {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-height: 180px;
+  padding: 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 20px;
+  background: #fff;
+
+  > .material-symbols-rounded {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    color: #243646;
+    font-size: 21px;
+  }
+
+  p {
+    margin: 0;
+    max-width: 820px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+:host-context(html[data-theme='dark']) {
+  .page-header h1,
+  .pricing-context strong,
+  .pending-dataset h2 {
+    color: #e5edf4;
+  }
+
+  .page-header p,
+  .pricing-context p,
+  .pending-dataset p {
+    color: #94a3b8;
+  }
+
+  .pricing-context,
+  .dataset-tabs,
+  .pending-dataset {
+    border-color: #334155;
+    background: #16212c;
+  }
+
+  .dataset-tabs button {
+    color: #94a3b8;
+
+    &:hover {
+      background: #22303d;
+      color: #e5edf4;
+    }
+
+    &.active {
+      background: rgba(0, 184, 148, 0.15);
+      color: #5eead4;
+    }
+  }
+
+  .pending-dataset > .material-symbols-rounded {
+    background: #22303d;
+    color: #94a3b8;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .page-header h1 {
+    font-size: 27px;
+  }
+
+  .refresh-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pending-dataset {
+    padding: 18px;
+  }
+}

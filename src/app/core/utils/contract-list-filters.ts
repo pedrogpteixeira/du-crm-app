@@ -80,6 +80,23 @@ export interface EnergyContractFilters extends BaseContractFilters {
   voltage: string;
 }
 
+export interface VodafoneContractFilters extends BaseContractFilters {
+  contracting: string;
+  scheduledFrom: string;
+  scheduledTo: string;
+  signatureFrom: string;
+  signatureTo: string;
+  registrationDateFrom: string;
+  registrationDateTo: string;
+  cae: string;
+  crc: string;
+  electronicInvoice: ContractBooleanFilter;
+  directDebit: ContractBooleanFilter;
+  iban: string;
+  campaign: string;
+  previousProvider: string;
+}
+
 export interface SolarContractFilters extends BaseContractFilters {
   contracting: string;
   scheduledFrom: string;
@@ -226,6 +243,26 @@ export function createEnergyContractFilters(): EnergyContractFilters {
     gasLevel: '',
     cycle: '',
     voltage: '',
+  };
+}
+
+export function createVodafoneContractFilters(): VodafoneContractFilters {
+  return {
+    ...createBaseContractFilters(),
+    contracting: '',
+    scheduledFrom: '',
+    scheduledTo: '',
+    signatureFrom: '',
+    signatureTo: '',
+    registrationDateFrom: '',
+    registrationDateTo: '',
+    cae: '',
+    crc: '',
+    electronicInvoice: '',
+    directDebit: '',
+    iban: '',
+    campaign: '',
+    previousProvider: '',
   };
 }
 
@@ -467,6 +504,9 @@ export interface EnergyFilterFieldOptions {
   includeCitizenCard?: boolean;
   includeSva?: boolean;
   includeSocialTariff?: boolean;
+  includeEnergyContracting?: boolean;
+  includeSupplyPointFields?: boolean;
+  includeSupplyPointDates?: boolean;
 }
 
 export interface SolarFilterFieldOptions {
@@ -539,21 +579,26 @@ export function buildEnergyContractFilterFields(
   const contractInsertIndex = fields.findIndex((item) => item.group === 'Datas do sistema');
   const contractFields: ContractFilterFieldDefinition[] = [
     field('contracting', 'Contratação', 'contratacao__contains', 'search', 'Contrato'),
-    field(
-      'lightContracting',
-      'Tipo contratação Luz',
-      'tipoContratacaoLuz__contains',
-      'search',
-      'Contrato',
-    ),
-    field(
-      'gasContracting',
-      'Tipo contratação Gás',
-      'tipoContratacaoGas__contains',
-      'search',
-      'Contrato',
-    ),
   ];
+
+  if (options.includeEnergyContracting !== false) {
+    contractFields.push(
+      field(
+        'lightContracting',
+        'Tipo contratação Luz',
+        'tipoContratacaoLuz__contains',
+        'search',
+        'Contrato',
+      ),
+      field(
+        'gasContracting',
+        'Tipo contratação Gás',
+        'tipoContratacaoGas__contains',
+        'search',
+        'Contrato',
+      ),
+    );
+  }
 
   if (options.includeCitizenCard) {
     contractFields.push(
@@ -586,14 +631,19 @@ export function buildEnergyContractFilterFields(
       'search',
       'Comercial / Energia',
     ),
-    field('cpe', 'CPE', 'cpe__contains', 'search', 'Comercial / Energia'),
-    field('cui', 'CUI', 'cui__contains', 'search', 'Comercial / Energia'),
-    numberField('powerMin', 'Potência mín.', 'potencia__gte', 'Comercial / Energia'),
-    numberField('powerMax', 'Potência máx.', 'potencia__lte', 'Comercial / Energia'),
-    field('gasLevel', 'Escalão', 'escalao__eq', 'search', 'Comercial / Energia'),
-    field('cycle', 'Ciclo horário', 'cicloHorario__contains', 'search', 'Comercial / Energia'),
-    field('voltage', 'Nível de tensão', 'nivelTensao__contains', 'search', 'Comercial / Energia'),
   ];
+
+  if (options.includeSupplyPointFields !== false) {
+    commercialFields.push(
+      field('cpe', 'CPE', 'cpe__contains', 'search', 'Comercial / Energia'),
+      field('cui', 'CUI', 'cui__contains', 'search', 'Comercial / Energia'),
+      numberField('powerMin', 'Potência mín.', 'potencia__gte', 'Comercial / Energia'),
+      numberField('powerMax', 'Potência máx.', 'potencia__lte', 'Comercial / Energia'),
+      field('gasLevel', 'Escalão', 'escalao__eq', 'search', 'Comercial / Energia'),
+      field('cycle', 'Ciclo horário', 'cicloHorario__contains', 'search', 'Comercial / Energia'),
+      field('voltage', 'Nível de tensão', 'nivelTensao__contains', 'search', 'Comercial / Energia'),
+    );
+  }
 
   if (options.includeSva) {
     commercialFields.splice(4, 0, booleanField('sva', 'SVA', 'sva__eq', 'Cliente / faturação'));
@@ -616,28 +666,61 @@ export function buildEnergyContractFilterFields(
     dateField('contractDateTo', 'Contrato até', 'dataContrato__lte', 'Datas do contrato'),
     dateField('registrationDateFrom', 'Registo desde', 'dataRegisto__gte', 'Datas do contrato'),
     dateField('registrationDateTo', 'Registo até', 'dataRegisto__lte', 'Datas do contrato'),
-    dateField(
-      'cpeActivationFrom',
-      'Ativação CPE desde',
-      'dataAtivacaoCPE__gte',
-      'Datas do contrato',
-    ),
-    dateField('cpeActivationTo', 'Ativação CPE até', 'dataAtivacaoCPE__lte', 'Datas do contrato'),
-    dateField('cpeDeactivationFrom', 'Baixa CPE desde', 'dataBaixaCPE__gte', 'Datas do contrato'),
-    dateField('cpeDeactivationTo', 'Baixa CPE até', 'dataBaixaCPE__lte', 'Datas do contrato'),
-    dateField(
-      'cuiActivationFrom',
-      'Ativação CUI desde',
-      'dataAtivacaoCUI__gte',
-      'Datas do contrato',
-    ),
-    dateField('cuiActivationTo', 'Ativação CUI até', 'dataAtivacaoCUI__lte', 'Datas do contrato'),
-    dateField('cuiDeactivationFrom', 'Baixa CUI desde', 'dataBaixaCUI__gte', 'Datas do contrato'),
-    dateField('cuiDeactivationTo', 'Baixa CUI até', 'dataBaixaCUI__lte', 'Datas do contrato'),
   ];
+
+  if (options.includeSupplyPointDates !== false) {
+    businessDates.push(
+      dateField(
+        'cpeActivationFrom',
+        'Ativação CPE desde',
+        'dataAtivacaoCPE__gte',
+        'Datas do contrato',
+      ),
+      dateField('cpeActivationTo', 'Ativação CPE até', 'dataAtivacaoCPE__lte', 'Datas do contrato'),
+      dateField('cpeDeactivationFrom', 'Baixa CPE desde', 'dataBaixaCPE__gte', 'Datas do contrato'),
+      dateField('cpeDeactivationTo', 'Baixa CPE até', 'dataBaixaCPE__lte', 'Datas do contrato'),
+      dateField(
+        'cuiActivationFrom',
+        'Ativação CUI desde',
+        'dataAtivacaoCUI__gte',
+        'Datas do contrato',
+      ),
+      dateField('cuiActivationTo', 'Ativação CUI até', 'dataAtivacaoCUI__lte', 'Datas do contrato'),
+      dateField('cuiDeactivationFrom', 'Baixa CUI desde', 'dataBaixaCUI__gte', 'Datas do contrato'),
+      dateField('cuiDeactivationTo', 'Baixa CUI até', 'dataBaixaCUI__lte', 'Datas do contrato'),
+    );
+  }
 
   fields.splice(contractInsertIndex, 0, ...contractFields, ...commercialFields, ...businessDates);
   return fields;
+}
+
+export function buildVodafoneContractFilterFields(
+  context: ContractFilterFieldContext,
+): ContractFilterFieldDefinition[] {
+  const allowedKeys = new Set<keyof VodafoneContractFilters>([
+    ...(Object.keys(createBaseContractFilters()) as Array<keyof BaseContractFilters>),
+    'contracting',
+    'scheduledFrom',
+    'scheduledTo',
+    'signatureFrom',
+    'signatureTo',
+    'registrationDateFrom',
+    'registrationDateTo',
+    'cae',
+    'crc',
+    'electronicInvoice',
+    'directDebit',
+    'iban',
+    'campaign',
+    'previousProvider',
+  ]);
+
+  return buildEnergyContractFilterFields(context, {
+    includeEnergyContracting: false,
+    includeSupplyPointFields: false,
+    includeSupplyPointDates: false,
+  }).filter((definition) => allowedKeys.has(definition.key as keyof VodafoneContractFilters));
 }
 
 export function buildSolarContractFilterFields(

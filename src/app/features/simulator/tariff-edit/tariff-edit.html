@@ -245,7 +245,19 @@
             {{ getSegmentLabel(tariff.segment) }}
           </p>
 
+          <p class="validity-summary">
+            <span class="material-symbols-rounded">event</span>
+            {{ getTariffValidityLabel(tariff) }}
+          </p>
+
           <div class="badges">
+            <span
+              class="advanced-mode"
+              *ngIf="tariff.calculationProfileId"
+            >
+              Advanced
+            </span>
+
             <span
               class="fixed-mode"
               *ngIf="
@@ -327,8 +339,8 @@
           <h2>{{ selectedTariff.name }}</h2>
 
           <p>
-            Altera os dados permitidos sem modificar a estrutura base do
-            tarifário.
+            Altera os dados permitidos, mantendo a compatibilidade entre os motores
+            Legacy e Advanced.
           </p>
         </div>
 
@@ -425,6 +437,96 @@
               </option>
             </select>
           </label>
+
+          <label>
+            Motor de cálculo
+
+            <select
+              formControlName="calculationEngine"
+              (change)="onCalculationEngineChange()"
+            >
+              <option value="legacy">
+                Legacy
+              </option>
+
+              <option value="advanced">
+                Perfil de cálculo avançado
+              </option>
+            </select>
+
+            <small class="field-help">
+              Ao migrar para Advanced, os campos de pricing legacy deixam de ser enviados.
+            </small>
+          </label>
+
+          <label
+            class="profile-field"
+            *ngIf="isAdvancedMode()"
+          >
+            Perfil de cálculo
+
+            <select
+              formControlName="calculationProfileId"
+              [disabled]="isLoadingCalculationProfiles"
+              (change)="onCalculationProfileChange()"
+            >
+              <option
+                [ngValue]="null"
+                disabled
+              >
+                {{
+                  isLoadingCalculationProfiles
+                    ? 'A carregar perfis...'
+                    : 'Selecione um perfil'
+                }}
+              </option>
+
+              <option
+                *ngFor="let profile of selectableCalculationProfiles"
+                [value]="profile.id"
+              >
+                {{ getCalculationProfileLabel(profile) }}
+              </option>
+            </select>
+
+            <small
+              class="field-error"
+              *ngIf="
+                editForm.controls.calculationProfileId.invalid &&
+                editForm.controls.calculationProfileId.touched
+              "
+            >
+              Seleciona um perfil de cálculo válido.
+            </small>
+
+            <small
+              class="field-help"
+              *ngIf="
+                !isLoadingCalculationProfiles &&
+                selectableCalculationProfiles.length === 0
+              "
+            >
+              Não existem perfis ativos compatíveis para uma nova associação.
+            </small>
+          </label>
+        </div>
+      </section>
+
+      <section
+        class="edit-section advanced-engine-section"
+        *ngIf="isAdvancedMode()"
+      >
+        <div class="advanced-engine-summary">
+          <span class="material-symbols-rounded">
+            functions
+          </span>
+
+          <div>
+            <strong>Pricing avançado ativo</strong>
+            <p>
+              O Calculation Profile define a metodologia do cálculo. Os campos de fórmula Legacy deixam de ser enviados, mas as condições comerciais concretas do tarifário continuam configuráveis quando forem compatíveis com o perfil selecionado.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -444,12 +546,20 @@
           </div>
 
           <span
+            class="mode-pill advanced"
+            *ngIf="isAdvancedMode()"
+          >
+            Perfil avançado
+          </span>
+
+          <span
             class="mode-pill"
+            *ngIf="isLegacyMode()"
             [class.indexed]="isIndexedElectricity()"
           >
             {{
               getPriceModeLabel(
-                selectedTariff.electricityPriceMode
+                editForm.controls.electricityPriceMode.value || undefined
               )
             }}
           </span>
@@ -470,18 +580,33 @@
         </div>
 
         <div class="form-grid">
-          <label>
+          <label *ngIf="isLegacyMode()">
             Modo de preço
 
-            <input
-              type="text"
-              [value]="
-                getPriceModeLabel(
-                  selectedTariff.electricityPriceMode
-                )
-              "
-              readonly
-            />
+            <ng-container *ngIf="originalTariff?.calculationProfileId; else existingElectricityMode">
+              <select
+                formControlName="electricityPriceMode"
+                (change)="onLegacyPriceModeChange()"
+              >
+                <option [ngValue]="null" disabled>
+                  Selecione o modo
+                </option>
+                <option value="fixed">Preço fixo</option>
+                <option value="indexed">Preço indexado</option>
+              </select>
+            </ng-container>
+
+            <ng-template #existingElectricityMode>
+              <input
+                type="text"
+                [value]="
+                  getPriceModeLabel(
+                    editForm.controls.electricityPriceMode.value || undefined
+                  )
+                "
+                readonly
+              />
+            </ng-template>
           </label>
 
           <label *ngIf="selectedTariff.tariffType">
@@ -549,7 +674,7 @@
           </label>
 
           <label>
-            Preço potência/dia
+            Preço potência/dia <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -562,7 +687,7 @@
           <!-- PREÇOS FIXOS -->
 
           <label *ngIf="shouldEditShowSimplePrices()">
-            Energia simples
+            Energia simples <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -573,7 +698,7 @@
           </label>
 
           <label *ngIf="shouldEditShowBiHourlyPrices()">
-            Fora vazio
+            Fora vazio <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -590,7 +715,7 @@
               shouldEditShowTetraHourlyPrices()
             "
           >
-            Vazio
+            Vazio <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -606,7 +731,7 @@
               shouldEditShowTetraHourlyPrices()
             "
           >
-            Ponta
+            Ponta <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -622,7 +747,7 @@
               shouldEditShowTetraHourlyPrices()
             "
           >
-            Cheias
+            Cheias <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -633,7 +758,7 @@
           </label>
 
           <label *ngIf="shouldEditShowTetraHourlyPrices()">
-            Super vazio
+            Super vazio <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -672,7 +797,7 @@
 
         <section
           class="discounts-section"
-          *ngIf="isFixedElectricity()"
+          *ngIf="shouldEditConfigureElectricityDiscounts()"
           formGroupName="electricityDiscounts"
         >
           <button
@@ -792,7 +917,7 @@
             </label>
 
             <label>
-              Fidelização
+              Desconto por fidelização
 
               <div class="percentage-input">
                 <input
@@ -826,12 +951,20 @@
           </div>
 
           <span
+            class="mode-pill advanced"
+            *ngIf="isAdvancedMode()"
+          >
+            Perfil avançado
+          </span>
+
+          <span
             class="mode-pill"
+            *ngIf="isLegacyMode()"
             [class.indexed]="isIndexedGas()"
           >
             {{
               getPriceModeLabel(
-                selectedTariff.gasPriceMode
+                editForm.controls.gasPriceMode.value || undefined
               )
             }}
           </span>
@@ -852,18 +985,33 @@
         </div>
 
         <div class="form-grid">
-          <label>
+          <label *ngIf="isLegacyMode()">
             Modo de preço
 
-            <input
-              type="text"
-              [value]="
-                getPriceModeLabel(
-                  selectedTariff.gasPriceMode
-                )
-              "
-              readonly
-            />
+            <ng-container *ngIf="originalTariff?.calculationProfileId; else existingGasMode">
+              <select
+                formControlName="gasPriceMode"
+                (change)="onLegacyPriceModeChange()"
+              >
+                <option [ngValue]="null" disabled>
+                  Selecione o modo
+                </option>
+                <option value="fixed">Preço fixo</option>
+                <option value="indexed">Preço indexado</option>
+              </select>
+            </ng-container>
+
+            <ng-template #existingGasMode>
+              <input
+                type="text"
+                [value]="
+                  getPriceModeLabel(
+                    editForm.controls.gasPriceMode.value || undefined
+                  )
+                "
+                readonly
+              />
+            </ng-template>
           </label>
 
           <label>
@@ -880,7 +1028,7 @@
           </label>
 
           <label>
-            Termo fixo gás/dia
+            Termo fixo gás/dia <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -890,8 +1038,8 @@
             />
           </label>
 
-          <label *ngIf="isFixedGas()">
-            Energia gás
+          <label *ngIf="shouldEditShowFixedGasPrice()">
+            Energia gás <span *ngIf="isLegacyMode()">*</span>
 
             <input
               type="number"
@@ -932,7 +1080,7 @@
 
         <section
           class="discounts-section"
-          *ngIf="isFixedGas()"
+          *ngIf="shouldEditConfigureGasDiscounts()"
           formGroupName="gasDiscounts"
         >
           <button
@@ -1050,6 +1198,22 @@
                 <span>%</span>
               </div>
             </label>
+
+            <label>
+              Desconto por fidelização
+
+              <div class="percentage-input">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  formControlName="loyalty"
+                />
+
+                <span>%</span>
+              </div>
+            </label>
           </div>
         </section>
       </section>
@@ -1074,7 +1238,12 @@
             <input
               type="date"
               formControlName="startDate"
+              [max]="editForm.controls.endDate.value || null"
             />
+
+            <small class="field-help">
+              A data de início é guardada exatamente como selecionada.
+            </small>
           </label>
 
           <label>
@@ -1083,7 +1252,22 @@
             <input
               type="date"
               formControlName="endDate"
+              [min]="editForm.controls.startDate.value || null"
             />
+
+            <small class="field-help">
+              Deixa vazio quando o tarifário não tiver data de fim definida.
+            </small>
+
+            <small
+              class="field-error"
+              *ngIf="
+                hasInvalidDateRange() &&
+                (editForm.controls.startDate.touched || editForm.controls.endDate.touched)
+              "
+            >
+              A data de fim não pode ser anterior à data de início.
+            </small>
           </label>
         </div>
       </section>
@@ -1155,7 +1339,12 @@
             </label>
             <label class="checkbox-label">
               <input type="checkbox" formControlName="isLoyalty" />
-              <span>Campanha com fidelização obrigatória</span>
+              <span>
+                Exige fidelização contratual
+                <small class="checkbox-help">
+                  Esta condição é independente do desconto percentual por fidelização configurado nas condições comerciais.
+                </small>
+              </span>
             </label>
           </div>
 
@@ -1208,7 +1397,8 @@
           [disabled]="
             !hasChanges() ||
             isSaving ||
-            isDeleting
+            isDeleting ||
+            isLoadingCalculationProfiles
           "
         >
           <span class="material-symbols-rounded">

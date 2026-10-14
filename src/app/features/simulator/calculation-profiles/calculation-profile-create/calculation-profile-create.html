@@ -1,0 +1,587 @@
+<div class="create-overlay" (click)="close()">
+  <section
+    class="create-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-profile-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="panel-header">
+      <div>
+        <span>{{ isVersionMode ? 'Nova versão' : 'Novo Calculation Profile' }}</span>
+        <h2 id="create-profile-title">
+          {{ isVersionMode ? 'Criar nova versão' : 'Criar perfil de cálculo' }}
+        </h2>
+        <p *ngIf="!isVersionMode; else versionHeaderText">
+          Configura os parâmetros enviados ao pricing engine. O frontend não executa fórmulas de
+          cálculo.
+        </p>
+        <ng-template #versionHeaderText>
+          <p>
+            Cria uma nova versão a partir de {{ versionSource?.familyCode }}
+            {{ sourceVersionLabel }} sem alterar retroativamente a versão existente.
+          </p>
+        </ng-template>
+      </div>
+
+      <button
+        type="button"
+        class="icon-button"
+        aria-label="Fechar"
+        [disabled]="isSubmitting"
+        (click)="close()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="panel-content">
+        <div class="version-context" *ngIf="versionSource as source">
+          <span class="material-symbols-rounded">history</span>
+          <div>
+            <strong>Base da nova versão: {{ source.familyCode }} · v{{ source.version }}</strong>
+            <p>
+              A versão v{{ source.version }} continuará disponível no histórico. Família,
+              comercializadora e produto são herdados para manter a mesma linha de versionamento.
+            </p>
+          </div>
+        </div>
+
+        <section class="form-section">
+          <div class="section-heading">
+            <span class="material-symbols-rounded">badge</span>
+            <div>
+              <h3>Identificação</h3>
+              <p>Família, comercializadora, produto e comportamento comercial.</p>
+            </div>
+          </div>
+
+          <div class="form-grid two-columns">
+            <label>
+              Família / nome <b>*</b>
+              <input
+                type="text"
+                formControlName="familyCode"
+                placeholder="Ex.: REPSOL_INDEXED"
+                [class.invalid]="isInvalid(form.controls.familyCode)"
+              />
+              <small *ngIf="isInvalid(form.controls.familyCode)">
+                Indica a família/nome do perfil.
+              </small>
+              <small class="locked-hint" *ngIf="isVersionMode">Herdado da versão anterior.</small>
+            </label>
+
+            <label>
+              Comercializadora <b>*</b>
+              <select
+                formControlName="commercializerId"
+                [class.invalid]="isInvalid(form.controls.commercializerId)"
+              >
+                <option value="">Selecionar comercializadora</option>
+                <option *ngFor="let company of selectableCompanies" [value]="company.id">
+                  {{ company.name }}{{ company.active ? '' : ' · Inativa' }}
+                </option>
+              </select>
+              <small *ngIf="isInvalid(form.controls.commercializerId)">
+                Seleciona a comercializadora.
+              </small>
+              <small class="locked-hint" *ngIf="isVersionMode">Herdada da versão anterior.</small>
+            </label>
+
+            <label>
+              Produto <b>*</b>
+              <select formControlName="productType" (change)="onProductTypeChange()">
+                <option value="electricity">Eletricidade</option>
+                <option value="gas">Gás</option>
+                <option value="dual">Luz + Gás</option>
+              </select>
+              <small class="locked-hint" *ngIf="isVersionMode">Herdado da versão anterior.</small>
+            </label>
+
+            <label>
+              Modo de comissão <b>*</b>
+              <select formControlName="commissionMode">
+                <option *ngFor="let mode of commissionModes" [value]="mode">
+                  {{ getCommissionModeLabel(mode) }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Vigência desde
+              <input type="date" formControlName="effectiveFrom" />
+            </label>
+
+            <label>
+              Vigência até
+              <input
+                type="date"
+                formControlName="effectiveTo"
+                [class.invalid]="form.hasError('effectiveDateRange')"
+              />
+              <small *ngIf="form.hasError('effectiveDateRange')">
+                A data final não pode ser anterior à inicial.
+              </small>
+            </label>
+          </div>
+
+          <label class="toggle-field">
+            <input type="checkbox" formControlName="active" />
+            <span class="toggle-control"></span>
+            <span>
+              <strong>{{ isVersionMode ? 'Nova versão ativa' : 'Criar como ativo' }}</strong>
+              <small>Uma versão ativa pode ser associada a novos tarifários.</small>
+            </span>
+          </label>
+        </section>
+
+        <section class="form-section included-components-section" formGroupName="includedComponents">
+          <div class="section-heading">
+            <span class="material-symbols-rounded">inventory_2</span>
+            <div>
+              <h3>Componentes já incluídos no preço</h3>
+              <p>
+                Ativa apenas os componentes que já fazem parte do preço/fórmula comercial. Quando
+                desativados, o pricing engine pode usar a respetiva fonte automática.
+              </p>
+            </div>
+          </div>
+
+          <div class="included-components-grid">
+            <label class="toggle-field included-component-toggle" *ngIf="usesElectricity">
+              <input
+                type="checkbox"
+                formControlName="networkAccessPower"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>TAR de potência já incluída no preço</strong>
+                <small>Eletricidade · o backend não volta a acrescentar a parcela de potência.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle" *ngIf="usesGas">
+              <input
+                type="checkbox"
+                formControlName="networkAccessFixedTerm"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>Termo fixo TAR gás já incluído</strong>
+                <small>Gás · o backend não volta a acrescentar o termo fixo regulatório.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle">
+              <input
+                type="checkbox"
+                formControlName="networkAccessEnergy"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>TAR de energia já incluída no preço</strong>
+                <small>A componente de acesso às redes na energia já está incorporada.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle">
+              <input
+                type="checkbox"
+                formControlName="losses"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>Perdas já incluídas no preço</strong>
+                <small>Ao ativar, as fontes explícitas de perdas deixam de ser aplicáveis.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle" *ngIf="usesElectricity">
+              <input
+                type="checkbox"
+                formControlName="renSystemCosts"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>REN/ERC já incluído no preço</strong>
+                <small>Impede configurar novamente a fonte automática REN/ERC.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle" *ngIf="usesElectricity">
+              <input
+                type="checkbox"
+                formControlName="mfrr"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>mFRR já incluído no preço</strong>
+                <small>O custo de reserva/restabelecimento já está incorporado.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle">
+              <input
+                type="checkbox"
+                formControlName="guaranteesOfOrigin"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>Garantias de origem já incluídas</strong>
+                <small>A respetiva componente comercial/regulatória já está incorporada.</small>
+              </span>
+            </label>
+
+            <label class="toggle-field included-component-toggle">
+              <input
+                type="checkbox"
+                formControlName="socialTariffFinancing"
+                (change)="onIncludedComponentsChange()"
+              />
+              <span class="toggle-control"></span>
+              <span>
+                <strong>Financiamento da tarifa social já incluído</strong>
+                <small>O financiamento da tarifa social já faz parte do preço/fórmula.</small>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section
+          class="form-section energy-config"
+          formGroupName="electricity"
+          *ngIf="usesElectricity"
+        >
+          <div class="section-heading">
+            <span class="material-symbols-rounded">electric_bolt</span>
+            <div>
+              <h3>Eletricidade</h3>
+              <p>Configuração enviada no bloco <code>electricity</code>.</p>
+            </div>
+          </div>
+
+          <ng-container
+            *ngTemplateOutlet="
+              energyFields;
+              context: { energy: 'electricity', group: electricityGroup }
+            "
+          ></ng-container>
+        </section>
+
+        <section class="form-section energy-config" formGroupName="gas" *ngIf="usesGas">
+          <div class="section-heading">
+            <span class="material-symbols-rounded">local_fire_department</span>
+            <div>
+              <h3>Gás</h3>
+              <p>Configuração enviada no bloco <code>gas</code>.</p>
+            </div>
+          </div>
+
+          <ng-container
+            *ngTemplateOutlet="energyFields; context: { energy: 'gas', group: gasGroup }"
+          ></ng-container>
+        </section>
+
+        <div class="api-note">
+          <span class="material-symbols-rounded">info</span>
+          <p>
+            As regras específicas de cada strategy continuam a ser validadas pela API. Se uma
+            combinação não for aceite, a mensagem devolvida pelo backend é apresentada diretamente.
+            {{ isVersionMode ? 'A versão anterior não é modificada por este formulário.' : '' }}
+          </p>
+        </div>
+      </div>
+
+      <footer class="panel-actions">
+        <button type="button" class="secondary-button" [disabled]="isSubmitting" (click)="close()">
+          Cancelar
+        </button>
+
+        <button type="submit" class="primary-button" [disabled]="isSubmitting">
+          <span class="material-symbols-rounded loading-icon" *ngIf="isSubmitting"
+            >progress_activity</span
+          >
+          {{
+            isSubmitting
+              ? isVersionMode
+                ? 'A criar versão...'
+                : 'A criar...'
+              : isVersionMode
+                ? 'Criar nova versão'
+                : 'Criar perfil'
+          }}
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<ng-template #energyFields let-energy="energy" let-group="group">
+  <div [formGroup]="group">
+    <div class="form-grid three-columns">
+      <label>
+        Strategy / fórmula <b>*</b>
+        <select formControlName="strategy">
+          <option *ngFor="let strategy of strategyOptions" [value]="strategy">
+            {{ getStrategyLabel(strategy) }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Fonte de mercado
+        <select formControlName="marketSource">
+          <option value="">Não definida</option>
+          <option *ngFor="let source of getMarketSources(energy)" [value]="source">
+            {{ source === 'omie' ? 'OMIE' : 'MIBGAS' }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Referência de mercado
+        <select formControlName="marketReference">
+          <option value="">Não definida</option>
+          <option *ngFor="let reference of marketReferences" [value]="reference">
+            {{ getMarketReferenceLabel(reference) }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Custo de sistema
+        <select formControlName="systemCostSource">
+          <option value="">Não definido</option>
+          <option
+            *ngFor="let source of getSystemCostSources(energy)"
+            [value]="source"
+            [disabled]="areRenSystemCostsIncluded && source === 'ren_erc'"
+          >
+            {{ getSystemCostSourceLabel(source) }}
+          </option>
+        </select>
+        <span class="field-note" *ngIf="areRenSystemCostsIncluded && energy === 'electricity'">
+          REN/ERC não pode ser selecionado porque já está incluído no preço.
+        </span>
+      </label>
+
+      <label>
+        Fonte de perdas
+        <select formControlName="lossSource">
+          <option value="">Não definida</option>
+          <option *ngFor="let source of lossSources" [value]="source">
+            {{ getLossSourceLabel(source) }}
+          </option>
+        </select>
+        <span class="field-note" *ngIf="areLossesIncluded">
+          Indisponível porque as perdas já estão incluídas no preço.
+        </span>
+      </label>
+
+      <label>
+        Acesso às redes
+        <select formControlName="networkAccessMode">
+          <option value="">Não definido</option>
+          <option *ngFor="let mode of networkAccessModes" [value]="mode">
+            {{ getNetworkAccessModeLabel(mode) }}
+          </option>
+        </select>
+      </label>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">
+        <div>
+          <h4>Margem da fórmula</h4>
+          <p>Opcional. Só é incluída no payload quando estiver configurada.</p>
+        </div>
+      </div>
+
+      <div class="form-grid three-columns">
+        <label>
+          Tipo
+          <select formControlName="marginKind">
+            <option value="">Sem margem</option>
+            <option *ngFor="let kind of marginKinds" [value]="kind">{{ kind }}</option>
+          </select>
+        </label>
+
+        <label>
+          Valor
+          <input type="number" step="any" formControlName="marginValue" placeholder="0" />
+        </label>
+
+        <label>
+          Unidade
+          <select formControlName="marginUnit">
+            <option *ngFor="let unit of marginUnits" [value]="unit">
+              {{ getMarginUnitLabel(unit) }}
+            </option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="subsection weighted-section" *ngIf="isWeightedMix(energy)">
+      <div class="subsection-title weighted-heading">
+        <div>
+          <h4>Componentes do mix ponderado</h4>
+          <p>
+            Cada componente é enviado como configuração, sem qualquer cálculo no frontend. A soma
+            estrutural dos pesos deve ser 1.
+          </p>
+        </div>
+
+        <button type="button" class="add-button" (click)="addComponent(energy)">
+          <span class="material-symbols-rounded">add</span>
+          Componente
+        </button>
+      </div>
+
+      <div class="weighted-empty" *ngIf="getComponents(energy).length === 0">
+        <span class="material-symbols-rounded">account_tree</span>
+        <p>Adiciona pelo menos dois componentes para configurar o mix.</p>
+      </div>
+
+      <div formArrayName="components" class="components-list">
+        <article
+          class="component-card"
+          *ngFor="let component of getComponents(energy).controls; let i = index"
+          [formGroupName]="i"
+        >
+          <header>
+            <strong>Componente {{ i + 1 }}</strong>
+            <button
+              type="button"
+              class="remove-button"
+              aria-label="Remover componente"
+              (click)="removeComponent(energy, i)"
+            >
+              <span class="material-symbols-rounded">delete</span>
+            </button>
+          </header>
+
+          <div class="form-grid three-columns">
+            <label>
+              Código <b>*</b>
+              <input type="text" formControlName="code" placeholder="Ex.: OMIE_BASE" />
+            </label>
+
+            <label>
+              Peso <b>*</b>
+              <input
+                type="number"
+                min="0"
+                step="0.0001"
+                formControlName="weight"
+                placeholder="0.5"
+              />
+            </label>
+
+            <label>
+              Strategy <b>*</b>
+              <select formControlName="strategy">
+                <option *ngFor="let strategy of strategyOptions" [value]="strategy">
+                  {{ getStrategyLabel(strategy) }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Mercado
+              <select formControlName="marketSource">
+                <option value="">Não definido</option>
+                <option *ngFor="let source of getMarketSources(energy)" [value]="source">
+                  {{ source === 'omie' ? 'OMIE' : 'MIBGAS' }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Referência
+              <select formControlName="marketReference">
+                <option value="">Não definida</option>
+                <option *ngFor="let reference of marketReferences" [value]="reference">
+                  {{ getMarketReferenceLabel(reference) }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Custo de sistema
+              <select formControlName="systemCostSource">
+                <option value="">Não definido</option>
+                <option
+                  *ngFor="let source of getSystemCostSources(energy)"
+                  [value]="source"
+                  [disabled]="areRenSystemCostsIncluded && source === 'ren_erc'"
+                >
+                  {{ getSystemCostSourceLabel(source) }}
+                </option>
+              </select>
+              <span
+                class="field-note"
+                *ngIf="areRenSystemCostsIncluded && energy === 'electricity'"
+              >
+                REN/ERC já incluído no preço.
+              </span>
+            </label>
+
+            <label>
+              Perdas
+              <select formControlName="lossSource">
+                <option value="">Não definidas</option>
+                <option *ngFor="let source of lossSources" [value]="source">
+                  {{ getLossSourceLabel(source) }}
+                </option>
+              </select>
+              <span class="field-note" *ngIf="areLossesIncluded">
+                Perdas já incluídas no preço.
+              </span>
+            </label>
+
+            <label>
+              Acesso redes
+              <select formControlName="networkAccessMode">
+                <option value="">Não definido</option>
+                <option *ngFor="let mode of networkAccessModes" [value]="mode">
+                  {{ getNetworkAccessModeLabel(mode) }}
+                </option>
+              </select>
+            </label>
+
+            <label>
+              Margem
+              <select formControlName="marginKind">
+                <option value="">Sem margem</option>
+                <option *ngFor="let kind of marginKinds" [value]="kind">{{ kind }}</option>
+              </select>
+            </label>
+
+            <label>
+              Valor da margem
+              <input type="number" step="any" formControlName="marginValue" />
+            </label>
+
+            <label>
+              Unidade da margem
+              <select formControlName="marginUnit">
+                <option *ngFor="let unit of marginUnits" [value]="unit">
+                  {{ getMarginUnitLabel(unit) }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</ng-template>

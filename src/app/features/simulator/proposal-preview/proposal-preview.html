@@ -1,25 +1,15 @@
 <section class="proposal-preview-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">
-        Simulador › Proposta Comercial
-      </span>
+      <span class="breadcrumb"> Simulador › Proposta Comercial </span>
 
-      <h1>
-        Preparar proposta
-      </h1>
+      <h1>Preparar proposta</h1>
 
-      <p>
-        Confirma os dados antes de gerar
-        o PDF comercial.
-      </p>
+      <p>Confirma os dados antes de gerar o PDF comercial.</p>
     </div>
   </header>
 
-  <p
-    class="validation-error-message"
-    *ngIf="validationErrorMessage"
-  >
+  <p class="validation-error-message" *ngIf="validationErrorMessage">
     {{ validationErrorMessage }}
   </p>
 
@@ -28,19 +18,12 @@
       <article class="form-card">
         <div class="form-card-header">
           <div>
-            <h2>
-              Dados do cliente
-            </h2>
+            <h2>Dados do cliente</h2>
 
-            <p>
-              Os campos assinalados são
-              obrigatórios.
-            </p>
+            <p>Os campos assinalados são obrigatórios.</p>
           </div>
 
-          <span class="required-note">
-            * Obrigatório
-          </span>
+          <span class="required-note"> * Obrigatório </span>
         </div>
 
         <div class="form-grid">
@@ -50,17 +33,10 @@
             <input
               type="text"
               [(ngModel)]="client.name"
-              [class.invalid]="
-                isClientFieldInvalid('name')
-              "
+              [class.invalid]="isClientFieldInvalid('name')"
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('name')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('name')">
               O nome é obrigatório.
             </small>
           </label>
@@ -71,17 +47,10 @@
             <input
               type="text"
               [(ngModel)]="client.nif"
-              [class.invalid]="
-                isClientFieldInvalid('nif')
-              "
+              [class.invalid]="isClientFieldInvalid('nif')"
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('nif')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('nif')">
               O NIF é obrigatório.
             </small>
           </label>
@@ -92,17 +61,10 @@
             <input
               type="email"
               [(ngModel)]="client.email"
-              [class.invalid]="
-                isClientFieldInvalid('email')
-              "
+              [class.invalid]="isClientFieldInvalid('email')"
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('email')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('email')">
               O email é obrigatório.
             </small>
           </label>
@@ -113,81 +75,51 @@
             <input
               type="text"
               [(ngModel)]="client.phone"
-              [class.invalid]="
-                isClientFieldInvalid('phone')
-              "
+              [class.invalid]="isClientFieldInvalid('phone')"
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('phone')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('phone')">
               O telemóvel é obrigatório.
             </small>
           </label>
 
-          <label
-            *ngIf="isBusinessProposal"
-          >
+          <label *ngIf="isBusinessProposal">
             CRC
 
             <input
               type="text"
               [(ngModel)]="client.crc"
-              [class.invalid]="
-                isClientFieldInvalid('crc')
-              "
+              [class.invalid]="isClientFieldInvalid('crc')"
               placeholder="Código da Certidão Permanente"
             />
           </label>
 
-          <label
-            *ngIf="hasElectricity"
-          >
+          <label *ngIf="hasElectricity">
             CPE *
 
             <input
               type="text"
               [(ngModel)]="client.cpe"
-              [class.invalid]="
-                isClientFieldInvalid('cpe')
-              "
+              [class.invalid]="isClientFieldInvalid('cpe')"
               placeholder="PT0002..."
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('cpe')
-              "
-            >
-              O CPE é obrigatório para
-              eletricidade.
+            <small class="field-error" *ngIf="isClientFieldInvalid('cpe')">
+              O CPE é obrigatório para eletricidade.
             </small>
           </label>
 
-          <label
-            *ngIf="hasGas"
-          >
+          <label *ngIf="hasGas">
             CUI *
 
             <input
               type="text"
               [(ngModel)]="client.cui"
-              [class.invalid]="
-                isClientFieldInvalid('cui')
-              "
+              [class.invalid]="isClientFieldInvalid('cui')"
               placeholder="PT1601..."
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('cui')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('cui')">
               O CUI é obrigatório para gás.
             </small>
           </label>
@@ -198,17 +130,10 @@
             <input
               type="text"
               [(ngModel)]="client.address"
-              [class.invalid]="
-                isClientFieldInvalid('address')
-              "
+              [class.invalid]="isClientFieldInvalid('address')"
             />
 
-            <small
-              class="field-error"
-              *ngIf="
-                isClientFieldInvalid('address')
-              "
-            >
+            <small class="field-error" *ngIf="isClientFieldInvalid('address')">
               A morada de consumo é obrigatória.
             </small>
           </label>
@@ -216,36 +141,25 @@
       </article>
 
       <article class="form-card">
-        <h2>
-          Dados do comercial
-        </h2>
+        <h2>Dados do comercial</h2>
 
         <div class="form-grid">
           <label>
             Nome
 
-            <input
-              type="text"
-              [(ngModel)]="commercial.name"
-            />
+            <input type="text" [(ngModel)]="commercial.name" />
           </label>
 
           <label>
             Email
 
-            <input
-              type="email"
-              [(ngModel)]="commercial.email"
-            />
+            <input type="email" [(ngModel)]="commercial.email" />
           </label>
 
           <label>
             Telemóvel
 
-            <input
-              type="text"
-              [(ngModel)]="commercial.phone"
-            />
+            <input type="text" [(ngModel)]="commercial.phone" />
           </label>
         </div>
       </article>
@@ -255,26 +169,16 @@
       <div class="provider-header">
         <div class="provider-logo">
           <img
-            [src]="
-              getProviderLogo(
-                offer.tariff.provider.name
-              )
-            "
-            [alt]="
-              offer.tariff.provider.name
-            "
+            [src]="getProviderLogo(offer.tariff.provider.name)"
+            [alt]="offer.tariff.provider.name"
           />
         </div>
 
         <div>
-          <span>
-            Oferta selecionada
-          </span>
+          <span> Oferta selecionada </span>
 
           <h2>
-            {{
-              offer.tariff.provider.name
-            }}
+            {{ offer.tariff.provider.name }}
           </h2>
 
           <p>
@@ -286,206 +190,167 @@
       <div class="summary-metrics">
         <div>
           <span>
-            Estimativa mensal
+            Período da fatura
+            <ng-container *ngIf="getPeriodDays() as days"> · {{ days }} dias </ng-container>
           </span>
 
           <strong>
-            {{
-              formatCurrency(
-                offer.simulation
-                  .estimatedMonthlyCost
-              )
-            }}
+            {{ formatCurrency(getInvoicePeriodCost()) }}
+          </strong>
+        </div>
+
+        <div>
+          <span>Mensal normalizado</span>
+
+          <strong>
+            {{ formatCurrency(getNormalizedMonthlyCost()) }}
+          </strong>
+        </div>
+
+        <div>
+          <span>Anual normalizado</span>
+
+          <strong>
+            {{ formatCurrency(getNormalizedAnnualCost()) }}
+          </strong>
+        </div>
+
+        <div class="saving" *ngIf="offer.comparison.invoicePeriodSaving !== undefined">
+          <span>Poupança no período</span>
+
+          <strong>
+            {{ formatCurrency(offer.comparison.invoicePeriodSaving) }}
           </strong>
         </div>
 
         <div class="saving">
-          <span>
-            Poupança mensal
-          </span>
+          <span>Poupança mensal</span>
 
           <strong>
-            {{
-              formatCurrency(
-                offer.comparison
-                  .monthlySaving
-              )
-            }}
+            {{ formatCurrency(offer.comparison.monthlySaving) }}
           </strong>
         </div>
 
         <div class="saving">
-          <span>
-            Poupança anual
-          </span>
+          <span>Poupança anual</span>
 
           <strong>
-            {{
-              formatCurrency(
-                offer.comparison
-                  .yearlySaving
-              )
-            }}
-          </strong>
-        </div>
-
-        <div
-          *ngIf="offer.commissionValue"
-        >
-          <span>
-            Comissão
-          </span>
-
-          <strong>
-            {{
-              formatCurrency(
-                offer.commissionValue
-              )
-            }}
+            {{ formatCurrency(offer.comparison.yearlySaving) }}
           </strong>
         </div>
       </div>
 
       <div class="offer-details">
         <div>
-          <span>
-            Produto
-          </span>
+          <span>Produto</span>
 
           <strong>
-            {{
-              getProductLabel(
-                offer.tariff.productType
-              )
-            }}
+            {{ getProductLabel(offer.tariff.productType) }}
           </strong>
         </div>
 
-        <div
-          *ngIf="
-            offer.tariff.tariffType
-          "
-        >
-          <span>
-            Tarifário
-          </span>
+        <div>
+          <span>Motor de cálculo</span>
 
           <strong>
-            {{
-              getTariffLabel(
-                offer.tariff.tariffType
-              )
-            }}
+            {{ isAdvancedOffer ? 'Advanced' : 'Legacy' }}
           </strong>
         </div>
 
-        <div
-          *ngIf="
-            offer.tariff.powerKva
-          "
-        >
-          <span>
-            Potência
-          </span>
+        <div *ngIf="getCalculationBasisLabel() as calculationBasisLabel">
+          <span>Base do cálculo</span>
 
           <strong>
-            {{ offer.tariff.powerKva }}
-            kVA
+            {{ calculationBasisLabel }}
           </strong>
         </div>
 
-        <div
-          *ngIf="
-            offer.tariff.gasTier
-          "
-        >
-          <span>
-            Gás
-          </span>
+        <div *ngIf="isAdvancedOffer">
+          <span>Perfil de cálculo</span>
 
           <strong>
-            Escalão
-            {{ offer.tariff.gasTier }}
+            {{ getCalculationProfileLabel() }}
           </strong>
+        </div>
+
+        <div>
+          <span>Vigência</span>
+
+          <strong>
+            {{ getValidityLabel() }}
+          </strong>
+        </div>
+
+        <div *ngIf="offer.tariff.tariffType">
+          <span>Tarifário</span>
+
+          <strong>
+            {{ getTariffLabel(offer.tariff.tariffType) }}
+          </strong>
+        </div>
+
+        <div *ngIf="offer.tariff.powerKva">
+          <span>Potência</span>
+
+          <strong> {{ offer.tariff.powerKva }} kVA </strong>
+        </div>
+
+        <div *ngIf="offer.tariff.gasTier">
+          <span>Gás</span>
+
+          <strong> Escalão {{ offer.tariff.gasTier }} </strong>
+        </div>
+      </div>
+
+      <div class="commercial-context-summary" *ngIf="getCommercialConditionLabels().length">
+        <span class="section-label"> Condições consideradas </span>
+
+        <div class="condition-badges">
+          <span *ngFor="let condition of getCommercialConditionLabels()">
+            {{ condition }}
+          </span>
         </div>
       </div>
 
       <button
         type="button"
         class="generate-btn"
-        [class.is-loading]="
-          isGeneratingPdf
-        "
-        [disabled]="
-          isGeneratingPdf
-        "
+        [class.is-loading]="isGeneratingPdf"
+        [disabled]="isGeneratingPdf"
         (click)="exportPdf()"
       >
-        <span
-          class="material-symbols-rounded"
-          *ngIf="!isGeneratingPdf"
-        >
-          description
-        </span>
+        <span class="material-symbols-rounded" *ngIf="!isGeneratingPdf"> description </span>
 
-        <span
-          class="button-spinner"
-          *ngIf="isGeneratingPdf"
-        ></span>
+        <span class="button-spinner" *ngIf="isGeneratingPdf"></span>
 
         <span>
           <strong>
-            {{
-              isGeneratingPdf
-                ? 'A gerar proposta...'
-                : 'Gerar proposta'
-            }}
+            {{ isGeneratingPdf ? 'A gerar proposta...' : 'Gerar proposta' }}
           </strong>
 
           <small>
             {{
-              isGeneratingPdf
-                ? 'A preparar o documento PDF'
-                : 'Exportar proposta comercial em PDF'
+              isGeneratingPdf ? 'A preparar o documento PDF' : 'Exportar proposta comercial em PDF'
             }}
           </small>
         </span>
 
-        <span
-          class="material-symbols-rounded"
-          *ngIf="!isGeneratingPdf"
-        >
-          arrow_forward
-        </span>
+        <span class="material-symbols-rounded" *ngIf="!isGeneratingPdf"> arrow_forward </span>
       </button>
 
-      <p
-        class="pdf-error-message"
-        *ngIf="pdfErrorMessage"
-      >
+      <p class="pdf-error-message" *ngIf="pdfErrorMessage">
         {{ pdfErrorMessage }}
       </p>
     </aside>
   </section>
 
-  <div
-    class="pdf-loading-overlay"
-    *ngIf="isGeneratingPdf"
-  >
+  <div class="pdf-loading-overlay" *ngIf="isGeneratingPdf">
     <div class="pdf-loading-card">
-      <span
-        class="pdf-loading-spinner"
-      ></span>
+      <span class="pdf-loading-spinner"></span>
 
-      <strong>
-        A gerar a proposta
-      </strong>
+      <strong> A gerar a proposta </strong>
 
-      <p>
-        Estamos a preparar o documento PDF.
-        Este processo poderá demorar alguns
-        segundos.
-      </p>
+      <p>Estamos a preparar o documento PDF. Este processo poderá demorar alguns segundos.</p>
     </div>
   </div>
 </section>

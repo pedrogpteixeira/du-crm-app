@@ -16,12 +16,12 @@ function notification(
 }
 
 describe('getNotificationRoute', () => {
-  it('routes OMIE and MIBGAS to the averages page', () => {
+  it('routes OMIE and MIBGAS to market and regulatory data', () => {
     expect(getNotificationRoute(notification({ resource: 'omie' }))).toEqual([
-      '/home/admin/omie-averages',
+      '/home/admin/market-regulatory-data',
     ]);
     expect(getNotificationRoute(notification({ resource: 'mibgas' }))).toEqual([
-      '/home/admin/omie-averages',
+      '/home/admin/market-regulatory-data',
     ]);
   });
 

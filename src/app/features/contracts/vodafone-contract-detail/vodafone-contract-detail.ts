@@ -17,6 +17,11 @@ import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import {
+  getVodafoneLifecycleDateValidationError,
+  isVodafoneActivationDateRequired,
+  isVodafoneDeactivationDateRequired,
+} from '../../../core/utils/vodafone-contract-lifecycle';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
   canMutateContractByBusinessRule,
@@ -37,17 +42,12 @@ import { SocketService } from '../../../core/services/socket';
 import {
   UpdateVodafoneContractRequest,
   VODAFONE_STATES,
-  VODAFONE_GAS_LEVEL_SUGGESTIONS,
-  VODAFONE_POWER_SUGGESTIONS,
-  VodafoneCicloHorario,
   VodafoneContractDetail as VodafoneContractDetailModel,
   VodafoneContractDocument,
   VodafoneContractService,
   VodafoneContractStatus,
   isVodafoneContractStatus,
   VodafoneContratacao,
-  VodafoneNivelTensao,
-  VodafoneTipoContratacao,
   VodafoneTipoSegmento,
 } from '../../../core/services/vodafone-contract';
 
@@ -65,10 +65,6 @@ interface EditableContractForm {
   tipoProduto: string;
   contratacao: VodafoneContratacao;
 
-  tipoContratacaoLuz: VodafoneTipoContratacao | '';
-
-  tipoContratacaoGas: VodafoneTipoContratacao | '';
-
   controleQualidade: string;
   codigoRegistoCE: string;
   nomeRegistoCE: string;
@@ -77,30 +73,18 @@ interface EditableContractForm {
 
   agendamento: string;
   dataAssinatura: string;
-  dataContrato: string;
+  dataAtivacao: string;
+  dataBaixa: string;
   dataRegisto: string;
-  dataAtivacaoCPE: string;
-  dataBaixaCPE: string;
-  dataAtivacaoCUI: string;
-  dataBaixaCUI: string;
 
   moradaInstalacao: string;
   moradaFaturacao: string;
 
   faturaEletronica: boolean;
-  tarifaSocial: boolean;
   debitoDireto: boolean;
   iban: string;
 
   antigaComercializadora: string;
-  cpe: string;
-  cui: string;
-  potencia: string;
-  escalao: string;
-
-  cicloHorario: VodafoneCicloHorario | '';
-
-  nivelTensao: VodafoneNivelTensao | '';
 
   campaignId: string;
   customCampaign: string;
@@ -124,11 +108,7 @@ interface AuthenticatedUserLike {
 interface VodafoneContractApiShape extends VodafoneContractDetailModel {
   campanha?: string | null;
 }
-import {
-  ANTIGA_COMERCIALIZADORA_SUGGESTIONS,
-  DEFAULT_CPE_PREFIX,
-  DEFAULT_CUI_PREFIX,
-} from '../../../core/constants/contract-energy-options';
+import { ANTIGA_COMERCIALIZADORA_SUGGESTIONS } from '../../../core/constants/contract-energy-options';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
 import { ObservationsThread } from '../../../shared/components/observations-thread/observations-thread';
 
@@ -245,28 +225,7 @@ export class VodafoneContractDetail implements OnInit {
 
   readonly contratacaoOptions: VodafoneContratacao[] = ['Contratação Digital', 'Contratação Papel'];
 
-  readonly tipoContratacaoOptions: VodafoneTipoContratacao[] = [
-    'Mudança de Comercializadora',
-    'Mudança de Comercializadora & AT',
-    'Entrada Direta',
-  ];
-
   readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_STATES;
-
-  readonly cicloHorarioOptions: VodafoneCicloHorario[] = [
-    'Simples',
-    'Bi-Horário Diário',
-    'Bi-Horário Semanal',
-    'Tri-Horário Diário',
-    'Tri-Horário Semanal',
-    'Tetra-Horário',
-  ];
-
-  readonly nivelTensaoOptions: VodafoneNivelTensao[] = ['Monofásico', 'Trifásico'];
-
-  readonly powerSuggestions = VODAFONE_POWER_SUGGESTIONS;
-
-  readonly gasLevelSuggestions = VODAFONE_GAS_LEVEL_SUGGESTIONS;
 
   readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
 
@@ -574,6 +533,26 @@ export class VodafoneContractDetail implements OnInit {
     this.editForm.telefone = digits ? Number(digits) : null;
   }
 
+  get isDataAtivacaoRequired(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return isVodafoneActivationDateRequired(estado);
+  }
+
+  get isDataAtivacaoMissing(): boolean {
+    const dataAtivacao = this.isEditing ? this.editForm.dataAtivacao : this.contract?.dataAtivacao;
+    return this.isDataAtivacaoRequired && !dataAtivacao?.trim();
+  }
+
+  get isDataBaixaRequired(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return isVodafoneDeactivationDateRequired(estado);
+  }
+
+  get isDataBaixaMissing(): boolean {
+    const dataBaixa = this.isEditing ? this.editForm.dataBaixa : this.contract?.dataBaixa;
+    return this.isDataBaixaRequired && !dataBaixa?.trim();
+  }
+
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
@@ -596,13 +575,20 @@ export class VodafoneContractDetail implements OnInit {
       return;
     }
 
+    const lifecycleDateValidationError = getVodafoneLifecycleDateValidationError(
+      this.editForm.estado,
+      this.editForm.dataAtivacao,
+      this.editForm.dataBaixa,
+    );
+
+    if (lifecycleDateValidationError) {
+      this.showError(lifecycleDateValidationError);
+      return;
+    }
+
     const fieldValidationError = getContractFormValidationError(
       this.editForm as unknown as Record<string, unknown>,
-      {
-        validateCpe: this.hasCpeValue(),
-        validateCui: this.hasCuiValue(),
-        ibanMode: 'international',
-      },
+      { ibanMode: 'international' },
     );
 
     if (fieldValidationError) {
@@ -1321,10 +1307,6 @@ export class VodafoneContractDetail implements OnInit {
 
         contratacao: contract.contratacao,
 
-        tipoContratacaoLuz: contract.tipoContratacaoLuz ?? '',
-
-        tipoContratacaoGas: contract.tipoContratacaoGas ?? '',
-
         controleQualidade: contract.controleQualidade ?? '',
 
         codigoRegistoCE: contract.codigoRegistoCE ?? '',
@@ -1337,17 +1319,11 @@ export class VodafoneContractDetail implements OnInit {
 
         dataAssinatura: this.toDateInput(contract.dataAssinatura),
 
-        dataContrato: this.toDateInput(contract.dataContrato),
+        dataAtivacao: this.toDateInput(contract.dataAtivacao),
+
+        dataBaixa: this.toDateInput(contract.dataBaixa),
 
         dataRegisto: this.toDateInput(contract.dataRegisto),
-
-        dataAtivacaoCPE: this.toDateInput(contract.dataAtivacaoCPE),
-
-        dataBaixaCPE: this.toDateInput(contract.dataBaixaCPE),
-
-        dataAtivacaoCUI: this.toDateInput(contract.dataAtivacaoCUI),
-
-        dataBaixaCUI: this.toDateInput(contract.dataBaixaCUI),
 
         moradaInstalacao: contract.moradaInstalacao ?? '',
 
@@ -1355,25 +1331,11 @@ export class VodafoneContractDetail implements OnInit {
 
         faturaEletronica: Boolean(contract.faturaEletronica),
 
-        tarifaSocial: Boolean(contract.tarifaSocial),
-
         debitoDireto: Boolean(contract.debitoDireto),
 
         iban: contract.iban ?? '',
 
         antigaComercializadora: contract.antigaComercializadora ?? '',
-
-        cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
-
-        cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
-
-        potencia: contract.potencia ?? '',
-
-        escalao: contract.escalao ?? '',
-
-        cicloHorario: contract.cicloHorario ?? '',
-
-        nivelTensao: contract.nivelTensao ?? '',
 
         campaignId: resolvedCampaign.campaignId,
 
@@ -1487,20 +1449,6 @@ export class VodafoneContractDetail implements OnInit {
       this.originalEditForm.contratacao,
     );
 
-    this.assignChangedValue(
-      payload,
-      'tipoContratacaoLuz',
-      this.editForm.tipoContratacaoLuz,
-      this.originalEditForm.tipoContratacaoLuz,
-    );
-
-    this.assignChangedValue(
-      payload,
-      'tipoContratacaoGas',
-      this.editForm.tipoContratacaoGas,
-      this.originalEditForm.tipoContratacaoGas,
-    );
-
     if (this.canManageQualityControl()) {
       this.assignChangedValue(
         payload,
@@ -1545,11 +1493,18 @@ export class VodafoneContractDetail implements OnInit {
       this.originalEditForm.dataAssinatura,
     );
 
-    this.assignChangedValue(
+    assignChangedContractLifecycleDate(
       payload,
-      'dataContrato',
-      this.editForm.dataContrato,
-      this.originalEditForm.dataContrato,
+      'dataAtivacao',
+      this.editForm.dataAtivacao,
+      this.originalEditForm.dataAtivacao,
+    );
+
+    assignChangedContractLifecycleDate(
+      payload,
+      'dataBaixa',
+      this.editForm.dataBaixa,
+      this.originalEditForm.dataBaixa,
     );
 
     assignChangedContractLifecycleDate(
@@ -1557,34 +1512,6 @@ export class VodafoneContractDetail implements OnInit {
       'dataRegisto',
       this.editForm.dataRegisto,
       this.originalEditForm.dataRegisto,
-    );
-
-    assignChangedContractLifecycleDate(
-      payload,
-      'dataAtivacaoCPE',
-      this.editForm.dataAtivacaoCPE,
-      this.originalEditForm.dataAtivacaoCPE,
-    );
-
-    assignChangedContractLifecycleDate(
-      payload,
-      'dataBaixaCPE',
-      this.editForm.dataBaixaCPE,
-      this.originalEditForm.dataBaixaCPE,
-    );
-
-    assignChangedContractLifecycleDate(
-      payload,
-      'dataAtivacaoCUI',
-      this.editForm.dataAtivacaoCUI,
-      this.originalEditForm.dataAtivacaoCUI,
-    );
-
-    assignChangedContractLifecycleDate(
-      payload,
-      'dataBaixaCUI',
-      this.editForm.dataBaixaCUI,
-      this.originalEditForm.dataBaixaCUI,
     );
 
     this.assignChangedValue(
@@ -1610,13 +1537,6 @@ export class VodafoneContractDetail implements OnInit {
 
     this.assignChangedValue(
       payload,
-      'tarifaSocial',
-      this.editForm.tarifaSocial,
-      this.originalEditForm.tarifaSocial,
-    );
-
-    this.assignChangedValue(
-      payload,
       'debitoDireto',
       this.editForm.debitoDireto,
       this.originalEditForm.debitoDireto,
@@ -1629,38 +1549,6 @@ export class VodafoneContractDetail implements OnInit {
       'antigaComercializadora',
       this.editForm.antigaComercializadora,
       this.originalEditForm.antigaComercializadora,
-    );
-
-    this.assignChangedValue(payload, 'cpe', this.editForm.cpe, this.originalEditForm.cpe);
-
-    this.assignChangedValue(payload, 'cui', this.editForm.cui, this.originalEditForm.cui);
-
-    this.assignChangedValue(
-      payload,
-      'potencia',
-      this.editForm.potencia,
-      this.originalEditForm.potencia,
-    );
-
-    this.assignChangedValue(
-      payload,
-      'escalao',
-      this.editForm.escalao,
-      this.originalEditForm.escalao,
-    );
-
-    this.assignChangedValue(
-      payload,
-      'cicloHorario',
-      this.editForm.cicloHorario,
-      this.originalEditForm.cicloHorario,
-    );
-
-    this.assignChangedValue(
-      payload,
-      'nivelTensao',
-      this.editForm.nivelTensao,
-      this.originalEditForm.nivelTensao,
     );
 
     const currentCampaign = this.getCurrentCampaignValue();
@@ -1705,16 +1593,6 @@ export class VodafoneContractDetail implements OnInit {
     return typeof value === 'string' ? value.trim() : value;
   }
 
-  private hasCpeValue(): boolean {
-    const value = this.editForm.cpe.trim();
-    return Boolean(value && value !== DEFAULT_CPE_PREFIX);
-  }
-
-  private hasCuiValue(): boolean {
-    const value = this.editForm.cui.trim();
-    return Boolean(value && value !== DEFAULT_CUI_PREFIX);
-  }
-
   private toDateInput(value: string | null | undefined): string {
     if (!value) {
       return '';
@@ -1754,9 +1632,6 @@ export class VodafoneContractDetail implements OnInit {
 
       contratacao: 'Contratação Digital',
 
-      tipoContratacaoLuz: '',
-      tipoContratacaoGas: '',
-
       controleQualidade: '',
       codigoRegistoCE: '',
       nomeRegistoCE: '',
@@ -1765,28 +1640,18 @@ export class VodafoneContractDetail implements OnInit {
 
       agendamento: '',
       dataAssinatura: '',
-      dataContrato: '',
+      dataAtivacao: '',
+      dataBaixa: '',
       dataRegisto: '',
-      dataAtivacaoCPE: '',
-      dataBaixaCPE: '',
-      dataAtivacaoCUI: '',
-      dataBaixaCUI: '',
 
       moradaInstalacao: '',
       moradaFaturacao: '',
 
       faturaEletronica: false,
-      tarifaSocial: false,
       debitoDireto: false,
       iban: '',
 
       antigaComercializadora: '',
-      cpe: '',
-      cui: '',
-      potencia: '',
-      escalao: '',
-      cicloHorario: '',
-      nivelTensao: '',
 
       campaignId: '',
       customCampaign: '',
@@ -1799,8 +1664,7 @@ export class VodafoneContractDetail implements OnInit {
       contract: value,
       dates: value,
       billing: value,
-      campaign: value,
-      energy: value,
+      commercial: value,
       attachments: value,
       observations: value,
       internalObservations: value,

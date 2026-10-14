@@ -13,24 +13,17 @@ import { Router } from '@angular/router';
 import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
-import {
-  DEFAULT_CPE_PREFIX,
-  DEFAULT_CUI_PREFIX,
-} from '../../../core/constants/contract-energy-options';
-
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import {
+  getVodafoneLifecycleDateValidationError,
+  isVodafoneActivationDateRequired,
+  isVodafoneDeactivationDateRequired,
+} from '../../../core/utils/vodafone-contract-lifecycle';
 
 import { Auth } from '../../../core/services/auth';
 
 import { Campaign, CampaignService } from '../../../core/services/campaign';
 
-import {
-  buildContractPreflightRequest,
-  ContractPreflightError,
-  getNewSupplyPointReentryWarnings,
-  ContractPreflightService,
-  SupplyPointReentryWarning,
-} from '../../../core/services/contract-preflight';
 import { Client, ClientService } from '../../../core/services/client';
 
 import { ContractLayout, PreferencesService } from '../../../core/services/preferences';
@@ -41,16 +34,11 @@ import {
   CreateVodafoneContractRequest,
   VODAFONE_COMPANY_ID,
   VODAFONE_STATES,
-  VODAFONE_GAS_LEVEL_SUGGESTIONS,
-  VODAFONE_POWER_SUGGESTIONS,
-  VodafoneCicloHorario,
   VodafoneContractDetail,
   VodafoneContractService,
   VodafoneContractStatus,
   VodafoneContractTeamVisibility,
   VodafoneContratacao,
-  VodafoneNivelTensao,
-  VodafoneTipoContratacao,
   VodafoneTipoSegmento,
 } from '../../../core/services/vodafone-contract';
 
@@ -72,10 +60,6 @@ interface VodafoneContractCreateForm {
   tipoProduto: string;
   contratacao: VodafoneContratacao;
 
-  tipoContratacaoLuz: VodafoneTipoContratacao | '';
-
-  tipoContratacaoGas: VodafoneTipoContratacao | '';
-
   controleQualidade: string;
   nomeRegistoCE: string;
   codigoRegistoCE: string;
@@ -84,12 +68,9 @@ interface VodafoneContractCreateForm {
 
   agendamento: string;
   dataAssinatura: string;
-  dataContrato: string;
+  dataAtivacao: string;
+  dataBaixa: string;
   dataRegisto: string;
-  dataAtivacaoCPE: string;
-  dataBaixaCPE: string;
-  dataAtivacaoCUI: string;
-  dataBaixaCUI: string;
 
   telefone: number | null;
   email: string;
@@ -112,20 +93,11 @@ interface VodafoneContractCreateForm {
 
   faturaEletronica: boolean;
   debitoDireto: boolean;
-  tarifaSocial: boolean;
   iban: string;
 
   campanha: string;
 
   antigaComercializadora: string;
-  cpe: string;
-  cui: string;
-  potencia: string;
-  escalao: string;
-
-  cicloHorario: VodafoneCicloHorario | '';
-
-  nivelTensao: VodafoneNivelTensao | '';
 
   observacoes: string;
   observacoesInternas: string;
@@ -139,12 +111,16 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
 import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
-import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-vodafone-contract-create',
   imports: [
-    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, FileDropzone, ContractPreflightModal],
+    EditableSelectCombobox,
+    CommonModule,
+    FormsModule,
+    ContractFieldMaskDirective,
+    FileDropzone,
+  ],
   templateUrl: './vodafone-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './vodafone-contract-create.scss',
@@ -156,8 +132,6 @@ export class VodafoneContractCreate implements OnInit {
   private readonly campaignService = inject(CampaignService);
 
   private readonly vodafoneContractService = inject(VodafoneContractService);
-
-  private readonly contractPreflightService = inject(ContractPreflightService);
 
   private readonly preferencesService = inject(PreferencesService);
 
@@ -199,17 +173,6 @@ export class VodafoneContractCreate implements OnInit {
   isCheckingClient = false;
   isCreatingClient = false;
   isCreatingContract = false;
-  isPreflightLoading = false;
-  isPreflightModalOpen = false;
-  isPostCreateWarningModalOpen = false;
-  preflightCanProceed = true;
-  preflightWarnings: SupplyPointReentryWarning[] = [];
-  preflightErrors: ContractPreflightError[] = [];
-  postCreateWarnings: SupplyPointReentryWarning[] = [];
-
-  private pendingCreatePayload: CreateVodafoneContractRequest | null = null;
-  private pendingCreatedContractId: string | null = null;
-  private navigateAfterPostCreateWarning = false;
   isUploadingDocuments = false;
 
   clientChecked = false;
@@ -252,28 +215,7 @@ export class VodafoneContractCreate implements OnInit {
     'Contratação Papel',
   ];
 
-  readonly tipoContratacaoOptions: VodafoneTipoContratacao[] = [
-    'Mudança de Comercializadora',
-    'Mudança de Comercializadora & AT',
-    'Entrada Direta',
-  ];
-
   readonly estadoOptions: readonly VodafoneContractStatus[] = VODAFONE_STATES;
-
-  readonly cicloHorarioOptions: VodafoneCicloHorario[] = [
-    'Simples',
-    'Bi-Horário Diário',
-    'Bi-Horário Semanal',
-    'Tri-Horário Diário',
-    'Tri-Horário Semanal',
-    'Tetra-Horário',
-  ];
-
-  readonly nivelTensaoOptions: VodafoneNivelTensao[] = ['Monofásico', 'Trifásico'];
-
-  readonly powerSuggestions = VODAFONE_POWER_SUGGESTIONS;
-
-  readonly gasLevelSuggestions = VODAFONE_GAS_LEVEL_SUGGESTIONS;
 
   readonly moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
 
@@ -284,10 +226,6 @@ export class VodafoneContractCreate implements OnInit {
     tipoProduto: '',
     contratacao: 'Contratação Digital',
 
-    tipoContratacaoLuz: 'Mudança de Comercializadora',
-
-    tipoContratacaoGas: 'Mudança de Comercializadora',
-
     controleQualidade: '',
     nomeRegistoCE: '',
     codigoRegistoCE: '',
@@ -296,12 +234,9 @@ export class VodafoneContractCreate implements OnInit {
 
     agendamento: '',
     dataAssinatura: '',
-    dataContrato: '',
+    dataAtivacao: '',
+    dataBaixa: '',
     dataRegisto: '',
-    dataAtivacaoCPE: '',
-    dataBaixaCPE: '',
-    dataAtivacaoCUI: '',
-    dataBaixaCUI: '',
 
     telefone: null,
     email: '',
@@ -324,19 +259,11 @@ export class VodafoneContractCreate implements OnInit {
 
     faturaEletronica: false,
     debitoDireto: false,
-    tarifaSocial: false,
     iban: '',
 
     campanha: '',
 
     antigaComercializadora: '',
-    cpe: DEFAULT_CPE_PREFIX,
-    cui: DEFAULT_CUI_PREFIX,
-    potencia: '',
-    escalao: '',
-
-    cicloHorario: '',
-    nivelTensao: '',
 
     observacoes: '',
     observacoesInternas: '',
@@ -534,15 +461,23 @@ export class VodafoneContractCreate implements OnInit {
   }
 
   cancel(): void {
-    if (this.isCreatingContract || this.isPreflightLoading) {
+    if (this.isCreatingContract) {
       return;
     }
 
     this.router.navigate(['/home/contracts/vodafone']);
   }
 
+  isDataAtivacaoRequired(): boolean {
+    return isVodafoneActivationDateRequired(this.contractForm.estado);
+  }
+
+  isDataBaixaRequired(): boolean {
+    return isVodafoneDeactivationDateRequired(this.contractForm.estado);
+  }
+
   createContract(): void {
-    if (this.isPreflightLoading || this.isCreatingContract) {
+    if (this.isCreatingContract) {
       return;
     }
 
@@ -609,13 +544,20 @@ export class VodafoneContractCreate implements OnInit {
       this.contractForm.estado = 'Em validação';
     }
 
+    const lifecycleDateValidationError = getVodafoneLifecycleDateValidationError(
+      this.contractForm.estado,
+      this.contractForm.dataAtivacao,
+      this.contractForm.dataBaixa,
+    );
+
+    if (lifecycleDateValidationError) {
+      this.errorMessage = lifecycleDateValidationError;
+      return;
+    }
+
     const fieldValidationError = getContractFormValidationError(
       this.contractForm as unknown as Record<string, unknown>,
-      {
-        validateCpe: this.hasCpeValue(),
-        validateCui: this.hasCuiValue(),
-        ibanMode: 'international',
-      },
+      { ibanMode: 'international' },
     );
 
     if (fieldValidationError) {
@@ -625,106 +567,10 @@ export class VodafoneContractCreate implements OnInit {
 
     const payload = this.buildContractPayload();
 
-    this.runPreflight(payload);
+    this.submitContract(payload);
   }
 
-  private runPreflight(payload: CreateVodafoneContractRequest): void {
-    const preflightProductType = this.resolvePreflightProductType();
-
-    if (!preflightProductType) {
-      this.createContractAfterPreflight(payload, []);
-      return;
-    }
-
-    const preflightPayload = buildContractPreflightRequest({
-      companyId: this.contractForm.companyId,
-      tipoProduto: preflightProductType,
-      cpe: this.hasCpeValue() ? this.contractForm.cpe : '',
-      cui: this.hasCuiValue() ? this.contractForm.cui : '',
-    });
-
-    this.isPreflightLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    this.contractPreflightService
-      .preflightContract('vodafone', preflightPayload)
-      .pipe(
-        finalize(() => {
-          this.isPreflightLoading = false;
-        }),
-      )
-      .subscribe({
-        next: (result) => {
-          const canProceed = result.canProceed && result.errors.length === 0;
-
-          if (!canProceed || result.warnings.length > 0 || result.errors.length > 0) {
-            this.preflightCanProceed = canProceed;
-            this.preflightWarnings = result.warnings;
-            this.preflightErrors = result.errors;
-            this.pendingCreatePayload = canProceed ? payload : null;
-            this.isPreflightModalOpen = true;
-            return;
-          }
-
-          this.createContractAfterPreflight(payload, []);
-        },
-        error: () => {
-          this.errorMessage =
-            'Não foi possível validar o CPE/CUI neste momento. Tente novamente.';
-        },
-      });
-  }
-
-  closePreflightModal(): void {
-    this.isPreflightModalOpen = false;
-    this.preflightCanProceed = true;
-    this.preflightWarnings = [];
-    this.preflightErrors = [];
-    this.pendingCreatePayload = null;
-  }
-
-  confirmPreflightCreation(): void {
-    if (!this.preflightCanProceed || !this.pendingCreatePayload) {
-      return;
-    }
-
-    const payload = this.pendingCreatePayload;
-    const acceptedWarnings = [...this.preflightWarnings];
-
-    this.closePreflightModal();
-    this.createContractAfterPreflight(payload, acceptedWarnings);
-  }
-
-  acknowledgePostCreateWarnings(): void {
-    const contractId = this.pendingCreatedContractId;
-    const shouldNavigate = this.navigateAfterPostCreateWarning;
-
-    this.isPostCreateWarningModalOpen = false;
-    this.postCreateWarnings = [];
-    this.pendingCreatedContractId = null;
-    this.navigateAfterPostCreateWarning = false;
-
-    if (contractId && shouldNavigate) {
-      this.router.navigate(['/home/contracts/vodafone', contractId]);
-    }
-  }
-
-  private openPostCreateWarningModal(
-    contractId: string,
-    warnings: SupplyPointReentryWarning[],
-    navigateAfterClose: boolean,
-  ): void {
-    this.pendingCreatedContractId = contractId;
-    this.postCreateWarnings = warnings;
-    this.navigateAfterPostCreateWarning = navigateAfterClose;
-    this.isPostCreateWarningModalOpen = true;
-  }
-
-  private createContractAfterPreflight(
-    payload: CreateVodafoneContractRequest,
-    preflightWarnings: SupplyPointReentryWarning[],
-  ): void {
+  private submitContract(payload: CreateVodafoneContractRequest): void {
     this.isCreatingContract = true;
 
     this.isUploadingDocuments = false;
@@ -733,17 +579,12 @@ export class VodafoneContractCreate implements OnInit {
     this.successMessage = '';
 
     let createdContract: VodafoneContractDetail | null = null;
-    let creationWarnings: SupplyPointReentryWarning[] = [];
 
     this.vodafoneContractService
       .createVodafoneContract(payload)
       .pipe(
         tap((contract) => {
           createdContract = contract;
-          creationWarnings = getNewSupplyPointReentryWarnings(
-            contract.warnings ?? [],
-            preflightWarnings,
-          );
         }),
 
         switchMap((contract) => {
@@ -784,11 +625,6 @@ export class VodafoneContractCreate implements OnInit {
             ? 'Contrato e documentos criados com sucesso.'
             : 'Contrato criado com sucesso.';
 
-          if (creationWarnings.length) {
-            this.openPostCreateWarningModal(contract.id, creationWarnings, true);
-            return;
-          }
-
           this.router.navigate(['/home/contracts/vodafone', contract.id]);
         },
 
@@ -802,10 +638,6 @@ export class VodafoneContractCreate implements OnInit {
         complete: () => {
           if (createdContract && this.errorMessage.includes('O contrato foi criado')) {
             this.successMessage = `Contrato ${createdContract.id} criado com sucesso.`;
-
-            if (creationWarnings.length) {
-              this.openPostCreateWarningModal(createdContract.id, creationWarnings, false);
-            }
           }
         },
       });
@@ -1079,8 +911,6 @@ export class VodafoneContractCreate implements OnInit {
       faturaEletronica: this.contractForm.faturaEletronica,
 
       debitoDireto: this.contractForm.debitoDireto,
-
-      tarifaSocial: this.contractForm.tarifaSocial,
     };
 
     this.addIfFilled(payload, 'email', this.contractForm.email.trim());
@@ -1100,7 +930,9 @@ export class VodafoneContractCreate implements OnInit {
 
     this.addIfFilled(payload, 'dataAssinatura', this.contractForm.dataAssinatura);
 
-    this.addIfFilled(payload, 'dataContrato', this.contractForm.dataContrato);
+    this.addIfFilled(payload, 'dataAtivacao', this.contractForm.dataAtivacao);
+
+    this.addIfFilled(payload, 'dataBaixa', this.contractForm.dataBaixa);
 
     this.addIfFilled(payload, 'dataRegisto', this.contractForm.dataRegisto);
 
@@ -1116,18 +948,6 @@ export class VodafoneContractCreate implements OnInit {
       this.contractForm.antigaComercializadora.trim(),
     );
 
-    this.addIfFilled(payload, 'tipoContratacaoLuz', this.contractForm.tipoContratacaoLuz);
-    this.addIfFilled(payload, 'tipoContratacaoGas', this.contractForm.tipoContratacaoGas);
-    this.addIfFilled(payload, 'cpe', this.hasCpeValue() ? this.contractForm.cpe.trim() : '');
-    this.addIfFilled(payload, 'cui', this.hasCuiValue() ? this.contractForm.cui.trim() : '');
-    this.addIfFilled(payload, 'potencia', this.contractForm.potencia.trim());
-    this.addIfFilled(payload, 'escalao', this.contractForm.escalao.trim());
-    this.addIfFilled(payload, 'cicloHorario', this.contractForm.cicloHorario);
-    this.addIfFilled(payload, 'nivelTensao', this.contractForm.nivelTensao);
-    this.addIfFilled(payload, 'dataAtivacaoCPE', this.contractForm.dataAtivacaoCPE);
-    this.addIfFilled(payload, 'dataBaixaCPE', this.contractForm.dataBaixaCPE);
-    this.addIfFilled(payload, 'dataAtivacaoCUI', this.contractForm.dataAtivacaoCUI);
-    this.addIfFilled(payload, 'dataBaixaCUI', this.contractForm.dataBaixaCUI);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 
@@ -1220,35 +1040,6 @@ export class VodafoneContractCreate implements OnInit {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}/${month}/${year} ${hours}:${minutes}`;
-  }
-
-  private hasCpeValue(): boolean {
-    const value = this.contractForm.cpe.trim();
-    return Boolean(value && value !== DEFAULT_CPE_PREFIX);
-  }
-
-  private hasCuiValue(): boolean {
-    const value = this.contractForm.cui.trim();
-    return Boolean(value && value !== DEFAULT_CUI_PREFIX);
-  }
-
-  private resolvePreflightProductType(): 'Luz' | 'Luz + Gás' | 'Gás' | null {
-    const hasCpe = this.hasCpeValue();
-    const hasCui = this.hasCuiValue();
-
-    if (hasCpe && hasCui) {
-      return 'Luz + Gás';
-    }
-
-    if (hasCpe) {
-      return 'Luz';
-    }
-
-    if (hasCui) {
-      return 'Gás';
-    }
-
-    return null;
   }
 
   private addIfFilled<Key extends keyof CreateVodafoneContractRequest>(

@@ -265,6 +265,15 @@ textarea {
   font-weight: 600;
 }
 
+.checkbox-help {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 input.ng-invalid.ng-touched,
 select.ng-invalid.ng-touched {
   border-color: #dc2626;
@@ -382,3 +391,58 @@ select.ng-invalid.ng-touched {
 .checkbox-label span { line-height:1.4; }
 @media (max-width:1200px){ .boolean-options-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media (max-width:700px){ .boolean-options-grid{grid-template-columns:1fr;} }
+
+/* =========================
+   MOTOR DE CÁLCULO
+========================= */
+
+.profile-field {
+  grid-column: span 2;
+}
+
+.advanced-engine-card {
+  border: 1px solid #bae6fd;
+  background: linear-gradient(135deg, #f0f9ff, #ffffff);
+}
+
+.advanced-engine-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  > .material-symbols-rounded {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: #e0f2fe;
+    color: #0284c7;
+    font-size: 24px;
+  }
+
+  strong {
+    display: block;
+    color: #243646;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.mode-pill.advanced {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+@media (max-width: 700px) {
+  .profile-field {
+    grid-column: auto;
+  }
+}

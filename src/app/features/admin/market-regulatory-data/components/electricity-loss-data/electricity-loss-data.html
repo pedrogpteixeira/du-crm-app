@@ -1,0 +1,169 @@
+<section class="regulatory-dataset">
+  <header class="dataset-header">
+    <div>
+      <span class="dataset-eyebrow">E-REDES · Perfis quarto-horários</span>
+      <h2>Perdas E-REDES</h2>
+      <p>Perfis de perdas persistidos pelo backend. Os fatores abaixo são apenas apresentados, nunca aplicados no Angular.</p>
+    </div>
+  </header>
+
+  <form class="filters-card" (ngSubmit)="applyFilters()">
+    <label>
+      Estado
+      <select [(ngModel)]="draftFilters.active" name="lossActive">
+        <option value="">Todos</option>
+        <option value="true">Ativos</option>
+        <option value="false">Inativos</option>
+      </select>
+    </label>
+
+    <label>
+      Fonte
+      <input [(ngModel)]="draftFilters.source" name="lossSource" type="text" />
+    </label>
+
+    <label>
+      Versão
+      <input [(ngModel)]="draftFilters.versionLabel" name="lossVersion" type="text" />
+    </label>
+
+    <label>
+      Data inicial
+      <input [(ngModel)]="draftFilters.startDate" name="lossStartDate" type="date" />
+    </label>
+
+    <label>
+      Data final <small>(exclusiva)</small>
+      <input [(ngModel)]="draftFilters.endDate" name="lossEndDate" type="date" />
+    </label>
+
+    <div class="filter-actions">
+      <button type="button" class="secondary-btn" (click)="clearFilters()">Limpar</button>
+      <button type="submit" class="apply-btn" [disabled]="isLoading || isLoadingMore">
+        <span class="material-symbols-rounded">filter_alt</span>
+        Aplicar
+      </button>
+    </div>
+  </form>
+
+  <div class="loading-state" *ngIf="isLoading">
+    <span class="material-symbols-rounded spinning">progress_activity</span>
+    <span>A carregar perfis de perdas E-REDES...</span>
+  </div>
+
+  <p class="load-error-message" *ngIf="!isLoading && loadErrorMessage">
+    {{ loadErrorMessage }}
+  </p>
+
+  <ng-container *ngIf="!isLoading && !loadErrorMessage">
+    <div class="dataset-meta" *ngIf="pagination">
+      <strong>{{ loadedCount }} de {{ pagination.total }} intervalos</strong>
+      <span>Paginação backend · {{ pagination.limit }} por pedido</span>
+    </div>
+
+    <div class="table-card" *ngIf="items.length; else emptyState">
+      <div class="table-scroll">
+        <table class="loss-table">
+          <thead>
+            <tr>
+              <th>Início</th>
+              <th>Fim</th>
+              <th>Intervalo</th>
+              <th class="numeric">BT</th>
+              <th class="numeric">MT</th>
+              <th class="numeric">AT</th>
+              <th class="numeric">AT/RNT</th>
+              <th class="numeric">MAT</th>
+              <th>Versão</th>
+              <th>Estado</th>
+              <th class="actions-column">Detalhe</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <ng-container *ngFor="let item of items; trackBy: trackById">
+              <tr
+                class="data-row"
+                [class.expanded]="expandedId === item.id"
+                role="button"
+                tabindex="0"
+                [attr.aria-expanded]="expandedId === item.id"
+                (click)="toggleDetails(item)"
+                (keydown)="onRowKeydown($event, item)"
+              >
+                <td>{{ formatDateTime(item.periodStart) }}</td>
+                <td>{{ formatDateTime(item.periodEnd) }}</td>
+                <td>{{ item.intervalMinutes }} min</td>
+                <td class="numeric primary-value">{{ formatPercentage(item.percentages.BT) }} %</td>
+                <td class="numeric">{{ formatPercentage(item.percentages.MT) }} %</td>
+                <td class="numeric">{{ formatPercentage(item.percentages.AT) }} %</td>
+                <td class="numeric">{{ formatPercentage(item.percentages.AT_RNT) }} %</td>
+                <td class="numeric">{{ formatPercentage(item.percentages.MAT) }} %</td>
+                <td>{{ item.versionLabel || '—' }}</td>
+                <td>
+                  <span class="status-badge" [class.inactive]="!item.active">
+                    {{ item.active ? 'Ativo' : 'Histórico' }}
+                  </span>
+                </td>
+                <td class="actions-column">
+                  <button
+                    type="button"
+                    class="details-btn"
+                    [class.expanded]="expandedId === item.id"
+                    (click)="onDetailsButtonClick($event, item)"
+                  >
+                    <span class="material-symbols-rounded details-chevron">expand_more</span>
+                    {{ expandedId === item.id ? 'Fechar' : 'Ver' }}
+                  </button>
+                </td>
+              </tr>
+
+              <tr class="details-row" *ngIf="expandedId === item.id">
+                <td colspan="11">
+                  <div class="details-panel">
+                    <div class="details-grid">
+                      <div><span>País / região</span><strong>{{ item.country }} · {{ item.region }}</strong></div>
+                      <div><span>Fonte</span><strong>{{ item.source || '—' }}</strong></div>
+                      <div><span>Referência</span><strong>{{ item.sourceReference || '—' }}</strong></div>
+                      <div><span>Recolhido</span><strong>{{ formatDateTime(item.fetchedAt) }}</strong></div>
+                      <div><span>Override manual</span><strong>{{ item.manualOverride ? 'Sim' : 'Não' }}</strong></div>
+                      <div><span>Atualizado</span><strong>{{ formatDateTime(item.updatedAt) }}</strong></div>
+                    </div>
+                    <a
+                      *ngIf="item.sourceUrl"
+                      class="source-link"
+                      [href]="item.sourceUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      (click)="$event.stopPropagation()"
+                    >
+                      Abrir fonte
+                      <span class="material-symbols-rounded">open_in_new</span>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="load-more-bar" *ngIf="pagination?.hasMore">
+        <button type="button" class="load-more-btn" [disabled]="isLoadingMore" (click)="loadMore()">
+          <span class="material-symbols-rounded" [class.spinning]="isLoadingMore">
+            {{ isLoadingMore ? 'progress_activity' : 'expand_more' }}
+          </span>
+          {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+        </button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-rounded">database_off</span>
+        <h3>Sem perfis E-REDES</h3>
+        <p>Não existem intervalos para os filtros aplicados.</p>
+      </div>
+    </ng-template>
+  </ng-container>
+</section>

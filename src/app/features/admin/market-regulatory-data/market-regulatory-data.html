@@ -1,0 +1,85 @@
+<section class="market-regulatory-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Administração › Simulador</span>
+      <h1>Dados de Mercado e Regulatórios</h1>
+      <p>
+        Consulta dos dados de mercado e regulatórios utilizados automaticamente pelo motor de simulação.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      *ngIf="canRefreshActiveTab"
+      [disabled]="isRefreshingActiveTab"
+      (click)="refreshActiveTab()"
+    >
+      <span
+        class="material-symbols-rounded"
+        [class.spinning]="isRefreshingActiveTab"
+      >
+        refresh
+      </span>
+      {{ isRefreshingActiveTab ? 'A atualizar...' : 'Atualizar' }}
+    </button>
+  </header>
+
+  <aside class="pricing-context">
+    <span class="material-symbols-rounded">info</span>
+    <div>
+      <strong>Fontes automáticas do pricing engine</strong>
+      <p>
+        Esta área é apenas de consulta e diagnóstico. O frontend não calcula OMIE, MIBGAS,
+        ERC, TAR, perdas nem preços de oferta.
+      </p>
+    </div>
+  </aside>
+
+  <nav class="dataset-tabs" aria-label="Dados de mercado e regulatórios">
+    <button
+      type="button"
+      *ngFor="let tab of tabs; trackBy: trackTab"
+      [class.active]="activeTab === tab.id"
+      [attr.aria-selected]="activeTab === tab.id"
+      (click)="selectTab(tab.id)"
+    >
+      <span class="material-symbols-rounded">{{ tab.icon }}</span>
+      <span>{{ tab.label }}</span>
+    </button>
+  </nav>
+
+  <section class="tab-content">
+    <app-omie-averages
+      *ngIf="isTabLoaded('omie')"
+      [hidden]="activeTab !== 'omie'"
+      (loadingChange)="onOmieLoadingChange($event)"
+    />
+
+    <app-mibgas-prices
+      *ngIf="isTabLoaded('mibgas')"
+      [hidden]="activeTab !== 'mibgas'"
+      [canEdit]="canEdit"
+    />
+
+    <app-ren-erc-values
+      *ngIf="isTabLoaded('ren-erc')"
+      [hidden]="activeTab !== 'ren-erc'"
+    />
+
+    <app-electricity-tar-data
+      *ngIf="isTabLoaded('electricity-tar')"
+      [hidden]="activeTab !== 'electricity-tar'"
+    />
+
+    <app-gas-tar-data
+      *ngIf="isTabLoaded('gas-tar')"
+      [hidden]="activeTab !== 'gas-tar'"
+    />
+
+    <app-electricity-loss-data
+      *ngIf="isTabLoaded('electricity-losses')"
+      [hidden]="activeTab !== 'electricity-losses'"
+    />
+  </section>
+</section>

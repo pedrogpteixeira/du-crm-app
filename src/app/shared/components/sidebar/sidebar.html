@@ -208,14 +208,25 @@
         <span class="label">Editar Tarifários</span>
       </a>
 
+
       <a
         *ngIf="canAccessRoles('Super Admin')"
-        routerLink="/home/admin/omie-averages"
+        routerLink="/home/tariffs/calculation-profiles"
         routerLinkActive="active"
-        title="Médias OMIE"
+        title="Perfis de Cálculo"
+      >
+        <span class="icon material-symbols-rounded">account_tree</span>
+        <span class="label">Perfis de Cálculo</span>
+      </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/admin/market-regulatory-data"
+        routerLinkActive="active"
+        title="Dados de Mercado e Regulatórios"
       >
         <span class="icon material-symbols-rounded">query_stats</span>
-        <span class="label">Médias OMIE</span>
+        <span class="label">Dados de Mercado e Regulatórios</span>
       </a>
     </div>
 

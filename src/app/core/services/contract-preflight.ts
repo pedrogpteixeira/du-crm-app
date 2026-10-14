@@ -10,7 +10,6 @@ export const SUPPLY_POINT_PREFLIGHT_PROVIDERS = [
   'iberdrola',
   'yes-energy',
   'meo-energias',
-  'vodafone',
   'portulogos',
 ] as const;
 

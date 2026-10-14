@@ -312,7 +312,6 @@ input {
   padding: 24px;
 
   background: rgba(15, 23, 42, 0.48);
-  backdrop-filter: blur(3px);
 }
 
 .pdf-loading-card {
@@ -439,5 +438,33 @@ input.invalid {
 @media (max-width: 700px) {
   .form-card-header {
     flex-direction: column;
+  }
+}
+.commercial-context-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.condition-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  span {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: #0e7490;
+    font-size: 11px;
+    font-weight: 900;
   }
 }

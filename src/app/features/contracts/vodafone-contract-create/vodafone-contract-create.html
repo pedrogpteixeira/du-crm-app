@@ -179,30 +179,6 @@
           <input type="text" [(ngModel)]="contractForm.tipoProduto" />
         </label>
 
-        <label>
-          Tipo Contração LUZ
-
-          <select [(ngModel)]="contractForm.tipoContratacaoLuz">
-            <option value="">Sem valor</option>
-
-            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Tipo Contração Gás
-
-          <select [(ngModel)]="contractForm.tipoContratacaoGas">
-            <option value="">Sem valor</option>
-
-            <option *ngFor="let option of tipoContratacaoOptions" [value]="option">
-              {{ option }}
-            </option>
-          </select>
-        </label>
-
         <label *ngIf="isProLayout()">
           Controlo de Qualidade
 
@@ -251,9 +227,9 @@
           </label>
 
           <label *ngIf="isProLayout()">
-            Data Contrato
+            Data de Assinatura
 
-            <input type="date" [(ngModel)]="contractForm.dataContrato" />
+            <input type="date" [(ngModel)]="contractForm.dataAssinatura" />
           </label>
 
           <label *ngIf="isProLayout()">
@@ -261,33 +237,25 @@
 
             <input type="date" [(ngModel)]="contractForm.dataRegisto" />
           </label>
-        </div>
 
-        <div class="status-sale-row status-sale-row--two" *ngIf="isProLayout()">
-          <label>
-            Data de Ativação CPE
+          <label *ngIf="isProLayout()">
+            Data de Ativação{{ isDataAtivacaoRequired() ? ' *' : '' }}
 
-            <input type="date" [(ngModel)]="contractForm.dataAtivacaoCPE" />
+            <input
+              type="date"
+              [(ngModel)]="contractForm.dataAtivacao"
+              [required]="isDataAtivacaoRequired()"
+            />
           </label>
 
-          <label>
-            Data de Ativação CUI
+          <label *ngIf="isProLayout()">
+            Data de Baixa{{ isDataBaixaRequired() ? ' *' : '' }}
 
-            <input type="date" [(ngModel)]="contractForm.dataAtivacaoCUI" />
-          </label>
-        </div>
-
-        <div class="status-sale-row status-sale-row--two" *ngIf="isProLayout()">
-          <label>
-            Data Baixa CPE
-
-            <input type="date" [(ngModel)]="contractForm.dataBaixaCPE" />
-          </label>
-
-          <label>
-            Data Baixa CUI
-
-            <input type="date" [(ngModel)]="contractForm.dataBaixaCUI" />
+            <input
+              type="date"
+              [(ngModel)]="contractForm.dataBaixa"
+              [required]="isDataBaixaRequired()"
+            />
           </label>
         </div>
       </div>
@@ -426,16 +394,6 @@
         </label>
 
         <label>
-          Tarifa Social
-
-          <select [(ngModel)]="contractForm.tarifaSocial">
-            <option [ngValue]="false">Não</option>
-
-            <option [ngValue]="true">Sim</option>
-          </select>
-        </label>
-
-        <label>
           Débito Direto
 
           <select [(ngModel)]="contractForm.debitoDireto">
@@ -497,68 +455,6 @@
 
           <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
         </label>
-
-        <label>
-          CPE
-
-          <input
-            type="text"
-            [(ngModel)]="contractForm.cpe"
-            appContractMask="cpe"
-            appContractMaskPlaceholder=""
-          />
-        </label>
-
-        <label>
-          CUI
-
-          <input
-            type="text"
-            [(ngModel)]="contractForm.cui"
-            appContractMask="cui"
-            appContractMaskPlaceholder=""
-          />
-        </label>
-
-        <label>
-          Potência
-
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.potencia"
-            [options]="powerSuggestions"
-            inputMode="decimal"
-          />
-        </label>
-
-        <label>
-          Escalão
-
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.escalao"
-            [options]="gasLevelSuggestions"
-            inputMode="decimal"
-          />
-        </label>
-
-        <label>
-          Ciclo Horário
-
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.cicloHorario"
-            [options]="cicloHorarioOptions"
-            emptyOptionLabel="Sem valor"
-          />
-        </label>
-
-        <label>
-          Nível Tensão
-
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.nivelTensao"
-            [options]="nivelTensaoOptions"
-            emptyOptionLabel="Sem valor"
-          />
-        </label>
       </div>
     </article>
 
@@ -569,7 +465,7 @@
 
       <app-file-dropzone
         [(files)]="selectedFiles"
-        [disabled]="isPreflightLoading || isCreatingContract || isUploadingDocuments"
+        [disabled]="isCreatingContract || isUploadingDocuments"
       />
 
       <p class="muted" *ngIf="isUploadingDocuments">A carregar documentos...</p>
@@ -607,38 +503,19 @@
     </article>
 
     <div class="final-actions">
-      <button type="button" class="secondary" [disabled]="isPreflightLoading || isCreatingContract" (click)="cancel()">
+      <button type="button" class="secondary" [disabled]="isCreatingContract" (click)="cancel()">
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isPreflightLoading || isCreatingContract" (click)="createContract()">
+      <button type="button" [disabled]="isCreatingContract" (click)="createContract()">
         {{
-          isPreflightLoading
-            ? 'A verificar CPE/CUI...'
-            : isUploadingDocuments
-              ? 'A carregar documentos...'
-              : isCreatingContract
-                ? 'A criar contrato...'
-                : 'Criar contrato'
+          isUploadingDocuments
+            ? 'A carregar documentos...'
+            : isCreatingContract
+              ? 'A criar contrato...'
+              : 'Criar contrato'
         }}
       </button>
     </div>
   </ng-container>
 </section>
-
-<app-contract-preflight-modal
-  *ngIf="isPreflightModalOpen"
-  [warnings]="preflightWarnings"
-  [errors]="preflightErrors"
-  [canProceed]="preflightCanProceed"
-  (closed)="closePreflightModal()"
-  (proceed)="confirmPreflightCreation()"
-></app-contract-preflight-modal>
-
-<app-contract-preflight-modal
-  *ngIf="isPostCreateWarningModalOpen"
-  mode="post-create"
-  [warnings]="postCreateWarnings"
-  (closed)="acknowledgePostCreateWarnings()"
-></app-contract-preflight-modal>
-

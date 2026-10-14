@@ -1,0 +1,613 @@
+<section class="calculation-profiles-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Gestão de Tarifários</span>
+      <h1>Perfis de Cálculo</h1>
+      <p>
+        Consulta os Calculation Profiles, respetivas versões e parâmetros, cria novas versões sem
+        alterar o histórico e controla a disponibilidade para novas associações.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="create-button" (click)="openCreateProfile()">
+        <span class="material-symbols-rounded">add</span>
+        Novo perfil
+      </button>
+
+      <button
+        type="button"
+        class="refresh-button"
+        [disabled]="isLoadingProfiles"
+        (click)="loadProfiles(undefined, true)"
+      >
+        <span class="material-symbols-rounded">refresh</span>
+        {{ isLoadingProfiles ? 'A atualizar...' : 'Atualizar' }}
+      </button>
+    </div>
+  </header>
+
+  <article class="card filters-card">
+    <div class="card-heading">
+      <div>
+        <span class="section-title">Filtros</span>
+        <p>Filtra a listagem sem efetuar novos pedidos à API.</p>
+      </div>
+
+      <span class="profile-count" *ngIf="!isLoadingProfiles">
+        {{ filteredProfiles.length }} / {{ profiles.length }}
+      </span>
+    </div>
+
+    <div class="filters-grid">
+      <label>
+        Comercializadora
+        <select
+          [(ngModel)]="filters.commercializerId"
+          [disabled]="isLoadingCompanies"
+          (ngModelChange)="applyFilters()"
+        >
+          <option value="">Todas</option>
+          <option *ngFor="let company of companies" [value]="company.id">
+            {{ company.name }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Produto
+        <select [(ngModel)]="filters.productType" (ngModelChange)="applyFilters()">
+          <option value="">Todos</option>
+          <option value="electricity">Eletricidade</option>
+          <option value="gas">Gás</option>
+          <option value="dual">Luz + Gás</option>
+        </select>
+      </label>
+
+      <label>
+        Família / nome
+        <input
+          type="text"
+          [(ngModel)]="filters.familyCode"
+          (ngModelChange)="applyFilters()"
+          placeholder="Ex.: REPSOL_INDEXED"
+        />
+      </label>
+
+      <label>
+        Versão
+        <input
+          type="number"
+          min="1"
+          step="1"
+          [(ngModel)]="filters.version"
+          (ngModelChange)="applyFilters()"
+          placeholder="Todas"
+        />
+      </label>
+
+      <label>
+        Strategy / fórmula
+        <select [(ngModel)]="filters.strategy" (ngModelChange)="applyFilters()">
+          <option value="">Todas</option>
+          <option *ngFor="let strategy of strategyOptions" [value]="strategy">
+            {{ getStrategyLabel(strategy) }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Estado
+        <select [(ngModel)]="filters.state" (ngModelChange)="applyFilters()">
+          <option value="">Todos</option>
+          <option value="active">Ativo</option>
+          <option value="inactive">Inativo</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="secondary-button" (click)="clearFilters()">
+        Limpar filtros
+      </button>
+    </div>
+  </article>
+
+  <div class="loading-card card" *ngIf="isLoadingProfiles">
+    <span class="material-symbols-rounded loading-icon">progress_activity</span>
+    <div>
+      <strong>A carregar perfis de cálculo</strong>
+      <p>A obter as versões e configurações disponíveis.</p>
+    </div>
+  </div>
+
+  <div class="empty-card card" *ngIf="!isLoadingProfiles && !filteredProfiles.length">
+    <span class="material-symbols-rounded">manage_search</span>
+    <h2>Nenhum perfil encontrado</h2>
+    <p>Não existem Calculation Profiles compatíveis com os filtros selecionados.</p>
+  </div>
+
+  <section class="profiles-layout" *ngIf="!isLoadingProfiles && filteredProfiles.length">
+    <article class="card profiles-list-card">
+      <div class="list-header">
+        <div>
+          <span class="section-title">Calculation Profiles</span>
+          <p>Seleciona um perfil para consultar todos os parâmetros.</p>
+        </div>
+      </div>
+
+      <div class="profiles-list">
+        <button
+          type="button"
+          class="profile-result"
+          *ngFor="let profile of filteredProfiles; trackBy: trackByProfileId"
+          [class.selected]="selectedProfile?.id === profile.id"
+          (click)="selectProfile(profile)"
+        >
+          <div class="profile-result-topline">
+            <div class="profile-family">
+              <strong>{{ profile.familyCode }}</strong>
+              <span>Versão {{ profile.version }}</span>
+            </div>
+
+            <div class="result-badges">
+              <span class="version-kind-badge" [class.historical]="!isLatestVersion(profile)">
+                {{ getVersionKindLabel(profile) }}
+              </span>
+              <span class="state-badge" [class.inactive]="!profile.active">
+                {{ profile.active ? 'Ativo' : 'Inativo' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="profile-meta">
+            <span>
+              <span class="material-symbols-rounded">apartment</span>
+              {{ getCompanyName(profile.commercializerId) }}
+            </span>
+
+            <span>
+              <span class="material-symbols-rounded">bolt</span>
+              {{ getProductTypeLabel(profile.productType) }}
+            </span>
+          </div>
+
+          <div class="strategy-badges">
+            <span *ngFor="let strategy of getPrimaryStrategies(profile)">
+              {{ strategy }}
+            </span>
+          </div>
+
+          <small *ngIf="profile.previousVersionId">
+            Anterior: {{ getPreviousVersionLabel(profile) }}
+          </small>
+        </button>
+      </div>
+    </article>
+
+    <article class="card profile-detail-card">
+      <ng-container *ngIf="selectedProfile as profile; else selectProfileHint">
+        <div class="detail-loading" *ngIf="isLoadingDetail">
+          <span class="material-symbols-rounded loading-icon">progress_activity</span>
+          A atualizar detalhe...
+        </div>
+
+        <div class="detail-header">
+          <div>
+            <span class="detail-eyebrow">Calculation Profile</span>
+            <h2>{{ profile.familyCode }}</h2>
+            <p>
+              {{ getCompanyName(profile.commercializerId) }} ·
+              {{ getProductTypeLabel(profile.productType) }}
+            </p>
+          </div>
+
+          <div class="detail-badges">
+            <span class="version-badge">v{{ profile.version }}</span>
+            <span class="version-kind-badge" [class.historical]="!isLatestVersion(profile)">
+              {{ getVersionKindLabel(profile) }}
+            </span>
+            <span class="state-badge" [class.inactive]="!profile.active">
+              {{ profile.active ? 'Ativo' : 'Inativo' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <div class="version-guidance" *ngIf="!isLatestVersion(profile)">
+            <span class="material-symbols-rounded">history</span>
+            <span>
+              Esta é uma versão histórica. Para criar a próxima versão, seleciona a versão atual v{{
+                getLatestFamilyVersion(profile)?.version
+              }}.
+            </span>
+          </div>
+
+          <div class="profile-action-buttons">
+            <button
+              type="button"
+              class="version-action-button"
+              [disabled]="!isLatestVersion(profile) || isLoadingDetail || !!updatingStatusProfileId"
+              (click)="openCreateVersion(profile)"
+            >
+              <span class="material-symbols-rounded">add_circle</span>
+              Criar nova versão
+            </button>
+
+            <button
+              type="button"
+              class="status-action-button"
+              [class.deactivate]="profile.active"
+              [disabled]="isLoadingDetail || !!updatingStatusProfileId"
+              (click)="toggleProfileActive(profile)"
+            >
+              <span
+                class="material-symbols-rounded loading-icon"
+                *ngIf="isUpdatingStatus(profile); else statusIcon"
+                >progress_activity</span
+              >
+              <ng-template #statusIcon>
+                <span class="material-symbols-rounded">
+                  {{ profile.active ? 'pause_circle' : 'play_circle' }}
+                </span>
+              </ng-template>
+              {{
+                isUpdatingStatus(profile)
+                  ? 'A atualizar...'
+                  : profile.active
+                    ? 'Desativar versão'
+                    : 'Ativar versão'
+              }}
+            </button>
+          </div>
+        </div>
+
+        <section class="detail-section">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">info</span>
+            <h3>Informação geral</h3>
+          </div>
+
+          <div class="metadata-grid">
+            <div>
+              <span>Família / nome</span>
+              <strong>{{ profile.familyCode }}</strong>
+            </div>
+
+            <div>
+              <span>Comercializadora</span>
+              <strong>{{ getCompanyName(profile.commercializerId) }}</strong>
+            </div>
+
+            <div>
+              <span>Produto</span>
+              <strong>{{ getProductTypeLabel(profile.productType) }}</strong>
+            </div>
+
+            <div>
+              <span>Modo de comissão</span>
+              <strong>{{ getCommissionModeLabel(profile.commissionMode) }}</strong>
+            </div>
+
+            <div>
+              <span>Versão</span>
+              <strong>{{ profile.version }}</strong>
+            </div>
+
+            <div>
+              <span>Versão anterior</span>
+              <strong>{{ getPreviousVersionLabel(profile) }}</strong>
+            </div>
+
+            <div>
+              <span>Vigência desde</span>
+              <strong>{{ formatDate(profile.effectiveFrom) }}</strong>
+            </div>
+
+            <div>
+              <span>Vigência até</span>
+              <strong>{{ formatDate(profile.effectiveTo) }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="detail-section version-history-section">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">history</span>
+            <div>
+              <h3>Histórico de versões</h3>
+              <p>
+                As versões anteriores permanecem consultáveis e nunca são alteradas retroativamente.
+              </p>
+            </div>
+          </div>
+
+          <div class="version-history">
+            <button
+              type="button"
+              class="history-version"
+              *ngFor="let version of getFamilyVersions(profile); trackBy: trackByProfileId"
+              [class.selected]="version.id === profile.id"
+              (click)="selectProfile(version)"
+            >
+              <span class="history-version-main">
+                <strong>v{{ version.version }}</strong>
+                <small>{{ isLatestVersion(version) ? 'Versão atual' : 'Histórica' }}</small>
+              </span>
+              <span class="history-version-state" [class.inactive]="!version.active">
+                {{ version.active ? 'Ativa' : 'Inativa' }}
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="detail-section included-components-detail">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">inventory_2</span>
+            <div>
+              <h3>Componentes já incluídos no preço</h3>
+              <p>
+                “Incluído” significa que o pricing engine não volta a acrescentar automaticamente a
+                respetiva componente.
+              </p>
+            </div>
+          </div>
+
+          <div class="included-components-detail-grid">
+            <div
+              class="included-component-card"
+              *ngFor="let item of getIncludedComponentItems(profile)"
+              [class.included]="item.included"
+            >
+              <div>
+                <span>{{ item.label }}</span>
+                <strong>{{ item.description }}</strong>
+              </div>
+              <span class="included-state" [class.included]="item.included">
+                {{ item.included ? 'Incluído' : 'Não incluído' }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section class="detail-section energy-section" *ngIf="profile.electricity as electricity">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">electric_bolt</span>
+            <div>
+              <h3>Eletricidade</h3>
+              <p>Parâmetros configurados no pricing engine.</p>
+            </div>
+          </div>
+
+          <div class="parameter-grid">
+            <div>
+              <span>Strategy / fórmula</span>
+              <strong>{{ getStrategyLabel(electricity.strategy) }}</strong>
+              <small>{{ electricity.strategy }}</small>
+            </div>
+
+            <div>
+              <span>Fonte de mercado</span>
+              <strong>{{ getMarketSourceLabel(electricity.marketSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Referência de mercado</span>
+              <strong>{{ getMarketReferenceLabel(electricity.marketReference) }}</strong>
+            </div>
+
+            <div>
+              <span>Custo de sistema</span>
+              <strong>{{ getSystemCostSourceLabel(electricity.systemCostSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Fonte de perdas</span>
+              <strong>{{ getLossSourceLabel(electricity.lossSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Margem</span>
+              <strong>{{ getMarginLabel(electricity) }}</strong>
+            </div>
+
+            <div>
+              <span>Acesso às redes</span>
+              <strong>{{ getNetworkAccessModeLabel(electricity.networkAccessMode) }}</strong>
+            </div>
+          </div>
+
+          <div class="weighted-components" *ngIf="electricity.components?.length">
+            <h4>Componentes do mix ponderado</h4>
+
+            <div class="component-table-wrap">
+              <table class="component-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Peso</th>
+                    <th>Strategy</th>
+                    <th>Mercado</th>
+                    <th>Referência</th>
+                    <th>Custo sistema</th>
+                    <th>Perdas</th>
+                    <th>Margem</th>
+                    <th>Acesso redes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let component of electricity.components">
+                    <td>{{ component.code }}</td>
+                    <td>{{ formatNumber(component.weight, 4) }}</td>
+                    <td>{{ getStrategyLabel(component.strategy) }}</td>
+                    <td>{{ getMarketSourceLabel(component.marketSource) }}</td>
+                    <td>{{ getMarketReferenceLabel(component.marketReference) }}</td>
+                    <td>{{ getSystemCostSourceLabel(component.systemCostSource) }}</td>
+                    <td>{{ getLossSourceLabel(component.lossSource) }}</td>
+                    <td>
+                      <ng-container *ngIf="component.margin; else noMargin">
+                        {{ component.margin.kind }} ·
+                        {{ formatNumber(component.margin.value) }}
+                        {{ component.margin.unit === 'EUR_MWH' ? '€/MWh' : 'cênt./kWh' }}
+                      </ng-container>
+                      <ng-template #noMargin>—</ng-template>
+                    </td>
+                    <td>{{ getNetworkAccessModeLabel(component.networkAccessMode) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="detail-section energy-section gas" *ngIf="profile.gas as gas">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">local_fire_department</span>
+            <div>
+              <h3>Gás</h3>
+              <p>Parâmetros configurados no pricing engine.</p>
+            </div>
+          </div>
+
+          <div class="parameter-grid">
+            <div>
+              <span>Strategy / fórmula</span>
+              <strong>{{ getStrategyLabel(gas.strategy) }}</strong>
+              <small>{{ gas.strategy }}</small>
+            </div>
+
+            <div>
+              <span>Fonte de mercado</span>
+              <strong>{{ getMarketSourceLabel(gas.marketSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Referência de mercado</span>
+              <strong>{{ getMarketReferenceLabel(gas.marketReference) }}</strong>
+            </div>
+
+            <div>
+              <span>Custo de sistema</span>
+              <strong>{{ getSystemCostSourceLabel(gas.systemCostSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Fonte de perdas</span>
+              <strong>{{ getLossSourceLabel(gas.lossSource) }}</strong>
+            </div>
+
+            <div>
+              <span>Margem</span>
+              <strong>{{ getMarginLabel(gas) }}</strong>
+            </div>
+
+            <div>
+              <span>Acesso às redes</span>
+              <strong>{{ getNetworkAccessModeLabel(gas.networkAccessMode) }}</strong>
+            </div>
+          </div>
+
+          <div class="weighted-components" *ngIf="gas.components?.length">
+            <h4>Componentes do mix ponderado</h4>
+
+            <div class="component-table-wrap">
+              <table class="component-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Peso</th>
+                    <th>Strategy</th>
+                    <th>Mercado</th>
+                    <th>Referência</th>
+                    <th>Custo sistema</th>
+                    <th>Perdas</th>
+                    <th>Margem</th>
+                    <th>Acesso redes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let component of gas.components">
+                    <td>{{ component.code }}</td>
+                    <td>{{ formatNumber(component.weight, 4) }}</td>
+                    <td>{{ getStrategyLabel(component.strategy) }}</td>
+                    <td>{{ getMarketSourceLabel(component.marketSource) }}</td>
+                    <td>{{ getMarketReferenceLabel(component.marketReference) }}</td>
+                    <td>{{ getSystemCostSourceLabel(component.systemCostSource) }}</td>
+                    <td>{{ getLossSourceLabel(component.lossSource) }}</td>
+                    <td>
+                      <ng-container *ngIf="component.margin; else noGasMargin">
+                        {{ component.margin.kind }} ·
+                        {{ formatNumber(component.margin.value) }}
+                        {{ component.margin.unit === 'EUR_MWH' ? '€/MWh' : 'cênt./kWh' }}
+                      </ng-container>
+                      <ng-template #noGasMargin>—</ng-template>
+                    </td>
+                    <td>{{ getNetworkAccessModeLabel(component.networkAccessMode) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="detail-section technical-section">
+          <div class="detail-section-heading">
+            <span class="material-symbols-rounded">history</span>
+            <h3>Referências técnicas</h3>
+          </div>
+
+          <div class="metadata-grid technical-grid">
+            <div>
+              <span>ID do perfil</span>
+              <strong class="technical-value">{{ profile.id }}</strong>
+            </div>
+
+            <div>
+              <span>ID da versão anterior</span>
+              <strong class="technical-value">{{ profile.previousVersionId || '—' }}</strong>
+            </div>
+
+            <div>
+              <span>Criado em</span>
+              <strong>{{ formatDate(profile.createdAt) }}</strong>
+            </div>
+
+            <div>
+              <span>Atualizado em</span>
+              <strong>{{ formatDate(profile.updatedAt) }}</strong>
+            </div>
+
+            <div>
+              <span>Criado por</span>
+              <strong class="technical-value">{{ profile.createdBy || '—' }}</strong>
+            </div>
+
+            <div>
+              <span>Atualizado por</span>
+              <strong class="technical-value">{{ profile.updatedBy || '—' }}</strong>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-template #selectProfileHint>
+        <div class="detail-placeholder">
+          <span class="material-symbols-rounded">account_tree</span>
+          <h2>Seleciona um perfil</h2>
+          <p>
+            O detalhe apresenta a versão, vigência, estratégia e os parâmetros de eletricidade e/ou
+            gás sem alterar qualquer configuração.
+          </p>
+        </div>
+      </ng-template>
+    </article>
+  </section>
+</section>
+
+<app-calculation-profile-create
+  *ngIf="isCreateOpen || versionSource"
+  [companies]="companies"
+  [versionSource]="versionSource"
+  (cancel)="closeProfileForm()"
+  (created)="handleProfileCreated($event)"
+></app-calculation-profile-create>

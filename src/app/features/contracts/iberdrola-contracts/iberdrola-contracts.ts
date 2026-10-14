@@ -117,7 +117,10 @@ export class IberdrolaContracts implements OnInit {
     this.loadKanbanContracts(showLoading);
   }
 
-  private loadTableContracts(showLoading = true): void {
+  private loadTableContracts(
+    showLoading = true,
+    minimumTotal?: number,
+  ): void {
     const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = currentUser?.id ?? currentUser?._id;
 
@@ -129,6 +132,10 @@ export class IberdrolaContracts implements OnInit {
 
     const requestId = ++this.loadRequestId;
     this.resetLoadedContracts();
+
+    if (minimumTotal !== undefined) {
+      this.totalContracts = Math.max(0, minimumTotal);
+    }
 
     if (showLoading) {
       this.isLoadingTable = true;
@@ -156,6 +163,10 @@ export class IberdrolaContracts implements OnInit {
           }
 
           this.replaceWithTableResponse(response);
+
+          if (minimumTotal !== undefined) {
+            this.totalContracts = Math.max(this.totalContracts, minimumTotal);
+          }
         },
         error: (error) => {
           if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
@@ -545,7 +556,14 @@ export class IberdrolaContracts implements OnInit {
     }
 
     if (this.viewMode === 'table') {
-      this.loadTableContracts(false);
+      const minimumTotal =
+        isCreated &&
+        !this.hasActiveFilters() &&
+        !this.contracts.some((contract) => contract.id === contractId)
+          ? this.totalContracts + 1
+          : undefined;
+
+      this.loadTableContracts(false, minimumTotal);
       return;
     }
 
@@ -564,6 +582,10 @@ export class IberdrolaContracts implements OnInit {
 
     if (!nextStatus || !this.statuses.includes(nextStatus)) {
       return;
+    }
+
+    if (isCreated && !existing) {
+      this.totalContracts += 1;
     }
 
     const updatedContract = {

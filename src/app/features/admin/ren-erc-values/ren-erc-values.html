@@ -1,0 +1,186 @@
+<section class="ren-erc-section">
+  <header class="section-header">
+    <div>
+      <span class="section-eyebrow">Regulação · REN</span>
+      <h2>REN / ERC</h2>
+      <p>Encargos de Regulação Imputados ao Consumo persistidos pela API do CRM.</p>
+    </div>
+  </header>
+
+  <form class="filters-card" [formGroup]="filterForm" (ngSubmit)="loadData()">
+    <label>
+      Data inicial
+      <input type="date" formControlName="startDate" (input)="onFiltersChanged()" />
+    </label>
+
+    <label>
+      Data final
+      <input type="date" formControlName="endDate" (input)="onFiltersChanged()" />
+    </label>
+
+    <button type="submit" class="apply-btn" [disabled]="isLoading || filterForm.invalid">
+      <span class="material-symbols-rounded">filter_alt</span>
+      Aplicar período
+    </button>
+  </form>
+
+  <div class="summary-grid" *ngIf="hasAppliedFilters && !isLoading && records.length">
+    <article class="summary-card primary">
+      <span>Último ERC</span>
+      <strong>{{ formatEurMwh(latestRecord?.totalEurMwh) }} €/MWh</strong>
+      <small *ngIf="latestRecord">
+        {{ formatTime(latestRecord.periodStart) }} – {{ formatTime(latestRecord.periodEnd) }}
+      </small>
+    </article>
+
+    <article class="summary-card">
+      <span>ERC médio do período</span>
+      <strong *ngIf="reference; else noReference">
+        {{ formatEurMwh(reference.averageEurMwh) }} €/MWh
+      </strong>
+      <ng-template #noReference>
+        <strong>—</strong>
+      </ng-template>
+      <small>Referência oficial devolvida pela API</small>
+    </article>
+
+    <article class="summary-card">
+      <span>Intervalos</span>
+      <strong>{{ records.length }}</strong>
+      <small>
+        {{ reference?.totalDurationMinutes ?? '—' }} min cobertos
+      </small>
+    </article>
+
+    <article class="summary-card">
+      <span>Última recolha</span>
+      <strong>{{ formatDateTime(latestRecord?.fetchedAt || latestRecord?.updatedAt) }}</strong>
+      <small *ngIf="latestRecord">{{ getSourceLabel(latestRecord) }}</small>
+    </article>
+  </div>
+
+  <div class="loading-state" *ngIf="hasAppliedFilters && isLoading">
+    <span class="material-symbols-rounded spinning">progress_activity</span>
+    <span>A carregar valores REN/ERC...</span>
+  </div>
+
+  <p class="load-error-message" *ngIf="hasAppliedFilters && !isLoading && loadErrorMessage">
+    {{ loadErrorMessage }}
+  </p>
+
+  <div class="table-card" *ngIf="hasAppliedFilters && !isLoading && !loadErrorMessage && records.length">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Período</th>
+            <th>Hora início</th>
+            <th>Hora fim</th>
+            <th class="numeric">ERC Total [€/MWh]</th>
+            <th>Fonte</th>
+            <th class="actions-column">Detalhe</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <ng-container *ngFor="let record of records; trackBy: trackByRecordId">
+            <tr
+              class="data-row"
+              [class.expanded]="expandedId === record.id"
+              role="button"
+              tabindex="0"
+              [attr.aria-expanded]="expandedId === record.id"
+              [attr.aria-label]="'Detalhes REN/ERC de ' + formatTime(record.periodStart) + ' a ' + formatTime(record.periodEnd)"
+              (click)="toggleDetails(record)"
+              (keydown)="onRowKeydown($event, record)"
+            >
+              <td>{{ formatDate(record.periodStart) }}</td>
+              <td>{{ record.ispMinutes }} min</td>
+              <td>{{ formatTime(record.periodStart) }}</td>
+              <td>{{ formatTime(record.periodEnd) }}</td>
+              <td class="numeric total-value">
+                {{ formatEurMwh(record.totalEurMwh) }} €/MWh
+              </td>
+              <td>
+                <div class="source-cell">
+                  <span class="source-badge" [class.manual]="getSourceLabel(record) === 'Manual'">
+                    {{ getSourceLabel(record) }}
+                  </span>
+                  <span class="override-badge" *ngIf="record.manualOverride">
+                    Override manual
+                  </span>
+                </div>
+              </td>
+              <td class="actions-column">
+                <button
+                  type="button"
+                  class="details-btn"
+                  [class.expanded]="expandedId === record.id"
+                  [attr.aria-expanded]="expandedId === record.id"
+                  (click)="onDetailsButtonClick($event, record)"
+                >
+                  <span class="material-symbols-rounded details-chevron">expand_more</span>
+                  {{ expandedId === record.id ? 'Fechar' : 'Ver' }}
+                </button>
+              </td>
+            </tr>
+
+            <tr class="details-row" *ngIf="expandedId === record.id">
+              <td colspan="7">
+                <div class="details-panel">
+                  <div class="details-header">
+                    <div>
+                      <span>Breakdown ERC</span>
+                      <strong>
+                        {{ formatTime(record.periodStart) }} – {{ formatTime(record.periodEnd) }}
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Referência</span>
+                      <strong>{{ record.sourceReference || '—' }}</strong>
+                    </div>
+                    <div>
+                      <span>Recolhido em</span>
+                      <strong>{{ formatDateTime(record.fetchedAt) }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="components-grid" *ngIf="record.components?.length; else noComponents">
+                    <article *ngFor="let component of record.components">
+                      <span>{{ getComponentLabel(component.code) }}</span>
+                      <strong>{{ formatEurMwh(component.valueEurMwh) }} €/MWh</strong>
+                    </article>
+                  </div>
+
+                  <ng-template #noComponents>
+                    <p class="no-components">
+                      Este intervalo não possui breakdown de componentes persistido.
+                    </p>
+                  </ng-template>
+
+                  <a
+                    *ngIf="record.sourceUrl"
+                    class="source-link"
+                    [href]="record.sourceUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir fonte
+                    <span class="material-symbols-rounded">open_in_new</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="hasAppliedFilters && !isLoading && !loadErrorMessage && !records.length">
+    <span class="material-symbols-rounded">database_off</span>
+    <h3>Sem valores REN/ERC</h3>
+    <p>Não existem valores REN/ERC para o período selecionado.</p>
+  </div>
+</section>

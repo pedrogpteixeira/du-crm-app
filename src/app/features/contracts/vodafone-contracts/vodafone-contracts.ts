@@ -18,15 +18,15 @@ import {
   BaseContractFilterOptions,
   ContractFilterFieldDefinition,
   ContractFilterUserOption,
-  EnergyContractFilters,
+  VodafoneContractFilters,
   buildBaseContractFilterOptions,
   buildContractApiFiltersFromDefinitions,
   cloneContractFilters,
   countActiveContractFilters,
   getVisibleContractStatuses,
   mergeBaseContractFilterOptions,
-  buildEnergyContractFilterFields,
-  createEnergyContractFilters,
+  buildVodafoneContractFilterFields,
+  createVodafoneContractFilters,
 } from '../../../core/utils/contract-list-filters';
 import {
   ContractApiFilters,
@@ -59,8 +59,8 @@ export class VodafoneContracts implements OnInit {
   contractsByStatus: Record<string, VodafoneContractList[]> = {};
   paginationByStatus: Record<string, ContractKanbanColumnState> = {};
 
-  filters: EnergyContractFilters = createEnergyContractFilters();
-  appliedFilters: EnergyContractFilters = cloneContractFilters(this.filters);
+  filters: VodafoneContractFilters = createVodafoneContractFilters();
+  appliedFilters: VodafoneContractFilters = cloneContractFilters(this.filters);
 
   availableSegments: string[] = [];
   availableProducts: string[] = [];
@@ -114,7 +114,10 @@ export class VodafoneContracts implements OnInit {
     this.loadKanbanContracts(showLoading);
   }
 
-  private loadTableContracts(showLoading = true): void {
+  private loadTableContracts(
+    showLoading = true,
+    minimumTotal?: number,
+  ): void {
     const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = currentUser?.id ?? currentUser?._id;
 
@@ -126,6 +129,10 @@ export class VodafoneContracts implements OnInit {
 
     const requestId = ++this.loadRequestId;
     this.resetLoadedContracts();
+
+    if (minimumTotal !== undefined) {
+      this.totalContracts = Math.max(0, minimumTotal);
+    }
 
     if (showLoading) {
       this.isLoadingTable = true;
@@ -153,6 +160,10 @@ export class VodafoneContracts implements OnInit {
           }
 
           this.replaceWithTableResponse(response);
+
+          if (minimumTotal !== undefined) {
+            this.totalContracts = Math.max(this.totalContracts, minimumTotal);
+          }
         },
         error: (error) => {
           if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
@@ -376,7 +387,7 @@ export class VodafoneContracts implements OnInit {
   }
 
   clearFilters(): void {
-    this.filters = createEnergyContractFilters();
+    this.filters = createVodafoneContractFilters();
     this.appliedFilters = cloneContractFilters(this.filters);
     this.loadContracts();
   }
@@ -504,7 +515,7 @@ export class VodafoneContracts implements OnInit {
       users: this.availableUsers,
     };
 
-    this.filterFields = buildEnergyContractFilterFields(context, { includeSocialTariff: true });
+    this.filterFields = buildVodafoneContractFilterFields(context);
   }
 
   private handleSocketContract(
@@ -518,7 +529,14 @@ export class VodafoneContracts implements OnInit {
     }
 
     if (this.viewMode === 'table') {
-      this.loadTableContracts(false);
+      const minimumTotal =
+        isCreated &&
+        !this.hasActiveFilters() &&
+        !this.contracts.some((contract) => contract.id === contractId)
+          ? this.totalContracts + 1
+          : undefined;
+
+      this.loadTableContracts(false, minimumTotal);
       return;
     }
 
@@ -537,6 +555,10 @@ export class VodafoneContracts implements OnInit {
 
     if (!nextStatus || !this.statuses.includes(nextStatus)) {
       return;
+    }
+
+    if (isCreated && !existing) {
+      this.totalContracts += 1;
     }
 
     const updatedContract = {

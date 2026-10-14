@@ -28,9 +28,6 @@ export type VodafoneTipoProduto = string;
 
 export type VodafoneContratacao = 'Contratação Digital' | 'Contratação Papel';
 
-export type VodafoneTipoContratacao =
-  'Mudança de Comercializadora' | 'Mudança de Comercializadora & AT' | 'Entrada Direta';
-
 export const VODAFONE_STATES = [
   'Em validação',
   'Sem efeito',
@@ -44,36 +41,6 @@ export type VodafoneContractStatus = (typeof VODAFONE_STATES)[number];
 export function isVodafoneContractStatus(value: string): value is VodafoneContractStatus {
   return (VODAFONE_STATES as readonly string[]).includes(value);
 }
-
-export type VodafoneCicloHorario =
-  | 'Simples'
-  | 'Bi-Horário Diário'
-  | 'Bi-Horário Semanal'
-  | 'Tri-Horário Diário'
-  | 'Tri-Horário Semanal'
-  | 'Tetra-Horário'
-  | (string & {});
-
-export type VodafoneNivelTensao = 'Monofásico' | 'Trifásico'
-  | (string & {});
-
-export const VODAFONE_POWER_SUGGESTIONS = [
-  '1.15',
-  '2.30',
-  '3.45',
-  '4.60',
-  '5.75',
-  '6.90',
-  '10.35',
-  '13.80',
-  '17.25',
-  '20.70',
-  '27.60',
-  '34.50',
-  '41.40',
-] as const;
-
-export const VODAFONE_GAS_LEVEL_SUGGESTIONS = ['1', '2', '3', '4'] as const;
 
 export interface VodafoneContractListUser {
   id: string;
@@ -144,8 +111,6 @@ export interface VodafoneContractDetail {
   tipoSegmento: VodafoneTipoSegmento;
   tipoProduto: string;
   contratacao: VodafoneContratacao;
-  tipoContratacaoLuz?: VodafoneTipoContratacao;
-  tipoContratacaoGas?: VodafoneTipoContratacao;
 
   /*
    * Os módulos atuais de contratos de energia tratam controleQualidade como texto livre.
@@ -158,12 +123,9 @@ export interface VodafoneContractDetail {
 
   agendamento?: string;
   dataAssinatura?: string;
-  dataContrato?: string;
+  dataAtivacao?: string;
+  dataBaixa?: string;
   dataRegisto?: string;
-  dataAtivacaoCPE?: string;
-  dataBaixaCPE?: string;
-  dataAtivacaoCUI?: string;
-  dataBaixaCUI?: string;
 
   nomeClienteEmpresa: string;
   nif: number;
@@ -177,18 +139,11 @@ export interface VodafoneContractDetail {
 
   faturaEletronica: boolean;
   debitoDireto: boolean;
-  tarifaSocial: boolean;
   iban?: string;
 
   campaign: VodafoneContractCampaign | null;
   campaigns?: Campaign[];
   antigaComercializadora?: string;
-  cpe?: string;
-  cui?: string;
-  potencia?: string;
-  escalao?: string;
-  cicloHorario?: VodafoneCicloHorario;
-  nivelTensao?: VodafoneNivelTensao;
 
   documentos: VodafoneContractDocument[];
   observacoes?: string;
@@ -210,8 +165,6 @@ export interface CreateVodafoneContractRequest {
   tipoSegmento: VodafoneTipoSegmento;
   tipoProduto: string;
   contratacao: VodafoneContratacao;
-  tipoContratacaoLuz?: VodafoneTipoContratacao;
-  tipoContratacaoGas?: VodafoneTipoContratacao;
 
   controleQualidade?: string;
   nomeRegistoCE?: string;
@@ -220,12 +173,9 @@ export interface CreateVodafoneContractRequest {
 
   agendamento?: string;
   dataAssinatura?: string;
-  dataContrato?: string;
+  dataAtivacao?: string;
+  dataBaixa?: string;
   dataRegisto?: string;
-  dataAtivacaoCPE?: string;
-  dataBaixaCPE?: string;
-  dataAtivacaoCUI?: string;
-  dataBaixaCUI?: string;
 
   nomeClienteEmpresa: string;
   nif: number;
@@ -239,17 +189,10 @@ export interface CreateVodafoneContractRequest {
 
   faturaEletronica?: boolean;
   debitoDireto?: boolean;
-  tarifaSocial?: boolean;
   iban?: string;
 
   campanha: string;
   antigaComercializadora?: string;
-  cpe?: string;
-  cui?: string;
-  potencia?: string;
-  escalao?: string;
-  cicloHorario?: VodafoneCicloHorario;
-  nivelTensao?: VodafoneNivelTensao;
 
   observacoes?: string;
   observacoesInternas?: string;
@@ -264,18 +207,14 @@ export type UpdateVodafoneContractRequest = Partial<
     | 'clientId'
     | 'userId'
     | 'teams'
+    | 'dataAtivacao'
+    | 'dataBaixa'
     | 'dataRegisto'
-    | 'dataAtivacaoCPE'
-    | 'dataBaixaCPE'
-    | 'dataAtivacaoCUI'
-    | 'dataBaixaCUI'
   >
 > & {
+  dataAtivacao?: string | null;
+  dataBaixa?: string | null;
   dataRegisto?: string | null;
-  dataAtivacaoCPE?: string | null;
-  dataBaixaCPE?: string | null;
-  dataAtivacaoCUI?: string | null;
-  dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
   observacoes?: string;

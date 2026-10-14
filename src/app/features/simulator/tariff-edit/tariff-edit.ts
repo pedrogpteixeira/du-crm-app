@@ -8,8 +8,10 @@ import {
   inject,
 } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +29,7 @@ import {
   GasPriceMode,
   ProductType,
   Segment,
+  SimulationCalculationProfile,
   SimulationTariff,
   SimulationTariffFilters,
   SimulatorService,
@@ -41,6 +44,13 @@ import {
 } from '../../../core/constants/energy';
 
 import { IBERDROLA_COMPANY_ID } from '../../../core/services/iberdrola-contract';
+
+import {
+  profileAllowsElectricityEnergyPrices,
+  profileAllowsGasEnergyPrice,
+} from '../../../core/utils/simulation-calculation-profile';
+
+type TariffCalculationEngine = 'legacy' | 'advanced';
 
 interface SearchFilters {
   name: string;
@@ -87,15 +97,20 @@ export class TariffEdit implements OnInit {
   readonly availableGasLevels = GAS_LEVELS;
 
   companies: Company[] = [];
+  calculationProfiles: SimulationCalculationProfile[] = [];
 
   tariffs: SimulationTariff[] = [];
   selectedTariff: SimulationTariff | null = null;
   originalTariff: SimulationTariff | null = null;
 
   isLoadingCompanies = false;
+  isLoadingCalculationProfiles = false;
   isSearching = false;
   isSaving = false;
   isDeleting = false;
+
+  private calculationProfilesLoaded = false;
+  private linkedCalculationProfile: SimulationCalculationProfile | null = null;
 
   showElectricityDiscounts = false;
   showGasDiscounts = false;
@@ -141,7 +156,19 @@ export class TariffEdit implements OnInit {
       Validators.minLength(2),
     ]),
 
+    calculationEngine:
+      this.fb.nonNullable.control<TariffCalculationEngine>('legacy'),
+
+    calculationProfileId:
+      this.fb.control<string | null>(null),
+
     segment: this.fb.control<Segment | null>(null),
+
+    electricityPriceMode:
+      this.fb.control<ElectricityPriceMode | null>(null),
+
+    gasPriceMode:
+      this.fb.control<GasPriceMode | null>(null),
 
     cycleType: this.fb.control<'daily' | 'weekly' | null>(null),
 
@@ -213,6 +240,10 @@ export class TariffEdit implements OnInit {
     endDate: this.fb.nonNullable.control(''),
 
     active: this.fb.nonNullable.control(true),
+  }, {
+    validators: [
+      (control) => this.validateDateRange(control),
+    ],
   });
 
   ngOnInit(): void {
@@ -316,7 +347,18 @@ export class TariffEdit implements OnInit {
     this.editForm.reset(
       {
         name: tariff.name,
+        calculationEngine:
+          tariff.calculationProfileId
+            ? 'advanced'
+            : 'legacy',
+        calculationProfileId:
+          tariff.calculationProfileId ?? null,
         segment: tariff.segment ?? null,
+
+        electricityPriceMode:
+          tariff.electricityPriceMode ?? null,
+        gasPriceMode:
+          tariff.gasPriceMode ?? null,
 
         cycleType: tariff.cycleType ?? null,
 
@@ -398,6 +440,12 @@ export class TariffEdit implements OnInit {
       },
     );
 
+    this.linkedCalculationProfile = null;
+
+    if (tariff.calculationProfileId) {
+      this.loadCalculationProfilesForSelection();
+    }
+
     this.configureValidators();
     this.editForm.markAsPristine();
     this.editForm.markAsUntouched();
@@ -447,15 +495,20 @@ export class TariffEdit implements OnInit {
       Validators.min(0),
     ]);
 
+    controls.calculationProfileId.clearValidators();
+    controls.electricityPriceMode.clearValidators();
+    controls.gasPriceMode.clearValidators();
+
+    if (this.isAdvancedMode()) {
+      controls.calculationProfileId.setValidators(
+        Validators.required,
+      );
+    }
+
     if (this.shouldEditShowElectricityFields()) {
       controls.powerKva.setValidators([
         Validators.required,
         Validators.min(0.01),
-      ]);
-
-      controls.powerPricePerDay.setValidators([
-        Validators.required,
-        Validators.min(0),
       ]);
 
       if (this.shouldEditShowCycleType()) {
@@ -466,20 +519,39 @@ export class TariffEdit implements OnInit {
         controls.cycleType.clearValidators();
       }
 
-      if (this.isFixedElectricity()) {
-        this.configureFixedElectricityValidators();
-      }
+      if (this.isLegacyMode()) {
+        controls.electricityPriceMode.setValidators(
+          Validators.required,
+        );
 
-      if (this.isIndexedElectricity()) {
-        controls.electricityAdjustmentFactor.setValidators([
+        controls.powerPricePerDay.setValidators([
           Validators.required,
           Validators.min(0),
         ]);
 
-        controls.electricityAdditionalCostPerKwh.setValidators([
-          Validators.required,
+        if (this.isFixedElectricity()) {
+          this.configureFixedElectricityValidators();
+        }
+
+        if (this.isIndexedElectricity()) {
+          controls.electricityAdjustmentFactor.setValidators([
+            Validators.required,
+            Validators.min(0),
+          ]);
+
+          controls.electricityAdditionalCostPerKwh.setValidators([
+            Validators.required,
+            Validators.min(0),
+          ]);
+        }
+      } else {
+        controls.powerPricePerDay.setValidators(
           Validators.min(0),
-        ]);
+        );
+
+        if (this.shouldEditShowFixedElectricityPrices()) {
+          this.configureOptionalElectricityEnergyValidators();
+        }
       }
     }
 
@@ -489,28 +561,44 @@ export class TariffEdit implements OnInit {
         Validators.min(1),
       ]);
 
-      controls.fixedTermPerDay.setValidators([
-        Validators.required,
-        Validators.min(0),
-      ]);
-
-      if (this.isFixedGas()) {
-        controls.gasEnergyPrice.setValidators([
+      if (this.isLegacyMode()) {
+        controls.gasPriceMode.setValidators(
           Validators.required,
-          Validators.min(0),
-        ]);
-      }
+        );
 
-      if (this.isIndexedGas()) {
-        controls.gasLossPercentage.setValidators([
+        controls.fixedTermPerDay.setValidators([
           Validators.required,
           Validators.min(0),
         ]);
 
-        controls.gasAdditionalCostPerKwh.setValidators([
-          Validators.required,
+        if (this.isFixedGas()) {
+          controls.gasEnergyPrice.setValidators([
+            Validators.required,
+            Validators.min(0),
+          ]);
+        }
+
+        if (this.isIndexedGas()) {
+          controls.gasLossPercentage.setValidators([
+            Validators.required,
+            Validators.min(0),
+          ]);
+
+          controls.gasAdditionalCostPerKwh.setValidators([
+            Validators.required,
+            Validators.min(0),
+          ]);
+        }
+      } else {
+        controls.fixedTermPerDay.setValidators(
           Validators.min(0),
-        ]);
+        );
+
+        if (this.shouldEditShowFixedGasPrice()) {
+          controls.gasEnergyPrice.setValidators(
+            Validators.min(0),
+          );
+        }
       }
     }
 
@@ -533,6 +621,18 @@ export class TariffEdit implements OnInit {
     });
 
     controls.crmCertoCommission.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    controls.calculationProfileId.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    controls.electricityPriceMode.updateValueAndValidity({
+      emitEvent: false,
+    });
+
+    controls.gasPriceMode.updateValueAndValidity({
       emitEvent: false,
     });
 
@@ -598,6 +698,32 @@ export class TariffEdit implements OnInit {
     }
   }
 
+  private configureOptionalElectricityEnergyValidators(): void {
+    const controls = this.editForm.controls;
+    const validators = [Validators.min(0)];
+
+    switch (this.selectedTariff?.tariffType) {
+      case 'simple':
+        controls.singleEnergyPrice.setValidators(validators);
+        break;
+      case 'bi_hourly':
+        controls.foraVazioEnergyPrice.setValidators(validators);
+        controls.vazioEnergyPrice.setValidators(validators);
+        break;
+      case 'tri_hourly':
+        controls.pontaEnergyPrice.setValidators(validators);
+        controls.cheiasEnergyPrice.setValidators(validators);
+        controls.vazioEnergyPrice.setValidators(validators);
+        break;
+      case 'tetra_hourly':
+        controls.pontaEnergyPrice.setValidators(validators);
+        controls.cheiasEnergyPrice.setValidators(validators);
+        controls.vazioEnergyPrice.setValidators(validators);
+        controls.superVazioEnergyPrice.setValidators(validators);
+        break;
+    }
+  }
+
   private configureDiscountValidators(): void {
     const validators = [
       Validators.min(0),
@@ -609,7 +735,7 @@ export class TariffEdit implements OnInit {
     ).forEach((control) => {
       control.clearValidators();
 
-      if (this.isFixedElectricity()) {
+      if (this.shouldEditConfigureElectricityDiscounts()) {
         control.setValidators(validators);
       }
 
@@ -623,7 +749,7 @@ export class TariffEdit implements OnInit {
     ).forEach((control) => {
       control.clearValidators();
 
-      if (this.isFixedGas()) {
+      if (this.shouldEditConfigureGasDiscounts()) {
         control.setValidators(validators);
       }
 
@@ -650,6 +776,17 @@ export class TariffEdit implements OnInit {
 
       this.showError(
         'Preenche corretamente todos os campos obrigatórios.',
+      );
+
+      return;
+    }
+
+    if (
+      this.isAdvancedMode() &&
+      !this.isCalculationProfileSelectionValid()
+    ) {
+      this.showError(
+        'Seleciona um perfil de cálculo válido para esta empresa e produto.',
       );
 
       return;
@@ -739,6 +876,17 @@ export class TariffEdit implements OnInit {
       current.segment ?? undefined,
     );
 
+    if (this.isAdvancedMode()) {
+      this.addChangedValue(
+        payload,
+        'calculationProfileId',
+        original.calculationProfileId ?? null,
+        current.calculationProfileId,
+      );
+    } else if (original.calculationProfileId) {
+      payload.calculationProfileId = null;
+    }
+
     this.addChangedNumber(
       payload,
       'salesCommission',
@@ -753,8 +901,6 @@ export class TariffEdit implements OnInit {
       current.crmCertoCommission,
     );
 
-    this.addChangedValue(payload, 'electricityDiscountAppliesToFixedTerm', original.electricityDiscountAppliesToFixedTerm ?? false, Boolean(current.electricityDiscountAppliesToFixedTerm));
-    this.addChangedValue(payload, 'gasDiscountAppliesToFixedTerm', original.gasDiscountAppliesToFixedTerm ?? false, Boolean(current.gasDiscountAppliesToFixedTerm));
     this.addChangedValue(payload, 'isLoyalty', original.isLoyalty ?? false, Boolean(current.isLoyalty));
 
     this.addChangedStringAllowEmpty(
@@ -793,13 +939,6 @@ export class TariffEdit implements OnInit {
         current.powerKva,
       );
 
-      this.addChangedNumber(
-        payload,
-        'powerPricePerDay',
-        original.powerPricePerDay,
-        current.powerPricePerDay,
-      );
-
       if (this.shouldEditShowCycleType()) {
         this.addChangedValue(
           payload,
@@ -809,52 +948,92 @@ export class TariffEdit implements OnInit {
         );
       }
 
-      if (this.isFixedElectricity()) {
-        this.appendFixedElectricityChanges(
+      if (this.isLegacyMode()) {
+        this.addChangedValue(
           payload,
+          'electricityPriceMode',
+          original.electricityPriceMode,
+          current.electricityPriceMode ?? undefined,
+        );
+
+        this.addChangedNumber(
+          payload,
+          'powerPricePerDay',
+          original.powerPricePerDay,
+          current.powerPricePerDay,
+        );
+
+        if (this.isFixedElectricity()) {
+          this.appendFixedElectricityChanges(
+            payload,
+            current,
+          );
+
+          const currentDiscounts =
+            this.buildCompleteDiscounts(
+              current.electricityDiscounts,
+              'electricity',
+            );
+
+          const originalDiscounts =
+            this.buildCompleteDiscounts(
+              this.toElectricityDiscountFormValue(
+                original.electricityDiscounts,
+              ),
+              'electricity',
+            );
+
+          if (
+            !this.areEqual(
+              originalDiscounts,
+              currentDiscounts,
+            )
+          ) {
+            payload.electricityDiscounts =
+              currentDiscounts;
+          }
+        }
+
+        if (this.isIndexedElectricity()) {
+          this.addChangedNumber(
+            payload,
+            'electricityAdjustmentFactor',
+            original.electricityAdjustmentFactor,
+            current.electricityAdjustmentFactor,
+          );
+
+          this.addChangedNumber(
+            payload,
+            'electricityAdditionalCostPerKwh',
+            original.electricityAdditionalCostPerKwh,
+            current.electricityAdditionalCostPerKwh,
+          );
+        }
+      } else {
+        this.addChangedNumber(
+          payload,
+          'powerPricePerDay',
+          original.powerPricePerDay,
+          current.powerPricePerDay,
+        );
+
+        if (this.shouldEditShowFixedElectricityPrices()) {
+          this.appendFixedElectricityChanges(payload, current);
+        }
+
+        this.appendElectricityDiscountChanges(
+          payload,
+          original,
           current,
         );
-
-        const currentDiscounts =
-          this.buildCompleteDiscounts(
-            current.electricityDiscounts,
-            'electricity',
-          );
-
-        const originalDiscounts =
-          this.buildCompleteDiscounts(
-            this.toElectricityDiscountFormValue(
-              original.electricityDiscounts,
-            ),
-            'electricity',
-          );
-
-        if (
-          !this.areEqual(
-            originalDiscounts,
-            currentDiscounts,
-          )
-        ) {
-          payload.electricityDiscounts =
-            currentDiscounts;
-        }
       }
 
-      if (this.isIndexedElectricity()) {
-        this.addChangedNumber(
-          payload,
-          'electricityAdjustmentFactor',
-          original.electricityAdjustmentFactor,
-          current.electricityAdjustmentFactor,
-        );
-
-        this.addChangedNumber(
-          payload,
-          'electricityAdditionalCostPerKwh',
-          original.electricityAdditionalCostPerKwh,
-          current.electricityAdditionalCostPerKwh,
-        );
-      }
+      this.addChangedValue(
+        payload,
+        'electricityDiscountAppliesToFixedTerm',
+        original.electricityDiscountAppliesToFixedTerm ?? false,
+        Boolean(current.electricityDiscountAppliesToFixedTerm),
+      );
     }
 
     if (this.shouldEditShowGasFields()) {
@@ -865,64 +1044,142 @@ export class TariffEdit implements OnInit {
         current.gasTier,
       );
 
-      this.addChangedNumber(
-        payload,
-        'fixedTermPerDay',
-        original.fixedTermPerDay,
-        current.fixedTermPerDay,
-      );
-
-      if (this.isFixedGas()) {
-        this.addChangedNumber(
+      if (this.isLegacyMode()) {
+        this.addChangedValue(
           payload,
-          'gasEnergyPrice',
-          original.gasEnergyPrice,
-          current.gasEnergyPrice,
+          'gasPriceMode',
+          original.gasPriceMode,
+          current.gasPriceMode ?? undefined,
         );
 
-        const currentDiscounts =
-          this.buildCompleteDiscounts(
-            current.gasDiscounts,
-            'gas',
+        this.addChangedNumber(
+          payload,
+          'fixedTermPerDay',
+          original.fixedTermPerDay,
+          current.fixedTermPerDay,
+        );
+
+        if (this.isFixedGas()) {
+          this.addChangedNumber(
+            payload,
+            'gasEnergyPrice',
+            original.gasEnergyPrice,
+            current.gasEnergyPrice,
           );
 
-        const originalDiscounts =
-          this.buildCompleteDiscounts(
-            this.toGasDiscountFormValue(
-              original.gasDiscounts,
-            ),
-            'gas',
-          );
+          const currentDiscounts =
+            this.buildCompleteDiscounts(
+              current.gasDiscounts,
+              'gas',
+            );
 
-        if (
-          !this.areEqual(
-            originalDiscounts,
-            currentDiscounts,
-          )
-        ) {
-          payload.gasDiscounts =
-            currentDiscounts;
+          const originalDiscounts =
+            this.buildCompleteDiscounts(
+              this.toGasDiscountFormValue(
+                original.gasDiscounts,
+              ),
+              'gas',
+            );
+
+          if (
+            !this.areEqual(
+              originalDiscounts,
+              currentDiscounts,
+            )
+          ) {
+            payload.gasDiscounts =
+              currentDiscounts;
+          }
         }
-      }
 
-      if (this.isIndexedGas()) {
+        if (this.isIndexedGas()) {
+          this.addChangedNumber(
+            payload,
+            'gasLossPercentage',
+            original.gasLossPercentage,
+            current.gasLossPercentage,
+          );
+
+          this.addChangedNumber(
+            payload,
+            'gasAdditionalCostPerKwh',
+            original.gasAdditionalCostPerKwh,
+            current.gasAdditionalCostPerKwh,
+          );
+        }
+      } else {
         this.addChangedNumber(
           payload,
-          'gasLossPercentage',
-          original.gasLossPercentage,
-          current.gasLossPercentage,
+          'fixedTermPerDay',
+          original.fixedTermPerDay,
+          current.fixedTermPerDay,
         );
 
-        this.addChangedNumber(
+        if (this.shouldEditShowFixedGasPrice()) {
+          this.addChangedNumber(
+            payload,
+            'gasEnergyPrice',
+            original.gasEnergyPrice,
+            current.gasEnergyPrice,
+          );
+        }
+
+        this.appendGasDiscountChanges(
           payload,
-          'gasAdditionalCostPerKwh',
-          original.gasAdditionalCostPerKwh,
-          current.gasAdditionalCostPerKwh,
+          original,
+          current,
         );
       }
+
+      this.addChangedValue(
+        payload,
+        'gasDiscountAppliesToFixedTerm',
+        original.gasDiscountAppliesToFixedTerm ?? false,
+        Boolean(current.gasDiscountAppliesToFixedTerm),
+      );
     }
 
     return payload;
+  }
+
+  private appendElectricityDiscountChanges(
+    payload: UpdateSimulationTariffRequest,
+    original: SimulationTariff,
+    current: ReturnType<typeof this.editForm.getRawValue>,
+  ): void {
+    const currentDiscounts = this.buildCompleteDiscounts(
+      current.electricityDiscounts,
+      'electricity',
+    );
+    const originalDiscounts = this.buildCompleteDiscounts(
+      this.toElectricityDiscountFormValue(
+        original.electricityDiscounts,
+      ),
+      'electricity',
+    );
+
+    if (!this.areEqual(originalDiscounts, currentDiscounts)) {
+      payload.electricityDiscounts = currentDiscounts;
+    }
+  }
+
+  private appendGasDiscountChanges(
+    payload: UpdateSimulationTariffRequest,
+    original: SimulationTariff,
+    current: ReturnType<typeof this.editForm.getRawValue>,
+  ): void {
+    const currentDiscounts = this.buildCompleteDiscounts(
+      current.gasDiscounts,
+      'gas',
+    );
+    const originalDiscounts = this.buildCompleteDiscounts(
+      this.toGasDiscountFormValue(original.gasDiscounts),
+      'gas',
+    );
+
+    if (!this.areEqual(originalDiscounts, currentDiscounts)) {
+      payload.gasDiscounts = currentDiscounts;
+    }
   }
 
   private appendFixedElectricityChanges(
@@ -1100,6 +1357,35 @@ export class TariffEdit implements OnInit {
     payload[key] = currentDate || null;
   }
 
+  hasInvalidDateRange(): boolean {
+    return this.editForm.hasError('dateRange');
+  }
+
+  getTariffValidityLabel(
+    tariff: SimulationTariff,
+  ): string {
+    const startDate = this.formatDateOnly(
+      tariff.startDate,
+    );
+    const endDate = this.formatDateOnly(
+      tariff.endDate,
+    );
+
+    if (startDate && endDate) {
+      return `Vigência: ${startDate} — ${endDate}`;
+    }
+
+    if (startDate) {
+      return `Vigência: desde ${startDate}`;
+    }
+
+    if (endDate) {
+      return `Vigência: até ${endDate}`;
+    }
+
+    return 'Vigência: sem período definido';
+  }
+
   deleteTariff(): void {
     if (
       !this.selectedTariff ||
@@ -1181,6 +1467,129 @@ export class TariffEdit implements OnInit {
     }
   }
 
+  isAdvancedMode(): boolean {
+    return (
+      this.editForm.controls.calculationEngine.value ===
+      'advanced'
+    );
+  }
+
+  isLegacyMode(): boolean {
+    return !this.isAdvancedMode();
+  }
+
+  onCalculationEngineChange(): void {
+    this.clearMessages();
+
+    if (this.isAdvancedMode()) {
+      this.clearLegacyFormulaFields();
+      this.loadCalculationProfilesForSelection();
+      this.applyAdvancedProfileCompatibility();
+    } else {
+      this.editForm.controls.calculationProfileId.setValue(
+        null,
+        { emitEvent: false },
+      );
+      this.restoreLegacyPricingFieldsFromOriginal();
+    }
+
+    this.configureValidators();
+  }
+
+  onLegacyPriceModeChange(): void {
+    this.clearMessages();
+    this.configureValidators();
+  }
+
+  onCalculationProfileChange(): void {
+    this.clearMessages();
+    this.applyAdvancedProfileCompatibility();
+    this.configureValidators();
+  }
+
+  get selectableCalculationProfiles():
+    SimulationCalculationProfile[] {
+    if (!this.selectedTariff) {
+      return [];
+    }
+
+    const companyId = this.getSelectedCompanyId();
+    const productType = this.selectedTariff.productType;
+    const originalProfileId =
+      this.originalTariff?.calculationProfileId ?? null;
+
+    const profiles = this.calculationProfiles.filter(
+      (profile) =>
+        profile.commercializerId === companyId &&
+        profile.productType === productType &&
+        (profile.active ||
+          profile.id === originalProfileId),
+    );
+
+    if (
+      this.linkedCalculationProfile &&
+      this.linkedCalculationProfile.commercializerId === companyId &&
+      this.linkedCalculationProfile.productType === productType &&
+      !profiles.some(
+        (profile) =>
+          profile.id === this.linkedCalculationProfile?.id,
+      )
+    ) {
+      profiles.push(this.linkedCalculationProfile);
+    }
+
+    return profiles.sort((a, b) => {
+      if (a.id === originalProfileId) {
+        return -1;
+      }
+      if (b.id === originalProfileId) {
+        return 1;
+      }
+      return b.version - a.version;
+    });
+  }
+
+  getCalculationProfileLabel(
+    profile: SimulationCalculationProfile,
+  ): string {
+    const state = profile.active
+      ? 'Ativo'
+      : 'Histórico / inativo';
+
+    return `${profile.familyCode} · v${profile.version} · ${this.getCalculationProfileStrategyLabel(profile)} · ${state}`;
+  }
+
+  getCalculationProfileStrategyLabel(
+    profile: SimulationCalculationProfile,
+  ): string {
+    const strategies = [
+      profile.electricity?.strategy,
+      profile.gas?.strategy,
+    ].filter((strategy): strategy is NonNullable<typeof strategy> => Boolean(strategy));
+
+    return strategies.length
+      ? [...new Set(strategies)]
+          .map((strategy) =>
+            strategy
+              .replaceAll('_', ' ')
+              .replace(/\b\w/g, (letter) =>
+                letter.toUpperCase(),
+              ),
+          )
+          .join(' + ')
+      : 'Estratégia configurada';
+  }
+
+  isOriginalHistoricalProfile(
+    profile: SimulationCalculationProfile,
+  ): boolean {
+    return (
+      !profile.active &&
+      profile.id ===
+        this.originalTariff?.calculationProfileId
+    );
+  }
+
   toggleElectricityDiscounts(): void {
     this.showElectricityDiscounts =
       !this.showElectricityDiscounts;
@@ -1214,67 +1623,121 @@ export class TariffEdit implements OnInit {
     );
   }
 
+  get selectedCalculationProfile():
+    SimulationCalculationProfile | null {
+    const selectedId =
+      this.editForm.controls.calculationProfileId.value;
+
+    return selectedId
+      ? this.selectableCalculationProfiles.find(
+          (profile) => profile.id === selectedId,
+        ) ?? null
+      : null;
+  }
+
   isFixedElectricity(): boolean {
     return (
+      this.isLegacyMode() &&
       this.shouldEditShowElectricityFields() &&
-      this.selectedTariff?.electricityPriceMode ===
+      this.editForm.controls.electricityPriceMode.value ===
         'fixed'
     );
   }
 
   isIndexedElectricity(): boolean {
     return (
+      this.isLegacyMode() &&
       this.shouldEditShowElectricityFields() &&
-      this.selectedTariff?.electricityPriceMode ===
+      this.editForm.controls.electricityPriceMode.value ===
         'indexed'
     );
   }
 
   isFixedGas(): boolean {
     return (
+      this.isLegacyMode() &&
       this.shouldEditShowGasFields() &&
-      this.selectedTariff?.gasPriceMode ===
+      this.editForm.controls.gasPriceMode.value ===
         'fixed'
     );
   }
 
   isIndexedGas(): boolean {
     return (
+      this.isLegacyMode() &&
       this.shouldEditShowGasFields() &&
-      this.selectedTariff?.gasPriceMode ===
+      this.editForm.controls.gasPriceMode.value ===
         'indexed'
+    );
+  }
+
+  shouldEditShowFixedElectricityPrices(): boolean {
+    if (!this.shouldEditShowElectricityFields()) {
+      return false;
+    }
+
+    return this.isAdvancedMode()
+      ? profileAllowsElectricityEnergyPrices(
+          this.selectedCalculationProfile,
+        )
+      : this.isFixedElectricity();
+  }
+
+  shouldEditShowFixedGasPrice(): boolean {
+    if (!this.shouldEditShowGasFields()) {
+      return false;
+    }
+
+    return this.isAdvancedMode()
+      ? profileAllowsGasEnergyPrice(
+          this.selectedCalculationProfile,
+        )
+      : this.isFixedGas();
+  }
+
+  shouldEditConfigureElectricityDiscounts(): boolean {
+    return (
+      this.shouldEditShowElectricityFields() &&
+      (this.isLegacyMode()
+        ? this.isFixedElectricity()
+        : Boolean(this.selectedCalculationProfile))
+    );
+  }
+
+  shouldEditConfigureGasDiscounts(): boolean {
+    return (
+      this.shouldEditShowGasFields() &&
+      (this.isLegacyMode()
+        ? this.isFixedGas()
+        : Boolean(this.selectedCalculationProfile))
     );
   }
 
   shouldEditShowSimplePrices(): boolean {
     return (
-      this.isFixedElectricity() &&
-      this.selectedTariff?.tariffType ===
-        'simple'
+      this.shouldEditShowFixedElectricityPrices() &&
+      this.selectedTariff?.tariffType === 'simple'
     );
   }
 
   shouldEditShowBiHourlyPrices(): boolean {
     return (
-      this.isFixedElectricity() &&
-      this.selectedTariff?.tariffType ===
-        'bi_hourly'
+      this.shouldEditShowFixedElectricityPrices() &&
+      this.selectedTariff?.tariffType === 'bi_hourly'
     );
   }
 
   shouldEditShowTriHourlyPrices(): boolean {
     return (
-      this.isFixedElectricity() &&
-      this.selectedTariff?.tariffType ===
-        'tri_hourly'
+      this.shouldEditShowFixedElectricityPrices() &&
+      this.selectedTariff?.tariffType === 'tri_hourly'
     );
   }
 
   shouldEditShowTetraHourlyPrices(): boolean {
     return (
-      this.isFixedElectricity() &&
-      this.selectedTariff?.tariffType ===
-        'tetra_hourly'
+      this.shouldEditShowFixedElectricityPrices() &&
+      this.selectedTariff?.tariffType === 'tetra_hourly'
     );
   }
 
@@ -1460,12 +1923,271 @@ export class TariffEdit implements OnInit {
     );
   }
 
+  private loadCalculationProfilesForSelection(): void {
+    if (
+      !this.selectedTariff ||
+      !this.isAdvancedMode()
+    ) {
+      return;
+    }
+
+    if (this.calculationProfilesLoaded) {
+      this.ensureLinkedCalculationProfileLoaded();
+      return;
+    }
+
+    if (this.isLoadingCalculationProfiles) {
+      return;
+    }
+
+    this.isLoadingCalculationProfiles = true;
+
+    this.simulatorService
+      .getCalculationProfiles()
+      .pipe(
+        finalize(() => {
+          this.isLoadingCalculationProfiles = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (profiles) => {
+          this.calculationProfiles = profiles;
+          this.calculationProfilesLoaded = true;
+          this.ensureLinkedCalculationProfileLoaded();
+        },
+        error: (error) => {
+          this.showBackendError(
+            error,
+            'Não foi possível carregar os perfis de cálculo.',
+          );
+        },
+      });
+  }
+
+  private ensureLinkedCalculationProfileLoaded(): void {
+    const profileId =
+      this.originalTariff?.calculationProfileId;
+
+    if (!profileId) {
+      return;
+    }
+
+    const existing = this.calculationProfiles.find(
+      (profile) => profile.id === profileId,
+    );
+
+    if (existing) {
+      this.linkedCalculationProfile = existing;
+      this.applyAdvancedProfileCompatibility();
+      this.configureValidators();
+      return;
+    }
+
+    this.simulatorService
+      .getCalculationProfileById(profileId)
+      .subscribe({
+        next: (profile) => {
+          this.linkedCalculationProfile = profile;
+          this.applyAdvancedProfileCompatibility();
+          this.configureValidators();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.linkedCalculationProfile = null;
+        },
+      });
+  }
+
+  private getSelectedCompanyId(): string {
+    return (
+      this.selectedTariff?.companyId ||
+      this.selectedTariff?.provider?.id ||
+      ''
+    );
+  }
+
+  private isCalculationProfileSelectionValid(): boolean {
+    const selectedId =
+      this.editForm.controls.calculationProfileId.value;
+
+    if (!selectedId) {
+      return false;
+    }
+
+    const profile =
+      this.selectableCalculationProfiles.find(
+        (candidate) => candidate.id === selectedId,
+      );
+
+    if (!profile) {
+      return false;
+    }
+
+    return (
+      profile.active ||
+      profile.id ===
+        this.originalTariff?.calculationProfileId
+    );
+  }
+
+  private clearLegacyFormulaFields(): void {
+    this.editForm.patchValue(
+      {
+        electricityPriceMode: null,
+        gasPriceMode: null,
+        electricityAdjustmentFactor: null,
+        electricityAdditionalCostPerKwh: null,
+        gasLossPercentage: null,
+        gasAdditionalCostPerKwh: null,
+      },
+      { emitEvent: false },
+    );
+  }
+
+  private applyAdvancedProfileCompatibility(): void {
+    if (!this.isAdvancedMode()) {
+      return;
+    }
+
+    const profile = this.selectedCalculationProfile;
+
+    if (!profile) {
+      return;
+    }
+
+    if (
+      this.shouldEditShowElectricityFields() &&
+      !profileAllowsElectricityEnergyPrices(profile)
+    ) {
+      this.editForm.patchValue(
+        {
+          singleEnergyPrice: null,
+          foraVazioEnergyPrice: null,
+          vazioEnergyPrice: null,
+          pontaEnergyPrice: null,
+          cheiasEnergyPrice: null,
+          superVazioEnergyPrice: null,
+        },
+        { emitEvent: false },
+      );
+    }
+
+    if (
+      this.shouldEditShowGasFields() &&
+      !profileAllowsGasEnergyPrice(profile)
+    ) {
+      this.editForm.controls.gasEnergyPrice.setValue(
+        null,
+        { emitEvent: false },
+      );
+    }
+  }
+
+  private restoreLegacyPricingFieldsFromOriginal(): void {
+    const tariff = this.originalTariff;
+
+    if (!tariff || tariff.calculationProfileId) {
+      return;
+    }
+
+    this.editForm.patchValue(
+      {
+        electricityPriceMode:
+          tariff.electricityPriceMode ?? null,
+        gasPriceMode:
+          tariff.gasPriceMode ?? null,
+        powerPricePerDay:
+          tariff.powerPricePerDay ?? null,
+        fixedTermPerDay:
+          tariff.fixedTermPerDay ?? null,
+        singleEnergyPrice:
+          tariff.singleEnergyPrice ?? null,
+        foraVazioEnergyPrice:
+          tariff.foraVazioEnergyPrice ?? null,
+        vazioEnergyPrice:
+          tariff.vazioEnergyPrice ?? null,
+        pontaEnergyPrice:
+          tariff.pontaEnergyPrice ?? null,
+        cheiasEnergyPrice:
+          tariff.cheiasEnergyPrice ?? null,
+        superVazioEnergyPrice:
+          tariff.superVazioEnergyPrice ?? null,
+        gasEnergyPrice:
+          tariff.gasEnergyPrice ?? null,
+        electricityAdjustmentFactor:
+          tariff.electricityAdjustmentFactor ?? null,
+        electricityAdditionalCostPerKwh:
+          tariff.electricityAdditionalCostPerKwh ?? null,
+        gasLossPercentage:
+          tariff.gasLossPercentage ?? null,
+        gasAdditionalCostPerKwh:
+          tariff.gasAdditionalCostPerKwh ?? null,
+        electricityDiscountAppliesToFixedTerm:
+          tariff.electricityDiscountAppliesToFixedTerm ?? false,
+        gasDiscountAppliesToFixedTerm:
+          tariff.gasDiscountAppliesToFixedTerm ?? false,
+        electricityDiscounts:
+          this.toElectricityDiscountFormValue(
+            tariff.electricityDiscounts,
+          ),
+        gasDiscounts:
+          this.toGasDiscountFormValue(
+            tariff.gasDiscounts,
+          ),
+      },
+      { emitEvent: false },
+    );
+
+    this.showElectricityDiscounts = Boolean(
+      tariff.electricityDiscounts &&
+        Object.keys(tariff.electricityDiscounts).length,
+    );
+    this.showGasDiscounts = Boolean(
+      tariff.gasDiscounts &&
+        Object.keys(tariff.gasDiscounts).length,
+    );
+  }
+
   private toDateInputValue(
     value?: string | null,
   ): string {
     return value
       ? value.substring(0, 10)
       : '';
+  }
+
+  private formatDateOnly(
+    value?: string | null,
+  ): string {
+    const dateOnly = this.toDateInputValue(value);
+
+    if (!dateOnly) {
+      return '';
+    }
+
+    const [year, month, day] = dateOnly.split('-');
+
+    if (!year || !month || !day) {
+      return dateOnly;
+    }
+
+    return `${day}/${month}/${year}`;
+  }
+
+  private validateDateRange(
+    control: AbstractControl,
+  ): ValidationErrors | null {
+    const startDate = control.get('startDate')?.value;
+    const endDate = control.get('endDate')?.value;
+
+    if (!startDate || !endDate) {
+      return null;
+    }
+
+    return endDate >= startDate
+      ? null
+      : { dateRange: true };
   }
 
   private areEqual(

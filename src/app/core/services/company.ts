@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, of } from 'rxjs';
+import { finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
@@ -31,6 +31,10 @@ interface CompanyApiResponse {
 export class CompanyService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+  private readonly cacheTtlMs = 60_000;
+
+  private companiesCache: { value: Company[]; loadedAt: number } | null = null;
+  private companiesRequest$: Observable<Company[]> | null = null;
 
   getCompanies(): Observable<Company[]> {
     const environmentCompanies = environment.companies ?? [];
@@ -47,7 +51,7 @@ export class CompanyService {
       );
     }
 
-    return this.getCompaniesFromApi();
+    return this.getCompaniesCached();
   }
 
   /**
@@ -67,7 +71,42 @@ export class CompanyService {
     return this.http.patch<Partial<Company> | null>(
       `${this.apiUrl}/api/companies/${companyId}`,
       payload,
+    ).pipe(
+      tap(() => this.invalidateCompaniesCache()),
     );
+  }
+
+  private getCompaniesCached(): Observable<Company[]> {
+    if (
+      this.companiesCache &&
+      Date.now() - this.companiesCache.loadedAt < this.cacheTtlMs
+    ) {
+      return of(this.companiesCache.value);
+    }
+
+    if (this.companiesRequest$) {
+      return this.companiesRequest$;
+    }
+
+    const request$ = this.getCompaniesFromApi().pipe(
+      tap((companies) => {
+        this.companiesCache = { value: companies, loadedAt: Date.now() };
+      }),
+      finalize(() => {
+        if (this.companiesRequest$ === request$) {
+          this.companiesRequest$ = null;
+        }
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+
+    this.companiesRequest$ = request$;
+    return request$;
+  }
+
+  private invalidateCompaniesCache(): void {
+    this.companiesCache = null;
+    this.companiesRequest$ = null;
   }
 
   private normalizeCompany(company: CompanyApiResponse): Company {

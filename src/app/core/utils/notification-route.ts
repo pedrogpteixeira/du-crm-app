@@ -33,7 +33,7 @@ export function getNotificationRoute(
   switch (notification.resource) {
     case 'omie':
     case 'mibgas':
-      return ['/home/admin/omie-averages'];
+      return ['/home/admin/market-regulatory-data'];
 
     case 'ticket':
       return notification.resourceId

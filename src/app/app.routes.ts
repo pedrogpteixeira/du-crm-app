@@ -607,15 +607,20 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'admin/omie-averages',
+        path: 'admin/market-regulatory-data',
         canActivate: [roleIncludesGuard],
         data: {
           allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
-          import('./features/admin/omie-averages/omie-averages').then(
-            (m) => m.OmieAverages,
+          import('./features/admin/market-regulatory-data/market-regulatory-data').then(
+            (m) => m.MarketRegulatoryData,
           ),
+      },
+      {
+        path: 'admin/omie-averages',
+        pathMatch: 'full',
+        redirectTo: 'admin/market-regulatory-data',
       },
       {
         path: 'tariffs/create',
@@ -637,6 +642,17 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/simulator/tariff-edit/tariff-edit').then(
             (m) => m.TariffEdit,
+          ),
+      },
+      {
+        path: 'tariffs/calculation-profiles',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/simulator/calculation-profiles/calculation-profiles').then(
+            (m) => m.CalculationProfiles,
           ),
       },
       {

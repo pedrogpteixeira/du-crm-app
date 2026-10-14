@@ -853,3 +853,39 @@ strong {
     display: none;
   }
 }
+
+/* Dynamic Vodafone lifecycle date validation */
+.data-ativacao-label,
+.data-baixa-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.data-ativacao-required-marker,
+.data-ativacao-validation-message,
+.data-ativacao-missing-value,
+.data-baixa-required-marker,
+.data-baixa-validation-message,
+.data-baixa-missing-value {
+  color: #dc2626;
+}
+
+.data-ativacao-required-marker,
+.data-baixa-required-marker {
+  font-weight: 900;
+}
+
+.data-ativacao-input[aria-invalid='true'],
+.data-baixa-input[aria-invalid='true'] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+.data-ativacao-validation-message,
+.data-baixa-validation-message {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
