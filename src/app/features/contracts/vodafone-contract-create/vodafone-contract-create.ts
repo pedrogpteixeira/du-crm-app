@@ -209,6 +209,12 @@ export class VodafoneContractCreate implements OnInit {
 
   readonly tipoSegmentoOptions: VodafoneTipoSegmento[] = ['Residencial', 'Empresarial'];
 
+  readonly tipoProdutoOptions = [
+    'NET',
+    'TV + VOZ',
+    'TV+NET+VOZ',
+    'TV +NET+VOZ +MOVEIS',
+  ] as const;
 
   readonly contratacaoOptions: VodafoneContratacao[] = [
     'Contratação Digital',

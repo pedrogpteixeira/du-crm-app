@@ -14,6 +14,8 @@ import { ToastService } from '../../../core/services/toast';
 
 import { Company, CompanyService, UpdateCompanyRequest } from '../../../core/services/company';
 
+type CompanySortOrder = 'name-asc' | 'name-desc';
+
 const integerValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
 
@@ -36,6 +38,7 @@ export class Companies implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   companies: Company[] = [];
+  companySortOrder: CompanySortOrder = 'name-asc';
 
   isLoading = false;
   isSaving = false;
@@ -81,6 +84,15 @@ export class Companies implements OnInit {
     this.loadCompanies();
   }
 
+  get sortedCompanies(): Company[] {
+    const direction = this.companySortOrder === 'name-desc' ? -1 : 1;
+
+    return [...this.companies].sort(
+      (left, right) =>
+        left.name.localeCompare(right.name, 'pt-PT', { sensitivity: 'base' }) * direction,
+    );
+  }
+
   get hasEditChanges(): boolean {
     const company = this.editingCompany;
 
@@ -108,14 +120,17 @@ export class Companies implements OnInit {
       )
       .subscribe({
         next: (companies) => {
-          this.companies = [...companies].sort((left, right) =>
-            left.name.localeCompare(right.name, 'pt-PT'),
-          );
+          this.companies = [...companies];
         },
         error: (error) => {
           this.errorMessage = error?.error?.message || 'Não foi possível carregar as Companies.';
         },
       });
+  }
+
+  onCompanySortOrderChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.companySortOrder = value === 'name-desc' ? 'name-desc' : 'name-asc';
   }
 
   openEdit(company: Company): void {

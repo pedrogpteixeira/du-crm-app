@@ -176,7 +176,11 @@
         <label>
           Tipo de Produto *
 
-          <input type="text" [(ngModel)]="contractForm.tipoProduto" />
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.tipoProduto"
+            [options]="tipoProdutoOptions"
+            [required]="true"
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -220,16 +224,16 @@
         </div>
 
         <div class="status-sale-row status-sale-row--three">
-          <label>
-            Agendamento
-
-            <input type="datetime-local" [(ngModel)]="contractForm.agendamento" />
-          </label>
-
           <label *ngIf="isProLayout()">
             Data de Assinatura
 
             <input type="date" [(ngModel)]="contractForm.dataAssinatura" />
+          </label>
+
+          <label>
+            Agendamento
+
+            <input type="datetime-local" [(ngModel)]="contractForm.agendamento" />
           </label>
 
           <label *ngIf="isProLayout()">
@@ -451,7 +455,7 @@
 
       <div class="form-grid three-columns product-data-grid">
         <label class="product-provider-field">
-          Antiga Comercializadora
+          Antiga Operadora
 
           <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
         </label>

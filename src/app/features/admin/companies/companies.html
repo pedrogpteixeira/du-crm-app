@@ -5,6 +5,19 @@
       <h1>Companies</h1>
       <p>Configuração das comercializadoras disponíveis no CRM.</p>
     </div>
+
+    <label class="sort-control">
+      <span class="material-symbols-rounded" aria-hidden="true">sort_by_alpha</span>
+      <span>Ordenar</span>
+      <select
+        [value]="companySortOrder"
+        (change)="onCompanySortOrderChange($event)"
+        aria-label="Ordenar comercializadoras"
+      >
+        <option value="name-asc">Nome A–Z</option>
+        <option value="name-desc">Nome Z–A</option>
+      </select>
+    </label>
   </header>
 
   <section class="companies-card">
@@ -26,7 +39,7 @@
         <span>Ações</span>
       </div>
 
-      <div class="company-row" *ngFor="let company of companies">
+      <div class="company-row" *ngFor="let company of sortedCompanies">
         <strong class="company-name">{{ company.name }}</strong>
 
         <span

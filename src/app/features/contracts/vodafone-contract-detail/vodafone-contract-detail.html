@@ -105,10 +105,11 @@
               <label>
                 Tipo de Produto *
 
-                <input
+                <app-editable-select-combobox
                   *ngIf="isEditing; else produtoView"
-                  type="text"
                   [(ngModel)]="editForm.tipoProduto"
+                  [options]="tipoProdutoOptions"
+                  [required]="true"
                 />
 
                 <ng-template #produtoView>
@@ -229,14 +230,14 @@
 
               <div class="status-sale-row status-sale-row--three">
                 <label>
-                  Agendamento
-                  <input *ngIf="isEditing; else agendamentoView" type="datetime-local" [(ngModel)]="editForm.agendamento" />
-                  <ng-template #agendamentoView><strong>{{ formatDateTime(contract.agendamento) }}</strong></ng-template>
-                </label>
-                <label>
                   Data de Assinatura
                   <input *ngIf="isEditing; else dataAssinaturaView" type="date" [(ngModel)]="editForm.dataAssinatura" />
                   <ng-template #dataAssinaturaView><strong>{{ formatDateOnly(contract.dataAssinatura) }}</strong></ng-template>
+                </label>
+                <label>
+                  Agendamento
+                  <input *ngIf="isEditing; else agendamentoView" type="datetime-local" [(ngModel)]="editForm.agendamento" />
+                  <ng-template #agendamentoView><strong>{{ formatDateTime(contract.agendamento) }}</strong></ng-template>
                 </label>
                 <label>
                   Data de Registo
@@ -598,7 +599,7 @@
               </label>
 
               <label>
-                Antiga Comercializadora
+                Antiga Operadora
 
                 <input
                   *ngIf="isEditing; else comercializadoraView"
