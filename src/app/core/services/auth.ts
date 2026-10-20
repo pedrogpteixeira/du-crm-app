@@ -40,6 +40,24 @@ interface ChangePasswordResponse {
   message: string;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  verificationCode: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -133,6 +151,40 @@ export class Auth {
   }): Observable<ChangePasswordResponse> {
     return this.http.patch<ChangePasswordResponse>(
       `${this.apiUrl}/api/auth/password`,
+      payload,
+      {
+        withCredentials: true,
+      },
+    );
+  }
+
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    const payload: ForgotPasswordPayload = {
+      email,
+    };
+
+    return this.http.post<ForgotPasswordResponse>(
+      `${this.apiUrl}/api/auth/forgot-password`,
+      payload,
+      {
+        withCredentials: true,
+      },
+    );
+  }
+
+  resetPassword(
+    token: string,
+    verificationCode: string,
+    newPassword: string,
+  ): Observable<ResetPasswordResponse> {
+    const payload: ResetPasswordPayload = {
+      token,
+      verificationCode,
+      newPassword,
+    };
+
+    return this.http.post<ResetPasswordResponse>(
+      `${this.apiUrl}/api/auth/reset-password`,
       payload,
       {
         withCredentials: true,

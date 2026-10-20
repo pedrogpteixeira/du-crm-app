@@ -9,6 +9,7 @@ import {
   SystemNoticeAudience,
   SystemNoticeCreateInput,
   SystemNoticeCreateResponse,
+  SystemNoticeImage,
   SystemNoticeType,
 } from '../models/system-notice';
 import { Auth } from './auth';
@@ -81,11 +82,32 @@ export class SystemNoticeService {
     );
   }
 
-  create(payload: SystemNoticeCreateInput): Observable<SystemNoticeCreateResponse> {
-    return this.http.post<unknown>(`${this.apiUrl}/api/system-notices`, payload).pipe(
+  create(
+    payload: SystemNoticeCreateInput,
+    image: File | null = null,
+  ): Observable<SystemNoticeCreateResponse> {
+    const body = this.buildCreateFormData(payload, image);
+
+    return this.http.post<unknown>(`${this.apiUrl}/api/system-notices`, body).pipe(
       map((response) => this.parseCreateResponse(response)),
       tap((response) => this.mergeNotice(response.notice)),
     );
+  }
+
+  loadImage(noticeId: string, access: 'authenticated' | 'public' = 'authenticated'): Observable<Blob> {
+    const normalizedId = this.readNonEmptyString(noticeId);
+
+    if (!normalizedId) {
+      throw new Error('A valid System Notice id is required.');
+    }
+
+    const encodedId = encodeURIComponent(normalizedId);
+    const endpoint =
+      access === 'public'
+        ? `${this.apiUrl}/api/system-notices/public/${encodedId}/image`
+        : `${this.apiUrl}/api/system-notices/${encodedId}/image`;
+
+    return this.http.get(endpoint, { responseType: 'blob' });
   }
 
   remove(noticeId: string): Observable<void> {
@@ -309,6 +331,7 @@ export class SystemNoticeService {
       this.readNonEmptyString(value['publishedAt']) ?? this.readNonEmptyString(value['createdAt']);
     const expiresAt = value['expiresAt'];
     const active = value['active'];
+    const image = this.parseNoticeImage(value['image']);
 
     if (
       !id ||
@@ -342,7 +365,53 @@ export class SystemNoticeService {
       ...(createdBy ? { createdBy } : {}),
       ...(createdAt ? { createdAt } : {}),
       ...(updatedAt ? { updatedAt } : {}),
+      image,
     };
+  }
+
+  private buildCreateFormData(payload: SystemNoticeCreateInput, image: File | null): FormData {
+    const formData = new FormData();
+
+    formData.append('title', payload.title);
+    formData.append('message', payload.message);
+    formData.append('type', payload.type);
+    formData.append('audience', payload.audience);
+    formData.append('deferWhileCriticalRequest', String(payload.deferWhileCriticalRequest));
+
+    if (payload.expiresAt) {
+      formData.append('expiresAt', payload.expiresAt);
+    }
+
+    if (image) {
+      formData.append('image', image, image.name);
+    }
+
+    return formData;
+  }
+
+  private parseNoticeImage(value: unknown): SystemNoticeImage | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+
+    const image = value as Record<string, unknown>;
+    const originalName = this.readNonEmptyString(image['originalName']);
+    const fileName = this.readNonEmptyString(image['fileName']);
+    const mimetype = this.readNonEmptyString(image['mimetype']);
+    const size = image['size'];
+
+    if (
+      !originalName ||
+      !fileName ||
+      !mimetype ||
+      typeof size !== 'number' ||
+      !Number.isFinite(size) ||
+      size < 0
+    ) {
+      return null;
+    }
+
+    return { originalName, fileName, mimetype, size };
   }
 
   private isExpired(notice: Pick<SystemNotice, 'expiresAt'>): boolean {

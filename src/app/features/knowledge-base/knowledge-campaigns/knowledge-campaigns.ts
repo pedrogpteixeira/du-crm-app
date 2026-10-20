@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnInit,
+  inject,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ToastService } from '../../../core/services/toast';
 
@@ -22,11 +28,13 @@ import { Auth } from '../../../core/services/auth';
 })
 export class KnowledgeCampaigns implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly campaignService = inject(CampaignService);
   private readonly auth = inject(Auth);
 
   companyId = '';
   companyName = 'Empresa';
+  supplierName = 'Empresa';
 
   campaigns: Campaign[] = [];
 
@@ -63,6 +71,7 @@ export class KnowledgeCampaigns implements OnInit {
 
   updatingCampaignId: string | null = null;
   deletingCampaignId: string | null = null;
+  openActionsCampaignId: string | null = null;
 
   readonly canManageCampaigns =
     this.auth.roleIncludes(
@@ -90,6 +99,8 @@ export class KnowledgeCampaigns implements OnInit {
     this.route.paramMap.subscribe((params) => {
       this.companyId = params.get('companyId') || '';
       this.companyName = this.route.snapshot.queryParamMap.get('name') || 'Empresa';
+      this.supplierName =
+        this.route.snapshot.queryParamMap.get('supplier') || this.companyName;
 
       if (this.companyId) {
         this.loadCampaigns();
@@ -115,6 +126,8 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   toggleCampaign(campaign: Campaign): void {
+    this.closeActionsMenu();
+
     if (!this.canManageCampaigns) {
       return;
     }
@@ -131,9 +144,7 @@ export class KnowledgeCampaigns implements OnInit {
       })
       .subscribe({
         next: (updatedCampaign) => {
-          this.campaigns = this.campaigns.map((item) =>
-            item.id === updatedCampaign.id ? updatedCampaign : item,
-          );
+          this.replaceCampaign(updatedCampaign);
 
           this.successMessage = updatedCampaign.active
             ? 'Campanha ativada com sucesso.'
@@ -153,6 +164,30 @@ export class KnowledgeCampaigns implements OnInit {
           this.updatingCampaignId = null;
         },
       });
+  }
+
+
+  toggleActionsMenu(campaignId: string, event: MouseEvent): void {
+    event.stopPropagation();
+
+    if (
+      this.updatingCampaignId === campaignId ||
+      this.deletingCampaignId === campaignId
+    ) {
+      return;
+    }
+
+    this.openActionsCampaignId =
+      this.openActionsCampaignId === campaignId ? null : campaignId;
+  }
+
+  closeActionsMenu(): void {
+    this.openActionsCampaignId = null;
+  }
+
+  @HostListener('document:click')
+  closeActionsMenuOnDocumentClick(): void {
+    this.closeActionsMenu();
   }
 
   openCreateCampaignModal(): void {
@@ -238,6 +273,8 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   openEditCampaignModal(campaign: Campaign): void {
+    this.closeActionsMenu();
+
     if (!this.canManageCampaigns) {
       return;
     }
@@ -296,9 +333,7 @@ export class KnowledgeCampaigns implements OnInit {
       })
       .subscribe({
         next: (updatedCampaign) => {
-          this.campaigns = this.campaigns.map((item) =>
-            item.id === updatedCampaign.id ? updatedCampaign : item,
-          );
+          this.replaceCampaign(updatedCampaign);
 
           this.showEditCampaignModal = false;
           this.editingCampaign = null;
@@ -313,6 +348,56 @@ export class KnowledgeCampaigns implements OnInit {
           this.isEditingCampaign = false;
         },
       });
+  }
+
+  openCampaignArticle(campaign: Campaign): void {
+    if (!campaign.knowledgeBaseArticleId) {
+      this.toast.info('O artigo desta campanha ainda não está disponível.');
+      return;
+    }
+
+    void this.router.navigate(
+      ['/home/knowledge-base/articles', campaign.knowledgeBaseArticleId],
+      {
+        queryParams: this.campaignArticleQueryParams(campaign),
+      },
+    );
+  }
+
+  openCampaignArticleFromKeyboard(
+    campaign: Campaign,
+    event: Event,
+  ): void {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    event.preventDefault();
+    this.openCampaignArticle(campaign);
+  }
+
+  private campaignArticleQueryParams(
+    campaign: Campaign,
+  ): Record<string, string> {
+    return {
+      name: campaign.name,
+      supplier: this.supplierName,
+      companyId: campaign.companyId || this.companyId,
+    };
+  }
+
+  private replaceCampaign(updatedCampaign: Campaign): void {
+    this.campaigns = this.campaigns.map((item) =>
+      item.id === updatedCampaign.id
+        ? {
+            ...item,
+            ...updatedCampaign,
+            knowledgeBaseArticleId:
+              updatedCampaign.knowledgeBaseArticleId ??
+              item.knowledgeBaseArticleId,
+          }
+        : item,
+    );
   }
 
   get newCampaignChargebackError(): string {
@@ -384,6 +469,8 @@ export class KnowledgeCampaigns implements OnInit {
   }
 
   deleteCampaign(campaign: Campaign): void {
+    this.closeActionsMenu();
+
     if (!this.canManageCampaigns) {
       return;
     }

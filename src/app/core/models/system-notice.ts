@@ -1,6 +1,13 @@
 export type SystemNoticeType = 'info' | 'warning' | 'error';
 export type SystemNoticeAudience = 'authenticated' | 'all';
 
+export interface SystemNoticeImage {
+  originalName: string;
+  fileName: string;
+  mimetype: string;
+  size: number;
+}
+
 export interface SystemNotice {
   id: string;
   title: string;
@@ -14,6 +21,7 @@ export interface SystemNotice {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  image?: SystemNoticeImage | null;
 }
 
 export interface SystemNoticeCreateInput {

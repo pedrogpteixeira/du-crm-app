@@ -33,6 +33,47 @@
         ></textarea>
       </label>
 
+      <div class="image-upload-field full-width">
+        <div class="image-upload-heading">
+          <span>Imagem</span>
+          <small>Opcional · PNG, JPEG ou WEBP · máximo 10 MB</small>
+        </div>
+
+        <label class="image-picker" [class.disabled]="isSaving">
+          <span class="material-symbols-rounded" aria-hidden="true">add_photo_alternate</span>
+          <span>{{ selectedImage ? 'Substituir imagem' : 'Selecionar imagem' }}</span>
+          <input
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            [disabled]="isSaving"
+            (change)="onImageSelected($event)"
+          />
+        </label>
+
+        <small class="image-validation-message" *ngIf="imageValidationMessage">
+          {{ imageValidationMessage }}
+        </small>
+
+        <div class="image-preview" *ngIf="selectedImage && imagePreviewUrl">
+          <img [src]="imagePreviewUrl" [alt]="'Preview de ' + selectedImage.name" />
+
+          <div class="image-preview-meta">
+            <strong>{{ selectedImage.name }}</strong>
+            <span>{{ formatFileSize(selectedImage.size) }}</span>
+          </div>
+
+          <button
+            type="button"
+            class="remove-selected-image"
+            [disabled]="isSaving"
+            (click)="removeSelectedImage()"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+            Remover imagem
+          </button>
+        </div>
+      </div>
+
       <label>
         <span>Tipo</span>
         <select [(ngModel)]="draft.type">
@@ -133,6 +174,10 @@
                 {{ typeLabel(notice.type) }}
               </span>
               <span class="notice-audience-badge">{{ audienceLabel(notice.audience) }}</span>
+              <span class="notice-image-badge" *ngIf="notice.image">
+                <span class="material-symbols-rounded" aria-hidden="true">image</span>
+                Imagem
+              </span>
             </div>
 
             <p>{{ notice.message }}</p>

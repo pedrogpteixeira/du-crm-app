@@ -52,7 +52,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     withCredentials: true,
   });
 
-  const authenticatedRequest = addAccessToken(requestWithCredentials, auth.getAccessToken());
+  const authenticatedRequest = isPasswordRecoveryRequest(req.url)
+    ? requestWithCredentials
+    : addAccessToken(requestWithCredentials, auth.getAccessToken());
 
   return next(authenticatedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -154,6 +156,10 @@ function isPasswordExpiredError(error: HttpErrorResponse): boolean {
 function isAllowedWhilePasswordExpired(request: HttpRequest<unknown>): boolean {
   const url = request.url;
 
+  if (isPasswordRecoveryRequest(url)) {
+    return request.method.toUpperCase() === 'POST';
+  }
+
   if (url.includes('/api/auth/password')) {
     return request.method.toUpperCase() === 'PATCH';
   }
@@ -173,9 +179,17 @@ function isAuthRequest(url: string): boolean {
   return (
     url.includes('/api/auth/login') ||
     url.includes('/api/auth/signin') ||
+    isPasswordRecoveryRequest(url) ||
     url.includes('/api/auth/refresh') ||
     url.includes('/api/auth/logout') ||
     url.includes('/api/auth/logout-all') ||
     url.includes('/api/auth/password')
+  );
+}
+
+function isPasswordRecoveryRequest(url: string): boolean {
+  return (
+    url.includes('/api/auth/forgot-password') ||
+    url.includes('/api/auth/reset-password')
   );
 }

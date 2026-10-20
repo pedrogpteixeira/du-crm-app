@@ -1,30 +1,109 @@
-<div class="system-notice-layer" *ngIf="activeNotice$ | async as notice">
-  <section
-    class="system-notice"
-    [class.system-notice--info]="notice.type === 'info'"
-    [class.system-notice--warning]="notice.type === 'warning'"
-    [class.system-notice--error]="notice.type === 'error'"
-    [attr.role]="notice.type === 'error' ? 'alert' : 'status'"
-    aria-live="polite"
-    aria-atomic="true"
-  >
-    <span class="system-notice__icon material-symbols-rounded" aria-hidden="true">
-      {{ notice.type === 'error' ? 'error' : notice.type === 'warning' ? 'warning' : 'info' }}
-    </span>
-
-    <div class="system-notice__content">
-      <strong>{{ notice.title }}</strong>
-      <p>{{ notice.message }}</p>
-    </div>
-
-    <button
-      type="button"
-      class="system-notice__dismiss"
-      aria-label="Fechar aviso"
-      title="Fechar aviso"
-      (click)="dismiss(notice.id)"
+<ng-container *ngIf="activeNoticeView$ | async as view">
+  <div class="system-notice-layer" *ngIf="!view.notice.image">
+    <section
+      class="system-notice"
+      [class.system-notice--info]="view.notice.type === 'info'"
+      [class.system-notice--warning]="view.notice.type === 'warning'"
+      [class.system-notice--error]="view.notice.type === 'error'"
+      [attr.role]="view.notice.type === 'error' ? 'alert' : 'status'"
+      aria-live="polite"
+      aria-atomic="true"
     >
-      <span class="material-symbols-rounded" aria-hidden="true">close</span>
-    </button>
-  </section>
-</div>
+      <span class="system-notice__icon material-symbols-rounded" aria-hidden="true">
+        {{
+          view.notice.type === 'error'
+            ? 'error'
+            : view.notice.type === 'warning'
+              ? 'warning'
+              : 'info'
+        }}
+      </span>
+
+      <div class="system-notice__content">
+        <strong>{{ view.notice.title }}</strong>
+        <p>{{ view.notice.message }}</p>
+      </div>
+
+      <button
+        type="button"
+        class="system-notice__dismiss"
+        aria-label="Fechar aviso"
+        title="Fechar aviso"
+        (click)="dismiss(view.notice.id)"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </section>
+  </div>
+
+  <div class="system-notice-modal-layer" *ngIf="view.notice.image">
+    <section
+      class="system-notice-modal"
+      [class.system-notice-modal--info]="view.notice.type === 'info'"
+      [class.system-notice-modal--warning]="view.notice.type === 'warning'"
+      [class.system-notice-modal--error]="view.notice.type === 'error'"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-labelledby]="'system-notice-title-' + view.notice.id"
+      [attr.aria-describedby]="'system-notice-message-' + view.notice.id"
+    >
+      <a
+        *ngIf="view.imageUrl"
+        class="system-notice-modal__open-image"
+        [href]="view.imageUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Abrir imagem num novo separador"
+        title="Abrir imagem num novo separador"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+      </a>
+
+      <button
+        type="button"
+        class="system-notice-modal__dismiss"
+        aria-label="Fechar aviso"
+        title="Fechar aviso"
+        (click)="dismiss(view.notice.id)"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+
+      <div class="system-notice-modal__media">
+        <img
+          *ngIf="view.imageUrl"
+          [src]="view.imageUrl"
+          [alt]="'Imagem do aviso ' + view.notice.title"
+        />
+
+        <div class="system-notice-modal__media-state" *ngIf="view.imageState === 'loading'">
+          <span class="system-notice-modal__spinner" aria-hidden="true"></span>
+          <span>A carregar imagem...</span>
+        </div>
+
+        <div class="system-notice-modal__media-state" *ngIf="view.imageState === 'error'">
+          <span class="material-symbols-rounded" aria-hidden="true">broken_image</span>
+          <span>Não foi possível carregar a imagem deste aviso.</span>
+        </div>
+      </div>
+
+      <div class="system-notice-modal__content">
+        <div class="system-notice-modal__heading">
+          <span class="system-notice-modal__type-icon material-symbols-rounded" aria-hidden="true">
+            {{
+              view.notice.type === 'error'
+                ? 'error'
+                : view.notice.type === 'warning'
+                  ? 'warning'
+                  : 'info'
+            }}
+          </span>
+
+          <h2 [id]="'system-notice-title-' + view.notice.id">{{ view.notice.title }}</h2>
+        </div>
+
+        <p [id]="'system-notice-message-' + view.notice.id">{{ view.notice.message }}</p>
+      </div>
+    </section>
+  </div>
+</ng-container>

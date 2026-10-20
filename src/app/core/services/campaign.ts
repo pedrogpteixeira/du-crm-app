@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 export interface Campaign {
   id: string;
   companyId: string;
+  knowledgeBaseArticleId?: string;
   name: string;
   loyalty: boolean;
   chargebackDays?: number | null;

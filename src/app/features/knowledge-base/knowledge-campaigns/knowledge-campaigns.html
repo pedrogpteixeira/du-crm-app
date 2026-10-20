@@ -43,14 +43,41 @@
       <span>Fidelização</span>
       <span>Chargeback</span>
       <span>Estado</span>
-      <span *ngIf="canManageCampaigns">Ações</span>
+      <span class="actions-heading" *ngIf="canManageCampaigns">Ações</span>
     </div>
 
     <div
       class="campaign-row"
       *ngFor="let campaign of campaigns"
+      [class.is-clickable]="!!campaign.knowledgeBaseArticleId"
+      [class.is-unavailable]="!campaign.knowledgeBaseArticleId"
+      [attr.role]="campaign.knowledgeBaseArticleId ? 'link' : null"
+      [attr.tabindex]="campaign.knowledgeBaseArticleId ? 0 : null"
+      [attr.aria-label]="
+        campaign.knowledgeBaseArticleId
+          ? 'Abrir artigo da campanha ' + campaign.name
+          : null
+      "
+      (click)="openCampaignArticle(campaign)"
+      (keydown.enter)="openCampaignArticleFromKeyboard(campaign, $event)"
+      (keydown.space)="openCampaignArticleFromKeyboard(campaign, $event)"
     >
-      <strong>{{ campaign.name }}</strong>
+      <div class="campaign-name-cell">
+        <div
+          *ngIf="campaign.knowledgeBaseArticleId; else campaignArticleUnavailable"
+          class="campaign-article-label"
+        >
+          <strong>{{ campaign.name }}</strong>
+          <span class="material-symbols-rounded" aria-hidden="true">description</span>
+        </div>
+
+        <ng-template #campaignArticleUnavailable>
+          <strong>{{ campaign.name }}</strong>
+          <small class="article-unavailable">
+            Artigo ainda não disponível
+          </small>
+        </ng-template>
+      </div>
 
       <span>{{ formatDate(campaign.startDate) }}</span>
 
@@ -74,48 +101,76 @@
         {{ campaign.active ? 'Ativa' : 'Inativa' }}
       </span>
 
-      <div class="row-actions" *ngIf="canManageCampaigns">
+      <div
+        class="row-actions"
+        *ngIf="canManageCampaigns"
+        (click)="$event.stopPropagation()"
+      >
         <button
           type="button"
-          class="edit-btn"
+          class="actions-trigger"
+          [class.is-open]="openActionsCampaignId === campaign.id"
+          [class.is-loading]="
+            updatingCampaignId === campaign.id ||
+            deletingCampaignId === campaign.id
+          "
           [disabled]="
             updatingCampaignId === campaign.id ||
             deletingCampaignId === campaign.id
           "
-          (click)="openEditCampaignModal(campaign)"
+          [attr.aria-label]="'Abrir ações da campanha ' + campaign.name"
+          [attr.aria-expanded]="openActionsCampaignId === campaign.id"
+          aria-haspopup="menu"
+          title="Mais ações"
+          (click)="toggleActionsMenu(campaign.id, $event)"
         >
-          Editar
+          <span class="material-symbols-rounded" aria-hidden="true">
+            {{
+              updatingCampaignId === campaign.id || deletingCampaignId === campaign.id
+                ? 'progress_activity'
+                : 'more_horiz'
+            }}
+          </span>
         </button>
 
-        <button
-          type="button"
-          class="toggle-btn"
-          [class.disable]="campaign.active"
-          [class.enable]="!campaign.active"
-          [disabled]="updatingCampaignId === campaign.id"
-          (click)="toggleCampaign(campaign)"
+        <div
+          class="actions-menu"
+          *ngIf="openActionsCampaignId === campaign.id"
+          role="menu"
+          [attr.aria-label]="'Ações da campanha ' + campaign.name"
         >
-          {{
-            updatingCampaignId === campaign.id
-              ? 'A atualizar...'
-              : campaign.active
-                ? 'Desativar'
-                : 'Ativar'
-          }}
-        </button>
+          <button
+            type="button"
+            role="menuitem"
+            (click)="openEditCampaignModal(campaign)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+            <span>Editar campanha</span>
+          </button>
 
-        <button
-          type="button"
-          class="delete-btn"
-          [disabled]="deletingCampaignId === campaign.id"
-          (click)="deleteCampaign(campaign)"
-        >
-          {{
-            deletingCampaignId === campaign.id
-              ? 'A eliminar...'
-              : 'Eliminar'
-          }}
-        </button>
+          <button
+            type="button"
+            role="menuitem"
+            (click)="toggleCampaign(campaign)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">
+              {{ campaign.active ? 'pause_circle' : 'play_circle' }}
+            </span>
+            <span>{{ campaign.active ? 'Desativar campanha' : 'Ativar campanha' }}</span>
+          </button>
+
+          <div class="actions-menu-separator" aria-hidden="true"></div>
+
+          <button
+            type="button"
+            class="danger"
+            role="menuitem"
+            (click)="deleteCampaign(campaign)"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+            <span>Eliminar campanha</span>
+          </button>
+        </div>
       </div>
     </div>
 

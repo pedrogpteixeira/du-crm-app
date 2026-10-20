@@ -63,6 +63,24 @@ form {
   gap: 18px;
 }
 
+.forgot-password-link {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.forgot-password-link a {
+  color: var(--app-accent, #008db1);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.forgot-password-link a:hover {
+  color: var(--app-accent-strong, #006f8c);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 label {
   display: flex;
   flex-direction: column;

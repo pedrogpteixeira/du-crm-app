@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
@@ -29,20 +29,29 @@ interface SystemNoticeDraft {
   styleUrl: './system-notice-admin.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
 })
-export class SystemNoticeAdmin implements OnInit {
+export class SystemNoticeAdmin implements OnInit, OnDestroy {
   private readonly notices = inject(SystemNoticeService);
   private readonly toast = inject(ToastService);
 
   readonly activeNotices$ = this.notices.notices$;
+  private readonly allowedImageTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  private readonly maxImageSizeBytes = 10 * 1024 * 1024;
 
   isSaving = false;
   isLoading = false;
   readonly deletingNoticeIds = new Set<string>();
 
   draft: SystemNoticeDraft = this.createEmptyDraft();
+  selectedImage: File | null = null;
+  imagePreviewUrl: string | null = null;
+  imageValidationMessage = '';
 
   ngOnInit(): void {
     this.loadActiveNotices();
+  }
+
+  ngOnDestroy(): void {
+    this.revokeImagePreviewUrl();
   }
 
   get canSubmit(): boolean {
@@ -68,11 +77,12 @@ export class SystemNoticeAdmin implements OnInit {
     this.isSaving = true;
 
     this.notices
-      .create(payload)
+      .create(payload, this.selectedImage)
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
         next: (response) => {
           this.draft = this.createEmptyDraft();
+          this.clearSelectedImage();
 
           const connections = response.recipientSockets;
           if (typeof connections === 'number') {
@@ -87,6 +97,50 @@ export class SystemNoticeAdmin implements OnInit {
           this.toast.error(this.getErrorMessage(error, 'Não foi possível criar o aviso geral.'));
         },
       });
+  }
+
+  onImageSelected(event: Event): void {
+    const input = event.target;
+
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    const validationMessage = this.validateImage(file);
+
+    if (validationMessage) {
+      this.clearSelectedImage();
+      this.imageValidationMessage = validationMessage;
+      return;
+    }
+
+    this.revokeImagePreviewUrl();
+    this.imageValidationMessage = '';
+    this.selectedImage = file;
+    this.imagePreviewUrl = URL.createObjectURL(file);
+  }
+
+  removeSelectedImage(): void {
+    this.clearSelectedImage();
+  }
+
+  formatFileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return '0 B';
+    }
+
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   }
 
   loadActiveNotices(showErrorToast = true): void {
@@ -149,6 +203,33 @@ export class SystemNoticeAdmin implements OnInit {
 
   trackByNoticeId(_index: number, notice: SystemNotice): string {
     return notice.id;
+  }
+
+  private validateImage(file: File): string {
+    if (!this.allowedImageTypes.has(file.type.toLowerCase())) {
+      return 'Formato de imagem inválido. Utilize PNG, JPEG ou WEBP.';
+    }
+
+    if (file.size > this.maxImageSizeBytes) {
+      return 'A imagem não pode exceder 10 MB.';
+    }
+
+    return '';
+  }
+
+  private clearSelectedImage(): void {
+    this.revokeImagePreviewUrl();
+    this.selectedImage = null;
+    this.imageValidationMessage = '';
+  }
+
+  private revokeImagePreviewUrl(): void {
+    if (!this.imagePreviewUrl) {
+      return;
+    }
+
+    URL.revokeObjectURL(this.imagePreviewUrl);
+    this.imagePreviewUrl = null;
   }
 
   private buildPayload(): SystemNoticeCreateInput {

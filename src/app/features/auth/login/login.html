@@ -24,6 +24,10 @@
         <input type="password" placeholder="Digite a sua palavra-passe" formControlName="password" autocomplete="current-password" />
       </label>
 
+      <div class="forgot-password-link">
+        <a routerLink="/forgot-password">Esqueceu-se da palavra-passe?</a>
+      </div>
+
       <button type="submit" [disabled]="isLoading">
         {{ isLoading ? 'A iniciar sessão...' : 'Iniciar sessão' }}
       </button>

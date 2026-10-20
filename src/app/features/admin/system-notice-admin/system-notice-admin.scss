@@ -320,6 +320,141 @@ select:focus {
   line-height: 1.45;
 }
 
+.image-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-upload-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--app-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.image-upload-heading small {
+  color: var(--app-text-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.image-picker {
+  min-height: 44px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px dashed var(--app-border-strong);
+  border-radius: 12px;
+  background: var(--app-surface-muted);
+  color: var(--app-text-strong);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.image-picker:hover:not(.disabled) {
+  border-color: var(--app-accent);
+  background: var(--app-accent-soft);
+}
+
+.image-picker.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.image-picker .material-symbols-rounded {
+  color: var(--app-accent);
+  font-size: 20px;
+}
+
+.image-picker input {
+  display: none;
+}
+
+.image-validation-message {
+  color: var(--app-danger);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.image-preview {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-muted);
+}
+
+.image-preview img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 130px;
+  justify-self: center;
+  display: block;
+  object-fit: contain;
+  image-rendering: auto;
+  border-radius: 10px;
+  background: var(--app-surface);
+}
+
+.image-preview-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.image-preview-meta strong {
+  overflow: hidden;
+  color: var(--app-text-strong);
+  font-size: 11px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-preview-meta span {
+  color: var(--app-text-muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.remove-selected-image {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid color-mix(in srgb, var(--app-danger) 32%, var(--app-border));
+  border-radius: 10px;
+  background: var(--app-danger-soft);
+  color: var(--app-danger);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.remove-selected-image:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.remove-selected-image .material-symbols-rounded {
+  font-size: 16px;
+}
+
 .active-notices-header {
   position: relative;
   padding-right: 48px;
@@ -463,6 +598,24 @@ select:focus {
   font-weight: 850;
 }
 
+.notice-image-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.notice-image-badge .material-symbols-rounded {
+  font-size: 13px;
+}
+
 .active-notice-main > p {
   margin: 7px 0 0;
   color: var(--app-text);
@@ -521,12 +674,27 @@ select:focus {
 }
 
 @media (max-width: 700px) {
-  .active-notice-row {
+  .image-upload-heading {
+    align-items: flex-start;
     flex-direction: column;
+    gap: 3px;
   }
 
+  .image-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .image-preview img {
+    max-height: 220px;
+  }
+
+  .remove-selected-image,
   .remove-notice-button {
     width: 100%;
+  }
+
+  .active-notice-row {
+    flex-direction: column;
   }
 }
 
@@ -534,5 +702,31 @@ select:focus {
   .field-help,
   .active-notices-card {
     display: none;
+  }
+
+  .image-upload-heading small {
+    color: #cbd5e1;
+  }
+
+  .image-picker {
+    min-height: 38px;
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(15, 23, 42, 0.2);
+    color: #ffffff;
+    font-size: 10px;
+  }
+
+  .image-preview {
+    grid-template-columns: 1fr;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.2);
+  }
+
+  .image-preview img {
+    max-height: 110px;
+  }
+
+  .image-preview-meta strong {
+    color: #ffffff;
   }
 }
