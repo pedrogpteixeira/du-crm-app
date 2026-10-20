@@ -7,6 +7,95 @@ export type ContractApiFilters = Record<
   ContractFilterPrimitive | readonly ContractFilterPrimitive[] | null | undefined
 >;
 
+export interface ContractListItemBase<TStatus extends string = string> {
+  id: string;
+  estado: TStatus;
+  nomeClienteEmpresa?: string | null;
+  nif?: number | null;
+  nomeRegistoCE?: string | null;
+  dataContrato?: string | null;
+  dataAssinatura?: string | null;
+  dataRegisto?: string | null;
+  dataAgendamento?: string | null;
+}
+
+export interface ContractListSocketPayload {
+  contractId?: string;
+  estado?: string | null;
+  nomeClienteEmpresa?: string | null;
+  nif?: number | null;
+  nomeRegistoCE?: string | null;
+  dataContrato?: string | null;
+  dataAssinatura?: string | null;
+  dataRegisto?: string | null;
+  dataAgendamento?: string | null;
+}
+
+export function mergeContractListSocketPayload<TStatus extends string>(
+  existing: ContractListItemBase<TStatus> | undefined,
+  event: ContractListSocketPayload,
+  estado: TStatus,
+): ContractListItemBase<TStatus> {
+  return {
+    id: event.contractId ?? existing?.id ?? '',
+    estado,
+    nomeClienteEmpresa:
+      event.nomeClienteEmpresa !== undefined
+        ? event.nomeClienteEmpresa
+        : existing?.nomeClienteEmpresa,
+    nif: event.nif !== undefined ? event.nif : existing?.nif,
+    nomeRegistoCE:
+      event.nomeRegistoCE !== undefined ? event.nomeRegistoCE : existing?.nomeRegistoCE,
+    dataContrato:
+      event.dataContrato !== undefined ? event.dataContrato : existing?.dataContrato,
+    dataAssinatura:
+      event.dataAssinatura !== undefined ? event.dataAssinatura : existing?.dataAssinatura,
+    dataRegisto:
+      event.dataRegisto !== undefined ? event.dataRegisto : existing?.dataRegisto,
+    dataAgendamento:
+      event.dataAgendamento !== undefined
+        ? event.dataAgendamento
+        : existing?.dataAgendamento,
+  };
+}
+
+export function formatContractListDate(
+  value: string | null | undefined,
+  includeTime = false,
+): string {
+  if (!value) {
+    return '-';
+  }
+
+  if (!includeTime) {
+    const isoDate = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+
+    if (isoDate) {
+      return `${isoDate[3]}/${isoDate[2]}/${isoDate[1]}`;
+    }
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('pt-PT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    ...(includeTime
+      ? {
+          hour: '2-digit',
+          minute: '2-digit',
+        }
+      : {
+          timeZone: 'UTC',
+        }),
+  }).format(date);
+}
+
 export interface ContractKanbanState<TContract> {
   estado: string;
   contracts: TContract[];
@@ -35,21 +124,7 @@ export interface ContractKanbanColumnState {
   isLoading: boolean;
 }
 
-export interface ContractKanbanBase {
-  id: string;
-  clientId?: string;
-  companyId?: string;
-  estado: string;
-  nomeClienteEmpresa?: string | null;
-  nif?: string | number | null;
-  userId?: string;
-  user?: {
-    id: string;
-    name?: string | null;
-  } | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export interface ContractKanbanBase extends ContractListItemBase {}
 
 export function buildContractFiltersParams(
   filters: ContractApiFilters = {},
@@ -100,15 +175,6 @@ export function mergeContractsById<TContract extends { id: string }>(
   return result;
 }
 
-
-export function sortContractsByUpdatedAtDesc<TContract extends { updatedAt?: string | null }>(
-  contracts: readonly TContract[],
-): TContract[] {
-  return [...contracts].sort(
-    (a, b) => getContractUpdatedAtTimestamp(b.updatedAt) - getContractUpdatedAtTimestamp(a.updatedAt),
-  );
-}
-
 export function prependContractById<TContract extends { id: string }>(
   contracts: readonly TContract[],
   contract: TContract,
@@ -120,16 +186,6 @@ export function hasAnyMoreContracts(
   pagination: Readonly<Record<string, ContractKanbanColumnState>>,
 ): boolean {
   return Object.values(pagination).some((state) => state.hasMore);
-}
-
-
-function getContractUpdatedAtTimestamp(value: string | null | undefined): number {
-  if (!value) {
-    return 0;
-  }
-
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function shouldIgnoreFilterValue(value: ContractApiFilters[string]): boolean {

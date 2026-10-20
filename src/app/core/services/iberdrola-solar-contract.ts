@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -216,26 +217,7 @@ export type UpdateIberdrolaSolarContractRequest = Partial<
   dataAtivacao?: string | null;
 };
 
-export type IberdrolaSolarContractList = Pick<
-  IberdrolaSolarContract,
-  'id' | 'estado' | 'nomeClienteEmpresa' | 'nif'
-> & { campanha?: string } & Partial<
-    Omit<
-      IberdrolaSolarContract,
-      | 'id'
-      | 'estado'
-      | 'nomeClienteEmpresa'
-      | 'nif'
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'followers'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-    >
-  >;
+export type IberdrolaSolarContractList = ContractListItemBase<IberdrolaSolarContractStatus>;
 
 @Injectable({ providedIn: 'root' })
 export class IberdrolaSolarContractService {

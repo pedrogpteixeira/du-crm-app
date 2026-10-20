@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -325,23 +326,7 @@ export type UpdateYesEnergyContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type YesEnergyContractList = Omit<
-  YesEnergyContract,
-  'observacoes' | 'observacoesInternas'
-> & { userId?: string; campanha?: string } & Partial<
-    Omit<
-      YesEnergyContractDetail,
-      | keyof Omit<YesEnergyContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type YesEnergyContractList = ContractListItemBase<YesEnergyContractStatus>;
 
 @Injectable({
   providedIn: 'root',

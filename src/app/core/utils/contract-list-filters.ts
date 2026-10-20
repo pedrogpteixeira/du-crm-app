@@ -533,20 +533,38 @@ export function buildBaseContractFilterFields(
     field('nif', 'NIF', 'nif__contains', 'search', 'Identificação', 'Pesquisar NIF...', 'numeric'),
     field('phone', 'Telefone', 'telefone__contains', 'search', 'Identificação', undefined, 'tel'),
     field('email', 'Email', 'email__contains', 'search', 'Identificação', undefined, 'email'),
-    selectField(
-      'segment',
-      'Segmento',
-      'tipoSegmento__eq',
-      'Contrato',
-      toFilterOptions(context.segments),
-    ),
-    selectField(
-      'product',
-      'Produto',
-      'tipoProduto__eq',
-      'Contrato',
-      toFilterOptions(context.products),
-    ),
+    context.segments.length
+      ? selectField(
+          'segment',
+          'Segmento',
+          'tipoSegmento__eq',
+          'Contrato',
+          toFilterOptions(context.segments),
+        )
+      : field(
+          'segment',
+          'Segmento',
+          'tipoSegmento__eq',
+          'search',
+          'Contrato',
+          'Pesquisar segmento...',
+        ),
+    context.products.length
+      ? selectField(
+          'product',
+          'Produto',
+          'tipoProduto__eq',
+          'Contrato',
+          toFilterOptions(context.products),
+        )
+      : field(
+          'product',
+          'Produto',
+          'tipoProduto__eq',
+          'search',
+          'Contrato',
+          'Pesquisar produto...',
+        ),
     statusField('Contrato'),
     field('quality', 'Controlo de Qualidade', 'controleQualidade__contains', 'search', 'Contrato'),
     field('registrationName', 'Nome Registo C.E.', 'nomeRegistoCE__contains', 'search', 'Contrato'),
@@ -557,13 +575,22 @@ export function buildBaseContractFilterFields(
       'search',
       'Contrato',
     ),
-    selectField(
-      'userId',
-      'Criado por',
-      'userId__eq',
-      'Contrato',
-      toUserFilterOptions(context.users),
-    ),
+    context.users.length
+      ? selectField(
+          'userId',
+          'Criado por',
+          'userId__eq',
+          'Contrato',
+          toUserFilterOptions(context.users),
+        )
+      : field(
+          'userId',
+          'Criado por (ID)',
+          'userId__eq',
+          'search',
+          'Contrato',
+          'ID do utilizador...',
+        ),
     dateField('createdFrom', 'Criado desde', 'createdAt__gte', 'Datas do sistema'),
     dateField('createdTo', 'Criado até', 'createdAt__lte', 'Datas do sistema'),
     dateField('updatedFrom', 'Atualizado desde', 'updatedAt__gte', 'Datas do sistema'),

@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -28,6 +29,7 @@ export type RepsolContractStatus =
   | 'Não Conformidade'
   | 'Pendente Docs'
   | 'Documentos Enviados'
+  | 'Processos sem DDc - A validar'
   | 'Atribuído'
   | 'Acesso RPE'
   | 'Eswich'
@@ -45,6 +47,7 @@ export const REPSOL_CONTRACT_STATUSES: readonly RepsolContractStatus[] = [
   'Não Conformidade',
   'Pendente Docs',
   'Documentos Enviados',
+  'Processos sem DDc - A validar',
   'Atribuído',
   'Acesso RPE',
   'Eswich',
@@ -287,23 +290,7 @@ export type UpdateRepsolContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type RepsolContractList = Omit<RepsolContract, 'observacoes' | 'observacoesInternas'> & {
-  userId?: string;
-  campanha?: string;
-} & Partial<
-    Omit<
-      RepsolContractDetail,
-      | keyof Omit<RepsolContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type RepsolContractList = ContractListItemBase<RepsolContractStatus>;
 
 @Injectable({
   providedIn: 'root',

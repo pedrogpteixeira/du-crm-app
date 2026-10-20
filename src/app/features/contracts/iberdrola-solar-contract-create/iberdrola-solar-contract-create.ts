@@ -221,7 +221,7 @@ export class IberdrolaSolarContractCreate implements OnInit {
 
     moradaInstalacaoCodigoPostal: '',
 
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
 
@@ -231,7 +231,7 @@ export class IberdrolaSolarContractCreate implements OnInit {
 
     moradaFaturacaoCodigoPostal: '',
 
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     faturaEletronica: false,
 

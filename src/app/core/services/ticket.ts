@@ -105,6 +105,9 @@ export interface TicketDetail {
   id: string;
   contractId: string;
   companyId: string;
+  nomeClienteEmpresa: string | null;
+  nif: number | null;
+  estadoContrato: string | null;
   tipo: TicketTipo;
   estado: TicketEstado;
   prioridade: TicketPrioridade;
@@ -160,6 +163,9 @@ export interface TicketApiModel {
   id?: string;
   _id?: string;
   ticketId?: string;
+  nomeClienteEmpresa?: string | null;
+  nif?: number | null;
+  estadoContrato?: string | null;
   estado?: TicketEstado;
   tipo?: TicketTipo;
   prioridade?: TicketPrioridade;
@@ -725,6 +731,12 @@ export class TicketService {
       id,
       contractId: ticket.contractId ?? '',
       companyId: ticket.companyId ?? '',
+      nomeClienteEmpresa: ticket.nomeClienteEmpresa ?? null,
+      nif: typeof ticket.nif === 'number' ? ticket.nif : null,
+      estadoContrato:
+        typeof ticket.estadoContrato === 'string' && ticket.estadoContrato.trim()
+          ? ticket.estadoContrato.trim()
+          : null,
       tipo: ticket.tipo ?? 'Tratamento de Pendência',
       estado: ticket.estado ?? 'Novo',
       prioridade: ticket.prioridade ?? 'Normal',

@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { ANTIGA_COMERCIALIZADORA_SUGGESTIONS } from '../../../core/constants/contract-energy-options';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
 import {
   getVodafoneLifecycleDateValidationError,
@@ -225,6 +226,8 @@ export class VodafoneContractCreate implements OnInit {
 
   readonly moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
 
+  readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
   contractForm: VodafoneContractCreateForm = {
     companyId: VODAFONE_COMPANY_ID,
 
@@ -255,13 +258,13 @@ export class VodafoneContractCreate implements OnInit {
     moradaInstalacaoCidade: '',
     moradaInstalacaoDistrito: '',
     moradaInstalacaoCodigoPostal: '',
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
     moradaFaturacaoCidade: '',
     moradaFaturacaoDistrito: '',
     moradaFaturacaoCodigoPostal: '',
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     faturaEletronica: false,
     debitoDireto: false,

@@ -9,17 +9,17 @@ import { io, Socket } from 'socket.io-client';
 
 import { environment } from '../../../environments/environment';
 import type { ContractActivitySocketPayload } from '../models/contract-activity';
+import type { ContractListSocketPayload } from '../utils/contract-kanban';
 import type { PasswordPolicy } from '../models/password-policy';
 import { Auth } from './auth';
 import { CriticalRequestService } from './critical-request';
 import { SystemNoticeService } from './system-notice';
 import type { TicketApiModel } from './ticket';
 
-interface ContractSocketBaseEvent extends ContractActivitySocketPayload {
+interface ContractSocketBaseEvent
+  extends ContractActivitySocketPayload, ContractListSocketPayload {
   contractId: string;
   estado: string;
-  nomeClienteEmpresa: string;
-  nif: number;
   updatedBy?: string;
   userId?: string;
   updatedByUserId?: string;

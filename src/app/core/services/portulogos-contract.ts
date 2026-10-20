@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -287,26 +288,7 @@ export type UpdatePortulogosContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type PortulogosContractList = Omit<
-  PortulogosContract,
-  'observacoes' | 'observacoesInternas'
-> & {
-  userId?: string;
-  campanha?: string;
-} & Partial<
-    Omit<
-      PortulogosContractDetail,
-      | keyof Omit<PortulogosContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type PortulogosContractList = ContractListItemBase<PortulogosContractStatus>;
 
 @Injectable({
   providedIn: 'root',

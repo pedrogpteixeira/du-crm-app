@@ -672,8 +672,8 @@ html[data-theme='dark'] .kanban-column {
 }
 
 html[data-theme='dark'] .kanban-card {
-  min-height: 216px;
-  gap: 4px !important;
+  min-height: 0;
+  gap: 5px !important;
   border-color: #2b3e55 !important;
   background: linear-gradient(180deg, #142238 0%, #101c2e 100%) !important;
   box-shadow:
@@ -718,19 +718,10 @@ html[data-theme='dark'] .kanban-card .kanban-meta-value {
   line-height: 1.3 !important;
 }
 
-html[data-theme='dark'] .kanban-card .kanban-meta:nth-last-child(2) {
-  border-top-color: rgba(145, 163, 184, 0.16) !important;
-}
-
-html[data-theme='dark'] .kanban-card .kanban-meta:nth-last-child(-n + 2) .kanban-meta-label {
-  color: #8196ac !important;
-  font-size: 10px !important;
-}
-
-html[data-theme='dark'] .kanban-card .kanban-meta:nth-last-child(-n + 2) .kanban-meta-value {
-  color: #b9c9d8 !important;
-  font-size: 11.75px !important;
-  font-weight: 650 !important;
+html[data-theme='dark']
+  .kanban-card
+  .kanban-meta:not(.kanban-meta--date):has(+ .kanban-meta--date) {
+  border-bottom-color: rgba(145, 163, 184, 0.16) !important;
 }
 
 html[data-theme='dark'] .kanban-card:hover {

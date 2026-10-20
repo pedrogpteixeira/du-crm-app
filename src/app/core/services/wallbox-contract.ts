@@ -10,6 +10,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -308,23 +309,7 @@ export type UpdateWallboxContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type WallboxContractList = Omit<WallboxContract, 'observacoes' | 'observacoesInternas'> & {
-  userId?: string;
-  campanha?: string;
-} & Partial<
-    Omit<
-      WallboxContractDetail,
-      | keyof Omit<WallboxContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type WallboxContractList = ContractListItemBase<WallboxContractStatus>;
 
 @Injectable({
   providedIn: 'root',

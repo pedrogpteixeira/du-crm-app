@@ -1778,6 +1778,9 @@ export class RepsolContractDetail implements OnInit {
       'Não Conformidade': 'status-non-compliance',
       'Pendente Docs': 'status-docs',
       'Documentos Enviados': 'status-docs-sent',
+
+      'Processos sem DDc - A validar': 'status-validation',
+
       Atribuído: 'status-assigned',
       'Acesso RPE': 'status-rpe-access',
       Eswich: 'status-eswich',

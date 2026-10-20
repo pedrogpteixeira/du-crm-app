@@ -264,22 +264,6 @@
 
               <div class="status-sale-row status-sale-row--three">
                 <label>
-                  Agendamento
-
-                  <input
-                    *ngIf="isEditing; else agendamentoView"
-                    type="datetime-local"
-                    [(ngModel)]="editForm.agendamento"
-                  />
-
-                  <ng-template #agendamentoView>
-                    <strong>
-                      {{ contract.agendamento ? formatDate(contract.agendamento) : '-' }}
-                    </strong>
-                  </ng-template>
-                </label>
-
-                <label>
                   Data Contrato
 
                   <input
@@ -291,6 +275,22 @@
                   <ng-template #dataContratoView>
                     <strong>
                       {{ formatDateOnly(contract.dataContrato) }}
+                    </strong>
+                  </ng-template>
+                </label>
+
+                <label>
+                  Agendamento
+
+                  <input
+                    *ngIf="isEditing; else agendamentoView"
+                    type="datetime-local"
+                    [(ngModel)]="editForm.agendamento"
+                  />
+
+                  <ng-template #agendamentoView>
+                    <strong>
+                      {{ contract.agendamento ? formatDate(contract.agendamento) : '-' }}
                     </strong>
                   </ng-template>
                 </label>
@@ -793,19 +793,11 @@
               <label>
                 Antiga Comercializadora
 
-                <input
+                <app-editable-select-combobox
                   *ngIf="isEditing; else antigaView"
-                  type="text"
-                  list="portulogos-old-supplier-options"
                   [(ngModel)]="editForm.antigaComercializadora"
+                  [options]="antigaComercializadoraSuggestions"
                 />
-
-                <datalist id="portulogos-old-supplier-options">
-                  <option
-                    *ngFor="let option of antigaComercializadoraSuggestions"
-                    [value]="option"
-                  ></option>
-                </datalist>
 
                 <ng-template #antigaView>
                   <strong>

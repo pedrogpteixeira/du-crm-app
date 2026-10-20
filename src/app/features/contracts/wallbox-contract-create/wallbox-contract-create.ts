@@ -232,13 +232,13 @@ export class WallboxContractCreate implements OnInit {
     moradaInstalacaoCidade: '',
     moradaInstalacaoDistrito: '',
     moradaInstalacaoCodigoPostal: '',
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
     moradaFaturacaoCidade: '',
     moradaFaturacaoDistrito: '',
     moradaFaturacaoCodigoPostal: '',
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     campanha: '',
 

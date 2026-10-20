@@ -15,21 +15,20 @@ import {
   MeoEnergiasContractStatus,
 } from '../../../core/services/meo-energias-contract';
 import {
-  BaseContractFilterOptions,
   ContractFilterFieldDefinition,
-  ContractFilterUserOption,
   EnergyContractFilters,
-  buildBaseContractFilterOptions,
   buildContractApiFiltersFromDefinitions,
   cloneContractFilters,
   countActiveContractFilters,
   getVisibleContractStatuses,
-  mergeBaseContractFilterOptions,
   buildEnergyContractFilterFields,
   createEnergyContractFilters,
 } from '../../../core/utils/contract-list-filters';
 import {
   ContractApiFilters,
+  ContractListSocketPayload,
+  formatContractListDate,
+  mergeContractListSocketPayload,
   ContractKanbanColumnState,
   ContractKanbanResponse,
   hasAnyMoreContracts,
@@ -62,10 +61,6 @@ export class MeoEnergiasContracts implements OnInit {
   filters: EnergyContractFilters = createEnergyContractFilters();
   appliedFilters: EnergyContractFilters = cloneContractFilters(this.filters);
 
-  availableSegments: string[] = [];
-  availableProducts: string[] = [];
-  availableUsers: ContractFilterUserOption[] = [];
-  private filterOptions: BaseContractFilterOptions = { segments: [], products: [], users: [] };
   filterFields: ContractFilterFieldDefinition[] = [];
 
   totalContracts = 0;
@@ -94,6 +89,8 @@ export class MeoEnergiasContracts implements OnInit {
     'Anulado',
   ];
 
+  readonly formatListDate = formatContractListDate;
+
   ngOnInit(): void {
     this.refreshFilterFields();
     this.loadContracts();
@@ -121,10 +118,7 @@ export class MeoEnergiasContracts implements OnInit {
     this.loadKanbanContracts(showLoading);
   }
 
-  private loadTableContracts(
-    showLoading = true,
-    minimumTotal?: number,
-  ): void {
+  private loadTableContracts(showLoading = true): void {
     const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = currentUser?.id ?? currentUser?._id;
 
@@ -136,10 +130,6 @@ export class MeoEnergiasContracts implements OnInit {
 
     const requestId = ++this.loadRequestId;
     this.resetLoadedContracts();
-
-    if (minimumTotal !== undefined) {
-      this.totalContracts = Math.max(0, minimumTotal);
-    }
 
     if (showLoading) {
       this.isLoadingTable = true;
@@ -168,9 +158,6 @@ export class MeoEnergiasContracts implements OnInit {
 
           this.replaceWithTableResponse(response);
 
-          if (minimumTotal !== undefined) {
-            this.totalContracts = Math.max(this.totalContracts, minimumTotal);
-          }
         },
         error: (error) => {
           if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
@@ -355,7 +342,6 @@ export class MeoEnergiasContracts implements OnInit {
           };
 
           this.syncFlatContracts();
-          this.buildFilterOptions();
         },
         error: (error) => {
           if (requestId !== this.loadRequestId) {
@@ -452,9 +438,10 @@ export class MeoEnergiasContracts implements OnInit {
     this.tableNextOffset = response.nextOffset ?? null;
 
     const incomingContracts = response.contracts ?? [];
-    this.contracts = append ? [...this.contracts, ...incomingContracts] : [...incomingContracts];
+    this.contracts = append
+      ? mergeContractsById(this.contracts, incomingContracts)
+      : [...incomingContracts];
     this.filteredContracts = this.contracts;
-    this.buildFilterOptions();
   }
 
   private replaceWithResponse(response: ContractKanbanResponse<MeoEnergiasContractList>): void {
@@ -480,7 +467,6 @@ export class MeoEnergiasContracts implements OnInit {
     this.contractsByStatus = contractsByStatus;
     this.paginationByStatus = paginationByStatus;
     this.syncFlatContracts();
-    this.buildFilterOptions();
   }
 
   private syncFlatContracts(): void {
@@ -507,47 +493,56 @@ export class MeoEnergiasContracts implements OnInit {
     this.isLoadingMore = false;
   }
 
-  private buildFilterOptions(): void {
-    this.filterOptions = mergeBaseContractFilterOptions(
-      this.filterOptions,
-      buildBaseContractFilterOptions(this.contracts),
-    );
-
-    this.availableSegments = this.filterOptions.segments;
-    this.availableProducts = this.filterOptions.products;
-    this.availableUsers = this.filterOptions.users;
-    this.refreshFilterFields();
-  }
-
   private refreshFilterFields(): void {
     const context = {
-      segments: this.availableSegments,
-      products: this.availableProducts,
-      users: this.availableUsers,
+      segments: [],
+      products: [],
+      users: [],
     };
 
     this.filterFields = buildEnergyContractFilterFields(context, { includeSocialTariff: true });
   }
 
   private handleSocketContract(
-    event: { contractId?: string; estado?: string },
+    event: ContractListSocketPayload,
     isCreated: boolean,
   ): void {
-    const contractId = event.contractId;
+    const contractId = event.contractId?.trim();
 
     if (!contractId) {
       return;
     }
 
-    if (this.viewMode === 'table') {
-      const minimumTotal =
-        isCreated &&
-        !this.hasActiveFilters() &&
-        !this.contracts.some((contract) => contract.id === contractId)
-          ? this.totalContracts + 1
-          : undefined;
+    if (this.hasActiveFilters()) {
+      if (this.viewMode === 'table') {
+        this.loadTableContracts(false);
+      } else {
+        this.loadKanbanContracts(false);
+      }
 
-      this.loadTableContracts(false, minimumTotal);
+      return;
+    }
+
+    if (this.viewMode === 'table') {
+      const existing = this.contracts.find((contract) => contract.id === contractId);
+      const nextStatus = String(event.estado ?? existing?.estado ?? '') as MeoEnergiasContractStatus;
+
+      if (!nextStatus || !this.statuses.includes(nextStatus)) {
+        return;
+      }
+
+      const updatedContract: MeoEnergiasContractList = mergeContractListSocketPayload(
+        existing,
+        event,
+        nextStatus,
+      );
+
+      if (isCreated && !existing) {
+        this.totalContracts += 1;
+      }
+
+      this.contracts = prependContractById(this.contracts, updatedContract);
+      this.filteredContracts = this.contracts;
       return;
     }
 
@@ -557,10 +552,6 @@ export class MeoEnergiasContracts implements OnInit {
       existing = contracts.find((contract) => contract.id === contractId);
       return Boolean(existing);
     });
-
-    if (!existing && (!isCreated || this.hasActiveFilters())) {
-      return;
-    }
 
     const nextStatus = String(event.estado ?? existing?.estado ?? '') as MeoEnergiasContractStatus;
 
@@ -572,32 +563,21 @@ export class MeoEnergiasContracts implements OnInit {
       this.totalContracts += 1;
     }
 
-    const updatedContract = {
-      ...(existing ?? {}),
-      ...event,
-      id: contractId,
-      estado: nextStatus,
-    } as MeoEnergiasContractList;
+    const updatedContract: MeoEnergiasContractList = mergeContractListSocketPayload(
+      existing,
+      event,
+      nextStatus,
+    );
 
     const nextColumns: Record<string, MeoEnergiasContractList[]> = {};
-    Object.entries(this.contractsByStatus).forEach(([status, contracts]) => {
-      nextColumns[status] = contracts.filter((contract) => contract.id !== contractId);
+    Object.entries(this.contractsByStatus).forEach(([columnStatus, contracts]) => {
+      nextColumns[columnStatus] = contracts.filter((contract) => contract.id !== contractId);
     });
 
-    const stateFilterAllowsContract =
-      !this.appliedFilters.status.length || this.appliedFilters.status.includes(nextStatus);
-
-    if (stateFilterAllowsContract) {
-      nextColumns[nextStatus] = prependContractById(nextColumns[nextStatus] ?? [], updatedContract);
-    }
+    nextColumns[nextStatus] = prependContractById(nextColumns[nextStatus] ?? [], updatedContract);
 
     this.contractsByStatus = nextColumns;
     this.syncFlatContracts();
-    this.buildFilterOptions();
-  }
-
-  getContractUserName(contract: MeoEnergiasContractList): string {
-    return contract.user?.name?.trim() || '—';
   }
 
   getValue(value: string | number | null | undefined): string | number {

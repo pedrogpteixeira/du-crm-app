@@ -68,11 +68,11 @@
       <span>ID Contrato</span>
       <span>Cliente / Empresa</span>
       <span>NIF</span>
-      <span>Segmento</span>
-      <span>Produto</span>
-      <span>Criado por</span>
+      <span>Nome Registo C.E.</span>
+      <span>Data Contrato</span>
+      <span>Data Registo</span>
+      <span>Data Agendamento</span>
       <span>Estado</span>
-      <span>Nome de Registo C.E.</span>
     </div>
 
     <p class="loading" *ngIf="isLoading">A carregar contratos...</p>
@@ -86,36 +86,22 @@
       *ngFor="let contract of filteredContracts"
       [routerLink]="['/home/contracts/repsol', contract.id]"
     >
-      <span>
-        {{ contract.id }}
-      </span>
+      <span>{{ contract.id }}</span>
 
-      <strong>
-        {{ getValue(contract.nomeClienteEmpresa) }}
-      </strong>
+      <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
 
-      <span>
-        {{ getValue(contract.nif) }}
-      </span>
+      <span>{{ getValue(contract.nif) }}</span>
 
-      <span>
-        {{ getValue(contract.tipoSegmento) }}
-      </span>
+      <span>{{ getValue(contract.nomeRegistoCE) }}</span>
 
-      <span>
-        {{ getValue(contract.tipoProduto) }}
-      </span>
+      <span>{{ formatListDate(contract.dataContrato) }}</span>
 
-      <span>
-        {{ getContractUserName(contract) }}
-      </span>
+      <span>{{ formatListDate(contract.dataRegisto) }}</span>
+
+      <span>{{ formatListDate(contract.dataAgendamento, true) }}</span>
 
       <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
         {{ contract.estado }}
-      </span>
-
-      <span>
-        {{ getValue(contract.nomeRegistoCE) }}
       </span>
     </a>
 
@@ -169,9 +155,7 @@
             *ngFor="let contract of getContractsByStatus(status)"
             [routerLink]="['/home/contracts/repsol', contract.id]"
           >
-            <span class="contract-id">
-              {{ contract.id }}
-            </span>
+            <span class="contract-id">{{ contract.id }}</span>
 
             <strong class="contract-client">
               {{ getValue(contract.nomeClienteEmpresa) }}
@@ -183,23 +167,23 @@
             </span>
 
             <span class="kanban-meta">
-              <span class="kanban-meta-label">Segmento:</span>
-              <span class="kanban-meta-value">{{ getValue(contract.tipoSegmento) }}</span>
-            </span>
-
-            <span class="kanban-meta">
-              <span class="kanban-meta-label">Produto:</span>
-              <span class="kanban-meta-value">{{ getValue(contract.tipoProduto) }}</span>
-            </span>
-
-            <span class="kanban-meta">
-              <span class="kanban-meta-label">Criado por:</span>
-              <span class="kanban-meta-value">{{ getContractUserName(contract) }}</span>
-            </span>
-
-            <span class="kanban-meta">
               <span class="kanban-meta-label">Registo C.E.:</span>
               <span class="kanban-meta-value">{{ getValue(contract.nomeRegistoCE) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Data Contrato:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataContrato) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Data Agendamento:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataAgendamento, true) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Data Registo:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataRegisto) }}</span>
             </span>
           </a>
 

@@ -1,0 +1,253 @@
+@mixin styles {
+  .kanban-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    max-height: calc(100vh - 230px);
+
+    padding-bottom: 14px;
+
+    overflow: auto;
+    scroll-padding-top: 42px;
+  }
+
+  .kanban-board {
+    width: max-content;
+    min-width: max-content;
+
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+
+    gap: 8px;
+  }
+
+  .kanban-column {
+    position: relative;
+
+    width: 286px;
+    min-width: 286px;
+
+    border-radius: 12px;
+
+    background: #eef6fa;
+
+    overflow: visible;
+  }
+
+  .kanban-column-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    padding: 0 11px;
+
+    border-radius: 12px 12px 5px 5px;
+
+    background: #475569;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 900;
+
+    box-shadow: 0 5px 10px rgba(15, 23, 42, 0.16);
+
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      min-width: 24px;
+      height: 24px;
+
+      display: inline-grid;
+      place-items: center;
+      flex-shrink: 0;
+
+      border-radius: 999px;
+
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+
+      font-size: 11px;
+      font-weight: 900;
+    }
+  }
+
+  .kanban-list {
+    position: relative;
+    z-index: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    padding: 8px;
+  }
+
+  .kanban-card {
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    padding: 8px 11px;
+
+    border: 1px solid #dbe5ed;
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: inherit;
+    text-decoration: none;
+
+    box-shadow: 0 3px 9px rgba(15, 23, 42, 0.07);
+
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+
+    &:hover {
+      border-color: #b8cad8;
+
+      transform: translateY(-1px);
+
+      box-shadow: 0 7px 16px rgba(15, 23, 42, 0.11);
+    }
+
+    .contract-id {
+      min-width: 0;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      color: #74869a;
+
+      font-size: 10.5px;
+      font-weight: 750;
+      line-height: 1.15;
+      letter-spacing: 0.015em;
+    }
+
+    .contract-client {
+      min-width: 0;
+      margin: 0 0 1px;
+
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+
+      color: #007f9f;
+
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+
+      overflow-wrap: anywhere;
+    }
+
+    .kanban-meta {
+      min-width: 0;
+      min-height: 15px;
+
+      display: grid;
+      grid-template-columns: 108px minmax(0, 1fr);
+      align-items: baseline;
+      column-gap: 8px;
+
+      color: inherit;
+      font-size: inherit;
+      line-height: 1.2;
+    }
+
+    .kanban-meta-label {
+      min-width: 0;
+
+      color: #8291a3;
+
+      font-size: 10.5px;
+      font-weight: 750;
+      line-height: 1.2;
+
+      white-space: nowrap;
+    }
+
+    .kanban-meta-value {
+      min-width: 0;
+
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      color: #2c4053;
+
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.2;
+    }
+
+    // As datas seguem exatamente a mesma grelha/alinhamento dos restantes
+    // metadados. Isto evita que os valores fiquem deslocados para a direita
+    // e mantém Data Contrato/Assinatura, Registo e Agendamento uniformes.
+    .kanban-meta--date {
+      border: 0 !important;
+
+      .kanban-meta-value {
+        text-align: left;
+      }
+
+      &::before,
+      &::after {
+        content: none !important;
+        display: none !important;
+      }
+    }
+
+    // Salvaguarda contra estilos antigos: nunca pode existir separador entre
+    // duas linhas de data consecutivas.
+    .kanban-meta--date + .kanban-meta--date {
+      border-top: 0 !important;
+      border-bottom: 0 !important;
+    }
+
+    // ÚNICO separador do card: fica entre Registo C.E. (último metadado
+    // normal) e a primeira data. O padding inferior cria uma folga subtil
+    // acima da linha; o gap normal do card mantém a mesma folga abaixo.
+    .kanban-meta:not(.kanban-meta--date):has(+ .kanban-meta--date) {
+      padding-bottom: 3px;
+      border-bottom: 1px solid rgba(130, 145, 163, 0.22);
+
+      &::before,
+      &::after {
+        content: none !important;
+        display: none !important;
+      }
+    }
+  }
+
+  .empty-column {
+    margin: 0;
+
+    padding: 8px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 700;
+  }
+}

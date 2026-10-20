@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -292,23 +293,7 @@ export type UpdateMeoEnergiasContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type MeoEnergiasContractList = Omit<
-  MeoEnergiasContract,
-  'observacoes' | 'observacoesInternas'
-> & { userId?: string; campanha?: string } & Partial<
-    Omit<
-      MeoEnergiasContractDetail,
-      | keyof Omit<MeoEnergiasContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type MeoEnergiasContractList = ContractListItemBase<MeoEnergiasContractStatus>;
 
 @Injectable({
   providedIn: 'root',

@@ -17,53 +17,64 @@
 
     <header class="page-header">
       <div>
-        <h1>{{ ticket.id }}</h1>
-        <p>{{ ticket.tipo }}</p>
+        <h1>{{ ticket.nomeClienteEmpresa || 'Cliente sem nome' }}</h1>
+        <p>NIF: {{ ticket.nif ?? '—' }}</p>
       </div>
 
-      <div class="header-actions" *ngIf="canEditTicket">
-        <button
-          *ngIf="!isEditing"
-          type="button"
-          class="primary-button edit-action-button"
-          (click)="startEditing()"
+      <div class="header-actions">
+        <a
+          *ngIf="contractRoute as route"
+          class="secondary-button contract-action-button"
+          [routerLink]="route"
         >
-          Editar
-        </button>
+          <span class="material-symbols-rounded" aria-hidden="true">description</span>
+          Ver contrato
+        </a>
 
-        <ng-container *ngIf="isEditing">
-          <span class="editing-label">A editar ticket</span>
-
+        <ng-container *ngIf="canEditTicket">
           <button
+            *ngIf="!isEditing"
             type="button"
-            class="secondary-button cancel-action-button"
-            [disabled]="isSaving"
-            (click)="cancelEditing()"
+            class="primary-button edit-action-button"
+            (click)="startEditing()"
           >
-            Cancelar
+            Editar
           </button>
 
-          <button
-            type="button"
-            class="primary-button save-action-button"
-            [disabled]="isSaving || isUploadingAttachments"
-            (click)="saveChanges()"
-          >
-            {{
-              isUploadingAttachments
-                ? 'A carregar documentos...'
-                : isSaving
-                  ? 'A guardar...'
-                  : 'Guardar'
-            }}
-          </button>
+          <ng-container *ngIf="isEditing">
+            <span class="editing-label">A editar ticket</span>
+
+            <button
+              type="button"
+              class="secondary-button cancel-action-button"
+              [disabled]="isSaving"
+              (click)="cancelEditing()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="primary-button save-action-button"
+              [disabled]="isSaving || isUploadingAttachments"
+              (click)="saveChanges()"
+            >
+              {{
+                isUploadingAttachments
+                  ? 'A carregar documentos...'
+                  : isSaving
+                    ? 'A guardar...'
+                    : 'Guardar'
+              }}
+            </button>
+          </ng-container>
         </ng-container>
       </div>
     </header>
 
 
     <p class="socket-message" *ngIf="isReadOnlyByContractState">
-      O contrato associado encontra-se no estado {{ contractStatus }}. Este Ticket está apenas disponível para visualização e não pode ser editado.
+      O contrato associado encontra-se no estado {{ ticket?.estadoContrato }}. Este Ticket está apenas disponível para visualização e não pode ser editado.
     </p>
 
     <form [formGroup]="ticketForm" class="detail-grid" novalidate>
@@ -362,32 +373,6 @@
             <label>
               Atualizado em
               <strong>{{ formatDateTime(ticket.updatedAt) }}</strong>
-            </label>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="section-title">Associação</div>
-
-          <div class="side-list">
-            <label>
-              Comercializadora
-              <strong>{{ companyName }}</strong>
-            </label>
-
-            <label>
-              ID de Contrato
-              <a
-                *ngIf="contractRoute as route; else sideContractId"
-                class="linked-item"
-                [routerLink]="route"
-              >
-                {{ ticket.contractId }}
-              </a>
-
-              <ng-template #sideContractId>
-                <strong>{{ ticket.contractId || '-' }}</strong>
-              </ng-template>
             </label>
           </div>
         </article>

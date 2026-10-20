@@ -14,6 +14,7 @@ import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
+  ANTIGA_COMERCIALIZADORA_SUGGESTIONS,
   DEFAULT_CPE_PREFIX,
   DEFAULT_CUI_PREFIX,
 } from '../../../core/constants/contract-energy-options';
@@ -289,6 +290,8 @@ export class YesEnergyContractCreate implements OnInit {
 
   readonly moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
 
+  readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
   contractForm: YesEnergyContractCreateForm = {
     companyId: YES_ENERGY_COMPANY_ID,
 
@@ -327,13 +330,13 @@ export class YesEnergyContractCreate implements OnInit {
     moradaInstalacaoCidade: '',
     moradaInstalacaoDistrito: '',
     moradaInstalacaoCodigoPostal: '',
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
     moradaFaturacaoCidade: '',
     moradaFaturacaoDistrito: '',
     moradaFaturacaoCodigoPostal: '',
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     faturaEletronica: false,
     debitoDireto: false,

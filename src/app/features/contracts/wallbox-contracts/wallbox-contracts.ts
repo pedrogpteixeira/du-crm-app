@@ -15,21 +15,20 @@ import {
   WallboxContractStatus,
 } from '../../../core/services/wallbox-contract';
 import {
-  BaseContractFilterOptions,
   ContractFilterFieldDefinition,
-  ContractFilterUserOption,
   WallboxContractFilters,
-  buildBaseContractFilterOptions,
   buildContractApiFiltersFromDefinitions,
   cloneContractFilters,
   countActiveContractFilters,
   getVisibleContractStatuses,
-  mergeBaseContractFilterOptions,
   buildWallboxContractFilterFields,
   createWallboxContractFilters,
 } from '../../../core/utils/contract-list-filters';
 import {
   ContractApiFilters,
+  ContractListSocketPayload,
+  formatContractListDate,
+  mergeContractListSocketPayload,
   ContractKanbanColumnState,
   ContractKanbanResponse,
   hasAnyMoreContracts,
@@ -62,10 +61,6 @@ export class WallboxContracts implements OnInit {
   filters: WallboxContractFilters = createWallboxContractFilters();
   appliedFilters: WallboxContractFilters = cloneContractFilters(this.filters);
 
-  availableSegments: string[] = [];
-  availableProducts: string[] = [];
-  availableUsers: ContractFilterUserOption[] = [];
-  private filterOptions: BaseContractFilterOptions = { segments: [], products: [], users: [] };
   filterFields: ContractFilterFieldDefinition[] = [];
 
   totalContracts = 0;
@@ -86,6 +81,8 @@ export class WallboxContracts implements OnInit {
 
   viewMode: 'table' | 'kanban' = this.preferencesService.getContractsDefaultView();
   readonly statuses: WallboxContractStatus[] = [...WALLBOX_CONTRACT_STATUSES];
+
+  readonly formatListDate = formatContractListDate;
 
   ngOnInit(): void {
     this.refreshFilterFields();
@@ -114,10 +111,7 @@ export class WallboxContracts implements OnInit {
     this.loadKanbanContracts(showLoading);
   }
 
-  private loadTableContracts(
-    showLoading = true,
-    minimumTotal?: number,
-  ): void {
+  private loadTableContracts(showLoading = true): void {
     const currentUser = this.auth.getCurrentUser() as { id?: string; _id?: string } | null;
     const userId = currentUser?.id ?? currentUser?._id;
 
@@ -129,10 +123,6 @@ export class WallboxContracts implements OnInit {
 
     const requestId = ++this.loadRequestId;
     this.resetLoadedContracts();
-
-    if (minimumTotal !== undefined) {
-      this.totalContracts = Math.max(0, minimumTotal);
-    }
 
     if (showLoading) {
       this.isLoadingTable = true;
@@ -161,9 +151,6 @@ export class WallboxContracts implements OnInit {
 
           this.replaceWithTableResponse(response);
 
-          if (minimumTotal !== undefined) {
-            this.totalContracts = Math.max(this.totalContracts, minimumTotal);
-          }
         },
         error: (error) => {
           if (requestId !== this.loadRequestId || this.viewMode !== 'table') {
@@ -348,7 +335,6 @@ export class WallboxContracts implements OnInit {
           };
 
           this.syncFlatContracts();
-          this.buildFilterOptions();
         },
         error: (error) => {
           if (requestId !== this.loadRequestId) {
@@ -451,9 +437,10 @@ export class WallboxContracts implements OnInit {
     this.tableNextOffset = response.nextOffset ?? null;
 
     const incomingContracts = response.contracts ?? [];
-    this.contracts = append ? [...this.contracts, ...incomingContracts] : [...incomingContracts];
+    this.contracts = append
+      ? mergeContractsById(this.contracts, incomingContracts)
+      : [...incomingContracts];
     this.filteredContracts = this.contracts;
-    this.buildFilterOptions();
   }
 
   private replaceWithResponse(response: ContractKanbanResponse<WallboxContractList>): void {
@@ -479,7 +466,6 @@ export class WallboxContracts implements OnInit {
     this.contractsByStatus = contractsByStatus;
     this.paginationByStatus = paginationByStatus;
     this.syncFlatContracts();
-    this.buildFilterOptions();
   }
 
   private syncFlatContracts(): void {
@@ -506,47 +492,56 @@ export class WallboxContracts implements OnInit {
     this.isLoadingMore = false;
   }
 
-  private buildFilterOptions(): void {
-    this.filterOptions = mergeBaseContractFilterOptions(
-      this.filterOptions,
-      buildBaseContractFilterOptions(this.contracts),
-    );
-
-    this.availableSegments = this.filterOptions.segments;
-    this.availableProducts = this.filterOptions.products;
-    this.availableUsers = this.filterOptions.users;
-    this.refreshFilterFields();
-  }
-
   private refreshFilterFields(): void {
     const context = {
-      segments: this.availableSegments,
-      products: this.availableProducts,
-      users: this.availableUsers,
+      segments: [],
+      products: [],
+      users: [],
     };
 
     this.filterFields = buildWallboxContractFilterFields(context);
   }
 
   private handleSocketContract(
-    event: { contractId?: string; estado?: string },
+    event: ContractListSocketPayload,
     isCreated: boolean,
   ): void {
-    const contractId = event.contractId;
+    const contractId = event.contractId?.trim();
 
     if (!contractId) {
       return;
     }
 
-    if (this.viewMode === 'table') {
-      const minimumTotal =
-        isCreated &&
-        !this.hasActiveFilters() &&
-        !this.contracts.some((contract) => contract.id === contractId)
-          ? this.totalContracts + 1
-          : undefined;
+    if (this.hasActiveFilters()) {
+      if (this.viewMode === 'table') {
+        this.loadTableContracts(false);
+      } else {
+        this.loadKanbanContracts(false);
+      }
 
-      this.loadTableContracts(false, minimumTotal);
+      return;
+    }
+
+    if (this.viewMode === 'table') {
+      const existing = this.contracts.find((contract) => contract.id === contractId);
+      const nextStatus = String(event.estado ?? existing?.estado ?? '') as WallboxContractStatus;
+
+      if (!nextStatus || !this.statuses.includes(nextStatus)) {
+        return;
+      }
+
+      const updatedContract: WallboxContractList = mergeContractListSocketPayload(
+        existing,
+        event,
+        nextStatus,
+      );
+
+      if (isCreated && !existing) {
+        this.totalContracts += 1;
+      }
+
+      this.contracts = prependContractById(this.contracts, updatedContract);
+      this.filteredContracts = this.contracts;
       return;
     }
 
@@ -556,10 +551,6 @@ export class WallboxContracts implements OnInit {
       existing = contracts.find((contract) => contract.id === contractId);
       return Boolean(existing);
     });
-
-    if (!existing && (!isCreated || this.hasActiveFilters())) {
-      return;
-    }
 
     const nextStatus = String(event.estado ?? existing?.estado ?? '') as WallboxContractStatus;
 
@@ -571,38 +562,21 @@ export class WallboxContracts implements OnInit {
       this.totalContracts += 1;
     }
 
-    const updatedContract = {
-      ...(existing ?? {}),
-      ...event,
-      id: contractId,
-      estado: nextStatus,
-    } as WallboxContractList;
+    const updatedContract: WallboxContractList = mergeContractListSocketPayload(
+      existing,
+      event,
+      nextStatus,
+    );
 
     const nextColumns: Record<string, WallboxContractList[]> = {};
-    Object.entries(this.contractsByStatus).forEach(([status, contracts]) => {
-      nextColumns[status] = contracts.filter((contract) => contract.id !== contractId);
+    Object.entries(this.contractsByStatus).forEach(([columnStatus, contracts]) => {
+      nextColumns[columnStatus] = contracts.filter((contract) => contract.id !== contractId);
     });
 
-    const stateFilterAllowsContract =
-      !this.appliedFilters.status.length || this.appliedFilters.status.includes(nextStatus);
-
-    if (stateFilterAllowsContract) {
-      nextColumns[nextStatus] = prependContractById(nextColumns[nextStatus] ?? [], updatedContract);
-    }
+    nextColumns[nextStatus] = prependContractById(nextColumns[nextStatus] ?? [], updatedContract);
 
     this.contractsByStatus = nextColumns;
     this.syncFlatContracts();
-    this.buildFilterOptions();
-  }
-
-  getContractUserName(contract: WallboxContractList): string {
-    const contractWithUser = contract as WallboxContractList & {
-      user?: {
-        name?: string;
-      } | null;
-    };
-
-    return contractWithUser.user?.name?.trim() || '—';
   }
 
   getValue(value: string | number | null | undefined): string | number {

@@ -8,12 +8,8 @@ import { catchError, finalize, map, merge, Observable, of, switchMap } from 'rxj
 
 import { ToastService } from '../../../core/services/toast';
 
-import {
-  getContractCompanyName,
-  getContractDetailRoute,
-} from '../../../core/config/contract-detail-route';
+import { getContractDetailRoute } from '../../../core/config/contract-detail-route';
 import { Auth } from '../../../core/services/auth';
-import { ContractAccessService } from '../../../core/services/contract-access';
 import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
 import { SocketService, TicketSocketEvent } from '../../../core/services/socket';
@@ -81,7 +77,6 @@ interface SaveTicketResult {
 export class TicketDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(Auth);
-  private readonly contractAccessService = inject(ContractAccessService);
   private readonly fileAccess = inject(FileAccessService);
   private readonly documentPreview = inject(DocumentPreviewService);
   private readonly destroyRef = inject(DestroyRef);
@@ -110,8 +105,6 @@ export class TicketDetail implements OnInit {
   canTransferAttachments = false;
   canEditTicket = false;
   isRequiredTeamMember = false;
-  contractStatus: string | null = null;
-  contractAccessValidated = false;
   contractAccessWarning = '';
 
   loadError = '';
@@ -191,12 +184,6 @@ export class TicketDetail implements OnInit {
     return getContractDetailRoute(this.ticket.companyId, this.ticket.contractId);
   }
 
-  get companyName(): string {
-    return this.ticket
-      ? getContractCompanyName(this.ticket.companyId, this.ticket.contractId)
-      : '—';
-  }
-
   get isTreatmentEditType(): boolean {
     return this.ticket?.tipo === TREATMENT_TICKET_TYPE;
   }
@@ -211,10 +198,12 @@ export class TicketDetail implements OnInit {
   }
 
   get isReadOnlyByContractState(): boolean {
+    const contractStatus = this.ticket?.estadoContrato ?? null;
+
     return (
-      this.contractAccessValidated &&
+      Boolean(contractStatus) &&
       !canMutateContractByBusinessRule(
-        this.contractStatus,
+        contractStatus,
         this.isRequiredTeamMember,
       )
     );
@@ -229,8 +218,6 @@ export class TicketDetail implements OnInit {
     this.loadError = '';
     this.errorMessage = '';
     this.contractAccessWarning = '';
-    this.contractAccessValidated = false;
-    this.contractStatus = null;
     this.canEditTicket = false;
 
     this.ticketService
@@ -245,8 +232,7 @@ export class TicketDetail implements OnInit {
             this.initializeEditForm(ticket);
           }
 
-          this.updateCanEditTicket();
-          this.loadAssociatedContractAccess(ticket.companyId, ticket.contractId);
+          this.applyContractAccessFromTicket(ticket);
         },
         error: (error: HttpErrorResponse) => {
           this.ticket = null;
@@ -406,9 +392,10 @@ export class TicketDetail implements OnInit {
       )
       .subscribe({
         next: ({ ticket, uploadFailed, uploadError }) => {
-          this.ticket = ticket;
+          const resolvedTicket = this.preserveAssociationData(ticket);
+          this.ticket = resolvedTicket;
           this.updateCanEditTicket();
-          this.initializeEditForm(ticket);
+          this.initializeEditForm(resolvedTicket);
 
           if (uploadFailed) {
             this.isEditing = this.canEditTicket;
@@ -461,9 +448,10 @@ export class TicketDetail implements OnInit {
             } satisfies SaveTicketResult);
           }
 
-          this.ticket = uploadedTicket;
+          const resolvedUploadedTicket = this.preserveAssociationData(uploadedTicket);
+          this.ticket = resolvedUploadedTicket;
           this.selectedFiles = [];
-          const payload = prepareTicketUpdatePayload(uploadedTicket, changes);
+          const payload = prepareTicketUpdatePayload(resolvedUploadedTicket, changes);
 
           return this.ticketService.updateTicket(uploadedTicket.id, payload).pipe(
             map(
@@ -479,7 +467,8 @@ export class TicketDetail implements OnInit {
       )
       .subscribe({
         next: ({ ticket, uploadFailed, uploadError }) => {
-          this.ticket = ticket;
+          const resolvedTicket = this.preserveAssociationData(ticket);
+          this.ticket = resolvedTicket;
           this.updateCanEditTicket();
 
           if (uploadFailed) {
@@ -492,7 +481,7 @@ export class TicketDetail implements OnInit {
             return;
           }
 
-          this.initializeEditForm(ticket);
+          this.initializeEditForm(resolvedTicket);
           this.isEditing = false;
           this.showSuccess('Ticket e documentos atualizados com sucesso.');
         },
@@ -550,8 +539,9 @@ export class TicketDetail implements OnInit {
       )
       .subscribe({
         next: (updatedTicket) => {
-          this.ticket = updatedTicket;
-          this.pruneTransferAttachmentSelection(updatedTicket);
+          const resolvedTicket = this.preserveAssociationData(updatedTicket);
+          this.ticket = resolvedTicket;
+          this.pruneTransferAttachmentSelection(resolvedTicket);
           this.updateCanEditTicket();
           this.showSuccess(`O documento "${document.originalName}" foi removido com sucesso.`);
         },
@@ -642,12 +632,13 @@ export class TicketDetail implements OnInit {
       .pipe(finalize(() => (this.isTransferringAttachments = false)))
       .subscribe({
         next: ({ transferred, ticket }) => {
-          this.ticket = ticket;
+          const resolvedTicket = this.preserveAssociationData(ticket);
+          this.ticket = resolvedTicket;
           this.transferAttachmentFileNames = new Set<string>();
           this.updateCanEditTicket();
 
           if (!this.isEditing) {
-            this.initializeEditForm(ticket);
+            this.initializeEditForm(resolvedTicket);
           }
 
           this.showSuccess(
@@ -781,10 +772,12 @@ export class TicketDetail implements OnInit {
       return;
     }
 
+    const contractStatus = this.ticket.estadoContrato;
+
     if (
-      !this.contractAccessValidated ||
+      !contractStatus ||
       !canMutateContractByBusinessRule(
-        this.contractStatus,
+        contractStatus,
         this.isRequiredTeamMember,
       )
     ) {
@@ -807,35 +800,24 @@ export class TicketDetail implements OnInit {
       this.ticket.followers.some((follower) => follower.id === this.currentUserId);
   }
 
-  private loadAssociatedContractAccess(companyId: string, contractId: string): void {
-    this.contractAccessValidated = false;
-    this.contractStatus = null;
-    this.contractAccessWarning = '';
+  private applyContractAccessFromTicket(ticket: TicketDetailModel): void {
+    this.contractAccessWarning = ticket.estadoContrato
+      ? ''
+      : 'Não foi possível validar o estado do contrato associado. O Ticket permanece apenas em modo de leitura.';
     this.updateCanEditTicket();
+  }
 
-    this.contractAccessService
-      .getContractStatus(companyId, contractId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (status) => {
-          if (!status) {
-            this.contractAccessWarning =
-              'Não foi possível validar o estado do contrato associado. O Ticket permanece apenas em modo de leitura.';
-            this.updateCanEditTicket();
-            return;
-          }
+  private preserveAssociationData(ticket: TicketDetailModel): TicketDetailModel {
+    if (!this.ticket) {
+      return ticket;
+    }
 
-          this.contractStatus = status;
-          this.contractAccessValidated = true;
-          this.contractAccessWarning = '';
-          this.updateCanEditTicket();
-        },
-        error: () => {
-          this.contractAccessWarning =
-            'Não foi possível validar o estado do contrato associado. O Ticket permanece apenas em modo de leitura.';
-          this.updateCanEditTicket();
-        },
-      });
+    return {
+      ...ticket,
+      nomeClienteEmpresa: this.ticket.nomeClienteEmpresa,
+      nif: this.ticket.nif,
+      estadoContrato: this.ticket.estadoContrato,
+    };
   }
 
   private observeAssociatedContractUpdates(): void {
@@ -849,6 +831,7 @@ export class TicketDetail implements OnInit {
       this.socketService.listenIberdrolaContractUpdated(),
       this.socketService.listenIberdrolaSolarContractUpdated(),
       this.socketService.listenMeoEnergiasContractUpdated(),
+      this.socketService.listenVodafoneContractUpdated(),
     )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => {
@@ -856,8 +839,10 @@ export class TicketDetail implements OnInit {
           return;
         }
 
-        this.contractStatus = event.estado;
-        this.contractAccessValidated = true;
+        this.ticket = {
+          ...this.ticket,
+          estadoContrato: event.estado,
+        };
         this.contractAccessWarning = '';
         this.updateCanEditTicket();
 
@@ -972,7 +957,7 @@ export class TicketDetail implements OnInit {
     if (this.isCompleteSocketTicketPayload(payload)) {
       this.ticket = this.ticketService.normalizeSocketTicket(payload, this.ticketId);
       this.pruneTransferAttachmentSelection(this.ticket);
-      this.updateCanEditTicket();
+      this.applyContractAccessFromTicket(this.ticket);
       this.initializeEditForm(this.ticket);
       this.socketMessage = `Este Ticket foi atualizado às ${currentTime}.`;
       return;
@@ -1017,7 +1002,7 @@ export class TicketDetail implements OnInit {
         this.ticket = latestTicket;
         this.pruneTransferAttachmentSelection(latestTicket);
         this.originalEditSnapshot = latestSnapshot;
-        this.updateCanEditTicket();
+        this.applyContractAccessFromTicket(latestTicket);
         this.socketMessage = conflicts
           ? `Este Ticket foi atualizado por outro utilizador às ${currentTime}. ${updated} campo(s) foram sincronizados automaticamente e ${conflicts} alteração(ões) em conflito foram preservadas com os seus valores locais.`
           : `Este Ticket foi atualizado por outro utilizador às ${currentTime}. ${updated} campo(s) foram sincronizados automaticamente sem perder as suas alterações locais.`;
@@ -1035,7 +1020,7 @@ export class TicketDetail implements OnInit {
       next: (ticket) => {
         this.ticket = ticket;
         this.pruneTransferAttachmentSelection(ticket);
-        this.updateCanEditTicket();
+        this.applyContractAccessFromTicket(ticket);
         this.initializeEditForm(ticket);
         this.socketMessage = `Este Ticket foi atualizado às ${currentTime}.`;
       },
@@ -1063,8 +1048,14 @@ export class TicketDetail implements OnInit {
     const hasId = Boolean(payload.id ?? payload._id ?? payload.ticketId);
     const hasUser = Boolean(payload.userId ?? payload.user?.id ?? payload.user?._id);
 
+    const hasAssociationData =
+      Object.prototype.hasOwnProperty.call(payload, 'nomeClienteEmpresa') &&
+      Object.prototype.hasOwnProperty.call(payload, 'nif') &&
+      Object.prototype.hasOwnProperty.call(payload, 'estadoContrato');
+
     return Boolean(
       hasId &&
+        hasAssociationData &&
         payload.contractId &&
         payload.companyId &&
         payload.tipo &&

@@ -508,7 +508,10 @@
         <label class="product-provider-field">
           Antiga Comercializadora
 
-          <input type="text" [(ngModel)]="contractForm.antigaComercializadora" />
+          <app-editable-select-combobox
+            [(ngModel)]="contractForm.antigaComercializadora"
+            [options]="antigaComercializadoraSuggestions"
+          />
         </label>
 
         <label>

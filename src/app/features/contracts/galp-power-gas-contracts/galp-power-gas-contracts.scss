@@ -1,4 +1,5 @@
 @use '../../../../styles/contract-list-filters' as contractListFilters;
+@use '../../../../styles/contract-kanban' as contractKanban;
 
 .contracts-page {
   display: flex;
@@ -126,18 +127,20 @@
 .table-header,
 .contract-row {
   display: grid;
+
   grid-template-columns:
-    minmax(130px, 0.75fr)
+    minmax(130px, 0.8fr)
     minmax(210px, 1.45fr)
     minmax(100px, 0.65fr)
-    minmax(125px, 0.8fr)
+    minmax(190px, 1.15fr)
     minmax(135px, 0.85fr)
-    minmax(175px, 1.1fr)
-    minmax(210px, 1.2fr)
+    minmax(135px, 0.85fr)
+    minmax(145px, 0.9fr)
     minmax(190px, 1.15fr);
+
   gap: 16px;
   align-items: center;
-  min-width: 1420px;
+  min-width: 1320px;
 }
 
 .table-header span,
@@ -255,138 +258,7 @@
    KANBAN
 ========================= */
 
-.kanban-wrapper {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  max-height: calc(100vh - 230px);
-  padding-bottom: 14px;
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
-.kanban-board {
-  width: max-content;
-  min-width: max-content;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.kanban-column {
-  width: 280px;
-  min-width: 280px;
-  border-radius: 12px;
-  background: #eef6fa;
-  overflow: visible;
-}
-
-.kanban-column-header {
-  position: sticky;
-  top: 12px;
-  z-index: 20;
-
-  height: 36px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-
-  padding: 0 10px;
-
-  border-radius: 12px 12px 0 0;
-
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 900;
-
-  span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  small {
-    min-width: 24px;
-    height: 24px;
-    display: inline-grid;
-    place-items: center;
-    flex-shrink: 0;
-
-    border-radius: 999px;
-
-    background: rgba(255, 255, 255, 0.2);
-
-    color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 900;
-  }
-}
-
-.kanban-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-}
-
-.kanban-card {
-  min-height: 172px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: #ffffff;
-  color: inherit;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
-
-  &:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
-  }
-
-  .contract-id {
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  strong {
-    color: #008db1;
-    font-size: 14px;
-    font-weight: 900;
-    line-height: 1.35;
-    word-break: break-word;
-  }
-
-  span {
-    color: #243646;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.35;
-    word-break: break-word;
-  }
-}
-
-.empty-column {
-  margin: 0;
-  padding: 8px;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 700;
-}
+@include contractKanban.styles;
 
 /* =========================
    KANBAN STATUS HEADERS

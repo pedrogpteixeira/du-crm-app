@@ -601,19 +601,11 @@
               <label>
                 Antiga Operadora
 
-                <input
+                <app-editable-select-combobox
                   *ngIf="isEditing; else comercializadoraView"
-                  type="text"
-                  list="vodafone-old-supplier-options"
                   [(ngModel)]="editForm.antigaComercializadora"
+                  [options]="antigaComercializadoraSuggestions"
                 />
-
-                <datalist id="vodafone-old-supplier-options">
-                  <option
-                    *ngFor="let option of antigaComercializadoraSuggestions"
-                    [value]="option"
-                  ></option>
-                </datalist>
 
                 <ng-template #comercializadoraView>
                   <strong>

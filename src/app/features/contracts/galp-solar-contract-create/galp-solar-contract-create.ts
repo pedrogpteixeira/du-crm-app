@@ -213,7 +213,7 @@ export class GalpSolarContractCreate implements OnInit {
 
     moradaInstalacaoCodigoPostal: '',
 
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
 
@@ -223,7 +223,7 @@ export class GalpSolarContractCreate implements OnInit {
 
     moradaFaturacaoCodigoPostal: '',
 
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     faturaEletronica: false,
 

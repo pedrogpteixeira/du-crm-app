@@ -12,6 +12,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -221,22 +222,7 @@ export type UpdateVodafoneContractRequest = Partial<
   observacoesInternas?: string;
 };
 
-export type VodafoneContractList = Omit<VodafoneContract, 'observacoes' | 'observacoesInternas'> & {
-  userId?: string;
-  campanha?: string;
-} & Partial<
-    Omit<
-      VodafoneContractDetail,
-      | keyof Omit<VodafoneContract, 'observacoes' | 'observacoesInternas'>
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'fluxo'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-      | 'followers'
-    >
-  >;
+export type VodafoneContractList = ContractListItemBase<VodafoneContractStatus>;
 
 @Injectable({
   providedIn: 'root',

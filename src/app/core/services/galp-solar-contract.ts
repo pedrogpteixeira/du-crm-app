@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 
 import {
   ContractKanbanQuery,
+  ContractListItemBase,
   ContractKanbanResponse,
   buildContractFiltersParams,
 } from '../utils/contract-kanban';
@@ -191,27 +192,7 @@ export type UpdateGalpSolarContractRequest = Partial<
   dataAtivacao?: string | null;
 };
 
-export type GalpSolarContractList = Pick<
-  GalpSolarContract,
-  'id' | 'estado' | 'nomeClienteEmpresa' | 'nif'
-> &
-  Partial<
-    Omit<
-      GalpSolarContract,
-      | 'id'
-      | 'estado'
-      | 'nomeClienteEmpresa'
-      | 'nif'
-      | 'documentos'
-      | 'observacoes'
-      | 'observacoesInternas'
-      | 'followers'
-      | 'fluxo'
-      | 'tickets'
-      | 'moradaInstalacao'
-      | 'moradaFaturacao'
-    >
-  >;
+export type GalpSolarContractList = ContractListItemBase<GalpSolarContractStatus>;
 
 @Injectable({ providedIn: 'root' })
 export class GalpSolarContractService {

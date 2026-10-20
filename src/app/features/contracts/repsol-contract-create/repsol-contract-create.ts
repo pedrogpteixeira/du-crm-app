@@ -13,6 +13,7 @@ import { EMPTY, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import {
+  ANTIGA_COMERCIALIZADORA_SUGGESTIONS,
   DEFAULT_CPE_PREFIX,
   DEFAULT_CUI_PREFIX,
 } from '../../../core/constants/contract-energy-options';
@@ -77,13 +78,14 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
   defaultTeam: AssignableContractTeam | null;
 }
 
+import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ContractPreflightModal } from '../../../shared/components/contract-preflight-modal/contract-preflight-modal';
 
 @Component({
   selector: 'app-repsol-contract-create',
-  imports: [CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone, ContractPreflightModal],
+  imports: [EditableSelectCombobox, CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone, ContractPreflightModal],
   templateUrl: './repsol-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './repsol-contract-create.scss',
@@ -215,6 +217,8 @@ export class RepsolContractCreate implements OnInit {
 
   moradaFaturacaoOptions: MoradaFaturacaoSelecao[] = ['Igual à de Instalação', 'Outra'];
 
+  readonly antigaComercializadoraSuggestions = ANTIGA_COMERCIALIZADORA_SUGGESTIONS;
+
   contractForm = {
     companyId: environment.REPSOLID,
 
@@ -254,13 +258,13 @@ export class RepsolContractCreate implements OnInit {
     moradaInstalacaoCidade: '',
     moradaInstalacaoDistrito: '',
     moradaInstalacaoCodigoPostal: '',
-    moradaInstalacaoPais: '',
+    moradaInstalacaoPais: 'Portugal',
 
     moradaFaturacaoRua: '',
     moradaFaturacaoCidade: '',
     moradaFaturacaoDistrito: '',
     moradaFaturacaoCodigoPostal: '',
-    moradaFaturacaoPais: '',
+    moradaFaturacaoPais: 'Portugal',
 
     faturaEletronica: false,
     sva: false,
