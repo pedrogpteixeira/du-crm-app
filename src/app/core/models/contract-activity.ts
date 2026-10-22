@@ -3,6 +3,7 @@ export interface ContractFlowEntry {
   userName: string | null;
   acao: string;
   dataHora: string;
+  bulkUpdateOperationId?: string | null;
 }
 
 export type ContractTicketPriority =

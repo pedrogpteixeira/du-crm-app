@@ -310,81 +310,30 @@ button:disabled {
   background: rgba(47, 64, 80, 0.22);
 }
 
-/* CANCELLATION CONFIRMATION */
+/* CANCELLATION REASON */
 
-.cancellation-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1210;
+.ticket-cancellation-fields {
   display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(15, 23, 42, 0.58);
-}
-
-.cancellation-modal {
-  width: min(500px, 100%);
-  overflow: hidden;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 26px 75px rgba(15, 23, 42, 0.3);
-}
-
-.cancellation-modal-header {
-  display: flex;
-  align-items: flex-start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 18px 18px 14px;
-
-  h3 {
-    margin: 0 0 5px;
-    color: #243646;
-    font-size: 17px;
-  }
-
-  p {
-    margin: 0;
-    color: #64748b;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.5;
-  }
+  padding: 12px;
+  border: 1px solid rgba(220, 38, 38, 0.16);
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.025);
 }
 
-.cancellation-icon {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: #fef2f2;
+.ticket-cancellation-fields select[aria-invalid='true'],
+.ticket-cancellation-fields textarea[aria-invalid='true'] {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.1);
+}
+
+.field-validation-error {
   color: #dc2626;
-
-  .material-symbols-rounded {
-    font-size: 21px;
-  }
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
 }
-
-.cancellation-modal-body {
-  padding: 0 18px 16px;
-
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-}
-
-.cancellation-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 18px 16px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
-
 
 @media (max-height: 760px) and (min-width: 721px) {
   .ticket-modal-backdrop {
@@ -441,17 +390,16 @@ button:disabled {
   }
 
   .primary-fields,
-  .ticket-text-grid {
+  .ticket-text-grid,
+  .ticket-cancellation-fields {
     grid-template-columns: 1fr;
   }
 
-  .ticket-modal-actions,
-  .cancellation-modal-actions {
+  .ticket-modal-actions {
     flex-direction: column-reverse;
   }
 
-  .ticket-modal-actions button,
-  .cancellation-modal-actions button {
+  .ticket-modal-actions button {
     width: 100%;
   }
 

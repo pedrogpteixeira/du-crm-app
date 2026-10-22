@@ -140,6 +140,9 @@ export interface PortulogosContractDetail {
 
   estado: PortulogosContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -206,6 +209,9 @@ export interface CreatePortulogosContractRequest {
   nomeRegistoCE?: string;
 
   estado?: PortulogosContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

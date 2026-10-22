@@ -1,0 +1,244 @@
+<div class="bulk-update-backdrop" role="presentation" (click)="onBackdropClick($event)">
+  <section class="bulk-update-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-update-title">
+    <header class="bulk-update-header">
+      <div>
+        <span class="eyebrow">{{ supplierLabel }}</span>
+        <h2 id="bulk-update-title">Atualização em massa</h2>
+        <p>Atualize os campos selecionados nos contratos abrangidos pela operação.</p>
+      </div>
+      <button type="button" class="close-button" [disabled]="isPreviewing || isExecuting" (click)="closeModal()" aria-label="Fechar">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="bulk-update-body">
+      <div class="scope-summary">
+        <div><span>Comercializadora</span><strong>{{ supplierLabel }}</strong></div>
+        <div><span>Contratos abrangidos</span><strong>{{ selectionCount }}</strong></div>
+        <div><span>Seleção</span><strong>{{ mode === 'selected' ? 'Manual' : 'Todos os filtrados' }}</strong></div>
+      </div>
+
+      <div class="limit-warning" *ngIf="scopeExceedsLimit">
+        <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+        <div>
+          <strong>Limite de 250 contratos por operação</strong>
+          <span>Restrinja a seleção ou os filtros antes de continuar.</span>
+        </div>
+      </div>
+
+      <div class="rules-note">
+        <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
+        <span>As regras e validações individuais de cada contrato continuam a ser aplicadas durante a execução.</span>
+      </div>
+
+      <ng-container *ngIf="phase === 'configure'">
+        <section class="bulk-section">
+          <div class="section-heading">
+            <div>
+              <span class="material-symbols-rounded" aria-hidden="true">filter_alt</span>
+              <div><strong>Âmbito da operação</strong><small>Escolha quais os contratos a atualizar.</small></div>
+            </div>
+          </div>
+
+          <div class="scope-options">
+            <label class="scope-option" [class.is-disabled]="!manualSelectedIds.length" [class.is-active]="mode === 'selected'">
+              <input type="radio" name="bulkScope" value="selected" [checked]="mode === 'selected'" [disabled]="!manualSelectedIds.length" (change)="setMode('selected')" />
+              <span class="material-symbols-rounded" aria-hidden="true">checklist</span>
+              <span><strong>Contratos selecionados</strong><small>{{ manualSelectedIds.length }} selecionados manualmente.</small></span>
+            </label>
+            <label class="scope-option" [class.is-disabled]="filteredTotal <= 0" [class.is-active]="mode === 'filtered'">
+              <input type="radio" name="bulkScope" value="filtered" [checked]="mode === 'filtered'" [disabled]="filteredTotal <= 0" (change)="setMode('filtered')" />
+              <span class="material-symbols-rounded" aria-hidden="true">filter_list</span>
+              <span><strong>Todos os contratos filtrados</strong><small>{{ filteredTotal }} contratos abrangidos pelos filtros atuais.</small></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="bulk-section fields-section">
+          <div class="section-heading">
+            <div>
+              <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+              <div><strong>Campos a atualizar</strong><small>Ative apenas os campos que pretende alterar.</small></div>
+            </div>
+            <span class="selected-count">{{ enabledStates.length }} selecionados</span>
+          </div>
+
+          <div class="state-message" *ngIf="isLoadingFields">
+            <span class="spinner" aria-hidden="true"></span>
+            <span>A carregar campos disponíveis...</span>
+          </div>
+          <div class="state-message is-error" *ngIf="!isLoadingFields && fieldsError">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <span>{{ fieldsError }}</span>
+            <button type="button" (click)="loadFields()">Tentar novamente</button>
+          </div>
+
+          <div class="bulk-fields" *ngIf="!isLoadingFields && !fieldsError">
+            <article class="bulk-field" *ngFor="let state of visibleFieldStates" [class.is-enabled]="state.enabled">
+              <label class="field-toggle">
+                <input type="checkbox" [checked]="state.enabled" [disabled]="isPreviewing || isExecuting || (state.field.key === 'motivoAnulacao' && requiresCancellationReasonContext)" (change)="toggleField(state, $event)" />
+                <span><strong>{{ state.field.label }}</strong><small>{{ state.field.type === 'teams' ? 'Equipas' : state.field.type === 'user' ? 'Utilizador' : 'Novo valor' }}</small></span>
+              </label>
+
+              <div class="field-control" *ngIf="state.enabled">
+                <label *ngIf="state.field.operations.length > 1">
+                  <span>Operação</span>
+                  <select [ngModel]="state.operation" [disabled]="isPreviewing || isExecuting" (ngModelChange)="setOperation(state, $event)">
+                    <option *ngFor="let operation of state.field.operations" [value]="operation">{{ operationLabel(operation) }}</option>
+                  </select>
+                </label>
+
+                <label *ngIf="state.field.type === 'boolean'">
+                  <span>Novo valor</span>
+                  <select [value]="state.value === null ? '' : state.value === false ? 'false' : 'true'" [disabled]="isPreviewing || isExecuting" (change)="setBooleanValue(state, $event)">
+                    <option value="" disabled>Selecionar...</option>
+                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
+                  </select>
+                </label>
+
+                <label *ngIf="state.field.type === 'string' && fieldOptions(state).length">
+                  <span>{{ state.field.key === 'motivoAnulacao' ? 'Motivo' : 'Novo valor' }}</span>
+                  <select [ngModel]="state.value" [disabled]="isPreviewing || isExecuting" (ngModelChange)="setValue(state, $event)">
+                    <option [ngValue]="null">Selecionar...</option>
+                    <option *ngFor="let option of fieldOptions(state)" [value]="option">{{ option }}</option>
+                  </select>
+                </label>
+
+                <label
+                  class="cancellation-other-control"
+                  *ngIf="state.field.key === 'motivoAnulacao' && state.value === 'Outras' && cancellationOtherState as otherState"
+                >
+                  <span>Descreva o motivo</span>
+                  <textarea
+                    rows="3"
+                    [ngModel]="otherState.value"
+                    [disabled]="isPreviewing || isExecuting"
+                    (ngModelChange)="setValue(otherState, $event)"
+                    placeholder="Descreva o motivo da anulação"
+                  ></textarea>
+                </label>
+
+                <label *ngIf="state.field.type === 'string' && !fieldOptions(state).length">
+                  <span>Novo valor</span>
+                  <input type="text" [ngModel]="state.value" [disabled]="isPreviewing || isExecuting" (ngModelChange)="setValue(state, $event)" />
+                </label>
+
+                <label *ngIf="state.field.type === 'number'">
+                  <span>Novo valor</span>
+                  <input type="number" [ngModel]="state.value" [disabled]="isPreviewing || isExecuting" (ngModelChange)="setNumericValue(state, $event)" />
+                </label>
+
+                <label *ngIf="state.field.type === 'user'">
+                  <span>Utilizador</span>
+                  <select [ngModel]="state.value" [disabled]="isLoadingUsers || isPreviewing || isExecuting" (ngModelChange)="setValue(state, $event)">
+                    <option [ngValue]="null">{{ isLoadingUsers ? 'A carregar...' : 'Selecionar utilizador...' }}</option>
+                    <option *ngFor="let user of users" [value]="user.id">{{ user.name }}</option>
+                  </select>
+                </label>
+
+                <div class="teams-control" *ngIf="state.field.type === 'teams'">
+                  <span>Equipas</span>
+                  <div class="teams-list" *ngIf="!isLoadingTeams; else loadingTeams">
+                    <label *ngFor="let team of teams">
+                      <input type="checkbox" [checked]="isTeamSelected(state, team.id)" [disabled]="isPreviewing || isExecuting" (change)="toggleTeam(state, team.id, $event)" />
+                      <span>{{ team.name }}</span>
+                    </label>
+                  </div>
+                  <ng-template #loadingTeams><small>A carregar equipas...</small></ng-template>
+                  <small *ngIf="state.operation === 'add'">Mantém as equipas atuais e acrescenta as selecionadas.</small>
+                  <small *ngIf="state.operation === 'remove'">Tenta remover apenas as equipas selecionadas.</small>
+                  <small *ngIf="state.operation === 'replace'">Substitui as equipas opcionais; as regras obrigatórias continuam a ser validadas pelo backend.</small>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="cancellation-context-error" *ngIf="cancellationContextError">
+            <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+            <span>{{ cancellationContextError }}</span>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngIf="phase === 'review'">
+        <section class="review-panel">
+          <span class="review-icon material-symbols-rounded" aria-hidden="true">fact_check</span>
+          <div>
+            <span class="eyebrow">Rever e confirmar</span>
+            <h3>{{ previewTotal }} contratos abrangidos</h3>
+            <p>A pré-visualização confirma o âmbito, mas não garante que todos os contratos cumpram as regras individuais no momento da execução.</p>
+          </div>
+        </section>
+
+        <section class="bulk-section">
+          <div class="section-heading"><div><span class="material-symbols-rounded">edit_note</span><div><strong>Alterações pretendidas</strong><small>Confirme os valores antes de executar.</small></div></div></div>
+          <div class="review-changes">
+            <div *ngFor="let state of enabledStates">
+              <span>{{ state.field.label }}</span>
+              <strong>{{ state.field.type === 'teams' ? operationLabel(state.operation) + ': ' + displayChangeValue(state) : displayChangeValue(state) }}</strong>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngIf="phase === 'result' && executionResult as result">
+        <div class="result-banner" [ngClass]="'status-' + result.status">
+          <span class="material-symbols-rounded" aria-hidden="true">{{ result.status === 'completed' ? 'check_circle' : result.status === 'interrupted' ? 'warning' : 'info' }}</span>
+          <div>
+            <strong>{{ statusLabel(result.status) }}</strong>
+            <span *ngIf="result.status === 'interrupted'">A operação foi interrompida. Alguns contratos podem ter sido atualizados e outros necessitam de verificação.</span>
+            <span *ngIf="result.status !== 'interrupted'">A execução terminou. Consulte o resumo e os resultados abaixo.</span>
+          </div>
+        </div>
+
+        <div class="result-cards">
+          <div><span>Abrangidos</span><strong>{{ result.summary.total }}</strong></div>
+          <div><span>Atualizados</span><strong>{{ result.summary.updated }}</strong></div>
+          <div><span>Sem alterações</span><strong>{{ result.summary.unchanged }}</strong></div>
+          <div><span>Falhados</span><strong>{{ result.summary.failed }}</strong></div>
+        </div>
+
+        <div class="recovery-warning" *ngIf="result.recovery?.requiresReview">
+          <strong>Esta operação necessita de revisão.</strong>
+          <span *ngIf="recoveryUncertainCount">{{ recoveryUncertainCount }} resultados incertos.</span>
+          <span *ngIf="recoveryPendingCount">{{ recoveryPendingCount }} resultados pendentes.</span>
+        </div>
+
+        <section class="bulk-section" *ngIf="result.errors?.length">
+          <div class="section-heading"><div><span class="material-symbols-rounded">error</span><div><strong>Erros devolvidos</strong><small>Contratos que não puderam concluir a alteração.</small></div></div></div>
+          <div class="result-errors">
+            <div *ngFor="let item of result.errors">
+              <strong>{{ item.contractId }}</strong>
+              <span>{{ item.message }}</span>
+              <small *ngIf="item.code">{{ item.code }}</small>
+            </div>
+          </div>
+          <p class="truncated-note" *ngIf="result.errorsTruncated">Existem mais resultados disponíveis no histórico completo da operação.</p>
+        </section>
+      </ng-container>
+
+      <div class="action-error" *ngIf="actionError">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <span>{{ actionError }}</span>
+      </div>
+    </div>
+
+    <footer class="bulk-update-footer">
+      <div class="progress-message" *ngIf="isPreviewing || isExecuting">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>{{ isPreviewing ? 'A preparar pré-visualização...' : 'A executar atualização...' }}</span>
+      </div>
+      <div class="footer-actions">
+        <button *ngIf="phase === 'configure'" type="button" class="secondary" [disabled]="isPreviewing" (click)="closeModal()">Cancelar</button>
+        <button *ngIf="phase === 'configure'" type="button" class="primary" [disabled]="!canPreview" (click)="preview()">Rever alterações</button>
+
+        <button *ngIf="phase === 'review'" type="button" class="secondary" [disabled]="isExecuting" (click)="backToConfigure()">Voltar</button>
+        <button *ngIf="phase === 'review'" type="button" class="primary danger-safe" [disabled]="isExecuting" (click)="execute()">Confirmar atualização</button>
+
+        <a *ngIf="phase === 'result' && executionResult?.operationId" class="history-link" [routerLink]="['/home/contracts/bulk-update-history', executionResult.operationId]">Ver detalhes da operação</a>
+        <button *ngIf="phase === 'result'" type="button" class="primary" (click)="closeModal()">Fechar</button>
+      </div>
+    </footer>
+  </section>
+</div>

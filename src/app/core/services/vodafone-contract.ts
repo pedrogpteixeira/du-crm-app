@@ -122,6 +122,9 @@ export interface VodafoneContractDetail {
   codigoRegistoCE?: string;
   estado: string;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataAtivacao?: string;
@@ -171,6 +174,9 @@ export interface CreateVodafoneContractRequest {
   nomeRegistoCE?: string;
   codigoRegistoCE?: string;
   estado?: VodafoneContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

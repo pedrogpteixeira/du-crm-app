@@ -207,7 +207,8 @@
                 <label>
                   Estado
 
-                  <select *ngIf="isEditing; else estadoView" [(ngModel)]="editForm.estado">
+                  <select *ngIf="isEditing; else estadoView" [(ngModel)]="editForm.estado"
+                    (change)="onEstadoChange()">
                     <option
                       *ngIf="isLegacyStatus(editForm.estado)"
                       [value]="editForm.estado"
@@ -227,6 +228,58 @@
                   </ng-template>
                 </label>
               </div>
+
+              <div
+                class="status-sale-row status-sale-row--two cancellation-reason-row"
+                *ngIf="shouldShowCancellationReason"
+              >
+                <label>
+                  <span>
+                    Motivo de anulação
+                    <span *ngIf="isEditing && isCancellationReasonRequired" class="cancellation-required-marker" aria-hidden="true">*</span>
+                  </span>
+                  <select
+                    *ngIf="isEditing; else motivoAnulacaoView"
+                    class="cancellation-reason-input"
+                    [(ngModel)]="editForm.motivoAnulacao"
+                    (ngModelChange)="onMotivoAnulacaoChange($event)"
+                    [required]="isCancellationReasonRequired"
+                    [attr.aria-invalid]="isMotivoAnulacaoInvalid ? 'true' : null"
+                  >
+                    <option value="">Selecionar motivo</option>
+                    <option *ngFor="let option of cancellationReasonOptions" [value]="option">{{ option }}</option>
+                  </select>
+                  <ng-template #motivoAnulacaoView>
+                    <strong>{{ getValue(contract.motivoAnulacao) }}</strong>
+                  </ng-template>
+                  <span class="cancellation-field-error" *ngIf="isEditing && isMotivoAnulacaoInvalid">
+                    Selecione um motivo de anulação.
+                  </span>
+                </label>
+
+                <label *ngIf="shouldShowCancellationReasonOther">
+                  <span>
+                    Descreva o motivo
+                    <span *ngIf="isEditing && isCancellationReasonRequired" class="cancellation-required-marker" aria-hidden="true">*</span>
+                  </span>
+                  <textarea
+                    *ngIf="isEditing; else motivoAnulacaoOutrasView"
+                    class="cancellation-reason-input cancellation-reason-textarea"
+                    rows="2"
+                    [(ngModel)]="editForm.motivoAnulacaoOutras"
+                    [required]="isCancellationReasonRequired && editForm.motivoAnulacao === 'Outras'"
+                    [attr.aria-invalid]="isMotivoAnulacaoOutrasInvalid ? 'true' : null"
+                    placeholder="Descreva o motivo da anulação"
+                  ></textarea>
+                  <ng-template #motivoAnulacaoOutrasView>
+                    <strong>{{ getValue(contract.motivoAnulacaoOutras) }}</strong>
+                  </ng-template>
+                  <span class="cancellation-field-error" *ngIf="isEditing && isMotivoAnulacaoOutrasInvalid">
+                    Descreva o motivo da anulação.
+                  </span>
+                </label>
+              </div>
+
 
               <div class="status-sale-row status-sale-row--three">
                 <label>

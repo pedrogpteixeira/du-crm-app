@@ -142,6 +142,9 @@ export interface GalpPowerGasContractDetail {
 
   estado: GalpPowerGasContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -208,6 +211,9 @@ export interface CreateGalpPowerGasContractRequest {
   nomeRegistoCE?: string;
 
   estado?: GalpPowerGasContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

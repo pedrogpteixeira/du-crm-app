@@ -1,8 +1,9 @@
+import { CONTRACT_CANCELLATION_REASONS } from '../constants/contract-cancellation-reasons';
 import { ContractApiFilters } from './contract-kanban';
 
 export type ContractBooleanFilter = '' | 'true' | 'false';
 export type ContractFilterInputType =
-  'text' | 'search' | 'number' | 'date' | 'select' | 'boolean' | 'status';
+  'text' | 'search' | 'number' | 'date' | 'select' | 'multi-select' | 'boolean' | 'status';
 
 export interface ContractFilterOption {
   value: string;
@@ -31,6 +32,7 @@ export interface BaseContractFilters {
   segment: string;
   product: string;
   status: string[];
+  cancellationReasons: string[];
   userId: string;
   registrationName: string;
   registrationCode: string;
@@ -193,6 +195,7 @@ export function createBaseContractFilters(): BaseContractFilters {
     segment: '',
     product: '',
     status: [],
+    cancellationReasons: [],
     userId: '',
     registrationName: '',
     registrationCode: '',
@@ -332,12 +335,12 @@ export function createWallboxContractFilters(): WallboxContractFilters {
 }
 
 export function cloneContractFilters<T>(filters: T): T {
-  return {
-    ...(filters as Record<string, unknown>),
-    status: Array.isArray((filters as { status?: unknown }).status)
-      ? [...((filters as { status: string[] }).status ?? [])]
-      : [],
-  } as T;
+  const source = filters as Record<string, unknown>;
+
+  return Object.entries(source).reduce<Record<string, unknown>>((clone, [key, value]) => {
+    clone[key] = Array.isArray(value) ? [...value] : value;
+    return clone;
+  }, {}) as T;
 }
 
 export function contractFiltersEqual(first: object, second: object): boolean {
@@ -374,6 +377,22 @@ export function buildContractApiFiltersFromDefinitions(
     }
 
     if (Array.isArray(value) && !value.length) {
+      return;
+    }
+
+    if (definition.type === 'multi-select' && Array.isArray(value)) {
+      const selected = value.map(String).map((item) => item.trim()).filter(Boolean);
+
+      if (!selected.length) {
+        return;
+      }
+
+      if (selected.length === 1) {
+        apiFilters[definition.apiKey] = selected[0];
+      } else {
+        apiFilters[`${definition.apiKey}__in`] = selected.join(',');
+      }
+
       return;
     }
 
@@ -566,6 +585,13 @@ export function buildBaseContractFilterFields(
           'Pesquisar produto...',
         ),
     statusField('Contrato'),
+    multiSelectField(
+      'cancellationReasons',
+      'Motivo de anulação',
+      'motivoAnulacao',
+      'Contrato',
+      toFilterOptions(CONTRACT_CANCELLATION_REASONS),
+    ),
     field('quality', 'Controlo de Qualidade', 'controleQualidade__contains', 'search', 'Contrato'),
     field('registrationName', 'Nome Registo C.E.', 'nomeRegistoCE__contains', 'search', 'Contrato'),
     field(
@@ -921,6 +947,16 @@ function selectField(
   options: readonly ContractFilterOption[],
 ): ContractFilterFieldDefinition {
   return { key, label, apiKey, type: 'select', group, options };
+}
+
+function multiSelectField(
+  key: string,
+  label: string,
+  apiKey: string,
+  group: string,
+  options: readonly ContractFilterOption[],
+): ContractFilterFieldDefinition {
+  return { key, label, apiKey, type: 'multi-select', group, options };
 }
 
 function booleanField(

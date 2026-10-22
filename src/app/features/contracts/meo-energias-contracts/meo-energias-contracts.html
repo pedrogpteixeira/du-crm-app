@@ -68,8 +68,96 @@
   ========================== -->
 
   <div class="card" *ngIf="viewMode === 'table'">
-    <div class="table-header">
-      <span>ID Contrato</span>
+    <div class="contract-table-toolbar" *ngIf="!isLoadingTable && !errorMessage && totalContracts > 0 && (exportSelection.manualCount > 0 || exportSelection.mode === 'filtered')">
+      <div class="contract-export-selection-summary">
+        <span class="material-symbols-rounded" aria-hidden="true">checklist</span>
+
+        <span *ngIf="exportSelection.mode === 'filtered'; else manualSelectionSummary">
+          <strong>Todos os {{ totalContracts }} contratos filtrados</strong> estão abrangidos pela seleção.
+        </span>
+
+        <ng-template #manualSelectionSummary>
+          <span *ngIf="exportSelection.manualCount; else noSelectionSummary">
+            <strong>{{ exportSelection.manualCount }}</strong>
+            {{ exportSelection.manualCount === 1 ? 'contrato selecionado' : 'contratos selecionados' }}.
+          </span>
+        </ng-template>
+
+        <ng-template #noSelectionSummary>
+          <span>Selecione contratos ou exporte todos os resultados dos filtros atuais.</span>
+        </ng-template>
+      </div>
+
+      <div class="contract-export-toolbar-actions">
+        <button
+          type="button"
+          class="select-filtered-action"
+          *ngIf="
+            exportSelection.mode === 'selected' &&
+            exportSelection.areAllVisibleSelected(filteredContracts) &&
+            totalContracts > filteredContracts.length
+          "
+          (click)="exportSelection.activateFiltered()"
+        >
+          Selecionar todos os {{ totalContracts }} contratos filtrados
+        </button>
+
+        <button
+          type="button"
+          *ngIf="exportSelection.manualCount || exportSelection.mode === 'filtered'"
+          (click)="exportSelection.clear()"
+        >
+          Limpar seleção
+        </button>
+
+        <details class="contract-selection-actions-menu" #selectionActionsMenu>
+          <summary class="contract-selection-actions-trigger">
+            <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
+            Ações
+            <span class="material-symbols-rounded contract-selection-actions-chevron" aria-hidden="true">expand_more</span>
+          </summary>
+
+          <div class="contract-selection-actions-popover" role="menu">
+            <button
+              type="button"
+              class="contract-selection-menu-item"
+              role="menuitem"
+              [disabled]="totalContracts <= 0"
+              (click)="selectionActionsMenu.open = false; exportSelection.openModal()"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">download</span>
+              <span>Exportar contratos</span>
+            </button>
+
+            <button
+              type="button"
+              class="contract-selection-menu-item contract-selection-menu-item--bulk"
+              role="menuitem"
+              *ngIf="canBulkUpdateContracts"
+              (click)="selectionActionsMenu.open = false; openBulkUpdateModal()"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">edit_square</span>
+              <span>Atualização em massa</span>
+            </button>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="table-header contract-table-grid">
+      <label class="contract-selection-cell" title="Selecionar contratos apresentados">
+        <input
+          type="checkbox"
+          aria-label="Selecionar contratos apresentados"
+          [checked]="exportSelection.mode === 'filtered' || exportSelection.areAllVisibleSelected(filteredContracts)"
+          [indeterminate]="exportSelection.mode !== 'filtered' && exportSelection.isVisibleSelectionIndeterminate(filteredContracts)"
+          [disabled]="!filteredContracts.length || exportSelection.mode === 'filtered'"
+          (change)="exportSelection.toggleVisibleFromEvent(filteredContracts, $event)"
+        />
+      </label>
+
+      <div class="contract-table-data-grid">
+        <span>ID Contrato</span>
       <span>Cliente / Empresa</span>
       <span>NIF</span>
       <span>Nome Registo C.E.</span>
@@ -77,6 +165,7 @@
       <span>Data Registo</span>
       <span>Data Agendamento</span>
       <span>Estado</span>
+      </div>
     </div>
 
     <p class="loading" *ngIf="isLoading">A carregar contratos...</p>
@@ -85,12 +174,31 @@
       {{ errorMessage }}
     </p>
 
-    <a
-      class="contract-row"
+    <div
+      class="contract-row contract-table-grid"
+      [class.is-filtered-selection]="exportSelection.mode === 'filtered'"
       *ngFor="let contract of filteredContracts"
-      [routerLink]="['/home/contracts/meo-energias', contract.id]"
     >
-      <span>{{ contract.id }}</span>
+      <label
+        class="contract-selection-cell"
+        [title]="exportSelection.isSelected(contract.id) ? 'Remover da seleção' : 'Selecionar contrato'"
+        (click)="$event.stopPropagation()"
+      >
+        <input
+          type="checkbox"
+          [checked]="exportSelection.mode === 'filtered' || exportSelection.isSelected(contract.id)"
+          [disabled]="exportSelection.mode === 'filtered'"
+          [attr.aria-label]="'Selecionar contrato ' + contract.id"
+          (click)="$event.stopPropagation()"
+          (change)="exportSelection.toggleFromEvent(contract.id, $event)"
+        />
+      </label>
+
+      <a
+        class="contract-row-link contract-table-data-grid"
+        [routerLink]="['/home/contracts/meo-energias', contract.id]"
+      >
+        <span>{{ contract.id }}</span>
 
       <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
 
@@ -107,7 +215,8 @@
       <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
         {{ contract.estado }}
       </span>
-    </a>
+      </a>
+    </div>
 
     <div class="table-pagination" *ngIf="!isLoadingTable && contracts.length">
       <span class="table-loaded-count">
@@ -214,4 +323,28 @@
       </section>
     </div>
   </div>
+
+  <app-contract-export-modal
+    *ngIf="exportSelection.modalOpen"
+    [provider]="'meo-energias'"
+    [supplierLabel]="'MEO Energias'"
+    [manualSelectedIds]="exportSelection.selectedIdsArray"
+    [filteredTotal]="totalContracts"
+    [filters]="getExportFilters()"
+    [initialMode]="exportSelection.effectiveMode"
+    (close)="exportSelection.closeModal()"
+    (exported)="exportSelection.closeModal()"
+  ></app-contract-export-modal>
+
+  <app-contract-bulk-update-modal
+    *ngIf="bulkUpdateModalOpen && canBulkUpdateContracts"
+    [provider]="'meo-energias'"
+    [supplierLabel]="'MEO Energias'"
+    [manualSelectedIds]="exportSelection.selectedIdsArray"
+    [filteredTotal]="totalContracts"
+    [filters]="getExportFilters()"
+    [initialMode]="exportSelection.effectiveMode"
+    (close)="closeBulkUpdateModal()"
+    (completed)="markBulkUpdateCompleted()"
+  ></app-contract-bulk-update-modal>
 </section>

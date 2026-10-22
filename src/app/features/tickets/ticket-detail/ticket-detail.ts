@@ -9,6 +9,10 @@ import { catchError, finalize, map, merge, Observable, of, switchMap } from 'rxj
 import { ToastService } from '../../../core/services/toast';
 
 import { getContractDetailRoute } from '../../../core/config/contract-detail-route';
+import {
+  CONTRACT_CANCELLATION_REASONS,
+  isContractCancellationReason,
+} from '../../../core/constants/contract-cancellation-reasons';
 import { Auth } from '../../../core/services/auth';
 import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
@@ -52,6 +56,8 @@ interface TicketEditSnapshot {
   prioridade: TicketPrioridade;
   agendamento: string | null;
   descricao: string;
+  motivoAnulacao: string;
+  motivoAnulacaoOutras: string;
 }
 
 interface SaveTicketResult {
@@ -141,12 +147,15 @@ export class TicketDetail implements OnInit {
 
   readonly ticketStatusOptions = TICKET_STATUS_OPTIONS;
   readonly ticketPriorityOptions = TICKET_PRIORITY_OPTIONS;
+  readonly cancellationReasonOptions = CONTRACT_CANCELLATION_REASONS;
 
   readonly ticketForm = this.fb.group({
     estado: this.fb.nonNullable.control<TicketEstado>('Novo', Validators.required),
     prioridade: this.fb.nonNullable.control<TicketPrioridade>('Normal', Validators.required),
     agendamento: this.fb.nonNullable.control<string>(''),
     descricao: this.fb.nonNullable.control<string>(''),
+    motivoAnulacao: this.fb.nonNullable.control<string>(''),
+    motivoAnulacaoOutras: this.fb.nonNullable.control<string>(''),
   });
 
   ngOnInit(): void {
@@ -186,6 +195,51 @@ export class TicketDetail implements OnInit {
 
   get isTreatmentEditType(): boolean {
     return this.ticket?.tipo === TREATMENT_TICKET_TYPE;
+  }
+
+
+  get isCancellationTicket(): boolean {
+    return this.ticket?.tipo === 'Pedido de Anulação';
+  }
+
+  get isCancellationReasonOther(): boolean {
+    const motivo = this.isEditing
+      ? this.ticketForm.controls.motivoAnulacao.value
+      : this.ticket?.motivoAnulacao;
+    return motivo === 'Outras';
+  }
+
+  get isCancellationReasonEdited(): boolean {
+    if (!this.originalEditSnapshot) return false;
+    return (
+      this.ticketForm.controls.motivoAnulacao.value !== this.originalEditSnapshot.motivoAnulacao ||
+      this.ticketForm.controls.motivoAnulacaoOutras.value !== this.originalEditSnapshot.motivoAnulacaoOutras
+    );
+  }
+
+  get isCancellationReasonInvalid(): boolean {
+    return (
+      this.isEditing &&
+      this.isCancellationTicket &&
+      this.isCancellationReasonEdited &&
+      !isContractCancellationReason(this.ticketForm.controls.motivoAnulacao.value)
+    );
+  }
+
+  get isCancellationReasonOtherInvalid(): boolean {
+    return (
+      this.isEditing &&
+      this.isCancellationTicket &&
+      this.isCancellationReasonEdited &&
+      this.ticketForm.controls.motivoAnulacao.value === 'Outras' &&
+      !this.ticketForm.controls.motivoAnulacaoOutras.value.trim()
+    );
+  }
+
+  onCancellationReasonChange(value: string): void {
+    if (value !== 'Outras') {
+      this.ticketForm.controls.motivoAnulacaoOutras.setValue('');
+    }
   }
 
   get canTransferTreatmentAttachments(): boolean {
@@ -333,6 +387,10 @@ export class TicketDetail implements OnInit {
         this.showError('Preencha os campos obrigatórios antes de guardar.');
       }
 
+      return;
+    }
+
+    if (!this.validateCancellationReasonEdit()) {
       return;
     }
 
@@ -880,6 +938,8 @@ export class TicketDetail implements OnInit {
       prioridade: snapshot.prioridade,
       agendamento: this.toDateTimeLocal(snapshot.agendamento),
       descricao: snapshot.descricao,
+      motivoAnulacao: snapshot.motivoAnulacao,
+      motivoAnulacaoOutras: snapshot.motivoAnulacaoOutras,
     });
 
     this.ticketForm.markAsPristine();
@@ -893,6 +953,8 @@ export class TicketDetail implements OnInit {
       prioridade: ticket.prioridade,
       agendamento: ticket.agendamento,
       descricao: ticket.descricao ?? '',
+      motivoAnulacao: ticket.motivoAnulacao ?? '',
+      motivoAnulacaoOutras: ticket.motivoAnulacaoOutras ?? '',
     };
   }
 
@@ -903,7 +965,30 @@ export class TicketDetail implements OnInit {
       prioridade: value.prioridade,
       agendamento: value.agendamento ? new Date(value.agendamento).toISOString() : null,
       descricao: value.descricao,
+      motivoAnulacao: value.motivoAnulacao,
+      motivoAnulacaoOutras: value.motivoAnulacaoOutras,
     };
+  }
+
+  private validateCancellationReasonEdit(): boolean {
+    if (!this.isCancellationTicket || !this.isCancellationReasonEdited) {
+      return true;
+    }
+
+    const motivo = this.ticketForm.controls.motivoAnulacao.value;
+    if (!isContractCancellationReason(motivo)) {
+      this.ticketForm.controls.motivoAnulacao.markAsTouched();
+      this.showError('Selecione um motivo de anulação válido.');
+      return false;
+    }
+
+    if (motivo === 'Outras' && !this.ticketForm.controls.motivoAnulacaoOutras.value.trim()) {
+      this.ticketForm.controls.motivoAnulacaoOutras.markAsTouched();
+      this.showError('Descreva o motivo da anulação.');
+      return false;
+    }
+
+    return true;
   }
 
   private buildPatchPayload(): UpdateTicketRequest {
@@ -919,6 +1004,16 @@ export class TicketDetail implements OnInit {
     if (current.prioridade !== original.prioridade) payload.prioridade = current.prioridade;
     if (current.agendamento !== original.agendamento) payload.agendamento = current.agendamento;
     if (current.descricao !== original.descricao) payload.descricao = current.descricao;
+    if (this.isCancellationTicket && current.motivoAnulacao !== original.motivoAnulacao) {
+      payload.motivoAnulacao = isContractCancellationReason(current.motivoAnulacao)
+        ? current.motivoAnulacao
+        : null;
+    }
+    if (this.isCancellationTicket && current.motivoAnulacaoOutras !== original.motivoAnulacaoOutras) {
+      payload.motivoAnulacaoOutras = current.motivoAnulacao === 'Outras'
+        ? current.motivoAnulacaoOutras.trim()
+        : null;
+    }
 
     return payload;
   }
@@ -984,6 +1079,8 @@ export class TicketDetail implements OnInit {
           'prioridade',
           'agendamento',
           'descricao',
+          'motivoAnulacao',
+          'motivoAnulacaoOutras',
         ];
 
         keys.forEach((key) => {

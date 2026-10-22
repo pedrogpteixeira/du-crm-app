@@ -88,6 +88,50 @@
               <strong>{{ ticket.tipo }}</strong>
             </label>
 
+            <label *ngIf="isCancellationTicket">
+              Motivo de anulação
+
+              <select
+                *ngIf="isEditing; else motivoAnulacaoView"
+                formControlName="motivoAnulacao"
+                (change)="onCancellationReasonChange(ticketForm.controls.motivoAnulacao.value)"
+                [attr.aria-invalid]="isCancellationReasonInvalid ? 'true' : null"
+              >
+                <option value="">Selecionar motivo</option>
+                <option *ngFor="let option of cancellationReasonOptions" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+
+              <ng-template #motivoAnulacaoView>
+                <strong>{{ ticket.motivoAnulacao || 'Não registado' }}</strong>
+              </ng-template>
+
+              <span class="field-validation-error" *ngIf="isCancellationReasonInvalid">
+                Selecione um motivo de anulação.
+              </span>
+            </label>
+
+            <label *ngIf="isCancellationTicket && isCancellationReasonOther">
+              Descreva o motivo
+
+              <textarea
+                *ngIf="isEditing; else motivoAnulacaoOutrasView"
+                rows="3"
+                formControlName="motivoAnulacaoOutras"
+                [attr.aria-invalid]="isCancellationReasonOtherInvalid ? 'true' : null"
+                placeholder="Descreva o motivo da anulação"
+              ></textarea>
+
+              <ng-template #motivoAnulacaoOutrasView>
+                <strong>{{ ticket.motivoAnulacaoOutras || 'Não registado' }}</strong>
+              </ng-template>
+
+              <span class="field-validation-error" *ngIf="isCancellationReasonOtherInvalid">
+                Descreva o motivo da anulação.
+              </span>
+            </label>
+
             <label>
               Estado
 

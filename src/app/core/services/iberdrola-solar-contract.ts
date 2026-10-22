@@ -107,6 +107,9 @@ export interface IberdrolaSolarContract {
 
   estado: IberdrolaSolarContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -172,6 +175,9 @@ export interface CreateIberdrolaSolarContractRequest {
   codigoRegistoCE?: string;
 
   estado?: IberdrolaSolarContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

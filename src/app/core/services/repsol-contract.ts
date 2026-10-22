@@ -142,6 +142,9 @@ export interface RepsolContractDetail {
 
   estado: RepsolContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -208,6 +211,9 @@ export interface CreateRepsolContractRequest {
   nomeRegistoCE?: string;
 
   estado?: RepsolContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

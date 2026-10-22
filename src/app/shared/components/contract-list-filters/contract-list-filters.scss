@@ -294,7 +294,8 @@
 
 .status-select-menu {
   position: absolute;
-  z-index: 30;
+  /* Must stay above the sticky Kanban state headers (z-index: 40). */
+  z-index: 90;
   top: calc(100% + 7px);
   left: 0;
   width: min(360px, calc(100vw - 48px));

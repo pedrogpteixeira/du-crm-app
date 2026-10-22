@@ -88,6 +88,24 @@
                 {{ entry.acao }}
               </span>
             </ng-template>
+
+            <ng-container *ngIf="entry.bulkUpdateOperationId">
+              <a
+                *ngIf="canViewBulkUpdateHistory; else bulkUpdateLabel"
+                class="flow-bulk-update"
+                [routerLink]="['/home/contracts/bulk-update-history', entry.bulkUpdateOperationId]"
+              >
+                <span class="material-symbols-rounded" aria-hidden="true">dataset</span>
+                Alteração realizada através de atualização em massa.
+              </a>
+
+              <ng-template #bulkUpdateLabel>
+                <span class="flow-bulk-update is-static">
+                  <span class="material-symbols-rounded" aria-hidden="true">dataset</span>
+                  Alteração realizada através de atualização em massa.
+                </span>
+              </ng-template>
+            </ng-container>
           </div>
 
           <time [attr.datetime]="entry.dataHora">

@@ -1,0 +1,283 @@
+/* Shared table-only selection/export controls for contract lists. */
+.contracts-page .card .contract-table-toolbar {
+  min-width: 1320px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-muted);
+}
+
+.contract-export-selection-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--app-text-muted);
+  font-size: 12px;
+
+  > .material-symbols-rounded {
+    color: var(--app-accent);
+    font-size: 19px;
+  }
+
+  strong {
+    color: var(--app-text-strong);
+  }
+}
+
+.contract-export-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.contract-export-toolbar-actions button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface);
+  color: var(--app-text);
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.16s ease;
+}
+
+.contract-export-toolbar-actions button:hover:not(:disabled) {
+  border-color: var(--app-border-strong);
+  background: var(--app-surface-hover);
+}
+
+.contract-export-toolbar-actions .select-filtered-action {
+  border-color: rgba(0, 141, 177, 0.22);
+  background: var(--app-accent-soft);
+  color: var(--app-accent-strong);
+}
+
+
+.contract-export-toolbar-actions .bulk-update-contracts-action {
+  border-color: rgba(0, 141, 177, 0.28);
+  background: var(--app-accent-soft);
+  color: var(--app-accent-strong);
+}
+
+.contract-export-toolbar-actions .bulk-update-contracts-action:hover:not(:disabled) {
+  border-color: var(--app-accent);
+  background: rgba(0, 141, 177, 0.16);
+  color: var(--app-accent-strong);
+}
+
+.contract-export-toolbar-actions .export-contracts-action {
+  border-color: var(--app-accent);
+  background: var(--app-accent);
+  color: #ffffff;
+}
+
+.contract-export-toolbar-actions .export-contracts-action:hover:not(:disabled) {
+  border-color: var(--app-accent-strong);
+  background: var(--app-accent-strong);
+  color: #ffffff;
+}
+
+.contract-export-toolbar-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.contracts-page .card .table-header.contract-table-grid,
+.contracts-page .card .contract-row.contract-table-grid {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 8px;
+  min-width: 1370px;
+}
+
+.contracts-page .card .contract-table-data-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 0.8fr)
+    minmax(210px, 1.45fr)
+    minmax(100px, 0.65fr)
+    minmax(190px, 1.15fr)
+    minmax(135px, 0.85fr)
+    minmax(135px, 0.85fr)
+    minmax(145px, 0.9fr)
+    minmax(190px, 1.15fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.contracts-page .card .table-header.contract-table-grid,
+.contracts-page .card .contract-row.contract-table-grid {
+  padding-left: 8px;
+}
+
+.contracts-page .card .contract-row-link {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.contract-selection-cell {
+  width: 32px;
+  height: 32px;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.contract-selection-cell:hover {
+  background: var(--app-accent-soft);
+}
+
+.contract-selection-cell input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--app-accent);
+  cursor: pointer;
+}
+
+.contract-table-grid.is-filtered-selection {
+  background: var(--app-accent-soft);
+}
+
+@media (max-width: 900px) {
+  .contracts-page .card .contract-table-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contract-export-toolbar-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Compact contextual menu for selection actions (export + bulk update). */
+.contract-selection-actions-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.contract-selection-actions-menu > summary {
+  list-style: none;
+}
+
+.contract-selection-actions-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.contract-selection-actions-trigger {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--app-accent);
+  border-radius: 10px;
+  background: var(--app-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.16s ease;
+}
+
+.contract-selection-actions-trigger:hover,
+.contract-selection-actions-menu[open] .contract-selection-actions-trigger {
+  border-color: var(--app-accent-strong);
+  background: var(--app-accent-strong);
+  color: #fff;
+}
+
+.contract-selection-actions-trigger:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.contract-selection-actions-trigger > .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.contract-selection-actions-chevron {
+  margin-left: 1px;
+  font-size: 16px !important;
+  transition: transform 0.16s ease;
+}
+
+.contract-selection-actions-menu[open] .contract-selection-actions-chevron {
+  transform: rotate(180deg);
+}
+
+.contract-selection-actions-popover {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 7px);
+  right: 0;
+  width: max-content;
+  min-width: 205px;
+  padding: 6px;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14);
+}
+
+.contract-export-toolbar-actions .contract-selection-menu-item {
+  width: 100%;
+  min-height: 38px;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.contract-export-toolbar-actions .contract-selection-menu-item:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--app-surface-hover);
+  color: var(--app-text-strong);
+}
+
+.contract-export-toolbar-actions .contract-selection-menu-item > .material-symbols-rounded {
+  color: var(--app-accent);
+  font-size: 19px;
+}
+
+.contract-export-toolbar-actions .contract-selection-menu-item--bulk {
+  margin-top: 3px;
+  padding-top: 10px;
+  border-top: 1px solid var(--app-border);
+  border-radius: 0 0 8px 8px;
+}
+
+@media (max-width: 900px) {
+  .contract-selection-actions-popover {
+    right: auto;
+    left: 0;
+  }
+}

@@ -181,6 +181,9 @@ export interface YesEnergyContractDetail {
 
   estado: YesEnergyContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -253,6 +256,9 @@ export interface CreateYesEnergyContractRequest {
   codigoRegistoCE?: string;
 
   estado?: YesEnergyContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

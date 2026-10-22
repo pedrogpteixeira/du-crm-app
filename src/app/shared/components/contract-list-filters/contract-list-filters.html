@@ -46,7 +46,7 @@
 
     <div class="filters-grid">
       <ng-container *ngFor="let field of visibleFields; trackBy: trackField">
-        <div class="filter-field" *ngIf="field.type !== 'status'">
+        <div class="filter-field" *ngIf="field.type !== 'status' && field.type !== 'multi-select'">
           <label [for]="'contract-filter-' + field.key">{{ field.label }}</label>
 
           <select
@@ -82,6 +82,54 @@
             [ngModel]="value[field.key] ?? ''"
             (ngModelChange)="updateValue(field.key, $event)"
           />
+        </div>
+
+        <div class="filter-field status-field" *ngIf="field.type === 'multi-select'">
+          <label>{{ field.label }}</label>
+
+          <div class="status-select" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="status-select-trigger"
+              [class.has-selection]="getMultiSelectValues(field).length"
+              (click)="toggleMultiSelectMenu(field, $event)"
+            >
+              <span class="status-select-copy">
+                <span>{{ getMultiSelectSummary(field) }}</span>
+                <small *ngIf="getMultiSelectValues(field).length">Seleção múltipla</small>
+              </span>
+              <span class="material-symbols-rounded">expand_more</span>
+            </button>
+
+            <div class="status-select-menu" *ngIf="multiSelectMenuKey === field.key">
+              <div class="status-select-menu-header">
+                <span>Selecionar motivos</span>
+                <button
+                  type="button"
+                  class="status-clear-action"
+                  [disabled]="!getMultiSelectValues(field).length"
+                  (click)="clearMultiSelect(field, $event)"
+                >
+                  Limpar
+                </button>
+              </div>
+
+              <div class="status-option-list">
+                <button
+                  type="button"
+                  class="status-option"
+                  *ngFor="let option of field.options ?? []"
+                  [class.selected]="isMultiSelectOptionSelected(field, option.value)"
+                  (click)="toggleMultiSelectOption(field, option.value, $event)"
+                >
+                  <span class="status-check material-symbols-rounded">
+                    {{ isMultiSelectOptionSelected(field, option.value) ? 'check_circle' : 'radio_button_unchecked' }}
+                  </span>
+                  <span>{{ option.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="filter-field status-field" *ngIf="field.type === 'status'">

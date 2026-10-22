@@ -391,3 +391,31 @@
   }
 
 }
+
+.flow-bulk-update {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: #008db1;
+  font-size: 10.5px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.flow-bulk-update .material-symbols-rounded {
+  font-size: 15px;
+}
+
+.flow-bulk-update:hover:not(.is-static) {
+  text-decoration: underline;
+}
+
+.flow-bulk-update.is-static {
+  color: #64748b;
+}
+
+:host-context(body.dark-theme) .flow-bulk-update.is-static {
+  color: #94a3b8;
+}

@@ -188,6 +188,9 @@ export interface IberdrolaContractDetail {
   codigoRegistoCE?: string;
   estado: IberdrolaContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -254,6 +257,9 @@ export interface CreateIberdrolaContractRequest {
   nomeRegistoCE?: string;
   codigoRegistoCE?: string;
   estado?: IberdrolaContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

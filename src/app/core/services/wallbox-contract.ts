@@ -138,6 +138,9 @@ export interface CreateWallboxContractRequest {
 
   estado?: WallboxContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   controleQualidade?: string;
   nomeRegistoCE?: string;
   codigoRegistoCE?: string;
@@ -186,6 +189,9 @@ export interface WallboxContractCreateResponse {
   tipoSegmento: WallboxTipoSegmento;
   tipoProduto: WallboxTipoProduto;
   estado: WallboxContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   controleQualidade?: string;
   nomeRegistoCE?: string;
@@ -241,6 +247,9 @@ export interface WallboxContractDetail {
   tipoProduto: WallboxTipoProduto;
 
   estado: WallboxContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   controleQualidade?: string;
   nomeRegistoCE?: string;

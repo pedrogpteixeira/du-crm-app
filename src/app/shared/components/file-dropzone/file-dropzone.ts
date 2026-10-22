@@ -16,6 +16,7 @@ export class FileDropzone {
   @Input() disabled = false;
   @Input() title = 'Arrasta ficheiros para aqui';
   @Input() selectLabel = 'Selecionar ficheiros';
+  @Input() deduplicateFiles = true;
 
   @Output() filesChange = new EventEmitter<File[]>();
 
@@ -106,6 +107,11 @@ export class FileDropzone {
       : '';
 
     if (!allowedFiles.length) {
+      return;
+    }
+
+    if (!this.deduplicateFiles) {
+      this.filesChange.emit([...this.files, ...allowedFiles]);
       return;
     }
 

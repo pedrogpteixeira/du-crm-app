@@ -71,6 +71,39 @@
           </label>
         </div>
 
+        <div class="ticket-cancellation-fields" *ngIf="isCancellationSelected">
+          <label>
+            Motivo de anulação *
+            <select
+              formControlName="motivoAnulacao"
+              [attr.aria-invalid]="isCancellationReasonInvalid ? 'true' : null"
+              required
+            >
+              <option value="" disabled>Selecionar motivo</option>
+              <option *ngFor="let option of cancellationReasonOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+            <span class="field-validation-error" *ngIf="isCancellationReasonInvalid">
+              Selecione um motivo de anulação.
+            </span>
+          </label>
+
+          <label *ngIf="isCancellationReasonOther">
+            Descreva o motivo *
+            <textarea
+              rows="3"
+              formControlName="motivoAnulacaoOutras"
+              [attr.aria-invalid]="isCancellationReasonOtherInvalid ? 'true' : null"
+              placeholder="Descreva o motivo da anulação..."
+              required
+            ></textarea>
+            <span class="field-validation-error" *ngIf="isCancellationReasonOtherInvalid">
+              Descreva o motivo da anulação.
+            </span>
+          </label>
+        </div>
+
         <div
           class="ticket-text-grid"
           [class.single-column]="isCancellationSelected"
@@ -158,63 +191,4 @@
     </footer>
   </section>
 
-  <div
-    *ngIf="isCancellationModalOpen"
-    class="cancellation-modal-backdrop"
-    (click)="$event.stopPropagation(); closeCancellationConfirmation()"
-  >
-    <section
-      class="cancellation-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cancellation-modal-title"
-      [formGroup]="cancellationForm"
-      (click)="$event.stopPropagation()"
-    >
-      <header class="cancellation-modal-header">
-        <div class="cancellation-icon" aria-hidden="true">
-          <span class="material-symbols-rounded">warning</span>
-        </div>
-
-        <div>
-          <h3 id="cancellation-modal-title">Confirmar pedido de anulação</h3>
-          <p>
-            Tem a certeza de que pretende solicitar a anulação deste contrato? Esta ação irá alterar
-            o estado do contrato.
-          </p>
-        </div>
-      </header>
-
-      <div class="cancellation-modal-body">
-        <label>
-          Motivo da anulação *
-          <textarea rows="4" formControlName="reason" placeholder="Explique o motivo..."></textarea>
-        </label>
-
-        <p class="error-message" *ngIf="cancellationErrorMessage">
-          {{ cancellationErrorMessage }}
-        </p>
-      </div>
-
-      <footer class="cancellation-modal-actions">
-        <button
-          type="button"
-          class="secondary-button"
-          [disabled]="isCreatingTicket"
-          (click)="closeCancellationConfirmation()"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="button"
-          class="danger-button"
-          [disabled]="isCreatingTicket || !hasValidCancellationReason"
-          (click)="confirmCancellation()"
-        >
-          {{ isCreatingTicket ? 'A confirmar...' : 'Confirmar pedido' }}
-        </button>
-      </footer>
-    </section>
-  </div>
 </div>

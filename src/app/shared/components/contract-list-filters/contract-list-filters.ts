@@ -47,6 +47,7 @@ export class ContractListFiltersComponent implements OnChanges {
   activeGroup = '';
   visibleFields: readonly ContractFilterFieldDefinition[] = [];
   statusMenuOpen = false;
+  multiSelectMenuKey = '';
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['fields']) {
@@ -86,6 +87,7 @@ export class ContractListFiltersComponent implements OnChanges {
     this.activeGroup = group;
     this.visibleFields = this.getFieldsForGroup(group);
     this.statusMenuOpen = false;
+    this.multiSelectMenuKey = '';
   }
 
   getGroupFilterCount(group: string): number {
@@ -108,11 +110,12 @@ export class ContractListFiltersComponent implements OnChanges {
 
   removeFilter(field: ContractFilterFieldDefinition, event?: MouseEvent): void {
     event?.stopPropagation();
-    this.updateValue(field.key, field.type === 'status' ? [] : '');
+    this.updateValue(field.key, field.type === 'status' || field.type === 'multi-select' ? [] : '');
   }
 
   toggleStatusMenu(event: MouseEvent): void {
     event.stopPropagation();
+    this.multiSelectMenuKey = '';
     this.statusMenuOpen = !this.statusMenuOpen;
   }
 
@@ -153,6 +156,61 @@ export class ContractListFiltersComponent implements OnChanges {
     return `${this.selectedStatuses.length} estados selecionados`;
   }
 
+  getMultiSelectValues(field: ContractFilterFieldDefinition): string[] {
+    const value = this.value?.[field.key];
+    return Array.isArray(value) ? value.map(String) : [];
+  }
+
+  toggleMultiSelectMenu(field: ContractFilterFieldDefinition, event: MouseEvent): void {
+    event.stopPropagation();
+    this.statusMenuOpen = false;
+    this.multiSelectMenuKey = this.multiSelectMenuKey === field.key ? '' : field.key;
+  }
+
+  toggleMultiSelectOption(
+    field: ContractFilterFieldDefinition,
+    optionValue: string,
+    event: MouseEvent,
+  ): void {
+    event.stopPropagation();
+    const selected = new Set(this.getMultiSelectValues(field));
+
+    if (selected.has(optionValue)) {
+      selected.delete(optionValue);
+    } else {
+      selected.add(optionValue);
+    }
+
+    const ordered = (field.options ?? [])
+      .map((option) => option.value)
+      .filter((value) => selected.has(value));
+
+    this.updateValue(field.key, ordered);
+  }
+
+  clearMultiSelect(field: ContractFilterFieldDefinition, event: MouseEvent): void {
+    event.stopPropagation();
+    this.updateValue(field.key, []);
+  }
+
+  isMultiSelectOptionSelected(field: ContractFilterFieldDefinition, optionValue: string): boolean {
+    return this.getMultiSelectValues(field).includes(optionValue);
+  }
+
+  getMultiSelectSummary(field: ContractFilterFieldDefinition): string {
+    const selected = this.getMultiSelectValues(field);
+
+    if (!selected.length) {
+      return 'Todos';
+    }
+
+    if (selected.length === 1) {
+      return field.options?.find((option) => option.value === selected[0])?.label ?? selected[0];
+    }
+
+    return `${selected.length} motivos selecionados`;
+  }
+
   getFilterValueLabel(field: ContractFilterFieldDefinition): string {
     const filterValue = this.value[field.key];
 
@@ -164,6 +222,16 @@ export class ContractListFiltersComponent implements OnChanges {
       }
 
       return `${selected.length} estados`;
+    }
+
+    if (field.type === 'multi-select') {
+      const selected = Array.isArray(filterValue) ? filterValue.map(String) : [];
+
+      if (selected.length === 1) {
+        return field.options?.find((option) => option.value === selected[0])?.label ?? selected[0];
+      }
+
+      return `${selected.length} motivos`;
     }
 
     if (field.type === 'boolean') {
@@ -179,11 +247,13 @@ export class ContractListFiltersComponent implements OnChanges {
 
   apply(): void {
     this.statusMenuOpen = false;
+    this.multiSelectMenuKey = '';
     this.applyFilters.emit();
   }
 
   reset(): void {
     this.statusMenuOpen = false;
+    this.multiSelectMenuKey = '';
     this.resetFilters.emit();
   }
 
@@ -198,6 +268,7 @@ export class ContractListFiltersComponent implements OnChanges {
   @HostListener('document:click')
   closeStatusMenu(): void {
     this.statusMenuOpen = false;
+    this.multiSelectMenuKey = '';
   }
 
   private rebuildGroups(): void {

@@ -5,7 +5,7 @@
 
       <p>
         Consulta campanhas, formulários de adesão,
-        recursos e formações por empresa.
+        formações e recursos por empresa.
       </p>
     </div>
   </header>
@@ -31,13 +31,19 @@
     <article
       class="company-card"
       *ngFor="
-        let company of getVisibleCompanies()
+        let company of getVisibleCompanies();
+        let companyIndex = index
       "
     >
       <div class="company-logo">
         <img
           [src]="company.logo"
           [alt]="company.name"
+          width="600"
+          height="240"
+          decoding="async"
+          [attr.loading]="companyIndex < 4 ? 'eager' : 'lazy'"
+          [attr.fetchpriority]="companyIndex < 4 ? 'high' : 'low'"
         />
       </div>
 
@@ -54,23 +60,6 @@
         </span>
 
         <span>Campanhas</span>
-
-        <strong>›</strong>
-      </a>
-
-      <a
-        class="company-action"
-        [routerLink]="companyActionRoute(company, 'support')"
-        [queryParams]="companyActionQueryParams(company, 'support')"
-        (click)="handleCompanyActionClick($event, company, 'support')"
-      >
-        <span
-          class="action-icon material-symbols-rounded"
-        >
-          folder
-        </span>
-
-        <span>Recursos</span>
 
         <strong>›</strong>
       </a>
@@ -105,6 +94,23 @@
         </span>
 
         <span>Formações</span>
+
+        <strong>›</strong>
+      </a>
+
+      <a
+        class="company-action"
+        [routerLink]="companyActionRoute(company, 'support')"
+        [queryParams]="companyActionQueryParams(company, 'support')"
+        (click)="handleCompanyActionClick($event, company, 'support')"
+      >
+        <span
+          class="action-icon material-symbols-rounded"
+        >
+          folder
+        </span>
+
+        <span>Recursos</span>
 
         <strong>›</strong>
       </a>

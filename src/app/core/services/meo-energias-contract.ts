@@ -166,6 +166,9 @@ export interface MeoEnergiasContractDetail {
   codigoRegistoCE?: string;
   estado: MeoEnergiasContractStatus;
 
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
+
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -228,6 +231,9 @@ export interface CreateMeoEnergiasContractRequest {
   nomeRegistoCE?: string;
   codigoRegistoCE?: string;
   estado?: MeoEnergiasContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
 
   agendamento?: string;
   dataAssinatura?: string;

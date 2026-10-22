@@ -36,11 +36,24 @@ import {
   prependContractById,
 } from '../../../core/utils/contract-kanban';
 import { ContractTableResponse } from '../../../core/utils/contract-table';
+import {
+  buildContractExportFilters,
+  ContractExportSelection,
+} from '../../../core/utils/contract-export';
 import { ContractListFiltersComponent } from '../../../shared/components/contract-list-filters/contract-list-filters';
+import { ContractExportModalComponent } from '../../../shared/components/contract-export-modal/contract-export-modal';
+import { ContractBulkUpdateModalComponent } from '../../../shared/components/contract-bulk-update-modal/contract-bulk-update-modal';
 
 @Component({
   selector: 'app-iberdrola-solar-contracts',
-  imports: [CommonModule, RouterLink, FormsModule, ContractListFiltersComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    ContractListFiltersComponent,
+    ContractExportModalComponent,
+    ContractBulkUpdateModalComponent,
+  ],
   templateUrl: './iberdrola-solar-contracts.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './iberdrola-solar-contracts.scss',
@@ -52,6 +65,10 @@ export class IberdrolaSolarContracts implements OnInit {
   private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
   private loadRequestId = 0;
+
+  readonly exportSelection = new ContractExportSelection();
+  bulkUpdateModalOpen = false;
+  bulkUpdateNeedsRefresh = false;
 
   contracts: IberdrolaSolarContractList[] = [];
   filteredContracts: IberdrolaSolarContractList[] = [];
@@ -379,12 +396,14 @@ export class IberdrolaSolarContracts implements OnInit {
 
   applyFilters(): void {
     this.appliedFilters = cloneContractFilters(this.filters);
+    this.exportSelection.clear();
     this.loadContracts();
   }
 
   clearFilters(): void {
     this.filters = createSolarContractFilters();
     this.appliedFilters = cloneContractFilters(this.filters);
+    this.exportSelection.clear();
     this.loadContracts();
   }
 
@@ -420,6 +439,39 @@ export class IberdrolaSolarContracts implements OnInit {
 
   getContractsByStatus(status: IberdrolaSolarContractStatus): IberdrolaSolarContractList[] {
     return this.contractsByStatus[status] ?? [];
+  }
+
+  get canBulkUpdateContracts(): boolean {
+    return this.auth.roleIncludes(['Super Admin', 'DU']);
+  }
+
+  openBulkUpdateModal(): void {
+    if (!this.canBulkUpdateContracts || this.viewMode !== 'table') {
+      return;
+    }
+
+    this.bulkUpdateNeedsRefresh = false;
+    this.bulkUpdateModalOpen = true;
+  }
+
+  markBulkUpdateCompleted(): void {
+    this.bulkUpdateNeedsRefresh = true;
+  }
+
+  closeBulkUpdateModal(): void {
+    this.bulkUpdateModalOpen = false;
+
+    if (!this.bulkUpdateNeedsRefresh) {
+      return;
+    }
+
+    this.bulkUpdateNeedsRefresh = false;
+    this.exportSelection.clear();
+    this.loadContracts();
+  }
+
+  getExportFilters(): ContractApiFilters {
+    return buildContractExportFilters(this.buildApiFilters(), this.appliedFilters.status);
   }
 
   private buildApiFilters(): ContractApiFilters {

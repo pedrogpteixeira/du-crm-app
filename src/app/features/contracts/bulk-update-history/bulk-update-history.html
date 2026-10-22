@@ -1,0 +1,68 @@
+<section class="bulk-history-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Contratos</span>
+      <h1>Histórico de atualizações em massa</h1>
+      <p>Consulte operações anteriores, resultados individuais e erros registados.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <label>
+      <span>Comercializadora</span>
+      <select [(ngModel)]="providerFilter">
+        <option value="">Todas</option>
+        <option *ngFor="let provider of providers" [value]="provider">{{ providerLabel(provider) }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Estado</span>
+      <select [(ngModel)]="statusFilter">
+        <option value="">Todos</option>
+        <option *ngFor="let status of operationStatuses" [value]="status">{{ statusLabel(status) }}</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button type="button" class="secondary" (click)="clearFilters()">Limpar</button>
+      <button type="button" class="primary" (click)="applyFilters()">Aplicar</button>
+    </div>
+  </section>
+
+  <section class="history-card">
+    <div class="card-heading">
+      <div><strong>Operações</strong><span>{{ operationsTotal }} registos</span></div>
+      <span class="loading-inline" *ngIf="isLoadingOperations"><span class="spinner"></span>A carregar...</span>
+    </div>
+
+    <div class="message error" *ngIf="operationsError">{{ operationsError }}</div>
+
+    <div class="history-table" *ngIf="!operationsError && operations.length; else emptyOperations">
+      <div class="history-row header-row" aria-hidden="true">
+        <span>Data</span><span>Comercializadora</span><span>Seleção</span><span>Campos</span><span>Total</span><span>Atualizados</span><span>Sem alterações</span><span>Falhados</span><span>Estado</span><span></span>
+      </div>
+      <button type="button" class="history-row data-row" *ngFor="let operation of operations" (click)="openOperation(operation)">
+        <span data-label="Data">{{ operationDate(operation) }}</span>
+        <span data-label="Comercializadora">{{ providerLabel(operation.provider) }}</span>
+        <span data-label="Seleção">{{ operation.mode === 'selected' ? 'Manual' : 'Filtrada' }}</span>
+        <span class="fields-cell" data-label="Campos">{{ operationFields(operation).join(', ') || '—' }}</span>
+        <span data-label="Total">{{ operationSummary(operation).total }}</span>
+        <span data-label="Atualizados">{{ operationSummary(operation).updated }}</span>
+        <span data-label="Sem alterações">{{ operationSummary(operation).unchanged }}</span>
+        <span data-label="Falhados">{{ operationSummary(operation).failed }}</span>
+        <span data-label="Estado"><span class="status-badge" [ngClass]="'status-' + operation.status">{{ statusLabel(operation.status) }}</span></span>
+        <span class="open-cell material-symbols-rounded" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+
+    <ng-template #emptyOperations>
+      <p class="empty-state" *ngIf="!isLoadingOperations && !operationsError">Não existem operações para os filtros selecionados.</p>
+    </ng-template>
+
+    <footer class="pagination" *ngIf="operationsTotal > operationsLimit">
+      <button type="button" [disabled]="operationsOffset <= 0 || isLoadingOperations" (click)="previousOperationsPage()">Anterior</button>
+      <span>{{ operationsOffset + 1 }}–{{ operationsOffset + operations.length }} de {{ operationsTotal }}</span>
+      <button type="button" [disabled]="!operationsHasMore || isLoadingOperations" (click)="nextOperationsPage()">Seguinte</button>
+    </footer>
+  </section>
+
+</section>

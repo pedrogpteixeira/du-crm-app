@@ -119,6 +119,28 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/bulk-update-history/:id',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU'],
+        },
+        loadComponent: () =>
+          import('./features/contracts/bulk-update-history-detail/bulk-update-history-detail').then(
+            (m) => m.BulkUpdateHistoryDetail,
+          ),
+      },
+      {
+        path: 'contracts/bulk-update-history',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin', 'DU'],
+        },
+        loadComponent: () =>
+          import('./features/contracts/bulk-update-history/bulk-update-history').then(
+            (m) => m.BulkUpdateHistory,
+          ),
+      },
+      {
         path: 'contracts/repsol',
         canActivate: [roleIncludesGuard],
         data: {

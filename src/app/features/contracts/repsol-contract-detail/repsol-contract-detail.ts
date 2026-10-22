@@ -63,6 +63,15 @@ import {
 import { PreferencesService } from '../../../core/services/preferences';
 import { SocketService } from '../../../core/services/socket';
 
+import {
+  CONTRACT_CANCELLATION_REASONS,
+  ContractCancellationReasonUpdate,
+  isCancellationReasonEditRequired,
+  isContractCancellationReason,
+  isContractCancellationState,
+  mergeCancellationReasonIntoEditState,
+} from '../../../core/constants/contract-cancellation-reasons';
+
 type CampaignSelectionMode = 'existing' | 'other';
 
 interface EditableContractForm {
@@ -83,6 +92,8 @@ interface EditableContractForm {
   codigoRegistoCE: string;
   nomeRegistoCE: string;
   estado: RepsolContractStatus;
+  motivoAnulacao: string;
+  motivoAnulacaoOutras: string;
 
   agendamento: string;
   dataAssinatura: string;
@@ -242,6 +253,114 @@ export class RepsolContractDetail implements OnInit {
   ];
 
   readonly estadoOptions: readonly RepsolContractStatus[] = REPSOL_CONTRACT_STATUSES;
+
+  readonly cancellationReasonOptions = CONTRACT_CANCELLATION_REASONS;
+
+  get shouldShowCancellationReason(): boolean {
+    const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
+    return isContractCancellationState(estado);
+  }
+
+  get isCancellationReasonRequired(): boolean {
+    if (!this.isEditing) {
+      return false;
+    }
+
+    return isCancellationReasonEditRequired({
+      currentState: this.editForm.estado,
+      originalState: this.originalEditForm.estado,
+      currentReason: this.editForm.motivoAnulacao,
+      originalReason: this.originalEditForm.motivoAnulacao,
+      currentOther: this.editForm.motivoAnulacaoOutras,
+      originalOther: this.originalEditForm.motivoAnulacaoOutras,
+    });
+  }
+
+  get shouldShowCancellationReasonOther(): boolean {
+    const motivo = this.isEditing
+      ? this.editForm.motivoAnulacao
+      : this.contract?.motivoAnulacao;
+
+    return this.shouldShowCancellationReason && motivo === 'Outras';
+  }
+
+  get isMotivoAnulacaoInvalid(): boolean {
+    return (
+      this.isCancellationReasonRequired &&
+      !isContractCancellationReason(this.editForm.motivoAnulacao)
+    );
+  }
+
+  get isMotivoAnulacaoOutrasInvalid(): boolean {
+    return (
+      this.isCancellationReasonRequired &&
+      this.editForm.motivoAnulacao === 'Outras' &&
+      !this.editForm.motivoAnulacaoOutras.trim()
+    );
+  }
+
+  onEstadoChange(): void {
+    if (this.editForm.estado !== this.originalEditForm.estado) {
+      this.editForm.motivoAnulacao = '';
+      this.editForm.motivoAnulacaoOutras = '';
+      return;
+    }
+
+    if (!isContractCancellationState(this.editForm.estado)) {
+      this.editForm.motivoAnulacao = '';
+      this.editForm.motivoAnulacaoOutras = '';
+    }
+  }
+
+  onMotivoAnulacaoChange(value: string): void {
+    this.editForm.motivoAnulacao = value;
+
+    if (value !== 'Outras') {
+      this.editForm.motivoAnulacaoOutras = '';
+    }
+  }
+
+  onContractCancellationReasonUpdated(
+    update: ContractCancellationReasonUpdate,
+  ): void {
+    if (!this.contract) {
+      return;
+    }
+
+    this.contract = {
+      ...this.contract,
+      motivoAnulacao: update.motivoAnulacao,
+      motivoAnulacaoOutras: update.motivoAnulacaoOutras,
+    };
+
+    const synced = mergeCancellationReasonIntoEditState(
+      this.editForm,
+      this.originalEditForm,
+      update,
+    );
+
+    this.editForm = synced.current;
+    this.originalEditForm = synced.original;
+  }
+
+  private validateCancellationReasonRequirement(): boolean {
+    if (!this.isCancellationReasonRequired) {
+      return true;
+    }
+
+    if (this.isMotivoAnulacaoInvalid) {
+      this.showError('Selecione um motivo de anulação válido.');
+      return false;
+    }
+
+    if (this.isMotivoAnulacaoOutrasInvalid) {
+      this.showError('Descreva o motivo da anulação.');
+      return false;
+    }
+
+    return true;
+  }
+
 
   get isDataRegistoRequired(): boolean {
     const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
@@ -691,6 +810,10 @@ export class RepsolContractDetail implements OnInit {
 
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
+      return;
+    }
+
+    if (!this.validateCancellationReasonRequirement()) {
       return;
     }
 
@@ -1363,6 +1486,8 @@ export class RepsolContractDetail implements OnInit {
         codigoRegistoCE: contract.codigoRegistoCE ?? '',
         nomeRegistoCE: contract.nomeRegistoCE ?? '',
         estado: contract.estado,
+        motivoAnulacao: contract.motivoAnulacao ?? '',
+        motivoAnulacaoOutras: contract.motivoAnulacaoOutras ?? '',
 
         agendamento: this.toDateTimeLocal(contract.agendamento),
         dataAssinatura: this.toDateInput(contract.dataAssinatura),
@@ -1525,6 +1650,22 @@ export class RepsolContractDetail implements OnInit {
       this.originalEditForm.nomeRegistoCE,
     );
     this.assignChangedValue(payload, 'estado', this.editForm.estado, this.originalEditForm.estado);
+
+    if (isContractCancellationState(this.editForm.estado)) {
+      this.assignChangedValue(
+        payload,
+        'motivoAnulacao',
+        this.editForm.motivoAnulacao,
+        this.originalEditForm.motivoAnulacao,
+      );
+      this.assignChangedValue(
+        payload,
+        'motivoAnulacaoOutras',
+        this.editForm.motivoAnulacaoOutras,
+        this.originalEditForm.motivoAnulacaoOutras,
+      );
+    }
+
     this.assignChangedValue(
       payload,
       'agendamento',
@@ -1720,6 +1861,8 @@ export class RepsolContractDetail implements OnInit {
       codigoRegistoCE: '',
       nomeRegistoCE: '',
       estado: 'Pedido de Chamada',
+      motivoAnulacao: '',
+      motivoAnulacaoOutras: '',
 
       agendamento: '',
       dataAssinatura: '',

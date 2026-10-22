@@ -1,0 +1,180 @@
+<div class="contract-export-backdrop" (click)="onBackdropClick($event)">
+  <section
+    class="contract-export-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="contract-export-title"
+  >
+    <header class="contract-export-header">
+      <div>
+        <span class="contract-export-eyebrow">{{ supplierLabel }}</span>
+        <h2 id="contract-export-title">Exportar contratos</h2>
+        <p>Personalize os campos que pretende incluir no ficheiro Excel.</p>
+      </div>
+
+      <button
+        type="button"
+        class="contract-export-close"
+        aria-label="Fechar exportação"
+        [disabled]="isExporting"
+        (click)="closeModal()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="contract-export-body">
+      <section class="contract-export-scope">
+        <div class="section-heading">
+          <div>
+            <span class="material-symbols-rounded" aria-hidden="true">filter_alt</span>
+            <div>
+              <strong>Âmbito da exportação</strong>
+              <small>{{ selectedContractCount }} {{ selectedContractCount === 1 ? 'contrato abrangido' : 'contratos abrangidos' }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="scope-options">
+          <label
+            class="scope-option"
+            [class.is-active]="exportMode === 'selected'"
+            [class.is-disabled]="!manualSelectedIds.length"
+          >
+            <input
+              type="radio"
+              name="contract-export-scope"
+              value="selected"
+              [checked]="exportMode === 'selected'"
+              [disabled]="!manualSelectedIds.length || isExporting"
+              (change)="setExportMode('selected')"
+            />
+            <span class="scope-option-icon material-symbols-rounded" aria-hidden="true">checklist</span>
+            <span>
+              <strong>Contratos selecionados</strong>
+              <small *ngIf="manualSelectedIds.length; else noManualSelection">
+                {{ manualSelectedIds.length }} {{ manualSelectedIds.length === 1 ? 'contrato selecionado' : 'contratos selecionados' }} manualmente
+              </small>
+              <ng-template #noManualSelection>
+                <small>Selecione contratos na tabela para utilizar esta opção.</small>
+              </ng-template>
+            </span>
+          </label>
+
+          <label
+            class="scope-option"
+            [class.is-active]="exportMode === 'filtered'"
+            [class.is-disabled]="filteredTotal <= 0"
+          >
+            <input
+              type="radio"
+              name="contract-export-scope"
+              value="filtered"
+              [checked]="exportMode === 'filtered'"
+              [disabled]="filteredTotal <= 0 || isExporting"
+              (change)="setExportMode('filtered')"
+            />
+            <span class="scope-option-icon material-symbols-rounded" aria-hidden="true">select_all</span>
+            <span>
+              <strong>Todos os contratos filtrados</strong>
+              <small>
+                {{ filteredTotal }} {{ filteredTotal === 1 ? 'contrato corresponde' : 'contratos correspondem' }} aos filtros atuais
+              </small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="contract-export-fields">
+        <div class="fields-toolbar">
+          <div class="section-heading">
+            <div>
+              <span class="material-symbols-rounded" aria-hidden="true">view_column</span>
+              <div>
+                <strong>Campos a exportar</strong>
+                <small>{{ selectedFieldCount }} de {{ fields.length }} selecionados</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="fields-actions">
+            <button type="button" [disabled]="isLoadingFields || !fields.length || allFieldsSelected || isExporting" (click)="selectAllFields()">
+              Selecionar todos
+            </button>
+            <button type="button" [disabled]="!selectedFieldCount || isExporting" (click)="clearFieldSelection()">
+              Limpar
+            </button>
+          </div>
+        </div>
+
+        <label class="field-search">
+          <span class="material-symbols-rounded" aria-hidden="true">search</span>
+          <input
+            type="search"
+            [(ngModel)]="searchTerm"
+            placeholder="Pesquisar campos..."
+            autocomplete="off"
+            [disabled]="isLoadingFields || isExporting"
+          />
+        </label>
+
+        <div class="fields-state" *ngIf="isLoadingFields">
+          <span class="contract-export-spinner" aria-hidden="true"></span>
+          <span>A carregar campos disponíveis...</span>
+        </div>
+
+        <div class="fields-state is-error" *ngIf="!isLoadingFields && fieldsError">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+          <span>{{ fieldsError }}</span>
+          <button type="button" (click)="loadFields()">Tentar novamente</button>
+        </div>
+
+        <div class="field-groups" *ngIf="!isLoadingFields && !fieldsError">
+          <section class="field-group" *ngFor="let group of fieldGroups">
+            <h3>{{ group.label }}</h3>
+
+            <div class="field-grid">
+              <label class="field-option" *ngFor="let field of group.fields">
+                <input
+                  type="checkbox"
+                  [checked]="selectedFieldKeys.has(field.key)"
+                  [disabled]="isExporting"
+                  (change)="toggleField(field, $event)"
+                />
+                <span>
+                  <strong>{{ field.label }}</strong>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <p class="fields-empty" *ngIf="!fieldGroups.length">
+            Nenhum campo corresponde à pesquisa atual.
+          </p>
+        </div>
+      </section>
+
+      <div class="contract-export-error" *ngIf="exportError">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <span>{{ exportError }}</span>
+      </div>
+    </div>
+
+    <footer class="contract-export-footer">
+      <div class="export-progress" *ngIf="isExporting">
+        <span class="contract-export-spinner" aria-hidden="true"></span>
+        <span>A preparar exportação...</span>
+      </div>
+
+      <div class="footer-actions">
+        <button type="button" class="secondary" [disabled]="isExporting" (click)="closeModal()">
+          Cancelar
+        </button>
+        <button type="button" class="primary" [disabled]="!canExport" (click)="export()">
+          <span class="material-symbols-rounded" aria-hidden="true">download</span>
+          {{ isExporting ? 'A preparar...' : 'Exportar Excel' }}
+        </button>
+      </div>
+    </footer>
+  </section>
+</div>

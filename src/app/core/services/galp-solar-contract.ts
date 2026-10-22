@@ -100,6 +100,9 @@ export interface GalpSolarContract {
   codigoRegistoCE?: string;
   nomeRegistoCE?: string;
   estado: GalpSolarContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;
@@ -152,6 +155,9 @@ export interface CreateGalpSolarContractRequest {
   codigoRegistoCE?: string;
   nomeRegistoCE?: string;
   estado?: GalpSolarContractStatus;
+
+  motivoAnulacao?: string | null;
+  motivoAnulacaoOutras?: string | null;
   agendamento?: string;
   dataAssinatura?: string;
   dataContrato?: string;

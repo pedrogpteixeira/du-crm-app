@@ -2,11 +2,22 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   Input,
   OnChanges,
+  Output,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { Auth } from '../../../core/services/auth';
+
+import {
+  ContractCancellationReasonUpdate,
+  isContractCancellationReason,
+} from '../../../core/constants/contract-cancellation-reasons';
+import { CANCELLATION_TICKET_TYPE } from '../../../core/services/ticket';
 
 import { getContractStatusColor } from '../../../core/config/contract-status-colors';
 import type {
@@ -38,6 +49,7 @@ interface FlowStatePresentation {
   styleUrl: './contract-activity-panel.scss',
 })
 export class ContractActivityPanel implements OnChanges {
+  private readonly auth = inject(Auth);
   @Input() fluxo: ContractFlowEntry[] | null | undefined = [];
   @Input() tickets: ContractTicketSummary[] | null | undefined = [];
   @Input() contractId = '';
@@ -45,6 +57,7 @@ export class ContractActivityPanel implements OnChanges {
   @Input() statusOptions: readonly string[] | null | undefined = [];
   @Input() canCreateTicket = true;
   @Input() showTickets = true;
+  @Output() contractCancellationReasonUpdated = new EventEmitter<ContractCancellationReasonUpdate>();
 
   activeTab: ContractActivityTab = 'flow';
   isCreateTicketModalOpen = false;
@@ -62,6 +75,11 @@ export class ContractActivityPanel implements OnChanges {
       this.isCreateTicketModalOpen = false;
       this.ticketCreateFeedback = '';
     }
+  }
+
+
+  get canViewBulkUpdateHistory(): boolean {
+    return this.auth.roleIncludes(['Super Admin', 'DU']);
   }
 
   get flowEntries(): ContractFlowEntry[] {
@@ -202,6 +220,20 @@ export class ContractActivityPanel implements OnChanges {
 
   onTicketCreated(result: TicketCreateModalResult): void {
     this.isCreateTicketModalOpen = false;
+
+    const createdTicket = result.ticket;
+    if (
+      createdTicket.tipo === CANCELLATION_TICKET_TYPE &&
+      isContractCancellationReason(createdTicket.motivoAnulacao)
+    ) {
+      this.contractCancellationReasonUpdated.emit({
+        motivoAnulacao: createdTicket.motivoAnulacao,
+        motivoAnulacaoOutras:
+          createdTicket.motivoAnulacao === 'Outras'
+            ? createdTicket.motivoAnulacaoOutras?.trim() || null
+            : null,
+      });
+    }
     this.activeTab = this.showTickets ? 'tickets' : 'flow';
 
     if (result.attachmentUploadFailed) {

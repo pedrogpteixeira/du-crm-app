@@ -344,6 +344,297 @@
   }
 }
 
+.campaign-create-modal {
+  width: 640px;
+  max-width: 94vw;
+  max-height: min(88dvh, 860px);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.campaign-create-header {
+  flex: 0 0 auto;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #e8eef3;
+
+  h2 {
+    margin-bottom: 4px;
+  }
+}
+
+.campaign-create-content {
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 24px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: #cbd5e1;
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+    background-clip: padding-box;
+  }
+}
+
+.campaign-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 14px;
+}
+
+.campaign-field-full {
+  grid-column: 1 / -1;
+}
+
+.campaign-create-actions {
+  flex: 0 0 auto;
+  margin-top: 0;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #e8eef3;
+  background: #ffffff;
+}
+
+.campaign-attachments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e5ebf0;
+  border-radius: 16px;
+  background: #fbfcfd;
+}
+
+.campaign-attachments-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+
+  > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  strong {
+    color: #243646;
+    font-size: 14px;
+    font-weight: 850;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+}
+
+.optional-badge {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.attachment-rules {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.attachment-validation-message,
+.attachment-failure-details {
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.attachment-failure-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  p {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
+
+.campaign-process-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  background: #eef6fa;
+  color: #0f6075;
+  font-size: 12px;
+  font-weight: 800;
+
+  .material-symbols-rounded {
+    flex: 0 0 auto;
+    font-size: 19px;
+  }
+
+  &:not(.warning) .material-symbols-rounded {
+    animation: campaign-action-spin 0.9s linear infinite;
+  }
+
+  &.warning {
+    background: #fff7ed;
+    color: #9a3412;
+  }
+}
+
+.attachment-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.attachment-result-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+
+  &.success {
+    border-color: #bbf7d0;
+  }
+
+  &.pending {
+    border-color: #fed7aa;
+  }
+}
+
+.attachment-result-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  strong {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  .success & .material-symbols-rounded {
+    color: #16a34a;
+  }
+
+  .pending & .material-symbols-rounded {
+    color: #ea580c;
+  }
+}
+
+.attachment-result-file {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    flex: 0 0 auto;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+  }
+}
+
+:host ::ng-deep .campaign-attachments-section app-file-dropzone {
+  .dropzone {
+    min-height: 122px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #ffffff;
+  }
+
+  .selected-files {
+    max-height: 166px;
+    margin-top: 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+
+    &::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background: #cbd5e1;
+      background-clip: padding-box;
+    }
+  }
+
+  .selected-file {
+    padding: 9px 11px;
+    background: #ffffff;
+  }
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -596,6 +887,124 @@
   .actions-menu-separator {
     background: #334155;
   }
+
+  .campaign-create-header,
+  .campaign-create-actions {
+    border-color: #334155;
+  }
+
+  .campaign-create-actions {
+    background: #0f172a;
+  }
+
+  .campaign-create-content {
+    scrollbar-color: #475569 transparent;
+
+    &::-webkit-scrollbar-thumb {
+      background: #475569;
+      background-clip: padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+      background-clip: padding-box;
+    }
+  }
+
+  .campaign-attachments-section {
+    border-color: #334155;
+    background: #111827;
+  }
+
+  .campaign-attachments-heading {
+    strong {
+      color: #f1f5f9;
+    }
+
+    p {
+      color: #94a3b8;
+    }
+  }
+
+  .optional-badge {
+    background: #334155;
+    color: #cbd5e1;
+  }
+
+  .attachment-rules {
+    color: #94a3b8;
+  }
+
+  .attachment-validation-message,
+  .attachment-failure-details,
+  .campaign-process-status.warning {
+    background: rgba(234, 88, 12, 0.14);
+    color: #fdba74;
+  }
+
+  .campaign-process-status:not(.warning) {
+    background: rgba(14, 165, 198, 0.14);
+    color: #67e8f9;
+  }
+
+  .attachment-result-group {
+    border-color: #334155;
+    background: #1e293b;
+
+    &.success {
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+
+    &.pending {
+      border-color: rgba(249, 115, 22, 0.45);
+    }
+  }
+
+  .attachment-result-title strong,
+  .attachment-result-file span {
+    color: #e2e8f0;
+  }
+
+  .attachment-result-file {
+    border-top-color: #334155;
+
+    small {
+      color: #94a3b8;
+    }
+  }
+
+  ::ng-deep .campaign-attachments-section app-file-dropzone {
+    .dropzone,
+    .selected-file {
+      border-color: #475569;
+      background: #1e293b;
+    }
+
+    .dropzone p,
+    .selected-files-header strong,
+    .selected-file strong {
+      color: #f1f5f9;
+    }
+
+    .dropzone > span,
+    .selected-file span {
+      color: #94a3b8;
+    }
+
+    .selected-files {
+      scrollbar-color: #475569 transparent;
+
+      &::-webkit-scrollbar-thumb {
+        background: #475569;
+        background-clip: padding-box;
+      }
+    }
+
+    .dropzone.dragging {
+      border-color: #22d3ee;
+      background: rgba(14, 165, 198, 0.12);
+    }
+  }
 }
 
 .campaigns-card.read-only {
@@ -741,6 +1150,46 @@
     overflow-y: auto;
     padding: 18px;
     border-radius: 18px;
+  }
+
+  .campaign-create-modal {
+    max-height: calc(100dvh - 24px);
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .campaign-create-header {
+    padding: 18px 18px 15px;
+  }
+
+  .campaign-create-content {
+    gap: 16px;
+    padding: 16px 18px 18px;
+  }
+
+  .campaign-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .campaign-field-full {
+    grid-column: auto;
+  }
+
+  .campaign-create-actions {
+    padding: 14px 18px 18px;
+  }
+
+  .campaign-attachments-section {
+    padding: 14px;
+  }
+
+  .campaign-attachments-heading {
+    flex-direction: column;
+  }
+
+  .attachment-results {
+    grid-template-columns: 1fr;
   }
 
   .modal-actions {

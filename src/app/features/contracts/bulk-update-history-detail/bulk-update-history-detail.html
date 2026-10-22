@@ -1,0 +1,152 @@
+<section class="bulk-detail-page">
+  <header class="page-header">
+    <div>
+      <a class="back-link" routerLink="/home/contracts/bulk-update-history">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        Voltar ao histórico
+      </a>
+      <span class="eyebrow">Contratos</span>
+      <h1>Detalhe da atualização em massa</h1>
+      <p>Consulte o resumo da operação, os campos envolvidos e o resultado de cada contrato.</p>
+    </div>
+  </header>
+
+  <div class="state-card" *ngIf="isLoadingOperation">
+    <span class="spinner" aria-hidden="true"></span>
+    <span>A carregar operação...</span>
+  </div>
+
+  <div class="state-card is-error" *ngIf="!isLoadingOperation && operationError">
+    <span class="material-symbols-rounded" aria-hidden="true">error</span>
+    <div>
+      <strong>Não foi possível consultar a operação</strong>
+      <span>{{ operationError }}</span>
+    </div>
+    <button type="button" (click)="retryOperation()">Tentar novamente</button>
+  </div>
+
+  <ng-container *ngIf="operation as currentOperation">
+    <section class="operation-card">
+      <div class="operation-heading">
+        <div>
+          <span class="provider-name">{{ providerLabel(currentOperation.provider) }}</span>
+          <strong>{{ getOperationId(currentOperation) }}</strong>
+        </div>
+        <span class="status-badge" [ngClass]="'status-' + currentOperation.status">
+          {{ statusLabel(currentOperation.status) }}
+        </span>
+      </div>
+
+      <div class="operation-meta">
+        <div><span>Tipo de seleção</span><strong>{{ selectionLabel(currentOperation) }}</strong></div>
+        <div><span>Início</span><strong>{{ formatDate(currentOperation.startedAt || currentOperation.createdAt) }}</strong></div>
+        <div><span>Conclusão</span><strong>{{ formatDate(currentOperation.completedAt) }}</strong></div>
+        <div><span>Responsável</span><strong>{{ responsibleName(currentOperation) }}</strong></div>
+      </div>
+    </section>
+
+    <section class="review-warning" *ngIf="currentOperation.status === 'interrupted' || currentOperation.recovery?.requiresReview">
+      <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+      <div>
+        <strong>Atenção: esta operação necessita de revisão.</strong>
+        <p>Alguns contratos poderão ter sido atualizados sem que o resultado tenha sido confirmado. Consulte os registos individuais antes de realizar novas alterações.</p>
+        <div class="recovery-counts" *ngIf="recoveryUncertainCount || recoveryPendingCount">
+          <span *ngIf="recoveryUncertainCount"><strong>{{ recoveryUncertainCount }}</strong> resultados incertos</span>
+          <span *ngIf="recoveryPendingCount"><strong>{{ recoveryPendingCount }}</strong> resultados pendentes</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary-grid" *ngIf="summary as currentSummary">
+      <article><span>Abrangidos</span><strong>{{ currentSummary.total }}</strong></article>
+      <article><span>Processados</span><strong>{{ currentSummary.processed }}</strong></article>
+      <article><span>Atualizados</span><strong>{{ currentSummary.updated }}</strong></article>
+      <article><span>Sem alterações</span><strong>{{ currentSummary.unchanged }}</strong></article>
+      <article><span>Falhados</span><strong>{{ currentSummary.failed }}</strong></article>
+    </section>
+
+    <section class="fields-card">
+      <div class="section-heading">
+        <div>
+          <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
+          <div><strong>Campos envolvidos</strong><span>Campos incluídos nesta atualização em massa.</span></div>
+        </div>
+      </div>
+      <div class="field-chips" *ngIf="changedFields.length; else noFields">
+        <span *ngFor="let field of changedFields">{{ fieldLabel(field) }}</span>
+      </div>
+      <ng-template #noFields><p class="empty-inline">A API não devolveu campos associados a esta operação.</p></ng-template>
+      <small class="catalog-warning" *ngIf="fieldsCatalogError">{{ fieldsCatalogError }}</small>
+    </section>
+
+    <section class="results-card">
+      <header class="results-heading">
+        <div>
+          <strong>Resultados individuais</strong>
+          <span>{{ resultsTotal }} resultados</span>
+        </div>
+        <label>
+          <span>Resultado</span>
+          <select [(ngModel)]="resultStatusFilter" (ngModelChange)="applyResultFilter()" [disabled]="isLoadingResults">
+            <option value="">Todos</option>
+            <option value="updated">Atualizados</option>
+            <option value="unchanged">Sem alterações</option>
+            <option value="failed">Falhados</option>
+            <option value="processing">Por confirmar</option>
+          </select>
+        </label>
+      </header>
+
+      <div class="results-state" *ngIf="isLoadingResults">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>A carregar resultados...</span>
+      </div>
+
+      <div class="results-state is-error" *ngIf="!isLoadingResults && resultsError">
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        <span>{{ resultsError }}</span>
+        <button type="button" (click)="retryResults()">Tentar novamente</button>
+      </div>
+
+      <div class="results-table" *ngIf="!isLoadingResults && !resultsError && results.length">
+        <div class="result-row result-header" aria-hidden="true">
+          <span>Contrato</span><span>Resultado</span><span>Motivo / Descrição</span><span>Campos</span><span>Data</span><span>Ações</span>
+        </div>
+
+        <div class="result-row" *ngFor="let result of results">
+          <span class="contract-cell" data-label="Contrato">{{ contractLabel(result) }}</span>
+          <span data-label="Resultado">
+            <span class="result-badge" [ngClass]="'result-' + result.status">{{ resultStatusLabel(result) }}</span>
+          </span>
+          <span class="message-cell" data-label="Motivo / Descrição">
+            <ng-container *ngIf="result.status === 'failed'; else regularResultMessage">
+              <strong *ngIf="resultErrorCode(result) !== '—'">{{ resultErrorCode(result) }}</strong>
+              <details *ngIf="isLongMessage(result.message); else shortFailedMessage">
+                <summary>{{ shortMessage(result.message) }}</summary>
+                <p>{{ result.message }}</p>
+              </details>
+              <ng-template #shortFailedMessage><span>{{ result.message || '—' }}</span></ng-template>
+            </ng-container>
+            <ng-template #regularResultMessage>{{ result.message || '—' }}</ng-template>
+          </span>
+          <span class="fields-cell" data-label="Campos">{{ resultFields(result).join(', ') || '—' }}</span>
+          <span data-label="Data">{{ formatDate(result.processedAt || result.createdAt) }}</span>
+          <span class="actions-cell" data-label="Ações">
+            <a *ngIf="contractRoute(result) as route" [routerLink]="route">Abrir contrato</a>
+            <span *ngIf="!contractRoute(result)">—</span>
+          </span>
+        </div>
+      </div>
+
+      <p class="empty-state" *ngIf="!isLoadingResults && !resultsError && !results.length">
+        Não existem resultados para o filtro selecionado.
+      </p>
+
+      <footer class="pagination" *ngIf="resultsTotal > resultsLimit && !resultsError">
+        <button type="button" [disabled]="resultsOffset <= 0 || isLoadingResults" (click)="previousResultsPage()">Anterior</button>
+        <span>{{ resultsOffset + 1 }}–{{ resultsOffset + results.length }} de {{ resultsTotal }}</span>
+        <button type="button" [disabled]="!resultsHasMore || isLoadingResults" (click)="nextResultsPage()">Seguinte</button>
+      </footer>
+    </section>
+  </ng-container>
+</section>

@@ -17,7 +17,10 @@ import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
 import {
-  buildCancellationDescription,
+  CONTRACT_CANCELLATION_REASONS,
+  isContractCancellationReason,
+} from '../../../core/constants/contract-cancellation-reasons';
+import {
   CANCELLATION_TICKET_TYPE,
   CreateTicketRequest,
   CreatedTicket,
@@ -75,14 +78,13 @@ export class TicketCreateModal implements OnInit {
   isLoadingAssignment = false;
   isCreatingTicket = false;
   isUploadingAttachments = false;
-  isCancellationModalOpen = false;
   errorMessage = '';
-  cancellationErrorMessage = '';
 
   private createdTicketPendingAttachments: CreatedTicket | null = null;
 
   readonly ticketTypeOptions = TICKET_TYPE_OPTIONS;
   readonly priorityOptions = TICKET_PRIORITY_OPTIONS;
+  readonly cancellationReasonOptions = CONTRACT_CANCELLATION_REASONS;
 
   readonly ticketForm = this.fb.group({
     tipo: this.fb.nonNullable.control<TicketTipo | ''>(
@@ -97,10 +99,8 @@ export class TicketCreateModal implements OnInit {
     agendamento: this.fb.nonNullable.control(''),
     descricao: this.fb.nonNullable.control(''),
     observacoes: this.fb.nonNullable.control(''),
-  });
-
-  readonly cancellationForm = this.fb.group({
-    reason: this.fb.nonNullable.control('', Validators.required),
+    motivoAnulacao: this.fb.nonNullable.control(''),
+    motivoAnulacaoOutras: this.fb.nonNullable.control(''),
   });
 
   get tipo(): TicketTipo | '' {
@@ -142,8 +142,35 @@ export class TicketCreateModal implements OnInit {
     );
   }
 
-  get hasValidCancellationReason(): boolean {
-    return this.cancellationForm.controls.reason.value.trim().length > 0;
+  get motivoAnulacao(): string {
+    return this.ticketForm.controls.motivoAnulacao.value;
+  }
+
+  get motivoAnulacaoOutras(): string {
+    return this.ticketForm.controls.motivoAnulacaoOutras.value;
+  }
+
+  get isCancellationReasonOther(): boolean {
+    return this.motivoAnulacao === 'Outras';
+  }
+
+  get isCancellationReasonInvalid(): boolean {
+    const control = this.ticketForm.controls.motivoAnulacao;
+    return (
+      this.isCancellationSelected &&
+      control.touched &&
+      !isContractCancellationReason(control.value)
+    );
+  }
+
+  get isCancellationReasonOtherInvalid(): boolean {
+    const control = this.ticketForm.controls.motivoAnulacaoOutras;
+    return (
+      this.isCancellationSelected &&
+      this.isCancellationReasonOther &&
+      control.touched &&
+      !control.value.trim()
+    );
   }
 
   get hasPendingAttachmentRetry(): boolean {
@@ -161,9 +188,21 @@ export class TicketCreateModal implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.syncDescriptionValidation();
+        this.syncCancellationValidation();
         this.errorMessage = '';
       });
 
+    this.ticketForm.controls.motivoAnulacao.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        if (value !== 'Outras') {
+          this.ticketForm.controls.motivoAnulacaoOutras.setValue('', { emitEvent: false });
+        }
+        this.syncCancellationValidation();
+        this.errorMessage = '';
+      });
+
+    this.syncCancellationValidation();
     this.loadAssignmentData();
   }
 
@@ -263,54 +302,7 @@ export class TicketCreateModal implements OnInit {
       return;
     }
 
-    if (this.tipo === CANCELLATION_TICKET_TYPE) {
-      this.openCancellationConfirmation();
-      return;
-    }
-
     this.createTicket();
-  }
-
-  openCancellationConfirmation(): void {
-    if (this.isCreatingTicket || this.isUploadingAttachments) {
-      return;
-    }
-
-    this.cancellationErrorMessage = '';
-    this.isCancellationModalOpen = true;
-  }
-
-  closeCancellationConfirmation(): void {
-    if (this.isCreatingTicket) {
-      return;
-    }
-
-    this.isCancellationModalOpen = false;
-    this.cancellationErrorMessage = '';
-  }
-
-  confirmCancellation(): void {
-    if (this.isCreatingTicket || this.isUploadingAttachments) {
-      return;
-    }
-
-    const reason = this.cancellationForm.controls.reason.value.trim();
-
-    if (!reason) {
-      this.cancellationForm.controls.reason.markAsTouched();
-      this.cancellationErrorMessage = 'Indique o motivo da anulação.';
-      return;
-    }
-
-    const validationError = this.validateForm();
-
-    if (validationError) {
-      this.cancellationErrorMessage = validationError;
-      return;
-    }
-
-    this.cancellationErrorMessage = '';
-    this.createTicket(reason);
   }
 
   retryAttachmentUpload(): void {
@@ -356,11 +348,6 @@ export class TicketCreateModal implements OnInit {
   }
 
   close(): void {
-    if (this.isCancellationModalOpen) {
-      this.closeCancellationConfirmation();
-      return;
-    }
-
     if (this.isCreatingTicket || this.isUploadingAttachments) {
       return;
     }
@@ -384,11 +371,10 @@ export class TicketCreateModal implements OnInit {
     this.close();
   }
 
-  private createTicket(cancellationReason?: string): void {
-    const payload = this.buildPayload(cancellationReason);
+  private createTicket(): void {
+    const payload = this.buildPayload();
 
     this.errorMessage = '';
-    this.cancellationErrorMessage = '';
     this.isCreatingTicket = true;
     this.syncReactiveFormDisabledState();
 
@@ -443,12 +429,6 @@ export class TicketCreateModal implements OnInit {
             this.createdTicketPendingAttachments = result.ticket;
             this.syncReactiveFormDisabledState();
 
-            if (result.ticket.tipo === CANCELLATION_TICKET_TYPE) {
-              this.isCancellationModalOpen = false;
-              this.cancellationForm.reset({ reason: '' });
-              this.cancellationErrorMessage = '';
-            }
-
             this.errorMessage =
               'O ticket foi criado, mas não foi possível carregar os documentos. Tente novamente o envio dos anexos.';
             return;
@@ -458,23 +438,12 @@ export class TicketCreateModal implements OnInit {
         },
         error: (error: unknown) => {
           const message = this.getApiErrorMessage(error);
-
-          if (cancellationReason !== undefined) {
-            this.cancellationErrorMessage = message;
-          } else {
-            this.errorMessage = message;
-          }
+          this.errorMessage = message;
         },
       });
   }
 
   private finishCreation(result: TicketCreateModalResult): void {
-    if (result.ticket.tipo === CANCELLATION_TICKET_TYPE) {
-      this.isCancellationModalOpen = false;
-      this.cancellationForm.reset({ reason: '' });
-      this.cancellationErrorMessage = '';
-    }
-
     this.created.emit(result);
   }
   private syncReactiveFormDisabledState(): void {
@@ -486,12 +455,6 @@ export class TicketCreateModal implements OnInit {
       if (!this.canAssignOtherUsers()) {
         this.ticketForm.controls.assignedUserId.disable({ emitEvent: false });
       }
-    }
-
-    if (this.isCreatingTicket) {
-      this.cancellationForm.disable({ emitEvent: false });
-    } else {
-      this.cancellationForm.enable({ emitEvent: false });
     }
   }
 
@@ -582,6 +545,29 @@ export class TicketCreateModal implements OnInit {
     control.updateValueAndValidity({ emitEvent: false });
   }
 
+  private syncCancellationValidation(): void {
+    const reasonControl = this.ticketForm.controls.motivoAnulacao;
+    const otherControl = this.ticketForm.controls.motivoAnulacaoOutras;
+
+    if (this.isCancellationSelected) {
+      reasonControl.setValidators([Validators.required]);
+      if (this.isCancellationReasonOther) {
+        otherControl.setValidators([Validators.required]);
+      } else {
+        otherControl.clearValidators();
+        otherControl.setValue('', { emitEvent: false });
+      }
+    } else {
+      reasonControl.clearValidators();
+      otherControl.clearValidators();
+      reasonControl.setValue('', { emitEvent: false });
+      otherControl.setValue('', { emitEvent: false });
+    }
+
+    reasonControl.updateValueAndValidity({ emitEvent: false });
+    otherControl.updateValueAndValidity({ emitEvent: false });
+  }
+
   private validateForm(): string | null {
     if (!this.contractId || !this.companyId) {
       return 'Não foi possível identificar o contrato ou a comercializadora.';
@@ -603,21 +589,39 @@ export class TicketCreateModal implements OnInit {
       return 'A descrição é obrigatória para este tipo de Ticket.';
     }
 
+    if (this.isCancellationSelected) {
+      if (!isContractCancellationReason(this.motivoAnulacao)) {
+        this.ticketForm.controls.motivoAnulacao.markAsTouched();
+        return 'Selecione um motivo de anulação válido.';
+      }
+
+      if (this.isCancellationReasonOther && !this.motivoAnulacaoOutras.trim()) {
+        this.ticketForm.controls.motivoAnulacaoOutras.markAsTouched();
+        return 'Descreva o motivo da anulação.';
+      }
+    }
+
     return null;
   }
 
-  private buildPayload(cancellationReason?: string): CreateTicketRequest {
+  private buildPayload(): CreateTicketRequest {
     const description = this.descricao.trim();
     const observations = this.observacoes.trim();
-    const finalDescription =
-      cancellationReason !== undefined
-        ? buildCancellationDescription(undefined, cancellationReason)
-        : description;
+    const finalDescription = this.isCancellationSelected ? '' : description;
+    const cancellationReason = this.motivoAnulacao;
 
     const payload: CreateTicketRequest = {
       contractId: this.contractId,
       companyId: this.companyId,
       tipo: this.tipo as TicketTipo,
+      ...(this.isCancellationSelected && isContractCancellationReason(cancellationReason)
+        ? {
+            motivoAnulacao: cancellationReason,
+            ...(cancellationReason === 'Outras'
+              ? { motivoAnulacaoOutras: this.motivoAnulacaoOutras.trim() }
+              : {}),
+          }
+        : {}),
       ...(this.prioridade !== 'Normal'
         ? { prioridade: this.prioridade }
         : {}),

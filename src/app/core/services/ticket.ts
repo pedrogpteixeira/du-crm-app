@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { ContractCancellationReason } from '../constants/contract-cancellation-reasons';
 
 export type TicketTipo =
   | 'Novo Pedido de Chamada'
@@ -51,6 +52,8 @@ export interface CreateTicketRequest {
   contractId: string;
   companyId: string;
   tipo: TicketTipo;
+  motivoAnulacao?: ContractCancellationReason | null;
+  motivoAnulacaoOutras?: string | null;
   estado?: TicketEstado;
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
@@ -69,12 +72,16 @@ export interface UpdateTicketRequest {
   observacoes?: string;
   userId?: string;
   documentosConfirmados?: boolean;
+  motivoAnulacao?: ContractCancellationReason | null;
+  motivoAnulacaoOutras?: string | null;
 }
 
 export interface CreatedTicket {
   ticketId: string;
   estado: TicketEstado;
   tipo: TicketTipo;
+  motivoAnulacao?: ContractCancellationReason | null;
+  motivoAnulacaoOutras?: string | null;
   prioridade?: TicketPrioridade;
   agendamento?: string | null;
   descricao?: string | null;
@@ -109,6 +116,8 @@ export interface TicketDetail {
   nif: number | null;
   estadoContrato: string | null;
   tipo: TicketTipo;
+  motivoAnulacao?: ContractCancellationReason | null;
+  motivoAnulacaoOutras?: string | null;
   estado: TicketEstado;
   prioridade: TicketPrioridade;
   agendamento: string | null;
@@ -183,6 +192,8 @@ export interface TicketApiModel {
   documentos?: TicketApiDocument[];
   createdAt?: string;
   updatedAt?: string;
+  motivoAnulacao?: ContractCancellationReason | null;
+  motivoAnulacaoOutras?: string | null;
 }
 
 interface TransferTicketAttachmentsApiResponse {
@@ -294,6 +305,10 @@ export function prepareTicketUpdatePayload(
   return sanitizedChanges;
 }
 
+/**
+ * Mantido por compatibilidade com testes/utilizadores antigos. Os novos
+ * Pedidos de Anulação usam motivoAnulacao/motivoAnulacaoOutras no payload.
+ */
 export function buildCancellationDescription(
   currentDescription: string | null | undefined,
   reason: string,
@@ -301,9 +316,7 @@ export function buildCancellationDescription(
   const description = currentDescription?.trim();
   const cancellationReason = `Motivo da anulação: ${reason.trim()}`;
 
-  return description
-    ? `${description}\n\n${cancellationReason}`
-    : cancellationReason;
+  return description ? `${description}\n\n${cancellationReason}` : cancellationReason;
 }
 
 export function isDocumentConfirmationApiError(
@@ -684,6 +697,9 @@ export class TicketService {
       ticketId,
       estado: ticket.estado ?? 'Novo',
       tipo: ticket.tipo ?? payload.tipo,
+      motivoAnulacao: ticket.motivoAnulacao ?? payload.motivoAnulacao ?? null,
+      motivoAnulacaoOutras:
+        ticket.motivoAnulacaoOutras ?? payload.motivoAnulacaoOutras ?? null,
       prioridade: ticket.prioridade ?? payload.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? payload.agendamento ?? null,
       descricao: ticket.descricao ?? payload.descricao ?? null,
@@ -738,6 +754,8 @@ export class TicketService {
           ? ticket.estadoContrato.trim()
           : null,
       tipo: ticket.tipo ?? 'Tratamento de Pendência',
+      motivoAnulacao: ticket.motivoAnulacao ?? null,
+      motivoAnulacaoOutras: ticket.motivoAnulacaoOutras ?? null,
       estado: ticket.estado ?? 'Novo',
       prioridade: ticket.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? null,

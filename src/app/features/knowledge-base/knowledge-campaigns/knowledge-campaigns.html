@@ -190,102 +190,217 @@
     canManageCampaigns
   "
 >
-  <div class="modal">
-    <h2>Nova campanha</h2>
+  <div class="modal campaign-create-modal">
+    <header class="campaign-create-header">
+      <div>
+        <h2>Nova campanha</h2>
+        <p>Criar campanha para {{ companyName }}.</p>
+      </div>
+    </header>
 
-    <p>
-      Criar campanha para {{ companyName }}.
-    </p>
+    <div class="campaign-create-content">
+      <div class="campaign-form-grid">
+        <label class="campaign-field-full">
+          Nome da campanha
+          <input
+            type="text"
+            [(ngModel)]="newCampaign.name"
+          />
+        </label>
 
-    <label>
-      Nome da campanha
-      <input
-        type="text"
-        [(ngModel)]="newCampaign.name"
-      />
-    </label>
+        <label>
+          Data de início
+          <input
+            type="date"
+            [(ngModel)]="newCampaign.startDate"
+          />
+        </label>
 
-    <label>
-      Data de início
-      <input
-        type="date"
-        [(ngModel)]="newCampaign.startDate"
-      />
-    </label>
+        <label>
+          Data de fim
+          <input
+            type="date"
+            [(ngModel)]="newCampaign.endDate"
+          />
+        </label>
 
-    <label>
-      Data de fim
-      <input
-        type="date"
-        [(ngModel)]="newCampaign.endDate"
-      />
-    </label>
+        <label>
+          Estado
+          <select [(ngModel)]="newCampaign.active">
+            <option [ngValue]="true">
+              Ativa
+            </option>
 
-    <label>
-      Estado
-      <select [(ngModel)]="newCampaign.active">
-        <option [ngValue]="true">
-          Ativa
-        </option>
+            <option [ngValue]="false">
+              Inativa
+            </option>
+          </select>
+        </label>
 
-        <option [ngValue]="false">
-          Inativa
-        </option>
-      </select>
-    </label>
+        <label>
+          Fidelização do cliente
+          <select [(ngModel)]="newCampaign.loyalty">
+            <option [ngValue]="true">
+              Com fidelização
+            </option>
 
-    <label>
-      Fidelização do cliente
-      <select [(ngModel)]="newCampaign.loyalty">
-        <option [ngValue]="true">
-          Com fidelização
-        </option>
+            <option [ngValue]="false">
+              Sem fidelização
+            </option>
+          </select>
+        </label>
 
-        <option [ngValue]="false">
-          Sem fidelização
-        </option>
-      </select>
-    </label>
+        <label class="campaign-field-full">
+          Dias de chargeback
+          <input
+            #newChargebackDaysModel="ngModel"
+            type="number"
+            min="0"
+            step="1"
+            inputmode="numeric"
+            [(ngModel)]="newCampaign.chargebackDays"
+            [class.input-error]="
+              newChargebackDaysModel.dirty && !!newCampaignChargebackError
+            "
+          />
+          <small class="field-help">
+            Número de dias durante os quais a campanha está sujeita a chargeback.
+          </small>
+          <small
+            class="field-error"
+            *ngIf="newChargebackDaysModel.dirty && newCampaignChargebackError"
+          >
+            {{ newCampaignChargebackError }}
+          </small>
+        </label>
+      </div>
 
-    <label>
-      Dias de chargeback
-      <input
-        #newChargebackDaysModel="ngModel"
-        type="number"
-        min="0"
-        step="1"
-        inputmode="numeric"
-        [(ngModel)]="newCampaign.chargebackDays"
-        [class.input-error]="
-          newChargebackDaysModel.dirty && !!newCampaignChargebackError
-        "
-      />
-      <small class="field-help">
-        Número de dias durante os quais a campanha está sujeita a chargeback.
-      </small>
-      <small
-        class="field-error"
-        *ngIf="newChargebackDaysModel.dirty && newCampaignChargebackError"
-      >
-        {{ newCampaignChargebackError }}
-      </small>
-    </label>
+      <section class="campaign-attachments-section" aria-labelledby="campaign-attachments-title">
+        <div class="campaign-attachments-heading">
+          <div>
+            <strong id="campaign-attachments-title">Anexos do artigo</strong>
+            <p>
+              Selecione os ficheiros que pretende adicionar ao artigo desta campanha
+              na Base de Conhecimento.
+            </p>
+          </div>
 
-    <div class="modal-actions">
+          <span class="optional-badge">Opcional</span>
+        </div>
+
+        <app-file-dropzone
+          *ngIf="!createdCampaign"
+          [files]="selectedCampaignAttachments"
+          [disabled]="isCampaignCreationBusy"
+          [deduplicateFiles]="false"
+          title="Arraste os anexos do artigo para aqui"
+          selectLabel="Selecionar anexos"
+          (filesChange)="onCampaignAttachmentFilesChange($event)"
+        ></app-file-dropzone>
+
+        <small class="attachment-rules" *ngIf="!createdCampaign">
+          Máximo de 10 MB por ficheiro. Os anexos são enviados sequencialmente
+          depois de a campanha ser criada.
+        </small>
+
+        <div
+          class="attachment-validation-message"
+          *ngIf="campaignAttachmentValidationMessage && !createdCampaign"
+          role="status"
+        >
+          {{ campaignAttachmentValidationMessage }}
+        </div>
+
+        <div
+          class="campaign-process-status"
+          *ngIf="campaignCreationStatusMessage"
+          [class.warning]="campaignCreationState === 'partialFailure'"
+          role="status"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">
+            {{
+              campaignCreationState === 'partialFailure'
+                ? 'warning'
+                : 'progress_activity'
+            }}
+          </span>
+          <span>{{ campaignCreationStatusMessage }}</span>
+        </div>
+
+        <div
+          class="attachment-results"
+          *ngIf="createdCampaign && (uploadedCampaignAttachments.length || pendingCampaignAttachments.length)"
+        >
+          <div class="attachment-result-group success" *ngIf="uploadedCampaignAttachments.length">
+            <div class="attachment-result-title">
+              <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+              <strong>Enviados ({{ uploadedCampaignAttachments.length }})</strong>
+            </div>
+
+            <div class="attachment-result-file" *ngFor="let file of uploadedCampaignAttachments">
+              <span>{{ file.name }}</span>
+              <small>{{ formatCampaignAttachmentSize(file.size) }}</small>
+            </div>
+          </div>
+
+          <div class="attachment-result-group pending" *ngIf="pendingCampaignAttachments.length">
+            <div class="attachment-result-title">
+              <span class="material-symbols-rounded" aria-hidden="true">error</span>
+              <strong>Por enviar ({{ pendingCampaignAttachments.length }})</strong>
+            </div>
+
+            <div class="attachment-result-file" *ngFor="let file of pendingCampaignAttachments">
+              <span>{{ file.name }}</span>
+              <small>{{ formatCampaignAttachmentSize(file.size) }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="attachment-failure-details"
+          *ngIf="campaignAttachmentFailureDetails.length"
+        >
+          <p *ngFor="let detail of campaignAttachmentFailureDetails">{{ detail }}</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-actions campaign-create-actions">
       <button
         type="button"
         class="secondary"
+        [disabled]="isCampaignCreationBusy"
         (click)="closeCreateCampaignModal()"
       >
-        Cancelar
+        {{ createdCampaign ? 'Fechar' : 'Cancelar' }}
       </button>
 
       <button
+        *ngIf="!createdCampaign || isCampaignCreationBusy"
         type="button"
-        [disabled]="isCreatingCampaign || !!newCampaignChargebackError"
+        [disabled]="isCampaignCreationBusy || !!newCampaignChargebackError"
         (click)="createCampaign()"
       >
-        {{ isCreatingCampaign ? 'A criar...' : 'Criar campanha' }}
+        {{
+          campaignCreationState === 'creatingCampaign'
+            ? 'A criar campanha...'
+            : campaignCreationState === 'uploadingAttachments'
+              ? 'A enviar anexos...'
+              : 'Criar campanha'
+        }}
+      </button>
+
+      <button
+        *ngIf="
+          campaignCreationState === 'partialFailure' &&
+          createdCampaign?.knowledgeBaseArticleId &&
+          pendingCampaignAttachments.length
+        "
+        type="button"
+        [disabled]="isCampaignCreationBusy"
+        (click)="retryPendingCampaignAttachments()"
+      >
+        Tentar novamente os anexos em falta
       </button>
     </div>
   </div>
