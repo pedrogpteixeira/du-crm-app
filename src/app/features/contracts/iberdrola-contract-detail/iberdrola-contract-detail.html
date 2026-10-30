@@ -1211,14 +1211,6 @@
           />
         </article>
 
-        <app-entity-email-panel
-          hidden
-          entityType="contract"
-          [entityId]="contractId"
-          provider="iberdrola"
-          [recipientEmail]="contract.email || null"
-        ></app-entity-email-panel>
-
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"
           [tickets]="contract.tickets ?? []"

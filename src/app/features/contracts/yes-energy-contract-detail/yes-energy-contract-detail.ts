@@ -169,8 +169,6 @@ import { EditableSelectCombobox } from '../../../shared/components/editable-sele
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
-import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/entity-email-panel';
-
 @Component({
   selector: 'app-yes-energy-contract-detail',
   imports: [
@@ -181,7 +179,6 @@ import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/
     VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
-    EntityEmailPanel,
     ObservationsThread,
     FileDropzone,
   ],
