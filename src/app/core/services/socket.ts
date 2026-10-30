@@ -11,6 +11,12 @@ import { environment } from '../../../environments/environment';
 import type { ContractActivitySocketPayload } from '../models/contract-activity';
 import type { ContractListSocketPayload } from '../utils/contract-kanban';
 import type { PasswordPolicy } from '../models/password-policy';
+import type {
+  EmailReadChangedEvent,
+  EmailSentEvent,
+  EmailSyncCompletedEvent,
+  EmailSyncFailedEvent,
+} from '../models/email.model';
 import { Auth } from './auth';
 import { CriticalRequestService } from './critical-request';
 import { SystemNoticeService } from './system-notice';
@@ -297,6 +303,22 @@ export class SocketService {
 
   listenTicketUpdated(): Observable<TicketSocketEvent> {
     return this.createEventObservable<TicketSocketEvent>('ticket:updated');
+  }
+
+  listenEmailSyncCompleted(): Observable<EmailSyncCompletedEvent> {
+    return this.createEventObservable<EmailSyncCompletedEvent>('email:sync-completed');
+  }
+
+  listenEmailSyncFailed(): Observable<EmailSyncFailedEvent> {
+    return this.createEventObservable<EmailSyncFailedEvent>('email:sync-failed');
+  }
+
+  listenEmailReadChanged(): Observable<EmailReadChangedEvent> {
+    return this.createEventObservable<EmailReadChangedEvent>('email:read-changed');
+  }
+
+  listenEmailSent(): Observable<EmailSentEvent> {
+    return this.createEventObservable<EmailSentEvent>('email:sent');
   }
 
   private observeAuthentication(): void {

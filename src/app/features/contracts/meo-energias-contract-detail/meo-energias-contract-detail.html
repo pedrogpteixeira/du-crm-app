@@ -588,7 +588,7 @@
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.client">
-            <div class="info-grid">
+            <div class="info-grid client-info-grid">
               <label>
                 Nome Cliente / Empresa *
 
@@ -651,51 +651,54 @@
                 </ng-template>
               </label>
 
-              <label>
-                Email
+              
+                <label class="client-secondary-field client-secondary-email">
+                  Email
 
-                <input
-                  *ngIf="isEditing; else emailView"
-                  type="email"
-                  [(ngModel)]="editForm.email"
-                  appContractMask="email" appContractMaskPlaceholder=""
-                />
+                  <input
+                    *ngIf="isEditing; else emailView"
+                    type="email"
+                    [(ngModel)]="editForm.email"
+                    appContractMask="email" appContractMaskPlaceholder=""
+                  />
 
-                <ng-template #emailView>
-                  <strong>
-                    {{ getValue(contract.email) }}
-                  </strong>
-                </ng-template>
-              </label>
+                  <ng-template #emailView>
+                    <strong>
+                      {{ getValue(contract.email) }}
+                    </strong>
+                  </ng-template>
+                </label>
 
-              <label>
-                CAE
+                <label class="client-secondary-field client-secondary-cae">
+                  CAE
+  
+                  <input *ngIf="isEditing; else caeView" type="text" [(ngModel)]="editForm.cae" />
+  
+                  <ng-template #caeView>
+                    <strong>
+                      {{ getValue(contract.cae) }}
+                    </strong>
+                  </ng-template>
+                </label>
+  
+                <label class="client-secondary-field client-secondary-crc">
+                  CRC
+  
+                  <input
+                    *ngIf="isEditing; else crcView"
+                    type="text"
+                    [(ngModel)]="editForm.crc"
+                    appContractMask="crc" appContractMaskPlaceholder=""
+                  />
+  
+                  <ng-template #crcView>
+                    <strong>
+                      {{ getValue(contract.crc) }}
+                    </strong>
+                  </ng-template>
+                </label>
 
-                <input *ngIf="isEditing; else caeView" type="text" [(ngModel)]="editForm.cae" />
-
-                <ng-template #caeView>
-                  <strong>
-                    {{ getValue(contract.cae) }}
-                  </strong>
-                </ng-template>
-              </label>
-
-              <label>
-                CRC
-
-                <input
-                  *ngIf="isEditing; else crcView"
-                  type="text"
-                  [(ngModel)]="editForm.crc"
-                  appContractMask="crc" appContractMaskPlaceholder=""
-                />
-
-                <ng-template #crcView>
-                  <strong>
-                    {{ getValue(contract.crc) }}
-                  </strong>
-                </ng-template>
-              </label>
+              
             </div>
           </div>
         </article>
@@ -802,7 +805,7 @@
                 </ng-template>
               </label>
 
-              <label>
+              <label class="iban-field">
                 IBAN
 
                 <input
@@ -834,7 +837,7 @@
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.energy">
-            <div class="info-grid">
+            <div class="info-grid product-info-grid">
               <label *ngIf="isEditing">
                 Tipo de campanha *
 
@@ -952,7 +955,7 @@
                   (isEditing ? editForm.tipoProduto : contract.tipoProduto) === 'Luz + Gás'
                 "
               >
-                <label>
+                <label class="product-technical-field product-technical-potencia">
                   Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
                   <app-editable-select-combobox
@@ -975,7 +978,7 @@
                   (isEditing ? editForm.tipoProduto : contract.tipoProduto) === 'Luz + Gás'
                 "
               >
-                <label>
+                <label class="product-technical-field product-technical-escalao">
                   Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
                   <app-editable-select-combobox
@@ -998,7 +1001,7 @@
                   (isEditing ? editForm.tipoProduto : contract.tipoProduto) === 'Luz + Gás'
                 "
               >
-                <label>
+                <label class="product-technical-field product-technical-ciclo">
                   Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
                   <app-editable-select-combobox
@@ -1014,7 +1017,7 @@
                   </ng-template>
                 </label>
 
-                <label>
+                <label class="product-technical-field product-technical-tensao">
                   Nível Tensão
 
                   <app-editable-select-combobox
@@ -1137,6 +1140,14 @@
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>
+
+        <app-entity-email-panel
+          hidden
+          entityType="contract"
+          [entityId]="contractId"
+          provider="meo-energias"
+          [recipientEmail]="contract.email || null"
+        ></app-entity-email-panel>
 
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"

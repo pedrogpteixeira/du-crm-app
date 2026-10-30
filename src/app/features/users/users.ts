@@ -131,7 +131,7 @@ export class Users implements OnInit {
     const searchedTeam = this.normalizeText(this.teamSearch);
 
     return this.teams
-      .filter((team) => team.active)
+      .filter((team) => team.active === true)
       .filter(
         (team) =>
           !searchedTeam ||
@@ -157,6 +157,7 @@ export class Users implements OnInit {
   ngOnInit(): void {
     this.isSuperAdmin = this.auth.isSuperAdmin();
     this.observeUsersCache();
+    this.observeTeamsCache();
     this.loadUsers();
 
   }
@@ -471,6 +472,36 @@ export class Users implements OnInit {
       });
   }
 
+  private observeTeamsCache(): void {
+    this.teamService.teamsState$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((state) => {
+        if (!state.loaded && !state.teams.length) {
+          return;
+        }
+
+        this.teams = state.teams;
+
+        if (
+          this.createUserForm.teamId &&
+          !this.teams.some(
+            (team) =>
+              team.id === this.createUserForm.teamId &&
+              team.active === true,
+          )
+        ) {
+          this.createUserForm.teamId = '';
+          this.createUserForm.positionIndex = null;
+          this.teamSearch = '';
+
+          if (this.showCreateUserModal) {
+            this.teamsErrorMessage =
+              'A equipa anteriormente selecionada deixou de estar ativa.';
+          }
+        }
+      });
+  }
+
   private finishSuccessfulUserCreation(): void {
     this.isCreatingUser = false;
     this.showCreateUserModal = false;
@@ -491,10 +522,17 @@ export class Users implements OnInit {
     this.createUserForm = this.getEmptyCreateUserForm();
     this.teamSearch = '';
 
+    const apiMessage = this.extractApiMessage(error);
+    const apiCode = this.extractApiCode(error);
+
     const suffix =
       error.status === 403
         ? ' Não tem permissão para concluir esta operação.'
-        : '';
+        : error.status === 409 && apiCode === 'TEAM_INACTIVE'
+          ? ` ${apiMessage || 'A equipa selecionada está inativa e não aceita novos membros.'}`
+          : apiMessage
+            ? ` ${apiMessage}`
+            : '';
 
     this.showFeedback(
       `${fallbackMessage}${suffix} O utilizador permanece inativo e pode ser encontrado através do filtro de inativos.`,
@@ -552,11 +590,18 @@ export class Users implements OnInit {
       return 'Seleciona o layout dos contratos.';
     }
 
-    if (
-      this.createUserForm.teamId &&
-      this.createUserForm.positionIndex === null
-    ) {
-      return 'Seleciona um cargo para a equipa escolhida.';
+    if (this.createUserForm.teamId) {
+      const selectedTeam = this.teams.find(
+        (team) => team.id === this.createUserForm.teamId,
+      );
+
+      if (!selectedTeam || selectedTeam.active !== true) {
+        return 'A equipa selecionada já não está ativa. Seleciona outra equipa.';
+      }
+
+      if (this.createUserForm.positionIndex === null) {
+        return 'Seleciona um cargo para a equipa escolhida.';
+      }
     }
 
     return '';
@@ -648,6 +693,19 @@ export class Users implements OnInit {
     }
 
     return '';
+  }
+
+  private extractApiCode(error: HttpErrorResponse): string {
+    const errorBody = error.error as
+      | { code?: unknown }
+      | null
+      | undefined;
+
+    return errorBody &&
+      typeof errorBody === 'object' &&
+      typeof errorBody.code === 'string'
+        ? errorBody.code
+        : '';
   }
 
   private showFeedback(

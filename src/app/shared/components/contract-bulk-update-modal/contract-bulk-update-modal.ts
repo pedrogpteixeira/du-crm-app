@@ -452,7 +452,7 @@ export class ContractBulkUpdateModalComponent implements OnInit {
       .getTeams()
       .pipe(finalize(() => (this.isLoadingTeams = false)))
       .subscribe({
-        next: (teams) => (this.teams = teams.filter((team) => team.active !== false)),
+        next: (teams) => (this.teams = teams.filter((team) => team.active === true)),
         error: () => (this.teams = []),
       });
   }

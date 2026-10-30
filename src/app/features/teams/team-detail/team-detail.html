@@ -30,21 +30,70 @@
         </p>
       </div>
 
-      <button
-        type="button"
-        class="add-user-button"
-        *ngIf="canManageTeamUsers"
-        (click)="openAddUserModal()"
-      >
-        <span
-          class="material-symbols-rounded"
+      <div class="team-header-actions">
+        <button
+          type="button"
+          class="team-edit-button"
+          *ngIf="canEditTeam && !isEditingTeam"
+          (click)="startTeamEditing()"
         >
-          person_add
-        </span>
+          <span class="material-symbols-rounded">edit</span>
+          Editar
+        </button>
 
-        Adicionar utilizadores
-      </button>
+        <ng-container *ngIf="isEditingTeam && canEditTeam">
+          <button
+            type="button"
+            class="team-active-button"
+            [class.reactivate]="team.active !== true"
+            [disabled]="isUpdatingTeamActive || isSavingPositions"
+            (click)="requestTeamActiveChange()"
+          >
+            <span class="material-symbols-rounded">
+              {{ team.active === true ? 'block' : 'check_circle' }}
+            </span>
+
+            {{
+              isUpdatingTeamActive
+                ? 'A atualizar...'
+                : team.active === true
+                  ? 'Desativar equipa'
+                  : 'Reativar equipa'
+            }}
+          </button>
+
+          <button
+            type="button"
+            class="team-edit-cancel-button"
+            [disabled]="isUpdatingTeamActive || isSavingPositions"
+            (click)="cancelTeamEditing()"
+          >
+            Cancelar edição
+          </button>
+        </ng-container>
+
+        <button
+          type="button"
+          class="add-user-button"
+          *ngIf="canAddTeamUsers && !isEditingTeam"
+          (click)="openAddUserModal()"
+        >
+          <span class="material-symbols-rounded">person_add</span>
+          Adicionar utilizadores
+        </button>
+      </div>
     </header>
+
+    <div class="inactive-team-notice" *ngIf="team.active !== true">
+      <span class="material-symbols-rounded">info</span>
+      <div>
+        <strong>Equipa inativa</strong>
+        <p>
+          As associações históricas são preservadas, mas esta equipa não pode
+          receber novos utilizadores nem novas atribuições.
+        </p>
+      </div>
+    </div>
 
     <div class="detail-grid">
       <article class="card">
@@ -105,22 +154,163 @@
             </strong>
           </label>
 
-          <label>
-            Cargos
-
-            <div class="positions-stack">
-              <span
-                class="position-item"
-                *ngFor="
-                  let position of
-                    team.positionList
-                "
-              >
-                {{ position }}
-              </span>
-            </div>
-          </label>
         </div>
+
+        <section class="team-positions-section">
+          <div class="team-positions-header">
+            <div>
+              <div class="section-title">Hierarquia de cargos</div>
+            </div>
+
+            <span
+              class="positions-editing-badge"
+              *ngIf="isEditingTeam && canManageTeamPositions"
+            >
+              <span class="material-symbols-rounded">edit</span>
+              Em edição
+            </span>
+          </div>
+
+          <div
+            class="positions-readonly-list"
+            *ngIf="!isEditingPositions"
+          >
+            <div
+              class="position-readonly-row"
+              *ngFor="let position of team.positionList; let positionIndex = index"
+            >
+              <span class="position-index">{{ positionIndex }}</span>
+              <strong>{{ position }}</strong>
+            </div>
+          </div>
+
+          <div class="positions-editor" *ngIf="isEditingTeam && isEditingPositions">
+            <div class="positions-unsaved-notice" *ngIf="hasPositionChanges">
+              <span class="material-symbols-rounded">edit_note</span>
+              Existem alterações por guardar.
+            </div>
+
+            <button
+              type="button"
+              class="position-insert-button"
+              [disabled]="isSavingPositions"
+              (click)="addPositionAt(0)"
+            >
+              <span class="material-symbols-rounded">add</span>
+              Adicionar no início
+            </button>
+
+            <div
+              class="position-editor-row"
+              *ngFor="let position of editablePositionList; let positionIndex = index; trackBy: trackPositionByIndex"
+            >
+              <span class="position-index">{{ positionIndex }}</span>
+
+              <input
+                type="text"
+                [value]="position"
+                [disabled]="isSavingPositions"
+                maxlength="80"
+                [attr.aria-label]="'Nome do cargo ' + positionIndex"
+                (input)="updatePositionName(positionIndex, $any($event.target).value)"
+              />
+
+              <div class="position-row-actions">
+                <button
+                  type="button"
+                  title="Mover para cima"
+                  [disabled]="isSavingPositions || positionIndex === 0"
+                  (click)="movePosition(positionIndex, -1)"
+                >
+                  <span class="material-symbols-rounded">arrow_upward</span>
+                </button>
+
+                <button
+                  type="button"
+                  title="Mover para baixo"
+                  [disabled]="isSavingPositions || positionIndex === editablePositionList.length - 1"
+                  (click)="movePosition(positionIndex, 1)"
+                >
+                  <span class="material-symbols-rounded">arrow_downward</span>
+                </button>
+
+                <button
+                  type="button"
+                  title="Adicionar cargo abaixo"
+                  [disabled]="isSavingPositions"
+                  (click)="addPositionAt(positionIndex + 1)"
+                >
+                  <span class="material-symbols-rounded">add</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="danger"
+                  title="Remover cargo"
+                  [disabled]="isSavingPositions"
+                  (click)="requestRemovePosition(positionIndex)"
+                >
+                  <span class="material-symbols-rounded">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="position-remove-confirmation"
+              *ngIf="pendingRemovePositionIndex !== null"
+            >
+              <div>
+                <strong>Remover este cargo?</strong>
+                <p>
+                  A remoção só será efetiva depois de guardar. Se existirem utilizadores associados, o backend recusará a operação.
+                </p>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  class="secondary-button"
+                  [disabled]="isSavingPositions"
+                  (click)="cancelRemovePosition()"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="danger-button"
+                  [disabled]="isSavingPositions"
+                  (click)="confirmRemovePosition()"
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
+
+            <p class="positions-error" *ngIf="positionsErrorMessage">
+              {{ positionsErrorMessage }}
+            </p>
+
+            <div class="positions-editor-actions">
+              <button
+                type="button"
+                class="secondary-button"
+                [disabled]="isSavingPositions"
+                (click)="cancelTeamEditing()"
+              >
+                Cancelar edição
+              </button>
+
+              <button
+                type="button"
+                class="primary-button"
+                [disabled]="isSavingPositions || !hasPositionChanges"
+                (click)="saveTeamPositions()"
+              >
+                {{ isSavingPositions ? 'A guardar...' : 'Guardar hierarquia' }}
+              </button>
+            </div>
+          </div>
+        </section>
       </article>
 
       <article class="card users-card">
@@ -729,6 +919,53 @@
 </section>
 
 <!-- MODAL ADICIONAR UTILIZADORES -->
+
+<div
+  class="modal-backdrop"
+  *ngIf="showDeactivateTeamConfirmation"
+  (click)="cancelTeamDeactivation()"
+>
+  <section
+    class="team-deactivation-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deactivate-team-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="team-deactivation-icon">
+      <span class="material-symbols-rounded">block</span>
+    </div>
+
+    <div class="team-deactivation-copy">
+      <h2 id="deactivate-team-title">Desativar equipa?</h2>
+      <p>
+        A equipa <strong>{{ team?.name }}</strong> deixará de estar disponível
+        para novas atribuições e novos membros. As associações históricas
+        serão preservadas.
+      </p>
+    </div>
+
+    <div class="team-deactivation-actions">
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="isUpdatingTeamActive"
+        (click)="cancelTeamDeactivation()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="button"
+        class="danger-button"
+        [disabled]="isUpdatingTeamActive"
+        (click)="confirmTeamDeactivation()"
+      >
+        {{ isUpdatingTeamActive ? 'A desativar...' : 'Desativar equipa' }}
+      </button>
+    </div>
+  </section>
+</div>
 
 <div
   class="modal-backdrop"

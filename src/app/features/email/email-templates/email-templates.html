@@ -1,0 +1,271 @@
+<section class="templates-page">
+  <header class="page-header">
+    <div class="page-title-group">
+      <span class="page-icon material-symbols-rounded">description</span>
+      <div>
+        <span class="eyebrow">Email · Templates</span>
+        <h1>Templates de email</h1>
+        <p>Prepara respostas frequentes para reutilizar diretamente no compositor.</p>
+      </div>
+    </div>
+    <button type="button" class="primary" [disabled]="isSaving || isDeleting" (click)="createNew()">
+      <span class="material-symbols-rounded">add</span>
+      Novo template
+    </button>
+  </header>
+
+  <div class="templates-shell">
+    <aside class="template-list-panel">
+      <header class="list-header">
+        <div>
+          <span class="kicker">Biblioteca</span>
+          <strong>{{ totalLabel }}</strong>
+        </div>
+        <span class="list-page" *ngIf="templates.length || hasPrevious"
+          >Pág. {{ currentPage }}</span
+        >
+      </header>
+
+      <div class="list-loading" *ngIf="isLoading">
+        <span class="loading-spinner"></span>
+        <div>
+          <strong>A carregar templates</strong>
+          <span>A consultar a biblioteca disponível.</span>
+        </div>
+      </div>
+
+      <div class="inline-state error-state" *ngIf="!isLoading && loadError && !templates.length">
+        <span class="material-symbols-rounded">error</span>
+        <div>
+          <strong>Não foi possível carregar os templates</strong>
+          <p>{{ loadError }}</p>
+        </div>
+        <button type="button" class="secondary compact" (click)="retryLoad()">
+          Tentar novamente
+        </button>
+      </div>
+
+      <div class="refresh-state" *ngIf="isRefreshing">
+        <span class="loading-spinner"></span>
+        A atualizar templates...
+      </div>
+
+      <div
+        class="refresh-error"
+        *ngIf="!isLoading && !isRefreshing && loadError && templates.length"
+      >
+        <span>{{ loadError }}</span>
+        <button type="button" (click)="retryLoad()">Tentar novamente</button>
+      </div>
+
+      <div class="template-list" *ngIf="!isLoading">
+        <button
+          type="button"
+          *ngFor="let template of templates; trackBy: trackByTemplateId"
+          [class.active]="selectedId === template.id"
+          (click)="select(template)"
+        >
+          <span class="template-icon material-symbols-rounded">description</span>
+          <span class="template-copy">
+            <strong>{{ template.name }}</strong>
+            <small>{{ template.subject || '(Sem assunto)' }}</small>
+            <span class="shared-label" *ngIf="template.shared">Partilhado · só leitura</span>
+          </span>
+          <span
+            class="status-dot"
+            [class.off]="!template.active"
+            [attr.title]="template.active ? 'Ativo' : 'Inativo'"
+          ></span>
+        </button>
+
+        <div class="empty-list" *ngIf="!loadError && !templates.length">
+          <span class="material-symbols-rounded">note_stack</span>
+          <strong>Ainda não existem templates</strong>
+          <p>Cria um template privado para o utilizar no compositor.</p>
+        </div>
+      </div>
+
+      <footer class="template-pagination" *ngIf="!isLoading && (templates.length || hasPrevious)">
+        <button type="button" [disabled]="!hasPrevious || isRefreshing" (click)="previous()">
+          <span class="material-symbols-rounded">chevron_left</span>
+          Anterior
+        </button>
+        <button type="button" [disabled]="!hasMore || isRefreshing" (click)="next()">
+          Seguinte
+          <span class="material-symbols-rounded">chevron_right</span>
+        </button>
+      </footer>
+    </aside>
+
+    <main class="template-detail">
+      <section class="detail-card editor" *ngIf="isEditing">
+        <header class="detail-header">
+          <div class="detail-title">
+            <span class="detail-icon material-symbols-rounded">edit_note</span>
+            <div>
+              <span class="kicker">{{ selectedId ? 'Editar template' : 'Novo template' }}</span>
+              <h2>{{ selectedId ? selectedTemplate?.name || 'Template' : 'Criar template' }}</h2>
+              <p>
+                {{
+                  selectedId
+                    ? 'Atualiza o conteúdo e a disponibilidade deste template.'
+                    : 'Cria uma mensagem reutilizável para o compositor.'
+                }}
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            <span>Nome *</span>
+            <input
+              [(ngModel)]="form.name"
+              type="text"
+              maxlength="120"
+              placeholder="Pedido de documentação"
+            />
+          </label>
+          <label>
+            <span>Assunto</span>
+            <input
+              [(ngModel)]="form.subject"
+              type="text"
+              maxlength="500"
+              placeholder="Documentação necessária"
+            />
+          </label>
+          <label class="body-field">
+            <span>Corpo</span>
+            <textarea [(ngModel)]="form.body" rows="13" [placeholder]="bodyPlaceholder"></textarea>
+          </label>
+        </div>
+
+        <label class="active-check">
+          <input type="checkbox" [(ngModel)]="form.active" />
+          <span>
+            <strong>Template ativo</strong>
+            <small>Disponível para utilização no compositor de email.</small>
+          </span>
+        </label>
+
+        <div class="variable-help">
+          <div class="variable-heading">
+            <span class="material-symbols-rounded">data_object</span>
+            <div>
+              <strong>Variáveis disponíveis</strong>
+              <small>Utiliza apenas os placeholders suportados pelo backend.</small>
+            </div>
+          </div>
+          <div class="variable-chips">
+            <span *ngFor="let variable of availableVariables; trackBy: trackByVariable">{{
+              variable
+            }}</span>
+          </div>
+          <p>
+            Os placeholders são mantidos até existir contexto suficiente para os resolver com
+            segurança.
+          </p>
+        </div>
+
+        <footer class="detail-actions">
+          <button type="button" class="secondary" [disabled]="isSaving" (click)="cancelEdit()">
+            Cancelar
+          </button>
+          <button type="button" class="primary" [disabled]="isSaving" (click)="save()">
+            <span class="loading-spinner button-spinner" *ngIf="isSaving"></span>
+            <span class="material-symbols-rounded" *ngIf="!isSaving">save</span>
+            {{ isSaving ? 'A guardar...' : 'Guardar template' }}
+          </button>
+        </footer>
+      </section>
+
+      <section class="detail-card preview" *ngIf="!isEditing && selectedTemplate as template">
+        <header class="detail-header">
+          <div class="detail-title">
+            <span class="detail-icon material-symbols-rounded">draft</span>
+            <div>
+              <span class="kicker">Pré-visualização</span>
+              <h2>{{ template.name }}</h2>
+              <p>Visualiza o conteúdo antes de o aplicar no compositor.</p>
+            </div>
+          </div>
+          <div class="template-badges">
+            <span class="status shared" *ngIf="template.shared">Partilhado</span>
+            <span class="status" [class.off]="!template.active">{{
+              template.active ? 'Ativo' : 'Inativo'
+            }}</span>
+          </div>
+        </header>
+
+        <section class="message-preview">
+          <div class="preview-subject">
+            <span>Assunto</span>
+            <strong>{{ template.subject || '(Sem assunto)' }}</strong>
+          </div>
+          <div class="preview-body">{{ template.body || '(Sem conteúdo)' }}</div>
+        </section>
+
+        <div class="variables" *ngIf="variables(template).length">
+          <div class="variable-heading">
+            <span class="material-symbols-rounded">data_object</span>
+            <strong>Variáveis presentes</strong>
+          </div>
+          <div class="variable-chips">
+            <span *ngFor="let variable of variables(template); trackBy: trackByVariable">{{
+              variable
+            }}</span>
+          </div>
+        </div>
+
+        <div class="readonly-note" *ngIf="template.shared">
+          <span class="material-symbols-rounded">lock</span>
+          <span
+            >Este template é partilhado e pode ser utilizado no compositor, mas não pode ser editado
+            ou eliminado por esta conta.</span
+          >
+        </div>
+
+        <footer class="detail-actions" *ngIf="canManageSelected">
+          <button
+            type="button"
+            class="secondary danger"
+            [disabled]="isDeleting || isSaving"
+            (click)="remove()"
+          >
+            <span class="loading-spinner button-spinner" *ngIf="isDeleting"></span>
+            <span class="material-symbols-rounded" *ngIf="!isDeleting">delete</span>
+            {{ isDeleting ? 'A eliminar...' : 'Eliminar' }}
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="isSaving || isDeleting"
+            (click)="toggleActive()"
+          >
+            <span class="loading-spinner button-spinner" *ngIf="isSaving"></span>
+            <span class="material-symbols-rounded" *ngIf="!isSaving">{{
+              template.active ? 'pause_circle' : 'play_circle'
+            }}</span>
+            {{ isSaving ? 'A atualizar...' : template.active ? 'Desativar' : 'Ativar' }}
+          </button>
+          <button
+            type="button"
+            class="primary"
+            [disabled]="isSaving || isDeleting"
+            (click)="editSelected()"
+          >
+            <span class="material-symbols-rounded">edit</span>
+            Editar
+          </button>
+        </footer>
+      </section>
+
+      <section class="detail-empty" *ngIf="!isEditing && !selectedTemplate">
+        <span class="material-symbols-rounded">description</span>
+        <h2>Seleciona ou cria um template</h2>
+        <p>Escolhe um template na biblioteca para consultar a pré-visualização ou cria um novo.</p>
+      </section>
+    </main>
+  </div>
+</section>

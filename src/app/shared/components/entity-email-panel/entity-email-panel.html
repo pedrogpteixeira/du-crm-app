@@ -1,0 +1,75 @@
+<article class="email-relations-card">
+  <header class="panel-header">
+    <div>
+      <div class="section-title">{{ title }}</div>
+      <p>Correspondência associada diretamente a este registo.</p>
+    </div>
+    <div class="panel-actions">
+      <button type="button" class="secondary-button" [disabled]="isLoading" (click)="refresh()">
+        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+        Atualizar
+      </button>
+      <button type="button" class="primary-button" [disabled]="isLoadingAccounts" (click)="openComposer()">
+        <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+        {{ isLoadingAccounts ? 'A preparar...' : 'Enviar email' }}
+      </button>
+    </div>
+  </header>
+
+  <div class="panel-state" *ngIf="isLoading">A carregar emails associados...</div>
+  <div class="panel-state error" *ngIf="!isLoading && loadError">
+    <span>{{ loadError }}</span>
+    <button type="button" (click)="refresh()">Tentar novamente</button>
+  </div>
+  <div class="panel-state" *ngIf="!isLoading && !loadError && !items.length">
+    <span class="material-symbols-rounded empty-icon" aria-hidden="true">mail</span>
+    <strong>Sem emails associados</strong>
+    <span>A correspondência ligada a este {{ entityType === 'contract' ? 'contrato' : 'ticket' }} aparecerá aqui.</span>
+  </div>
+
+  <div class="message-list" *ngIf="!isLoading && !loadError && items.length">
+    <article class="message-row" *ngFor="let item of items; trackBy: trackByRelationId">
+      <button type="button" class="message-main" (click)="openMessage(item)">
+        <div class="message-heading">
+          <strong>{{ item.subject }}</strong>
+          <time *ngIf="item.date">{{ item.date | date:'dd/MM/yyyy HH:mm' }}</time>
+        </div>
+        <div class="message-meta">
+          <span>{{ formatAddress(item.from) }}</span>
+          <span class="material-symbols-rounded attachment-icon" *ngIf="item.hasAttachments" aria-label="Tem anexos">attach_file</span>
+        </div>
+        <p>{{ item.preview || 'Sem pré-visualização disponível.' }}</p>
+      </button>
+
+      <ng-container *ngIf="pendingDeleteId !== item.relationId; else removeConfirm">
+        <button type="button" class="unlink-button" aria-label="Remover associação" (click)="askRemove(item.relationId)">
+          <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
+        </button>
+      </ng-container>
+      <ng-template #removeConfirm>
+        <div class="remove-confirm">
+          <button type="button" (click)="cancelRemove()">Cancelar</button>
+          <button type="button" class="danger" [disabled]="deletingRelationId === item.relationId" (click)="remove(item)">
+            {{ deletingRelationId === item.relationId ? 'A remover...' : 'Remover' }}
+          </button>
+        </div>
+      </ng-template>
+    </article>
+  </div>
+
+  <footer class="pagination" *ngIf="!isLoading && !loadError && (items.length || canPrevious)">
+    <button type="button" [disabled]="!canPrevious" (click)="previous()">Anterior</button>
+    <span>{{ counterLabel }}</span>
+    <button type="button" [disabled]="!hasMore" (click)="next()">Seguinte</button>
+  </footer>
+</article>
+
+<app-email-composer
+  *ngIf="isComposerOpen"
+  [accounts]="accounts"
+  [selectedAccountId]="accounts[0]?.id || null"
+  [initialTo]="recipientEmail || ''"
+  mode="new"
+  (closed)="closeComposer()"
+  (sent)="onSent($event)"
+></app-email-composer>

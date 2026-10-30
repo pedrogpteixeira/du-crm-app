@@ -1,0 +1,106 @@
+<div class="relation-backdrop" (click)="closed.emit()">
+  <section class="relation-modal" role="dialog" aria-modal="true" aria-labelledby="relation-title" (click)="$event.stopPropagation()">
+    <header>
+      <div>
+        <span class="eyebrow">Certo CRM</span>
+        <h2 id="relation-title">Associar email</h2>
+        <p>Liga esta mensagem a um contrato ou ticket acessível.</p>
+      </div>
+      <button type="button" class="icon-button" aria-label="Fechar" (click)="closed.emit()">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="existing-section">
+      <div class="section-heading">
+        <strong>Associações atuais</strong>
+        <span>{{ relations.length }}</span>
+      </div>
+
+      <p class="muted" *ngIf="isLoadingRelations">A carregar associações...</p>
+      <div class="relations-error" *ngIf="!isLoadingRelations && relationsError"><span>{{ relationsError }}</span><button type="button" (click)="retryLoadRelations()">Tentar novamente</button></div>
+      <p class="muted" *ngIf="!isLoadingRelations && !relationsError && !relations.length">Este email ainda não está associado a nenhum registo.</p>
+
+      <div class="relation-list" *ngIf="relations.length">
+        <div class="relation-item" *ngFor="let relation of relations; trackBy: trackByRelationId">
+          <button type="button" class="relation-main" (click)="openRelation(relation)">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ relation.entityType === 'contract' ? 'description' : 'confirmation_number' }}</span>
+            <span>
+              <strong>{{ relation.entityType === 'contract' ? 'Contrato' : 'Ticket' }}</strong>
+              <small>{{ relation.entityId }}<ng-container *ngIf="relation.provider"> · {{ relation.provider }}</ng-container></small>
+            </span>
+          </button>
+
+          <ng-container *ngIf="pendingDeleteId !== relation.id; else confirmDelete">
+            <button type="button" class="remove-button" aria-label="Remover associação" (click)="askRemove(relation.id)">
+              <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
+            </button>
+          </ng-container>
+          <ng-template #confirmDelete>
+            <div class="confirm-remove">
+              <button type="button" (click)="cancelRemove()">Cancelar</button>
+              <button type="button" class="danger" [disabled]="deletingId === relation.id" (click)="removeRelation(relation)">
+                {{ deletingId === relation.id ? 'A remover...' : 'Remover' }}
+              </button>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div class="search-section">
+      <div class="entity-tabs" role="tablist" aria-label="Tipo de registo">
+        <button type="button" role="tab" [attr.aria-selected]="entityType === 'contract'" [class.active]="entityType === 'contract'" (click)="setEntityType('contract')">Contratos</button>
+        <button type="button" role="tab" [attr.aria-selected]="entityType === 'ticket'" [class.active]="entityType === 'ticket'" (click)="setEntityType('ticket')">Tickets</button>
+      </div>
+
+      <label class="search-box">
+        <span class="material-symbols-rounded" aria-hidden="true">search</span>
+        <input
+          type="search"
+          [ngModel]="query"
+          (ngModelChange)="onQueryChange($event)"
+          [placeholder]="entityType === 'contract' ? 'Nome, NIF, email ou contrato...' : 'Pesquisar ticket...'"
+          autocomplete="off"
+        />
+      </label>
+
+      <p class="muted" *ngIf="query.trim().length < 2">Escreve pelo menos 2 caracteres para pesquisar.</p>
+      <p class="muted" *ngIf="isSearching">A pesquisar...</p>
+      <p class="error" *ngIf="searchError">{{ searchError }}</p>
+      <p class="muted" *ngIf="!isSearching && !searchError && query.trim().length >= 2 && !results.length">Não foram encontrados resultados acessíveis.</p>
+
+      <div class="search-results" *ngIf="results.length">
+        <article class="search-result" *ngFor="let result of results; trackBy: trackBySearchResult">
+          <div class="result-copy">
+            <strong>{{ result.title }}</strong>
+            <ng-container *ngIf="result.entityType === 'contract'; else ticketMeta">
+              <small>{{ result.provider }} · {{ result.entityId }}</small>
+              <span>
+                <ng-container *ngIf="result.nif">NIF {{ result.nif }}</ng-container>
+                <ng-container *ngIf="result.estado"> · {{ result.estado }}</ng-container>
+                <ng-container *ngIf="result.tipoProduto"> · {{ result.tipoProduto }}</ng-container>
+              </span>
+            </ng-container>
+            <ng-template #ticketMeta>
+              <small>{{ result.entityId }}</small>
+              <span>
+                <ng-container *ngIf="ticketType(result) as tipo">{{ tipo }}</ng-container>
+                <ng-container *ngIf="result.estado"> · {{ result.estado }}</ng-container>
+                <ng-container *ngIf="ticketPriority(result) as prioridade"> · {{ prioridade }}</ng-container>
+              </span>
+            </ng-template>
+          </div>
+          <button
+            type="button"
+            class="associate-button"
+            [disabled]="relationExists(result) || creatingKey === resultKey(result)"
+            (click)="addRelation(result)"
+          >
+            {{ relationExists(result) ? 'Associado' : creatingKey === resultKey(result) ? 'A associar...' : 'Associar' }}
+          </button>
+        </article>
+      </div>
+    </div>
+  </section>
+</div>

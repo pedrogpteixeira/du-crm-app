@@ -1,0 +1,244 @@
+<div class="composer-backdrop" (click)="!isBusy && closed.emit()">
+  <section
+    class="composer"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="email-composer-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="composer-header">
+      <div class="composer-title-block">
+        <div class="composer-title-icon">
+          <span class="material-symbols-rounded">edit_square</span>
+        </div>
+        <div class="composer-title-copy">
+          <span id="email-composer-title">{{
+            mode === 'reply'
+              ? 'Responder'
+              : mode === 'replyAll'
+                ? 'Responder a todos'
+                : mode === 'forward'
+                  ? 'Reencaminhar'
+                  : mode === 'draft'
+                    ? 'Editar rascunho'
+                    : 'Nova mensagem'
+          }}</span>
+          <small>{{ draftId ? 'Rascunho guardado no CRM' : 'Composição de email' }}</small>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="icon-button"
+        aria-label="Fechar"
+        [disabled]="isBusy"
+        (click)="closed.emit()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+
+    <div class="composer-fields">
+      <label class="field-row"
+        ><span>De</span
+        ><select
+          [(ngModel)]="accountId"
+          (ngModelChange)="onDraftFieldChanged()"
+          [disabled]="isBusy || availableAccounts.length <= 1 || !!draftId"
+        >
+          <option
+            *ngFor="let account of availableAccounts; trackBy: trackByAccountId"
+            [value]="account.id"
+          >
+            {{ account.displayName || account.address }} — {{ account.address }}
+          </option>
+        </select></label
+      >
+      <label class="field-row"
+        ><span>Para</span
+        ><input
+          [(ngModel)]="to"
+          (ngModelChange)="onDraftFieldChanged()"
+          type="text"
+          autocomplete="off"
+          placeholder="cliente@exemplo.pt"
+        />
+        <div class="recipient-links">
+          <button type="button" (click)="showCc = !showCc">CC</button
+          ><button type="button" (click)="showBcc = !showBcc">BCC</button>
+        </div></label
+      >
+      <label class="field-row" *ngIf="showCc"
+        ><span>CC</span
+        ><input
+          [(ngModel)]="cc"
+          (ngModelChange)="onDraftFieldChanged()"
+          type="text"
+          autocomplete="off"
+      /></label>
+      <label class="field-row" *ngIf="showBcc"
+        ><span>BCC</span
+        ><input
+          [(ngModel)]="bcc"
+          (ngModelChange)="onDraftFieldChanged()"
+          type="text"
+          autocomplete="off"
+      /></label>
+      <label class="field-row template-row" *ngIf="activeTemplates.length"
+        ><span>Template</span
+        ><select
+          #templateSelect
+          (change)="applyTemplate(templateSelect.value); templateSelect.value = ''"
+        >
+          <option value="">Aplicar template...</option>
+          <option
+            *ngFor="let template of activeTemplates; trackBy: trackByTemplateId"
+            [value]="template.id"
+          >
+            {{ template.name }}
+          </option>
+        </select></label
+      >
+      <label class="field-row"
+        ><span>Assunto</span
+        ><input
+          [(ngModel)]="subject"
+          (ngModelChange)="onDraftFieldChanged()"
+          type="text"
+          maxlength="998"
+      /></label>
+    </div>
+
+    <textarea
+      class="composer-body"
+      [(ngModel)]="text"
+      (ngModelChange)="onDraftFieldChanged()"
+      maxlength="200000"
+      placeholder="Escreve a mensagem..."
+    ></textarea>
+
+    <div class="attachments" *ngIf="isLoadingDraftAttachments">
+      <div class="attachment-chip">
+        <span class="loading-spinner"></span><span>A carregar anexos do rascunho...</span>
+      </div>
+    </div>
+    <div class="attachments" *ngIf="persistedAttachments.length">
+      <div
+        class="attachment-chip"
+        *ngFor="let attachment of persistedAttachments; trackBy: trackByPersistedAttachment"
+      >
+        <span class="material-symbols-rounded">attach_file</span
+        ><span
+          ><strong>{{ attachment.filename }}</strong
+          ><small>Guardado · {{ formatBytes(attachment.size) }}</small></span
+        >
+        <button
+          type="button"
+          aria-label="Descarregar anexo"
+          [disabled]="!!downloadingAttachmentId"
+          (click)="downloadPersistedAttachment(attachment)"
+        >
+          <span class="material-symbols-rounded">download</span>
+        </button>
+        <button
+          type="button"
+          aria-label="Remover anexo"
+          [disabled]="!!deletingAttachmentId"
+          (click)="removePersistedAttachment(attachment)"
+        >
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="attachments" *ngIf="files.length">
+      <div class="attachment-chip" *ngFor="let file of files; let i = index; trackBy: trackByFile">
+        <span class="material-symbols-rounded">attach_file</span
+        ><span
+          ><strong>{{ file.name }}</strong
+          ><small>Pendente · {{ formatBytes(file.size) }}</small></span
+        ><button type="button" aria-label="Remover anexo" (click)="removeFile(i)">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+    </div>
+
+    <div
+      class="draft-save-status"
+      *ngIf="canPersistDraft"
+      [class.error]="autosaveState === 'error'"
+      aria-live="polite"
+    >
+      <span class="material-symbols-rounded">{{
+        autosaveState === 'saving'
+          ? 'sync'
+          : autosaveState === 'saved'
+            ? 'cloud_done'
+            : autosaveState === 'error'
+              ? 'cloud_off'
+              : autosaveState === 'dirty'
+                ? 'edit'
+                : 'cloud'
+      }}</span>
+      <span *ngIf="autosaveState === 'idle'"
+        >O rascunho será guardado automaticamente quando começares a escrever.</span
+      >
+      <span *ngIf="autosaveState === 'dirty'">Alterações por guardar</span>
+      <span *ngIf="autosaveState === 'saving'">A guardar rascunho...</span>
+      <span *ngIf="autosaveState === 'saved'">Rascunho guardado</span>
+      <span *ngIf="autosaveState === 'error'">{{
+        autosaveError || 'Não foi possível guardar automaticamente.'
+      }}</span>
+    </div>
+    <div class="draft-save-status warning" *ngIf="isThreadedMode">
+      <span class="material-symbols-rounded">info</span>
+      <span
+        >O threading desta resposta/reencaminhamento só é preservado no envio. A API atual não o
+        persiste em rascunhos.</span
+      >
+    </div>
+
+    <footer class="composer-footer">
+      <div class="composer-actions-primary">
+        <button type="button" class="send-button" [disabled]="isBusy" (click)="send()">
+          <span class="material-symbols-rounded">send</span
+          >{{ isSending ? 'A enviar...' : 'Enviar' }}
+        </button>
+        <label class="attach-button" [class.disabled]="isBusy"
+          ><input
+            type="file"
+            multiple
+            hidden
+            [disabled]="isBusy"
+            (change)="onFilesSelected($event)"
+          /><span class="material-symbols-rounded">attach_file</span>Anexar</label
+        >
+        <span class="limit-copy">máx. 5 ficheiros · 5 MB cada · 6 MB total</span>
+      </div>
+      <div class="composer-actions-secondary">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="isBusy || !canPersistDraft"
+          [title]="
+            !canPersistDraft
+              ? 'A API não persiste threading em rascunhos de respostas/reencaminhamentos.'
+              : 'Guardar agora'
+          "
+          (click)="saveDraft()"
+        >
+          <span class="material-symbols-rounded">draft</span
+          >{{ isSavingDraft || uploadingAttachments ? 'A guardar...' : 'Guardar rascunho' }}
+        </button>
+        <button
+          *ngIf="draftId"
+          type="button"
+          class="danger-icon"
+          aria-label="Eliminar rascunho"
+          [disabled]="isBusy"
+          (click)="deleteDraft()"
+        >
+          <span class="material-symbols-rounded">delete</span>
+        </button>
+      </div>
+    </footer>
+  </section>
+</div>

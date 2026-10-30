@@ -136,6 +136,7 @@ export class UserService {
   constructor() {
     this.observeAuthentication();
     this.observeAssignableUsersInvalidation();
+    this.observeTeamsInvalidation();
     this.observeSocketReconnect();
   }
 
@@ -479,6 +480,36 @@ export class UserService {
         // The same backend invalidation event is emitted when user/team/role
         // assignment data changes. Only refresh the expensive full list if it
         // has already been requested in this session.
+        if (
+          this.usersStateSubject.value.loaded ||
+          this.usersRequest$
+        ) {
+          this.refreshUsers().subscribe({
+            error: () => undefined,
+          });
+        }
+      });
+  }
+
+  private observeTeamsInvalidation(): void {
+    this.socketService
+      .listenTeamsInvalidated()
+      .pipe(
+        debounceTime(300),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        if (!this.auth.isAuthenticated()) {
+          return;
+        }
+
+        // Team active/inactive state is embedded in assignable-user DTOs.
+        // Refresh this cache as well so open assignment screens do not keep
+        // offering a team that has just become ineligible.
+        this.refreshAssignableUsers().subscribe({
+          error: () => undefined,
+        });
+
         if (
           this.usersStateSubject.value.loaded ||
           this.usersRequest$

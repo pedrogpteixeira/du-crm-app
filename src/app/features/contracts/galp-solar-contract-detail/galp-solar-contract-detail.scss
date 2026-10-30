@@ -930,3 +930,37 @@ strong {
   color: #dc2626;
   opacity: 1;
 }
+
+
+
+
+.client-info-grid {
+  grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(0, 1fr));
+  column-gap: 24px;
+}
+
+.client-secondary-field {
+  order: 10;
+}
+
+.client-secondary-email {
+  grid-column: 1;
+}
+
+.client-secondary-cae {
+  grid-column: 2;
+}
+
+.client-secondary-crc {
+  grid-column: 3;
+}
+
+@media (max-width: 700px) {
+  .client-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-secondary-field {
+    grid-column: auto;
+  }
+}

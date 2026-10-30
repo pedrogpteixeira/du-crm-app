@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth-guard';
 import { guestGuard } from './core/guards/guest-guard';
 import { roleIncludesGuard } from './core/guards/role-includes-guard';
+import { emailFeatureGuard } from './core/guards/email-feature-guard';
 
 export const routes: Routes = [
   {
@@ -117,6 +118,27 @@ export const routes: Routes = [
           import('./features/tickets/ticket-detail/ticket-detail').then(
             (m) => m.TicketDetail,
           ),
+      },
+      {
+        path: 'email',
+        canActivate: [emailFeatureGuard],
+        loadComponent: () =>
+          import('./features/email/mailbox/mailbox').then((m) => m.Mailbox),
+      },
+      {
+        path: 'email/templates',
+        canActivate: [emailFeatureGuard],
+        loadComponent: () =>
+          import('./features/email/email-templates/email-templates').then((m) => m.EmailTemplates),
+      },
+      {
+        path: 'email/admin',
+        canActivate: [emailFeatureGuard, roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () =>
+          import('./features/email/email-admin/email-admin').then((m) => m.EmailAdmin),
       },
       {
         path: 'contracts/bulk-update-history/:id',

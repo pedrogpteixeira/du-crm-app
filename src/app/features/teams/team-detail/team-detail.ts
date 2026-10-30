@@ -63,6 +63,7 @@ interface AddUserResult {
   userId: string;
   success: boolean;
   status?: number;
+  code?: string;
   message?: string;
 }
 
@@ -157,6 +158,17 @@ export class TeamDetail implements OnInit {
   removingUserId = '';
 
   showAddUserModal = false;
+  isUpdatingTeamActive = false;
+  showDeactivateTeamConfirmation = false;
+
+  isEditingTeam = false;
+  isEditingPositions = false;
+  isSavingPositions = false;
+  editablePositionList: string[] = [];
+  private originalPositionList: string[] = [];
+  pendingRemovePositionIndex: number | null = null;
+  positionsErrorMessage = '';
+
   private readonly toast = inject(ToastService);
 
   private _errorMessage = '';
@@ -323,6 +335,377 @@ export class TeamDetail implements OnInit {
     );
   }
 
+  get canAddTeamUsers(): boolean {
+    return (
+      this.canManageTeamUsers &&
+      this.team?.active === true
+    );
+  }
+
+  get canManageTeamActive(): boolean {
+    return this.auth.roleIncludes(
+      'Super Admin',
+    );
+  }
+
+  get canManageTeamPositions(): boolean {
+    return this.auth.roleIncludes(
+      'Super Admin',
+    );
+  }
+
+  get canEditTeam(): boolean {
+    return this.auth.roleIncludes(
+      'Super Admin',
+    );
+  }
+
+  startTeamEditing(): void {
+    if (!this.canEditTeam || !this.team) {
+      return;
+    }
+
+    this.isEditingTeam = true;
+    this.startPositionEditing();
+  }
+
+  cancelTeamEditing(): void {
+    if (this.isSavingPositions || this.isUpdatingTeamActive) {
+      return;
+    }
+
+    this.cancelPositionEditing();
+    this.showDeactivateTeamConfirmation = false;
+    this.isEditingTeam = false;
+  }
+
+  get hasPositionChanges(): boolean {
+    if (!this.isEditingPositions) {
+      return false;
+    }
+
+    const current = this.editablePositionList.map((position) =>
+      position.trim(),
+    );
+
+    return (
+      current.length !== this.originalPositionList.length ||
+      current.some(
+        (position, index) =>
+          position !== this.originalPositionList[index],
+      )
+    );
+  }
+
+  startPositionEditing(): void {
+    if (!this.canManageTeamPositions || !this.team) {
+      return;
+    }
+
+    this.originalPositionList = [...this.team.positionList];
+    this.editablePositionList = [...this.team.positionList];
+    this.isEditingPositions = true;
+    this.positionsErrorMessage = '';
+    this.pendingRemovePositionIndex = null;
+  }
+
+  cancelPositionEditing(): void {
+    if (this.isSavingPositions) {
+      return;
+    }
+
+    this.editablePositionList = [...this.originalPositionList];
+    this.isEditingPositions = false;
+    this.positionsErrorMessage = '';
+    this.pendingRemovePositionIndex = null;
+  }
+
+  trackPositionByIndex(index: number): number {
+    return index;
+  }
+
+  updatePositionName(index: number, value: string): void {
+    if (!this.isEditingPositions || this.isSavingPositions) {
+      return;
+    }
+
+    const next = [...this.editablePositionList];
+    next[index] = value;
+    this.editablePositionList = next;
+    this.positionsErrorMessage = '';
+  }
+
+  addPositionAt(index: number): void {
+    if (!this.isEditingPositions || this.isSavingPositions) {
+      return;
+    }
+
+    const next = [...this.editablePositionList];
+    const safeIndex = Math.max(0, Math.min(index, next.length));
+    next.splice(safeIndex, 0, '');
+    this.editablePositionList = next;
+    this.positionsErrorMessage = '';
+    this.pendingRemovePositionIndex = null;
+  }
+
+  movePosition(index: number, direction: -1 | 1): void {
+    if (!this.isEditingPositions || this.isSavingPositions) {
+      return;
+    }
+
+    const targetIndex = index + direction;
+
+    if (targetIndex < 0 || targetIndex >= this.editablePositionList.length) {
+      return;
+    }
+
+    const next = [...this.editablePositionList];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    this.editablePositionList = next;
+    this.positionsErrorMessage = '';
+  }
+
+  requestRemovePosition(index: number): void {
+    if (
+      !this.isEditingPositions ||
+      this.isSavingPositions ||
+      index < 0 ||
+      index >= this.editablePositionList.length
+    ) {
+      return;
+    }
+
+    this.pendingRemovePositionIndex = index;
+  }
+
+  cancelRemovePosition(): void {
+    if (this.isSavingPositions) {
+      return;
+    }
+
+    this.pendingRemovePositionIndex = null;
+  }
+
+  confirmRemovePosition(): void {
+    const index = this.pendingRemovePositionIndex;
+
+    if (
+      index === null ||
+      this.isSavingPositions ||
+      index < 0 ||
+      index >= this.editablePositionList.length
+    ) {
+      return;
+    }
+
+    const next = [...this.editablePositionList];
+    next.splice(index, 1);
+    this.editablePositionList = next;
+    this.pendingRemovePositionIndex = null;
+    this.positionsErrorMessage = '';
+  }
+
+  saveTeamPositions(): void {
+    const team = this.team;
+
+    if (
+      !this.canManageTeamPositions ||
+      !team ||
+      !this.isEditingPositions ||
+      this.isSavingPositions ||
+      !this.hasPositionChanges
+    ) {
+      return;
+    }
+
+    const normalizedPositions = this.editablePositionList.map((position) =>
+      position.trim(),
+    );
+
+    if (!normalizedPositions.length) {
+      this.positionsErrorMessage =
+        'A hierarquia deve ter pelo menos um cargo.';
+      return;
+    }
+
+    if (normalizedPositions.some((position) => !position)) {
+      this.positionsErrorMessage =
+        'Todos os cargos devem ter um nome válido.';
+      return;
+    }
+
+    const normalizedKeys = normalizedPositions.map((position) =>
+      this.normalizeText(position),
+    );
+
+    if (new Set(normalizedKeys).size !== normalizedKeys.length) {
+      this.positionsErrorMessage =
+        'Não podem existir cargos duplicados, mesmo com diferenças de maiúsculas ou espaços.';
+      return;
+    }
+
+    this.isSavingPositions = true;
+    this.positionsErrorMessage = '';
+
+    this.teamService
+      .updateTeamPositions(team.id, normalizedPositions)
+      .pipe(
+        finalize(() => {
+          this.isSavingPositions = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (updatedTeam) => {
+          this.team = {
+            ...team,
+            ...updatedTeam,
+            positionList: normalizedPositions,
+          };
+
+          this.originalPositionList = [...normalizedPositions];
+          this.editablePositionList = [...normalizedPositions];
+          this.isEditingPositions = false;
+          this.isEditingTeam = false;
+          this.pendingRemovePositionIndex = null;
+
+          this.toast.success(
+            'A hierarquia de cargos foi atualizada com sucesso.',
+          );
+
+          this.loadTeam(team.id);
+
+          this.userService.refreshAssignableUsers().subscribe({
+            error: () => undefined,
+          });
+
+          this.userService.refreshUsers().subscribe({
+            error: () => undefined,
+          });
+        },
+        error: (error) => {
+          const apiCode =
+            typeof error?.error?.code === 'string'
+              ? error.error.code
+              : '';
+          const apiMessage =
+            typeof error?.error?.message === 'string'
+              ? error.error.message.trim()
+              : '';
+
+          if (error?.status === 409 && apiCode === 'POSITION_IN_USE') {
+            this.positionsErrorMessage =
+              `${apiMessage ? `${apiMessage} ` : ''}` +
+              'Reatribui os utilizadores associados a esse cargo antes de o remover.';
+
+            this.toast.error(this.positionsErrorMessage);
+            return;
+          }
+
+          this.positionsErrorMessage =
+            apiMessage ||
+            'Não foi possível atualizar a hierarquia de cargos.';
+          this.toast.error(this.positionsErrorMessage);
+        },
+      });
+  }
+
+  requestTeamActiveChange(): void {
+    if (
+      !this.canManageTeamActive ||
+      !this.team ||
+      this.isUpdatingTeamActive
+    ) {
+      return;
+    }
+
+    if (this.team.active === true) {
+      this.showDeactivateTeamConfirmation = true;
+      return;
+    }
+
+    this.updateTeamActive(true);
+  }
+
+  cancelTeamDeactivation(): void {
+    if (this.isUpdatingTeamActive) {
+      return;
+    }
+
+    this.showDeactivateTeamConfirmation = false;
+  }
+
+  confirmTeamDeactivation(): void {
+    if (
+      !this.team ||
+      this.isUpdatingTeamActive
+    ) {
+      return;
+    }
+
+    this.updateTeamActive(false);
+  }
+
+  private updateTeamActive(active: boolean): void {
+    const team = this.team;
+
+    if (
+      !this.canManageTeamActive ||
+      !team ||
+      this.isUpdatingTeamActive
+    ) {
+      return;
+    }
+
+    this.isUpdatingTeamActive = true;
+
+    this.teamService
+      .setTeamActive(team.id, active)
+      .pipe(
+        finalize(() => {
+          this.isUpdatingTeamActive = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: (updatedTeam) => {
+          this.showDeactivateTeamConfirmation = false;
+          this.team = {
+            ...team,
+            ...updatedTeam,
+            active,
+          };
+
+          if (
+            !active &&
+            this.showAddUserModal &&
+            !this.isAddingUser
+          ) {
+            this.closeAddUserModal();
+          }
+
+          this.toast.success(
+            active
+              ? `A equipa ${team.name} foi reativada.`
+              : `A equipa ${team.name} foi desativada.`,
+          );
+        },
+        error: (error) => {
+          const apiMessage =
+            typeof error?.error?.message === 'string'
+              ? error.error.message.trim()
+              : '';
+
+          this.toast.error(
+            apiMessage ||
+              (active
+                ? 'Não foi possível reativar a equipa.'
+                : 'Não foi possível desativar a equipa.'),
+          );
+        },
+      });
+  }
+
   get canManageCommissions(): boolean {
     return this.auth.roleIncludes(
       'Super Admin',
@@ -467,6 +850,14 @@ export class TeamDetail implements OnInit {
         }
       : cachedTeam;
 
+    if (
+      this.team.active !== true &&
+      this.showAddUserModal &&
+      !this.isAddingUser
+    ) {
+      this.closeAddUserModal();
+    }
+
     this.cdr.detectChanges();
   }
 
@@ -530,6 +921,11 @@ export class TeamDetail implements OnInit {
       .subscribe({
         next: (response) => {
           this.team = response.team;
+          this.originalPositionList = [...response.team.positionList];
+
+          if (!this.isEditingPositions) {
+            this.editablePositionList = [...response.team.positionList];
+          }
 
           this.users = [
             ...(response.users || []),
@@ -1358,7 +1754,7 @@ export class TeamDetail implements OnInit {
 
   openAddUserModal(): void {
     if (
-      !this.canManageTeamUsers ||
+      !this.canAddTeamUsers ||
       !this.teamId ||
       this.isLoadingUsers
     ) {
@@ -1396,7 +1792,7 @@ export class TeamDetail implements OnInit {
   }
 
   loadAvailableUsers(): void {
-    if (!this.canManageTeamUsers) {
+    if (!this.canAddTeamUsers) {
       return;
     }
 
@@ -1678,13 +2074,13 @@ export class TeamDetail implements OnInit {
 
   addSelectedUsers(): void {
     if (
-      !this.canManageTeamUsers ||
+      !this.canAddTeamUsers ||
       !this.teamId ||
       !this.selectedUserIds.length ||
       this.isAddingUser
     ) {
       if (
-        this.canManageTeamUsers &&
+        this.canAddTeamUsers &&
         !this.selectedUserIds.length
       ) {
         this.addUserErrorMessage =
@@ -1743,6 +2139,12 @@ export class TeamDetail implements OnInit {
                     success: false,
                     status:
                       error?.status,
+                    code:
+                      typeof error?.error
+                        ?.code ===
+                      'string'
+                        ? error.error.code
+                        : undefined,
                     message:
                       typeof error?.error
                         ?.message ===
@@ -1789,6 +2191,25 @@ export class TeamDetail implements OnInit {
             !failedResults.length
           ) {
             this.closeModalAfterSuccess();
+            return;
+          }
+
+          const inactiveTeamFailure =
+            failedResults.find(
+              (result) =>
+                result.status === 409 &&
+                result.code === 'TEAM_INACTIVE',
+            );
+
+          if (inactiveTeamFailure) {
+            this.addUserErrorMessage =
+              inactiveTeamFailure.message ||
+              'Esta equipa está inativa e não pode receber novos utilizadores.';
+
+            this.teamService.refreshTeams().subscribe({
+              error: () => undefined,
+            });
+
             return;
           }
 

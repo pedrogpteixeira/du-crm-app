@@ -66,6 +66,8 @@ interface SaveTicketResult {
   uploadError: unknown;
 }
 
+import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/entity-email-panel';
+
 @Component({
   selector: 'app-ticket-detail',
   imports: [
@@ -75,6 +77,7 @@ interface SaveTicketResult {
     FileDropzone,
     VisibleAttachmentsPipe,
     ObservationsThread,
+    EntityEmailPanel,
   ],
   templateUrl: './ticket-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,

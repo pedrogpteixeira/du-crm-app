@@ -1029,7 +1029,7 @@ export class YesEnergyContractCreate implements OnInit {
           Boolean(team?.id) &&
           Number.isInteger(team.positionIndex) &&
           team.positionIndex >= 0 &&
-          team.active !== false
+          team.active === true
         );
       })
       .map((team) => ({

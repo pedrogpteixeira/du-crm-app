@@ -1,0 +1,137 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div class="page-title-group">
+      <span class="page-icon material-symbols-rounded">admin_panel_settings</span>
+      <div>
+        <span class="eyebrow">Email · Administração</span>
+        <h1>Contas de email</h1>
+        <p>Configura contas, valida IMAP/SMTP e gere as permissões de acesso.</p>
+      </div>
+    </div>
+    <button type="button" class="primary" (click)="openCreate()">
+      <span class="material-symbols-rounded">add</span>
+      Nova conta
+    </button>
+  </header>
+
+  <div class="security-banner">
+    <span class="material-symbols-rounded">encrypted</span>
+    <div>
+      <strong>Credenciais protegidas</strong>
+      <p>As passwords guardadas nunca são apresentadas. Uma nova password substitui a credencial atual.</p>
+    </div>
+  </div>
+
+  <div class="loading-card" *ngIf="isLoading"><span class="spinner"></span><div><strong>A carregar contas</strong><span>A consultar a configuração atual do servidor.</span></div></div>
+  <div class="info-banner error-banner" *ngIf="!isLoading && accountsLoadError" role="alert">
+    <span class="material-symbols-rounded">error</span>
+    <div><strong>Não foi possível carregar as contas</strong><p>{{ accountsLoadError }}</p></div>
+    <button type="button" class="secondary" (click)="retryLoadAccounts()">Tentar novamente</button>
+  </div>
+
+  <div class="admin-shell" *ngIf="!isLoading && !accountsLoadError">
+    <aside class="account-list-panel">
+      <header class="list-header">
+        <div><span class="kicker">Contas configuradas</span><strong>{{ accounts.length }} {{ accounts.length === 1 ? 'conta' : 'contas' }}</strong></div>
+      </header>
+      <div class="account-list">
+        <button type="button" *ngFor="let account of accounts; trackBy: trackByAccountId" [class.active]="selectedAccount?.id === account.id" (click)="selectAccount(account)">
+          <span class="account-icon material-symbols-rounded">alternate_email</span>
+          <span class="account-copy"><strong>{{ account.displayName || account.address }}</strong><small>{{ account.address }}</small></span>
+          <span class="account-state" [class.on]="account.isActive">{{ account.isActive ? 'Ativa' : 'Inativa' }}</span>
+        </button>
+        <div class="empty" *ngIf="!accounts.length"><span class="material-symbols-rounded">mark_email_unread</span><strong>Sem contas configuradas</strong><p>Cria a primeira conta para disponibilizar email no CRM.</p></div>
+      </div>
+    </aside>
+
+    <main class="account-detail" *ngIf="selectedAccount as account; else selectAccountEmpty">
+      <section class="card configuration-card">
+        <header class="card-header">
+          <div class="card-title"><span class="account-large-icon material-symbols-rounded">alternate_email</span><div><span class="kicker">Configuração</span><h2>{{ account.displayName || account.address }}</h2><p>{{ account.address }}</p></div></div>
+          <span class="status" [class.active]="account.isActive"><span class="status-dot"></span>{{ account.isActive ? 'Ativa' : 'Inativa' }}</span>
+        </header>
+
+        <div class="connection-overview">
+          <article><span class="material-symbols-rounded">move_to_inbox</span><div><small>IMAP</small><strong>{{ account.imapHost || '—' }}</strong><span>Porta {{ account.imapPort }}</span></div></article>
+          <article><span class="material-symbols-rounded">outgoing_mail</span><div><small>SMTP</small><strong>{{ account.smtpHost || '—' }}</strong><span>Porta {{ account.smtpPort }}</span></div></article>
+          <article><span class="material-symbols-rounded">person</span><div><small>Utilizador</small><strong>{{ account.username || '—' }}</strong><span>Autenticação da mailbox</span></div></article>
+          <article><span class="material-symbols-rounded">lock</span><div><small>Segurança</small><strong>TLS</strong><span>993 / 465</span></div></article>
+        </div>
+
+        <div class="settings-grid">
+          <label><span>Nome de apresentação</span><input [(ngModel)]="editDisplayName" type="text" maxlength="160" /></label>
+          <label><span>Nova password</span><input [(ngModel)]="newPassword" type="password" autocomplete="new-password" placeholder="Deixar vazio para manter" /></label>
+        </div>
+
+        <section class="connection-test-panel">
+          <div class="connection-test-heading"><div><span class="kicker">Diagnóstico</span><strong>Estado das ligações</strong></div><button type="button" class="secondary test-button" [disabled]="isTesting" (click)="testConnection()"><span class="material-symbols-rounded">cable</span>{{ isTesting ? 'A testar...' : 'Testar ligação' }}</button></div>
+          <div class="connection-testing" *ngIf="isTesting"><span class="spinner"></span><span>A validar autenticação e conectividade IMAP/SMTP...</span></div>
+          <div class="connection-result" *ngIf="!isTesting && connectionTest">
+            <article [ngClass]="connectionStatusClass(connectionTest.connections.imap)"><span class="material-symbols-rounded">{{ connectionStatusIcon(connectionTest.connections.imap) }}</span><div><small>IMAP</small><strong>{{ connectionStatusLabel(connectionTest.connections.imap) }}</strong></div></article>
+            <article [ngClass]="connectionStatusClass(connectionTest.connections.smtp)"><span class="material-symbols-rounded">{{ connectionStatusIcon(connectionTest.connections.smtp) }}</span><div><small>SMTP</small><strong>{{ connectionStatusLabel(connectionTest.connections.smtp) }}</strong></div></article>
+          </div>
+          <div class="connection-error" *ngIf="!isTesting && connectionTestError"><span class="material-symbols-rounded">error</span><span>{{ connectionTestError }}</span></div>
+          <p class="connection-note">O teste valida apenas a ligação técnica aos servidores. As permissões dos utilizadores são geridas separadamente.</p>
+        </section>
+
+        <footer class="actions configuration-actions">
+          <button type="button" class="secondary" [class.danger]="account.isActive" [disabled]="isSaving" (click)="toggleActive()"><span class="material-symbols-rounded">{{ account.isActive ? 'pause_circle' : 'play_circle' }}</span>{{ account.isActive ? 'Desativar conta' : 'Ativar conta' }}</button>
+          <button type="button" class="primary" [disabled]="isSaving" (click)="saveAccount()"><span class="material-symbols-rounded">save</span>{{ isSaving ? 'A guardar...' : 'Guardar alterações' }}</button>
+        </footer>
+      </section>
+
+      <section class="card access-card">
+        <header class="card-header">
+          <div><span class="kicker">Permissões</span><h2>Acesso de utilizadores</h2><p>Define exatamente o que cada utilizador pode fazer nesta conta.</p></div>
+          <span class="access-count">{{ accountUsers.length }} associados</span>
+        </header>
+
+        <div class="access-editor">
+          <label class="user-select"><span>Utilizador</span><select [ngModel]="selectedUserId" (ngModelChange)="onUserSelected($event)"><option value="">Selecionar utilizador</option><option *ngFor="let user of users; trackBy: trackByUserId" [value]="user.id">{{ user.name }} — {{ user.email }}</option></select></label>
+          <div class="permission-editor" *ngIf="selectedUserId">
+            <div class="permission-status-line"><span class="permission-user-state" [class.new]="!selectedUserHasAccess">{{ selectedUserHasAccess ? 'Acesso existente' : 'Novo acesso' }}</span><span class="save-state" [class.dirty]="accessDirty">{{ accessDirty ? 'Alterações por guardar' : 'Guardado' }}</span></div>
+            <div class="permission-checks">
+              <label><input type="checkbox" [ngModel]="access.canRead" (ngModelChange)="onReadPermissionChange($event)" /><span><strong>Ler</strong><small>Consultar mensagens e anexos</small></span></label>
+              <label><input type="checkbox" [(ngModel)]="access.canSend" /><span><strong>Enviar</strong><small>Enviar emails e gerir rascunhos</small></span></label>
+              <label [class.disabled]="!access.canRead"><input type="checkbox" [(ngModel)]="access.canManageMessages" [disabled]="!access.canRead" /><span><strong>Gerir</strong><small>Alterar estado lido/não lido</small></span></label>
+            </div>
+            <div class="permission-actions"><button type="button" class="primary small" [disabled]="isSavingAccess || !accessDirty" (click)="saveUserAccess()"><span class="material-symbols-rounded">save</span>{{ isSavingAccess ? 'A guardar...' : (selectedUserHasAccess ? 'Guardar permissões' : 'Atribuir acesso') }}</button></div>
+          </div>
+        </div>
+
+        <div class="loading-inline" *ngIf="isLoadingUsers"><span class="spinner"></span>A carregar acessos...</div>
+        <div class="info-banner error-banner" *ngIf="!isLoadingUsers && accountUsersLoadError" role="alert"><span class="material-symbols-rounded">error</span><div><strong>Não foi possível carregar os acessos</strong><p>{{ accountUsersLoadError }}</p></div><button type="button" class="secondary" (click)="retryLoadAccountUsers()">Tentar novamente</button></div>
+
+        <div class="access-list" *ngIf="!isLoadingUsers && !accountUsersLoadError">
+          <article *ngFor="let item of accountUsers; trackBy: trackByAccessUserId">
+            <div class="user-avatar">{{ (userFor(item.userId)?.name || '?').charAt(0).toUpperCase() }}</div>
+            <div class="user-copy"><strong>{{ userFor(item.userId)?.name || item.userId }}</strong><small>{{ userFor(item.userId)?.email || 'Utilizador associado' }}</small></div>
+            <div class="pills"><span *ngIf="item.canRead"><span class="material-symbols-rounded">visibility</span>Leitura</span><span *ngIf="item.canSend"><span class="material-symbols-rounded">send</span>Envio</span><span *ngIf="item.canManageMessages"><span class="material-symbols-rounded">tune</span>Gestão</span><span class="no-permissions" *ngIf="!item.canRead && !item.canSend && !item.canManageMessages">Sem permissões</span></div>
+            <button type="button" class="icon-danger" [disabled]="removingUserId === item.userId" (click)="removeUser(item.userId)" aria-label="Remover acesso"><span class="material-symbols-rounded">person_remove</span></button>
+          </article>
+          <div class="empty compact" *ngIf="!accountUsers.length"><span class="material-symbols-rounded">group_off</span><strong>Sem utilizadores associados</strong><p>Atribui acesso através do seletor acima.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <ng-template #selectAccountEmpty><main class="account-detail-empty"><span class="material-symbols-rounded">alternate_email</span><h2>Seleciona uma conta</h2><p>Escolhe uma conta para consultar a configuração e gerir os acessos.</p></main></ng-template>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="createOpen" (click)="closeCreate()">
+    <section class="modal" role="dialog" aria-modal="true" aria-label="Criar conta de email" (click)="$event.stopPropagation()">
+      <header><div class="card-title"><span class="account-large-icon material-symbols-rounded">add_circle</span><div><span class="kicker">Nova conta</span><h2>Configurar IMAP / SMTP</h2><p>Adiciona uma mailbox centralizada ao Certo CRM.</p></div></div><button type="button" class="icon-close" (click)="closeCreate()"><span class="material-symbols-rounded">close</span></button></header>
+      <div class="form-grid modal-grid">
+        <label><span>Endereço *</span><input [(ngModel)]="form.address" type="email" placeholder="comercial@empresa.pt" /></label>
+        <label><span>Nome de apresentação</span><input [(ngModel)]="form.displayName" type="text" placeholder="Departamento Comercial" /></label>
+        <label><span>Servidor IMAP *</span><input [(ngModel)]="form.imapHost" type="text" placeholder="mail.empresa.pt" /></label>
+        <label><span>Porta IMAP</span><input value="993" disabled /></label>
+        <label><span>Servidor SMTP *</span><input [(ngModel)]="form.smtpHost" type="text" placeholder="mail.empresa.pt" /></label>
+        <label><span>Porta SMTP</span><input value="465" disabled /></label>
+        <label><span>Utilizador *</span><input [(ngModel)]="form.username" type="text" autocomplete="username" /></label>
+        <label><span>Password *</span><input [(ngModel)]="form.password" type="password" autocomplete="new-password" /></label>
+      </div>
+      <div class="tls-note"><span class="material-symbols-rounded">verified_user</span><div><strong>Configuração suportada</strong><span>IMAP 993 e SMTP 465 com TLS.</span></div></div>
+      <footer class="actions"><button type="button" class="secondary" (click)="closeCreate()">Cancelar</button><button type="button" class="primary" [disabled]="isSaving" (click)="createAccount()"><span class="material-symbols-rounded">add</span>{{ isSaving ? 'A criar...' : 'Criar conta' }}</button></footer>
+    </section>
+  </div>
+</section>

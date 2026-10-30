@@ -50,6 +50,14 @@ export interface CreateTeamRequest {
   positionList: string[];
 }
 
+export interface SetTeamActiveRequest {
+  active: boolean;
+}
+
+export interface UpdateTeamPositionsRequest {
+  positionList: string[];
+}
+
 export interface AddUserToTeamRequest {
   teamId: string;
   userId: string;
@@ -174,6 +182,54 @@ export class TeamService {
       )
       .pipe(
         tap((team) => this.upsertTeamInCache(team)),
+      );
+  }
+
+  setTeamActive(
+    teamId: string,
+    active: boolean,
+  ): Observable<Team> {
+    const payload: SetTeamActiveRequest = { active };
+
+    return this.http
+      .patch<Team>(
+        `${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/active`,
+        payload,
+      )
+      .pipe(
+        tap((team) => {
+          this.upsertTeamInCache({
+            ...team,
+            id: team?.id || teamId,
+            active,
+          });
+        }),
+      );
+  }
+
+  updateTeamPositions(
+    teamId: string,
+    positionList: string[],
+  ): Observable<Team> {
+    const payload: UpdateTeamPositionsRequest = {
+      positionList,
+    };
+
+    return this.http
+      .patch<Team>(
+        `${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/positions`,
+        payload,
+      )
+      .pipe(
+        tap((team) => {
+          this.upsertTeamInCache({
+            ...team,
+            id: team?.id || teamId,
+            positionList: Array.isArray(team?.positionList)
+              ? team.positionList
+              : positionList,
+          });
+        }),
       );
   }
 

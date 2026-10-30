@@ -307,6 +307,16 @@
       </a>
 
       <a
+        *ngIf="canAccessRoles('CRM')"
+        routerLink="/home/email"
+        routerLinkActive="active"
+        title="Email"
+      >
+        <span class="icon material-symbols-rounded">mail</span>
+        <span class="label">Email</span>
+      </a>
+
+      <a
         *ngIf="canAccessRoles('Super Admin')"
         routerLink="/home/autos"
         routerLinkActive="active"

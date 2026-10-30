@@ -1,0 +1,499 @@
+<section class="email-page">
+  <header class="email-header">
+    <div class="email-title-group">
+      <span class="email-title-icon material-symbols-rounded">mail</span>
+      <div>
+        <span class="eyebrow">Comunicação</span>
+        <h1>Email</h1>
+        <p>Consulta e gere a correspondência das contas a que tens acesso.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button
+        *ngIf="canOpenEmailAdmin"
+        type="button"
+        class="admin-header-button"
+        (click)="goToAdmin()"
+      >
+        <span class="material-symbols-rounded">manage_accounts</span>Gerir contas
+      </button>
+      <button
+        *ngIf="accounts.length"
+        type="button"
+        class="compose-header-button"
+        (click)="openComposer()"
+      >
+        <span class="material-symbols-rounded">edit</span>Novo email
+      </button>
+      <button
+        *ngIf="
+          selectedAccount &&
+          (canReadSelectedAccount || (folder === 'DRAFTS' && canSendSelectedAccount))
+        "
+        type="button"
+        class="refresh-button"
+        [disabled]="
+          isLoadingMessages || isRefreshingMessages || isPagingMessages || isSyncingMessages
+        "
+        (click)="refresh()"
+      >
+        <span class="material-symbols-rounded">refresh</span>Recarregar
+      </button>
+    </div>
+  </header>
+
+  <div class="state-card" *ngIf="isLoadingAccounts">
+    <span class="loading-spinner"></span>
+    <div>
+      <strong>A carregar contas de email</strong>
+      <p>A consultar as contas disponíveis para o teu utilizador.</p>
+    </div>
+  </div>
+  <div class="state-card state-error" *ngIf="!isLoadingAccounts && accountsError" role="alert">
+    <span class="material-symbols-rounded">error</span>
+    <div>
+      <strong>Não foi possível carregar as contas</strong>
+      <p>{{ accountsError }}</p>
+      <button type="button" class="state-retry-button" (click)="retryLoadAccounts()">
+        Tentar novamente
+      </button>
+    </div>
+  </div>
+  <div
+    class="state-card state-empty"
+    *ngIf="!isLoadingAccounts && !accountsError && !accounts.length"
+  >
+    <span class="material-symbols-rounded">mark_email_unread</span>
+    <div>
+      <strong>Não tens contas de email atribuídas</strong>
+      <p>Quando uma conta for associada ao teu utilizador, ficará disponível neste módulo.</p>
+    </div>
+  </div>
+
+  <div
+    class="mailbox-shell"
+    *ngIf="!isLoadingAccounts && !accountsError && accounts.length && selectedAccount"
+  >
+    <aside class="mailbox-sidebar">
+      <div class="account-block">
+        <label for="email-account-select">Conta de email</label>
+        <select
+          id="email-account-select"
+          [value]="selectedAccount.id"
+          (change)="onAccountChange($event)"
+        >
+          <option *ngFor="let account of accounts; trackBy: trackByAccountId" [value]="account.id">
+            {{ account.displayName || account.address }}
+          </option>
+        </select>
+        <p class="account-address" *ngIf="selectedAccount.displayName">
+          {{ selectedAccount.address }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="sidebar-compose"
+        (click)="openComposer()"
+        [disabled]="!canSendSelectedAccount"
+      >
+        <span class="material-symbols-rounded">edit</span>Escrever email
+      </button>
+
+      <div class="folder-load-note" *ngIf="isLoadingFolders">
+        <span class="loading-spinner"></span><span>A atualizar pastas...</span>
+      </div>
+      <div class="folder-load-error" *ngIf="!isLoadingFolders && foldersError">
+        <span>{{ foldersError }}</span
+        ><button type="button" (click)="retryLoadFolders()">Tentar novamente</button>
+      </div>
+
+      <nav class="folder-nav" aria-label="Pastas de email">
+        <button
+          *ngIf="folderAvailable('INBOX')"
+          type="button"
+          [class.active]="folder === 'INBOX'"
+          (click)="selectFolder('INBOX')"
+        >
+          <span class="material-symbols-rounded">inbox</span><span>Caixa de Entrada</span>
+        </button>
+        <button
+          *ngIf="folderAvailable('SENT')"
+          type="button"
+          [class.active]="folder === 'SENT'"
+          (click)="selectFolder('SENT')"
+        >
+          <span class="material-symbols-rounded">send</span><span>Enviados</span>
+        </button>
+        <button
+          *ngIf="folderAvailable('DRAFTS')"
+          type="button"
+          [class.active]="folder === 'DRAFTS'"
+          (click)="selectFolder('DRAFTS')"
+        >
+          <span class="material-symbols-rounded">draft</span><span>Rascunhos</span>
+        </button>
+        <button type="button" (click)="goToTemplates()">
+          <span class="material-symbols-rounded">description</span><span>Templates</span>
+        </button>
+        <button *ngIf="canOpenEmailAdmin" type="button" (click)="goToAdmin()">
+          <span class="material-symbols-rounded">admin_panel_settings</span
+          ><span>Administração</span>
+        </button>
+      </nav>
+    </aside>
+
+    <section class="message-list-panel">
+      <header class="panel-header">
+        <div class="panel-title-group">
+          <span class="panel-icon material-symbols-rounded">{{
+            folder === 'INBOX' ? 'inbox' : folder === 'SENT' ? 'send' : 'draft'
+          }}</span>
+          <div>
+            <span class="panel-kicker">{{ selectedAccount.address }}</span>
+            <h2>{{ mailboxTitle }}</h2>
+          </div>
+        </div>
+        <div class="panel-status">
+          <span class="secondary-loading" *ngIf="isRefreshingMessages"
+            ><span class="loading-spinner"></span>A recarregar...</span
+          ><span class="secondary-loading" *ngIf="isPagingMessages"
+            ><span class="loading-spinner"></span>A mudar de página...</span
+          ><button
+            *ngIf="canSyncCurrentFolder"
+            type="button"
+            class="sync-button"
+            [disabled]="isSyncingMessages || isLoadingMessages || isRefreshingMessages || isPagingMessages"
+            (click)="syncCurrentFolder()"
+          >
+            <span class="material-symbols-rounded" [class.spin]="isSyncingMessages">sync</span>
+            <span>{{ isSyncingMessages ? 'A sincronizar...' : 'Sincronizar' }}</span>
+          </button
+          ><span class="message-counter" *ngIf="!isLoadingMessages">{{
+            getMessageCounterLabel()
+          }}</span>
+        </div>
+      </header>
+
+      <div class="inline-state warning-state" *ngIf="!selectedAccount.isActive">
+        <span class="material-symbols-rounded">mail_lock</span>
+        <div>
+          <strong>Conta inativa</strong>
+          <p>Esta conta encontra-se inativa.</p>
+        </div>
+      </div>
+      <div
+        class="inline-state warning-state"
+        *ngIf="
+          selectedAccount.isActive && folder !== 'DRAFTS' && !selectedAccount.permissions.canRead
+        "
+      >
+        <span class="material-symbols-rounded">lock</span>
+        <div>
+          <strong>Sem permissão de leitura</strong>
+          <p>O teu acesso não permite consultar mensagens.</p>
+        </div>
+      </div>
+      <div
+        class="inline-state warning-state"
+        *ngIf="
+          selectedAccount.isActive && folder === 'DRAFTS' && !selectedAccount.permissions.canSend
+        "
+      >
+        <span class="material-symbols-rounded">lock</span>
+        <div>
+          <strong>Sem permissão de envio</strong>
+          <p>O teu acesso não permite gerir rascunhos.</p>
+        </div>
+      </div>
+      <div class="inline-state error-state sync-error-state" *ngIf="syncError">
+        <span class="material-symbols-rounded">sync_problem</span>
+        <div>
+          <strong>Falha na sincronização</strong>
+          <p>{{ syncError }}</p>
+        </div>
+      </div>
+
+      <div class="inline-state" *ngIf="isLoadingMessages">
+        <span class="loading-spinner"></span>
+        <p>{{ folder === 'DRAFTS' ? 'A carregar rascunhos...' : 'A carregar mensagens...' }}</p>
+      </div>
+      <div class="inline-state error-state" *ngIf="!isLoadingMessages && messagesError">
+        <span class="material-symbols-rounded">error</span>
+        <div>
+          <strong
+            >Não foi possível carregar
+            {{ folder === 'DRAFTS' ? 'os rascunhos' : 'as mensagens' }}</strong
+          >
+          <p>{{ messagesError }}</p>
+        </div>
+        <button type="button" (click)="refresh()">Tentar novamente</button>
+      </div>
+
+      <div class="inline-state" *ngIf="!isLoadingMessages && !messagesError && !visibleItemsCount">
+        <span class="material-symbols-rounded">inbox</span>
+        <div>
+          <strong>{{
+            folder === 'INBOX'
+              ? 'A caixa de entrada está vazia'
+              : folder === 'SENT'
+                ? 'Ainda não existem mensagens enviadas'
+                : 'Ainda não existem rascunhos'
+          }}</strong>
+          <p>Não existem itens para apresentar nesta página.</p>
+        </div>
+      </div>
+
+      <div
+        class="message-list"
+        *ngIf="folder !== 'DRAFTS' && !isLoadingMessages && messages.length"
+      >
+        <button
+          type="button"
+          class="message-row"
+          *ngFor="let message of messages; trackBy: trackByMessageId"
+          [class.unread]="message.isRead === false"
+          [class.selected]="selectedMessage?.id === message.id"
+          (click)="selectMessage(message)"
+        >
+          <span class="read-indicator"></span>
+          <div class="message-row-main">
+            <div class="message-row-topline">
+              <strong>{{
+                folder === 'INBOX' ? formatAddress(message.from) : formatAddressList(message.to)
+              }}</strong
+              ><time *ngIf="message.date" [attr.datetime]="message.date">{{
+                message.date | date: 'dd/MM/yyyy HH:mm'
+              }}</time>
+            </div>
+            <div class="message-subject-row">
+              <span class="message-subject">{{ message.subject }}</span
+              ><span *ngIf="message.hasAttachments" class="material-symbols-rounded attachment-icon"
+                >attach_file</span
+              >
+            </div>
+            <p>{{ message.preview || 'Sem pré-visualização disponível.' }}</p>
+          </div>
+        </button>
+      </div>
+
+      <div class="message-list" *ngIf="folder === 'DRAFTS' && !isLoadingMessages && drafts.length">
+        <button
+          type="button"
+          class="message-row"
+          *ngFor="let draft of drafts; trackBy: trackByDraftId"
+          (click)="openDraft(draft)"
+        >
+          <span class="read-indicator"></span>
+          <div class="message-row-main">
+            <div class="message-row-topline">
+              <strong>{{ draft.to.length ? draft.to.join(', ') : 'Sem destinatário' }}</strong
+              ><time
+                *ngIf="draft.updatedAt || draft.createdAt"
+                [attr.datetime]="draft.updatedAt || draft.createdAt"
+                >{{ draft.updatedAt || draft.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time
+              >
+            </div>
+            <div class="message-subject-row">
+              <span class="message-subject">{{ draft.subject || '(Sem assunto)' }}</span
+              ><span *ngIf="draft.attachmentCount" class="material-symbols-rounded attachment-icon"
+                >attach_file</span
+              >
+            </div>
+            <p>{{ draft.text || 'Rascunho sem conteúdo.' }}</p>
+          </div>
+        </button>
+      </div>
+
+      <footer
+        class="pagination-bar"
+        *ngIf="!isLoadingMessages && (visibleItemsCount || hasPreviousPage)"
+      >
+        <button
+          type="button"
+          [disabled]="
+            !hasPreviousPage || isPagingMessages || isRefreshingMessages || isSyncingMessages
+          "
+          (click)="previousPage()"
+        >
+          <span class="material-symbols-rounded">chevron_left</span>Anterior</button
+        ><span>Página {{ currentPage }}</span
+        ><button
+          type="button"
+          [disabled]="!hasMore || isPagingMessages || isRefreshingMessages || isSyncingMessages"
+          (click)="nextPage()"
+        >
+          Seguinte<span class="material-symbols-rounded">chevron_right</span>
+        </button>
+      </footer>
+    </section>
+
+    <article class="message-reader-panel">
+      <div class="reader-empty" *ngIf="folder === 'DRAFTS'">
+        <span class="material-symbols-rounded">drafts</span><strong>Seleciona um rascunho</strong>
+        <p>O rascunho será aberto no compositor para edição, anexos e envio.</p>
+      </div>
+      <div
+        class="reader-empty"
+        *ngIf="folder !== 'DRAFTS' && !selectedMessage && !isLoadingMessage && !messageError"
+      >
+        <span class="material-symbols-rounded">drafts</span><strong>Seleciona uma mensagem</strong>
+        <p>O conteúdo da mensagem será apresentado aqui.</p>
+      </div>
+      <div class="reader-empty" *ngIf="folder !== 'DRAFTS' && isLoadingMessage">
+        <span class="loading-spinner"></span><strong>A abrir mensagem</strong>
+        <p>A carregar o conteúdo completo.</p>
+      </div>
+      <div
+        class="reader-empty reader-error"
+        *ngIf="folder !== 'DRAFTS' && !isLoadingMessage && messageError"
+      >
+        <span class="material-symbols-rounded">error</span
+        ><strong>Não foi possível abrir a mensagem</strong>
+        <p>{{ messageError }}</p>
+        <button type="button" (click)="retrySelectedMessage()">Tentar novamente</button>
+      </div>
+
+      <ng-container *ngIf="folder !== 'DRAFTS' && selectedMessage && !isLoadingMessage">
+        <header class="reader-header">
+          <span class="reader-folder">{{ mailboxTitle }}</span>
+          <h2>{{ selectedMessage.subject }}</h2>
+          <time *ngIf="selectedMessage.date" [attr.datetime]="selectedMessage.date">{{
+            selectedMessage.date | date: 'dd/MM/yyyy HH:mm:ss'
+          }}</time>
+          <div class="reader-actions">
+            <button
+              *ngIf="selectedMessage.isRead !== null && canManageMessagesSelectedAccount"
+              type="button"
+              [disabled]="isUpdatingRead"
+              (click)="toggleSelectedMessageRead()"
+            >
+              <span class="material-symbols-rounded">{{
+                selectedMessage.isRead ? 'mark_email_unread' : 'drafts'
+              }}</span
+              >{{
+                isUpdatingRead
+                  ? 'A atualizar...'
+                  : selectedMessage.isRead
+                    ? 'Marcar não lido'
+                    : 'Marcar lido'
+              }}
+            </button>
+            <button type="button" class="crm-relation-action" (click)="openRelationModal()">
+              <span class="material-symbols-rounded">link</span>Associar ao CRM
+            </button>
+            <ng-container *ngIf="canSendSelectedAccount"
+              ><button type="button" (click)="openComposer('reply')">
+                <span class="material-symbols-rounded">reply</span>Responder</button
+              ><button type="button" (click)="openComposer('replyAll')">
+                <span class="material-symbols-rounded">reply_all</span>Responder a todos</button
+              ><button type="button" (click)="openComposer('forward')">
+                <span class="material-symbols-rounded">forward</span>Reencaminhar
+              </button></ng-container
+            >
+          </div>
+          <div class="reader-operation-error" *ngIf="readError">
+            <span class="material-symbols-rounded">warning</span>{{ readError }}
+          </div>
+        </header>
+
+        <dl class="message-meta">
+          <div>
+            <dt>De</dt>
+            <dd>{{ formatAddress(selectedMessage.from) }}</dd>
+          </div>
+          <div>
+            <dt>Para</dt>
+            <dd>{{ formatAddressList(selectedMessage.to) }}</dd>
+          </div>
+          <div *ngIf="selectedMessage.cc.length">
+            <dt>CC</dt>
+            <dd>{{ formatAddressList(selectedMessage.cc) }}</dd>
+          </div>
+          <div *ngIf="selectedMessage.bcc.length">
+            <dt>BCC</dt>
+            <dd>{{ formatAddressList(selectedMessage.bcc) }}</dd>
+          </div>
+        </dl>
+
+        <div class="message-body" *ngIf="getVisibleMessageBody(); else emptyMessageBody">
+          {{ getVisibleMessageBody() }}
+        </div>
+        <ng-template #emptyMessageBody
+          ><div class="message-body empty-body">
+            Esta mensagem não contém corpo de texto disponível.
+          </div></ng-template
+        >
+
+        <section class="attachments-panel" *ngIf="selectedMessage.hasAttachments">
+          <header>
+            <span class="material-symbols-rounded">attach_file</span><strong>Anexos</strong>
+          </header>
+          <div class="attachment-loading" *ngIf="isLoadingAttachments">
+            <span class="loading-spinner"></span>A carregar anexos...
+          </div>
+          <div class="attachment-error" *ngIf="!isLoadingAttachments && attachmentsError">
+            <span>{{ attachmentsError }}</span
+            ><button type="button" (click)="retryLoadAttachments()">Tentar novamente</button>
+          </div>
+          <div
+            class="attachment-empty"
+            *ngIf="!isLoadingAttachments && !attachmentsError && !messageAttachments.length"
+          >
+            Não foram encontrados anexos para esta mensagem.
+          </div>
+          <div class="attachment-list" *ngIf="!isLoadingAttachments && messageAttachments.length">
+            <div
+              class="attachment-item"
+              *ngFor="
+                let attachment of messageAttachments;
+                let attachmentIndex = index;
+                trackBy: trackByAttachmentIndex
+              "
+            >
+              <span class="material-symbols-rounded">description</span>
+              <div>
+                <strong>{{ attachment.filename || 'Anexo' }}</strong
+                ><small
+                  >{{ attachment.contentType || 'Tipo desconhecido' }} ·
+                  {{ formatBytes(attachment.size) }}</small
+                >
+              </div>
+              <button
+                type="button"
+                [disabled]="downloadingAttachmentIndexes.has(attachment.index)"
+                (click)="downloadAttachment(attachment)"
+              >
+                <span class="material-symbols-rounded">download</span
+                >{{
+                  downloadingAttachmentIndexes.has(attachment.index)
+                    ? 'A descarregar'
+                    : 'Descarregar'
+                }}
+              </button>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+    </article>
+  </div>
+
+  <app-email-relation-modal
+    *ngIf="isRelationModalOpen && selectedAccount && selectedMessage"
+    [accountId]="selectedAccount.id"
+    [messageId]="selectedMessage.id"
+    (closed)="closeRelationModal()"
+  ></app-email-relation-modal>
+
+  <app-email-composer
+    *ngIf="isComposerOpen"
+    [accounts]="accounts"
+    [selectedAccountId]="selectedAccount?.id || null"
+    [mode]="composerMode"
+    [sourceMessage]="composerSourceMessage"
+    [draft]="composerDraft"
+    (closed)="closeComposer()"
+    (sent)="onMessageSent($event)"
+    (draftChanged)="onDraftChanged()"
+  ></app-email-composer>
+</section>
