@@ -139,11 +139,10 @@
               <label>
                 Código Registo C.E.
 
-                <input
-                  *ngIf="isEditing; else codigoRegistoView"
+                <input *ngIf="isEditing; else codigoRegistoView"
                   type="text"
-                  [(ngModel)]="editForm.codigoRegistoCE"
-                />
+                  [value]="editForm.codigoRegistoCE"
+                readonly />
 
                 <ng-template #codigoRegistoView>
                   <strong>
@@ -155,11 +154,10 @@
               <label>
                 Nome Registo C.E.
 
-                <input
-                  *ngIf="isEditing; else nomeRegistoView"
+                <input *ngIf="isEditing; else nomeRegistoView"
                   type="text"
-                  [(ngModel)]="editForm.nomeRegistoCE"
-                />
+                  [value]="editForm.nomeRegistoCE"
+                readonly />
 
                 <ng-template #nomeRegistoView>
                   <strong>
@@ -829,6 +827,13 @@
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>
+
+        <app-entity-email-panel
+          entityType="contract"
+          [entityId]="contractId"
+          provider="wallbox"
+          [recipientEmail]="contract.email || null"
+        ></app-entity-email-panel>
 
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"

@@ -216,14 +216,14 @@
 
       <div class="inline-state" *ngIf="isLoadingMessages">
         <span class="loading-spinner"></span>
-        <p>{{ folder === 'DRAFTS' ? 'A carregar rascunhos...' : 'A carregar mensagens...' }}</p>
+        <p>{{ folder === 'DRAFTS' ? 'A carregar rascunhos...' : 'A carregar conversas...' }}</p>
       </div>
       <div class="inline-state error-state" *ngIf="!isLoadingMessages && messagesError">
         <span class="material-symbols-rounded">error</span>
         <div>
           <strong
             >Não foi possível carregar
-            {{ folder === 'DRAFTS' ? 'os rascunhos' : 'as mensagens' }}</strong
+            {{ folder === 'DRAFTS' ? 'os rascunhos' : 'as conversas' }}</strong
           >
           <p>{{ messagesError }}</p>
         </div>
@@ -237,7 +237,7 @@
             folder === 'INBOX'
               ? 'A caixa de entrada está vazia'
               : folder === 'SENT'
-                ? 'Ainda não existem mensagens enviadas'
+                ? 'Ainda não existem conversas em Enviados'
                 : 'Ainda não existem rascunhos'
           }}</strong>
           <p>Não existem itens para apresentar nesta página.</p>
@@ -246,33 +246,32 @@
 
       <div
         class="message-list"
-        *ngIf="folder !== 'DRAFTS' && !isLoadingMessages && messages.length"
+        *ngIf="folder !== 'DRAFTS' && !isLoadingMessages && threads.length"
       >
         <button
           type="button"
-          class="message-row"
-          *ngFor="let message of messages; trackBy: trackByMessageId"
-          [class.unread]="message.isRead === false"
-          [class.selected]="selectedMessage?.id === message.id"
-          (click)="selectMessage(message)"
+          class="message-row thread-row"
+          *ngFor="let thread of threads; trackBy: trackByThreadId"
+          [class.unread]="thread.unreadCount > 0"
+          [class.selected]="selectedThreadId === thread.id"
+          (click)="selectThread(thread)"
         >
           <span class="read-indicator"></span>
           <div class="message-row-main">
             <div class="message-row-topline">
-              <strong>{{
-                folder === 'INBOX' ? formatAddress(message.from) : formatAddressList(message.to)
-              }}</strong
-              ><time *ngIf="message.date" [attr.datetime]="message.date">{{
-                message.date | date: 'dd/MM/yyyy HH:mm'
+              <strong>{{ formatThreadParticipants(thread.participants) }}</strong
+              ><time *ngIf="thread.lastMessageAt" [attr.datetime]="thread.lastMessageAt">{{
+                thread.lastMessageAt | date: 'dd/MM/yyyy HH:mm'
               }}</time>
             </div>
             <div class="message-subject-row">
-              <span class="message-subject">{{ message.subject }}</span
-              ><span *ngIf="message.hasAttachments" class="material-symbols-rounded attachment-icon"
-                >attach_file</span
+              <span class="message-subject">{{ thread.subject || '(Sem assunto)' }}</span
+              ><span *ngIf="thread.messageCount > 1" class="thread-count">{{ thread.messageCount }} mensagens</span
+              ><span *ngIf="thread.unreadCount > 0" class="thread-unread-count" [attr.aria-label]="thread.unreadCount + ' mensagens não lidas'">{{ thread.unreadCount }}</span
+              ><span *ngIf="thread.hasAttachments" class="material-symbols-rounded attachment-icon" aria-label="A conversa contém anexos">attach_file</span
               >
             </div>
-            <p>{{ message.preview || 'Sem pré-visualização disponível.' }}</p>
+            <div class="thread-meta-row" *ngIf="thread.folders.length > 1"><span>Entrada + Enviados</span></div>
           </div>
         </button>
       </div>
@@ -333,147 +332,214 @@
         <span class="material-symbols-rounded">drafts</span><strong>Seleciona um rascunho</strong>
         <p>O rascunho será aberto no compositor para edição, anexos e envio.</p>
       </div>
+
       <div
         class="reader-empty"
-        *ngIf="folder !== 'DRAFTS' && !selectedMessage && !isLoadingMessage && !messageError"
+        *ngIf="folder !== 'DRAFTS' && !selectedThread && !isLoadingMessage && !messageError"
       >
-        <span class="material-symbols-rounded">drafts</span><strong>Seleciona uma mensagem</strong>
-        <p>O conteúdo da mensagem será apresentado aqui.</p>
+        <span class="material-symbols-rounded">forum</span><strong>Seleciona uma conversa</strong>
+        <p>O histórico completo da conversa será apresentado aqui.</p>
       </div>
+
       <div class="reader-empty" *ngIf="folder !== 'DRAFTS' && isLoadingMessage">
-        <span class="loading-spinner"></span><strong>A abrir mensagem</strong>
-        <p>A carregar o conteúdo completo.</p>
+        <span class="loading-spinner"></span><strong>A abrir conversa</strong>
+        <p>A carregar o histórico de mensagens.</p>
       </div>
+
       <div
         class="reader-empty reader-error"
         *ngIf="folder !== 'DRAFTS' && !isLoadingMessage && messageError"
       >
         <span class="material-symbols-rounded">error</span
-        ><strong>Não foi possível abrir a mensagem</strong>
+        ><strong>Não foi possível abrir a conversa</strong>
         <p>{{ messageError }}</p>
         <button type="button" (click)="retrySelectedMessage()">Tentar novamente</button>
       </div>
 
-      <ng-container *ngIf="folder !== 'DRAFTS' && selectedMessage && !isLoadingMessage">
-        <header class="reader-header">
-          <span class="reader-folder">{{ mailboxTitle }}</span>
-          <h2>{{ selectedMessage.subject }}</h2>
-          <time *ngIf="selectedMessage.date" [attr.datetime]="selectedMessage.date">{{
-            selectedMessage.date | date: 'dd/MM/yyyy HH:mm:ss'
-          }}</time>
-          <div class="reader-actions">
-            <button
-              *ngIf="selectedMessage.isRead !== null && canManageMessagesSelectedAccount"
-              type="button"
-              [disabled]="isUpdatingRead"
-              (click)="toggleSelectedMessageRead()"
-            >
-              <span class="material-symbols-rounded">{{
-                selectedMessage.isRead ? 'mark_email_unread' : 'drafts'
-              }}</span
-              >{{
-                isUpdatingRead
-                  ? 'A atualizar...'
-                  : selectedMessage.isRead
-                    ? 'Marcar não lido'
-                    : 'Marcar lido'
-              }}
-            </button>
-            <button type="button" class="crm-relation-action" (click)="openRelationModal()">
-              <span class="material-symbols-rounded">link</span>Associar ao CRM
-            </button>
-            <ng-container *ngIf="canSendSelectedAccount"
-              ><button type="button" (click)="openComposer('reply')">
-                <span class="material-symbols-rounded">reply</span>Responder</button
-              ><button type="button" (click)="openComposer('replyAll')">
-                <span class="material-symbols-rounded">reply_all</span>Responder a todos</button
-              ><button type="button" (click)="openComposer('forward')">
-                <span class="material-symbols-rounded">forward</span>Reencaminhar
-              </button></ng-container
-            >
+      <ng-container *ngIf="folder !== 'DRAFTS' && selectedThread && !isLoadingMessage && !messageError">
+        <header class="thread-reader-header">
+          <div>
+            <span class="reader-folder">Conversa</span>
+            <h2>{{ selectedThread.subject || '(Sem assunto)' }}</h2>
+            <p class="thread-reader-participants">
+              {{ formatThreadParticipants(selectedThread.participants) }}
+            </p>
           </div>
-          <div class="reader-operation-error" *ngIf="readError">
-            <span class="material-symbols-rounded">warning</span>{{ readError }}
+          <div class="thread-reader-summary">
+            <span class="thread-summary-pill">
+              <span class="material-symbols-rounded">forum</span>
+              {{ selectedThread.messageCount }}
+              {{ selectedThread.messageCount === 1 ? 'mensagem' : 'mensagens' }}
+            </span>
+            <span class="thread-summary-pill unread" *ngIf="selectedThread.unreadCount > 0">
+              <span class="material-symbols-rounded">mark_email_unread</span>
+              {{ selectedThread.unreadCount }} não
+              {{ selectedThread.unreadCount === 1 ? 'lida' : 'lidas' }}
+            </span>
           </div>
         </header>
 
-        <dl class="message-meta">
-          <div>
-            <dt>De</dt>
-            <dd>{{ formatAddress(selectedMessage.from) }}</dd>
-          </div>
-          <div>
-            <dt>Para</dt>
-            <dd>{{ formatAddressList(selectedMessage.to) }}</dd>
-          </div>
-          <div *ngIf="selectedMessage.cc.length">
-            <dt>CC</dt>
-            <dd>{{ formatAddressList(selectedMessage.cc) }}</dd>
-          </div>
-          <div *ngIf="selectedMessage.bcc.length">
-            <dt>BCC</dt>
-            <dd>{{ formatAddressList(selectedMessage.bcc) }}</dd>
-          </div>
-        </dl>
-
-        <div class="message-body" *ngIf="getVisibleMessageBody(); else emptyMessageBody">
-          {{ getVisibleMessageBody() }}
-        </div>
-        <ng-template #emptyMessageBody
-          ><div class="message-body empty-body">
-            Esta mensagem não contém corpo de texto disponível.
-          </div></ng-template
-        >
-
-        <section class="attachments-panel" *ngIf="selectedMessage.hasAttachments">
-          <header>
-            <span class="material-symbols-rounded">attach_file</span><strong>Anexos</strong>
-          </header>
-          <div class="attachment-loading" *ngIf="isLoadingAttachments">
-            <span class="loading-spinner"></span>A carregar anexos...
-          </div>
-          <div class="attachment-error" *ngIf="!isLoadingAttachments && attachmentsError">
-            <span>{{ attachmentsError }}</span
-            ><button type="button" (click)="retryLoadAttachments()">Tentar novamente</button>
-          </div>
-          <div
-            class="attachment-empty"
-            *ngIf="!isLoadingAttachments && !attachmentsError && !messageAttachments.length"
+        <section class="thread-history" *ngIf="selectedThread.messages.length; else emptyThreadHistory">
+          <article
+            class="thread-message"
+            *ngFor="let message of selectedThread.messages; trackBy: trackByThreadMessageId"
+            [class.expanded]="isThreadMessageExpanded(message.id)"
+            [class.unread]="message.isRead === false"
           >
-            Não foram encontrados anexos para esta mensagem.
-          </div>
-          <div class="attachment-list" *ngIf="!isLoadingAttachments && messageAttachments.length">
-            <div
-              class="attachment-item"
-              *ngFor="
-                let attachment of messageAttachments;
-                let attachmentIndex = index;
-                trackBy: trackByAttachmentIndex
-              "
+            <button
+              type="button"
+              class="thread-message-header"
+              [attr.aria-expanded]="isThreadMessageExpanded(message.id)"
+              (click)="toggleThreadMessage(message.id)"
             >
-              <span class="material-symbols-rounded">description</span>
-              <div>
-                <strong>{{ attachment.filename || 'Anexo' }}</strong
-                ><small
-                  >{{ attachment.contentType || 'Tipo desconhecido' }} ·
-                  {{ formatBytes(attachment.size) }}</small
+              <span class="thread-message-avatar material-symbols-rounded">person</span>
+              <span class="thread-message-heading">
+                <span class="thread-message-sender">{{ formatAddress(message.from) }}</span>
+                <span class="thread-message-recipient">
+                  para {{ formatAddressList(message.to) }}
+                </span>
+              </span>
+              <span class="thread-message-header-meta">
+                <span class="thread-message-kind">{{ getThreadMessageKindLabel(message) }}</span>
+                <span
+                  *ngIf="message.hasAttachments"
+                  class="material-symbols-rounded thread-message-attachment"
+                  aria-label="Mensagem com anexos"
+                  >attach_file</span
                 >
-              </div>
-              <button
-                type="button"
-                [disabled]="downloadingAttachmentIndexes.has(attachment.index)"
-                (click)="downloadAttachment(attachment)"
-              >
-                <span class="material-symbols-rounded">download</span
-                >{{
-                  downloadingAttachmentIndexes.has(attachment.index)
-                    ? 'A descarregar'
-                    : 'Descarregar'
-                }}
-              </button>
+                <time *ngIf="message.date" [attr.datetime]="message.date">{{
+                  message.date | date: 'dd/MM/yyyy HH:mm'
+                }}</time>
+                <span class="material-symbols-rounded thread-message-chevron">{{ isThreadMessageExpanded(message.id) ? 'expand_less' : 'expand_more' }}</span>
+              </span>
+            </button>
+
+            <div class="thread-message-collapsed-preview" *ngIf="!isThreadMessageExpanded(message.id)">
+              {{ message.preview || 'Sem pré-visualização disponível.' }}
             </div>
-          </div>
+
+            <div class="thread-message-content" *ngIf="isThreadMessageExpanded(message.id)">
+              <dl class="thread-message-meta">
+                <div>
+                  <dt>De</dt>
+                  <dd>{{ formatAddress(message.from) }}</dd>
+                </div>
+                <div>
+                  <dt>Para</dt>
+                  <dd>{{ formatAddressList(message.to) }}</dd>
+                </div>
+                <div *ngIf="message.cc.length">
+                  <dt>CC</dt>
+                  <dd>{{ formatAddressList(message.cc) }}</dd>
+                </div>
+                <div *ngIf="message.bcc.length">
+                  <dt>BCC</dt>
+                  <dd>{{ formatAddressList(message.bcc) }}</dd>
+                </div>
+              </dl>
+
+              <div class="thread-message-body" *ngIf="getThreadMessageBody(message); else emptyThreadMessageBody">
+                {{ getThreadMessageBody(message) }}
+              </div>
+              <ng-template #emptyThreadMessageBody>
+                <div class="thread-message-body empty-body">
+                  Esta mensagem não contém corpo de texto disponível.
+                </div>
+              </ng-template>
+
+              <section class="thread-message-attachments" *ngIf="message.hasAttachments">
+                <div class="thread-message-attachments-header">
+                  <span class="material-symbols-rounded">attach_file</span>
+                  <strong>Anexos</strong>
+                </div>
+
+                <div class="thread-message-attachments-loading" *ngIf="isLoadingThreadMessageAttachments(message.id)">
+                  <span class="loading-spinner"></span>
+                  <span>A carregar anexos...</span>
+                </div>
+
+                <div class="thread-message-attachment-error" *ngIf="getThreadMessageAttachmentError(message.id) as attachmentError">
+                  <span>{{ attachmentError }}</span>
+                  <button type="button" (click)="retryThreadMessageAttachments(message); $event.stopPropagation()">
+                    Tentar novamente
+                  </button>
+                </div>
+
+                <div
+                  class="thread-message-attachment-list"
+                  *ngIf="!isLoadingThreadMessageAttachments(message.id) && !getThreadMessageAttachmentError(message.id) && getThreadMessageAttachments(message.id).length"
+                >
+                  <button
+                    type="button"
+                    class="thread-message-attachment-item"
+                    *ngFor="let attachment of getThreadMessageAttachments(message.id); trackBy: trackByAttachmentIndex"
+                    [disabled]="isDownloadingThreadMessageAttachment(message.id, attachment.index)"
+                    (click)="downloadThreadMessageAttachment(message, attachment); $event.stopPropagation()"
+                  >
+                    <span class="material-symbols-rounded">description</span>
+                    <span class="thread-message-attachment-copy">
+                      <strong>{{ attachment.filename }}</strong>
+                      <small>{{ formatBytes(attachment.size) }}</small>
+                    </span>
+                    <span class="material-symbols-rounded">
+                      {{ isDownloadingThreadMessageAttachment(message.id, attachment.index) ? 'progress_activity' : 'download' }}
+                    </span>
+                  </button>
+                </div>
+
+                <p
+                  class="thread-message-attachment-empty"
+                  *ngIf="areThreadMessageAttachmentsLoaded(message.id) && !getThreadMessageAttachments(message.id).length"
+                >
+                  A mensagem indica anexos, mas não foram devolvidos ficheiros pelo servidor.
+                </p>
+              </section>
+
+              <footer class="thread-message-actions">
+                <button
+                  type="button"
+                  *ngIf="canManageMessagesSelectedAccount && message.isRead !== null"
+                  [disabled]="isUpdatingRead"
+                  (click)="toggleThreadMessageRead(message); $event.stopPropagation()"
+                >
+                  <span class="material-symbols-rounded">{{ message.isRead ? 'mark_email_unread' : 'drafts' }}</span>
+                  {{ message.isRead ? 'Marcar não lida' : 'Marcar lida' }}
+                </button>
+
+                <ng-container *ngIf="canSendSelectedAccount">
+                  <button type="button" (click)="openComposerForThreadMessage(message, 'reply'); $event.stopPropagation()">
+                    <span class="material-symbols-rounded">reply</span>
+                    Responder
+                  </button>
+                  <button type="button" (click)="openComposerForThreadMessage(message, 'replyAll'); $event.stopPropagation()">
+                    <span class="material-symbols-rounded">reply_all</span>
+                    Responder a todos
+                  </button>
+                  <button type="button" (click)="openComposerForThreadMessage(message, 'forward'); $event.stopPropagation()">
+                    <span class="material-symbols-rounded">forward</span>
+                    Reencaminhar
+                  </button>
+                </ng-container>
+
+                <button
+                  type="button"
+                  class="thread-message-crm-action"
+                  (click)="openRelationForThreadMessage(message); $event.stopPropagation()"
+                >
+                  <span class="material-symbols-rounded">link</span>
+                  Associar CRM
+                </button>
+              </footer>
+            </div>
+          </article>
         </section>
+
+        <ng-template #emptyThreadHistory>
+          <div class="reader-empty compact-empty">
+            <span class="material-symbols-rounded">forum</span>
+            <strong>Conversa sem mensagens disponíveis</strong>
+          </div>
+        </ng-template>
       </ng-container>
     </article>
   </div>

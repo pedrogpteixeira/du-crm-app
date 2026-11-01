@@ -140,11 +140,10 @@
               <label>
                 Código Registo C.E.
 
-                <input
-                  *ngIf="isEditing; else codigoView"
+                <input *ngIf="isEditing; else codigoView"
                   type="text"
-                  [(ngModel)]="editForm.codigoRegistoCE"
-                />
+                  [value]="editForm.codigoRegistoCE"
+                readonly />
 
                 <ng-template #codigoView>
                   <strong>
@@ -156,11 +155,10 @@
               <label>
                 Nome Registo C.E.
 
-                <input
-                  *ngIf="isEditing; else nomeRegistoView"
+                <input *ngIf="isEditing; else nomeRegistoView"
                   type="text"
-                  [(ngModel)]="editForm.nomeRegistoCE"
-                />
+                  [value]="editForm.nomeRegistoCE"
+                readonly />
 
                 <ng-template #nomeRegistoView>
                   <strong>
@@ -438,7 +436,7 @@
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.client">
-            <div class="info-grid client-info-grid">
+            <div class="info-grid">
               <label>
                 Nome Cliente / Empresa *
 
@@ -494,54 +492,51 @@
                 </ng-template>
               </label>
 
-              
-                <label class="client-secondary-field client-secondary-email">
-                  Email
+              <label>
+                Email
 
-                  <input
-                    *ngIf="isEditing; else emailView"
-                    type="email"
-                    [(ngModel)]="editForm.email"
-                    appContractMask="email" appContractMaskPlaceholder=""
-                  />
+                <input
+                  *ngIf="isEditing; else emailView"
+                  type="email"
+                  [(ngModel)]="editForm.email"
+                  appContractMask="email" appContractMaskPlaceholder=""
+                />
 
-                  <ng-template #emailView>
-                    <strong>
-                      {{ getValue(contract.email) }}
-                    </strong>
-                  </ng-template>
-                </label>
+                <ng-template #emailView>
+                  <strong>
+                    {{ getValue(contract.email) }}
+                  </strong>
+                </ng-template>
+              </label>
 
-                <label class="client-secondary-field client-secondary-cae">
-                  CAE
-  
-                  <input *ngIf="isEditing; else caeView" type="text" [(ngModel)]="editForm.cae" />
-  
-                  <ng-template #caeView>
-                    <strong>
-                      {{ getValue(contract.cae) }}
-                    </strong>
-                  </ng-template>
-                </label>
-  
-                <label class="client-secondary-field client-secondary-crc">
-                  CRC
-  
-                  <input
-                    *ngIf="isEditing; else crcView"
-                    type="text"
-                    [(ngModel)]="editForm.crc"
-                    appContractMask="crc" appContractMaskPlaceholder=""
-                  />
-  
-                  <ng-template #crcView>
-                    <strong>
-                      {{ getValue(contract.crc) }}
-                    </strong>
-                  </ng-template>
-                </label>
+              <label>
+                CAE
 
-              
+                <input *ngIf="isEditing; else caeView" type="text" [(ngModel)]="editForm.cae" />
+
+                <ng-template #caeView>
+                  <strong>
+                    {{ getValue(contract.cae) }}
+                  </strong>
+                </ng-template>
+              </label>
+
+              <label>
+                CRC
+
+                <input
+                  *ngIf="isEditing; else crcView"
+                  type="text"
+                  [(ngModel)]="editForm.crc"
+                  appContractMask="crc" appContractMaskPlaceholder=""
+                />
+
+                <ng-template #crcView>
+                  <strong>
+                    {{ getValue(contract.crc) }}
+                  </strong>
+                </ng-template>
+              </label>
             </div>
           </div>
         </article>
@@ -823,6 +818,13 @@
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>
+
+        <app-entity-email-panel
+          entityType="contract"
+          [entityId]="contractId"
+          provider="iberdrola-solar"
+          [recipientEmail]="contract.email || null"
+        ></app-entity-email-panel>
 
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"

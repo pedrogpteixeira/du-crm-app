@@ -60,7 +60,13 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
 @Component({
   selector: 'app-iberdrola-solar-contract-create',
   imports: [
-    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone],
+    EditableSelectCombobox,
+    CommonModule,
+    FormsModule,
+    ContractFieldMaskDirective,
+    RouterLink,
+    FileDropzone,
+  ],
   templateUrl: './iberdrola-solar-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './iberdrola-solar-contract-create.scss',
@@ -264,7 +270,6 @@ export class IberdrolaSolarContractCreate implements OnInit {
     return this.assignableUsers.length > 1;
   }
 
-
   get selectedTeams(): AssignableContractTeam[] {
     return this.selectedTeamIds
       .map((teamId) => this.availableTeams.find((team) => team.id === teamId))
@@ -392,15 +397,19 @@ export class IberdrolaSolarContractCreate implements OnInit {
       return;
     }
 
-    this.selectedTeamIds = [...new Set([...this.selectedTeamIds, this.teamToAddId])];
+    this.selectedTeamIds = [this.teamToAddId];
+    this.onRegistrationTeamChange(this.teamToAddId);
 
     this.teamToAddId = '';
   }
 
   removeSelectedTeam(teamId: string): void {
-    this.selectedTeamIds = this.selectedTeamIds.filter(
-      (selectedTeamId) => selectedTeamId !== teamId,
-    );
+    if (!this.selectedTeamIds.includes(teamId)) {
+      return;
+    }
+
+    this.selectedTeamIds = [];
+    this.clearRegistrationFields();
   }
 
   isRequiredTeam(teamId: string): boolean {
@@ -623,8 +632,7 @@ export class IberdrolaSolarContractCreate implements OnInit {
         this.assignmentErrorMessage = '';
         this.assignableUsers = state.users;
 
-        const currentUser =
-          state.users.find((user) => user.id === authenticatedUser.id) ?? null;
+        const currentUser = state.users.find((user) => user.id === authenticatedUser.id) ?? null;
 
         if (!currentUser) {
           this.currentUser = null;
@@ -641,8 +649,7 @@ export class IberdrolaSolarContractCreate implements OnInit {
           return;
         }
 
-        const selectedUser =
-          state.users.find((user) => user.id === this.assignedUserId) ?? null;
+        const selectedUser = state.users.find((user) => user.id === this.assignedUserId) ?? null;
 
         if (!selectedUser) {
           this.assignmentErrorMessage =
@@ -662,18 +669,15 @@ export class IberdrolaSolarContractCreate implements OnInit {
     this.availableTeams = this.resolveAssignableTeams(user);
 
     const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
-    this.selectedTeamIds = previousSelectedTeamIds.filter((teamId) =>
-      availableTeamIds.has(teamId),
-    );
+    this.selectedTeamIds = previousSelectedTeamIds
+      .filter((teamId) => availableTeamIds.has(teamId))
+      .slice(0, 1);
 
     if (!this.selectedTeamIds.length) {
       this.selectedTeamIds = this.resolveInitialTeamIds(user);
     }
 
-    if (
-      previousRegistrationTeamId &&
-      availableTeamIds.has(previousRegistrationTeamId)
-    ) {
+    if (previousRegistrationTeamId && availableTeamIds.has(previousRegistrationTeamId)) {
       this.onRegistrationTeamChange(previousRegistrationTeamId);
     } else {
       this.syncRegistrationFields(user);
@@ -717,7 +721,6 @@ export class IberdrolaSolarContractCreate implements OnInit {
     this.initializeAssignment(selectedUser, false);
   }
 
-
   private initializeAssignment(user: ProfileUser, updateAssignedUser = true): void {
     if (updateAssignedUser) {
       this.assignedUserId = user.id;
@@ -733,15 +736,14 @@ export class IberdrolaSolarContractCreate implements OnInit {
   }
 
   private resolveAssignableTeams(user: ProfileUser): AssignableContractTeam[] {
-    const rawTeams = (user as ProfileUserWithTeamPositions).teams ?? [];
+    const rawTeams = this.userService.getAssignableContractTeams(user);
 
     return rawTeams
       .filter((team) => {
         return (
           Boolean(team?.id) &&
           Number.isInteger(team.positionIndex) &&
-          team.positionIndex >= 0 &&
-          team.active === true
+          Number(team.positionIndex) >= 0
         );
       })
       .map((team) => ({
@@ -749,9 +751,15 @@ export class IberdrolaSolarContractCreate implements OnInit {
 
         name: team.name,
 
-        registrationNumber: team.registrationNumber ?? null,
+        registrationNumber:
+          team.registrationNumber !== null &&
+          team.registrationNumber !== undefined &&
+          String(team.registrationNumber).trim() !== '' &&
+          Number.isFinite(Number(team.registrationNumber))
+            ? Number(team.registrationNumber)
+            : null,
 
-        positionIndex: team.positionIndex,
+        positionIndex: Number(team.positionIndex),
 
         position: team.position?.trim() || `Posição ${team.positionIndex}`,
 
@@ -806,12 +814,11 @@ export class IberdrolaSolarContractCreate implements OnInit {
   private resolveInitialTeamIds(user: ProfileUser): string[] {
     const defaultTeamId = (user as ProfileUserWithTeamPositions).defaultTeam?.id;
 
-    const initialTeamId =
-      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
-        ? defaultTeamId
-        : this.availableTeams[0]?.id;
+    if (defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)) {
+      return [defaultTeamId];
+    }
 
-    return initialTeamId ? [initialTeamId] : [];
+    return this.availableTeams[0]?.id ? [this.availableTeams[0].id] : [];
   }
 
   private getRequiredTeamIds(): string[] {
@@ -821,6 +828,10 @@ export class IberdrolaSolarContractCreate implements OnInit {
   }
 
   private validateSelectedTeams(): string | null {
+    if (this.selectedTeamIds.length !== 1) {
+      return 'Selecione exatamente uma equipa do utilizador atribuído para o contrato.';
+    }
+
     const invalidTeamId = this.selectedTeamIds.find((teamId) => {
       const team = this.availableTeams.find((availableTeam) => availableTeam.id === teamId);
 

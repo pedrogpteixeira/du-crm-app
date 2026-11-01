@@ -4,6 +4,7 @@ import type { IberdrolaContractStatus } from '../services/iberdrola-contract';
 import type { IberdrolaSolarContractStatus } from '../services/iberdrola-solar-contract';
 import type { MeoEnergiasContractStatus } from '../services/meo-energias-contract';
 import type { PortulogosContractStatus } from '../services/portulogos-contract';
+import type { PortulogosB2BContractStatus } from '../services/portulogos-b2b-contract';
 import type { RepsolContractStatus } from '../services/repsol-contract';
 import type { WallboxContractStatus } from '../services/wallbox-contract';
 import type { YesEnergyContractStatus } from '../services/yes-energy-contract';
@@ -11,6 +12,7 @@ import type { YesEnergyContractStatus } from '../services/yes-energy-contract';
 export type DataRegistoProvider =
   | 'repsol'
   | 'portulogos'
+  | 'portulogos-b2b'
   | 'galp-power-gas'
   | 'galp-solar'
   | 'wallbox'
@@ -22,6 +24,7 @@ export type DataRegistoProvider =
 interface DataRegistoTriggerStateMap {
   repsol: readonly RepsolContractStatus[];
   portulogos: readonly PortulogosContractStatus[];
+  'portulogos-b2b': readonly PortulogosB2BContractStatus[];
   'galp-power-gas': readonly GalpPowerGasContractStatus[];
   'galp-solar': readonly GalpSolarContractStatus[];
   wallbox: readonly WallboxContractStatus[];
@@ -34,6 +37,7 @@ interface DataRegistoTriggerStateMap {
 export const DATA_REGISTO_TRIGGER_STATES: DataRegistoTriggerStateMap = {
   repsol: ['Atribuído'],
   portulogos: ['Atribuído'],
+  'portulogos-b2b': ['Registo Plataforma Portulogos'],
   'galp-power-gas': ['Registo Plataforma Galp'],
   'galp-solar': ['Proposta enviada'],
   wallbox: ['Registo Plataforma Galp'],
@@ -43,8 +47,7 @@ export const DATA_REGISTO_TRIGGER_STATES: DataRegistoTriggerStateMap = {
   'meo-energias': ['Registo MEO'],
 };
 
-export const DATA_REGISTO_REQUIRED_MESSAGE =
-  'A Data de Registo é obrigatória para este estado.';
+export const DATA_REGISTO_REQUIRED_MESSAGE = 'A Data de Registo é obrigatória para este estado.';
 
 export function requiresDataRegisto(
   provider: DataRegistoProvider,

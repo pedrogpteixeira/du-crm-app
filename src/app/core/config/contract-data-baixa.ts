@@ -1,6 +1,7 @@
 export type DataBaixaProvider =
   | 'repsol'
   | 'portulogos'
+  | 'portulogos-b2b'
   | 'galp-power-gas'
   | 'yes-energy'
   | 'iberdrola'
@@ -36,6 +37,7 @@ export const DATA_BAIXA_PARTIAL_DUAL_EXCLUSIVE_MESSAGE =
 const PROVIDERS_WITH_PARTIAL_TERMINATION = new Set<DataBaixaProvider>([
   'repsol',
   'portulogos',
+  'portulogos-b2b',
   'galp-power-gas',
   'yes-energy',
   'iberdrola',

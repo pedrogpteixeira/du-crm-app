@@ -39,11 +39,13 @@ describe('contract field formatting', () => {
     expect(isValidInternationalIban('DE89 3704 0044 0532 0130 01')).toBeFalse();
   });
 
-  it('forces the CPE prefix and accepts complete or suffix-only pasted values', () => {
+  it('protects only the PT CPE prefix and keeps the network code editable', () => {
     expect(formatCpe('pt0002123456789012aa')).toBe('PT 0002 123456789012 AA');
-    expect(formatCpe('PT 0002 123456789012 AA')).toBe('PT 0002 123456789012 AA');
-    expect(formatCpe('123456789012AA')).toBe('PT 0002 123456789012 AA');
+    expect(formatCpe('PT 1234 123456789012 AA')).toBe('PT 1234 123456789012 AA');
+    expect(formatCpe('1234123456789012AA')).toBe('PT 1234 123456789012 AA');
+    expect(formatCpe('')).toBe('PT');
     expect(isValidCpe('PT 0002 123456789012 AA')).toBeTrue();
+    expect(isValidCpe('PT 1234 123456789012 AA')).toBeTrue();
   });
 
   it('formats CUI, postal code and phone', () => {

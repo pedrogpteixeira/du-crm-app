@@ -4,6 +4,7 @@ import { authGuard } from './core/guards/auth-guard';
 import { guestGuard } from './core/guards/guest-guard';
 import { roleIncludesGuard } from './core/guards/role-includes-guard';
 import { emailFeatureGuard } from './core/guards/email-feature-guard';
+import { portulogosB2BAccessGuard } from './core/guards/portulogos-b2b-access-guard';
 
 export const routes: Routes = [
   {
@@ -19,24 +20,18 @@ export const routes: Routes = [
   {
     path: 'forgot-password',
     loadComponent: () =>
-      import('./features/auth/forgot-password/forgot-password').then(
-        (m) => m.ForgotPassword,
-      ),
+      import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
   },
   {
     path: 'reset-password',
     loadComponent: () =>
-      import('./features/auth/reset-password/reset-password').then(
-        (m) => m.ResetPassword,
-      ),
+      import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
   {
     path: 'change-password',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/auth/change-password/change-password').then(
-        (m) => m.ChangePassword,
-      ),
+      import('./features/auth/change-password/change-password').then((m) => m.ChangePassword),
   },
   {
     path: 'home',
@@ -49,8 +44,7 @@ export const routes: Routes = [
         data: {
           allowedRoles: ['Super Admin', 'DU'],
         },
-        loadComponent: () =>
-          import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
+        loadComponent: () => import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
         path: 'autos',
@@ -58,8 +52,7 @@ export const routes: Routes = [
         data: {
           allowedRoles: ['Super Admin'],
         },
-        loadComponent: () =>
-          import('./features/autos/autos').then((m) => m.Autos),
+        loadComponent: () => import('./features/autos/autos').then((m) => m.Autos),
       },
       {
         path: 'autos/:autoId',
@@ -76,8 +69,7 @@ export const routes: Routes = [
         data: {
           allowedRoles: ['Super Admin'],
         },
-        loadComponent: () =>
-          import('./features/users/users').then((m) => m.Users),
+        loadComponent: () => import('./features/users/users').then((m) => m.Users),
       },
       {
         path: 'teams',
@@ -85,15 +77,12 @@ export const routes: Routes = [
         data: {
           allowedRoles: ['Super Admin'],
         },
-        loadComponent: () =>
-          import('./features/teams/teams').then((m) => m.Teams),
+        loadComponent: () => import('./features/teams/teams').then((m) => m.Teams),
       },
       {
         path: 'teams/:id',
         loadComponent: () =>
-          import('./features/teams/team-detail/team-detail').then(
-            (m) => m.TeamDetail,
-          ),
+          import('./features/teams/team-detail/team-detail').then((m) => m.TeamDetail),
       },
       {
         path: 'users/:id',
@@ -103,27 +92,21 @@ export const routes: Routes = [
       {
         path: 'clients/:clientId',
         loadComponent: () =>
-          import('./features/clients/client-detail/client-detail').then(
-            (m) => m.ClientDetail,
-          ),
+          import('./features/clients/client-detail/client-detail').then((m) => m.ClientDetail),
       },
       {
         path: 'tickets',
-        loadComponent: () =>
-          import('./features/tickets/tickets/tickets').then((m) => m.Tickets),
+        loadComponent: () => import('./features/tickets/tickets/tickets').then((m) => m.Tickets),
       },
       {
         path: 'tickets/:id',
         loadComponent: () =>
-          import('./features/tickets/ticket-detail/ticket-detail').then(
-            (m) => m.TicketDetail,
-          ),
+          import('./features/tickets/ticket-detail/ticket-detail').then((m) => m.TicketDetail),
       },
       {
         path: 'email',
         canActivate: [emailFeatureGuard],
-        loadComponent: () =>
-          import('./features/email/mailbox/mailbox').then((m) => m.Mailbox),
+        loadComponent: () => import('./features/email/mailbox/mailbox').then((m) => m.Mailbox),
       },
       {
         path: 'email/templates',
@@ -229,6 +212,30 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/portulogos-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/portulogos-b2b-contracts/portulogos-b2b-contracts').then(
+            (m) => m.PortulogosB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/portulogos-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/portulogos-b2b-contract-create/portulogos-b2b-contract-create').then(
+            (m) => m.PortulogosB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/portulogos-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/portulogos-b2b-contract-detail/portulogos-b2b-contract-detail').then(
+            (m) => m.PortulogosB2BContractDetail,
+          ),
+      },
+      {
         path: 'contracts/galp-power-gas',
         canActivate: [roleIncludesGuard],
         data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
@@ -286,16 +293,10 @@ export const routes: Routes = [
         path: 'contracts/wallbox',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Galp',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Galp'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/wallbox-contracts/wallbox-contracts'
-          ).then(
+          import('./features/contracts/wallbox-contracts/wallbox-contracts').then(
             (m) => m.WallboxContracts,
           ),
       },
@@ -303,16 +304,10 @@ export const routes: Routes = [
         path: 'contracts/wallbox/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Galp',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Galp'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/wallbox-contract-create/wallbox-contract-create'
-          ).then(
+          import('./features/contracts/wallbox-contract-create/wallbox-contract-create').then(
             (m) => m.WallboxContractCreate,
           ),
       },
@@ -320,16 +315,10 @@ export const routes: Routes = [
         path: 'contracts/wallbox/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Galp',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Galp'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/wallbox-contract-detail/wallbox-contract-detail'
-          ).then(
+          import('./features/contracts/wallbox-contract-detail/wallbox-contract-detail').then(
             (m) => m.WallboxContractDetail,
           ),
       },
@@ -337,16 +326,10 @@ export const routes: Routes = [
         path: 'contracts/yes-energy',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Yes Energy',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Yes Energy'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/yes-energy-contracts/yes-energy-contracts'
-          ).then(
+          import('./features/contracts/yes-energy-contracts/yes-energy-contracts').then(
             (m) => m.YesEnergyContracts,
           ),
       },
@@ -354,16 +337,10 @@ export const routes: Routes = [
         path: 'contracts/yes-energy/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Yes Energy',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Yes Energy'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/yes-energy-contract-create/yes-energy-contract-create'
-          ).then(
+          import('./features/contracts/yes-energy-contract-create/yes-energy-contract-create').then(
             (m) => m.YesEnergyContractCreate,
           ),
       },
@@ -371,16 +348,10 @@ export const routes: Routes = [
         path: 'contracts/yes-energy/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Yes Energy',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Yes Energy'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/yes-energy-contract-detail/yes-energy-contract-detail'
-          ).then(
+          import('./features/contracts/yes-energy-contract-detail/yes-energy-contract-detail').then(
             (m) => m.YesEnergyContractDetail,
           ),
       },
@@ -388,16 +359,10 @@ export const routes: Routes = [
         path: 'contracts/iberdrola',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-contracts/iberdrola-contracts'
-          ).then(
+          import('./features/contracts/iberdrola-contracts/iberdrola-contracts').then(
             (m) => m.IberdrolaContracts,
           ),
       },
@@ -405,16 +370,10 @@ export const routes: Routes = [
         path: 'contracts/iberdrola/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-contract-create/iberdrola-contract-create'
-          ).then(
+          import('./features/contracts/iberdrola-contract-create/iberdrola-contract-create').then(
             (m) => m.IberdrolaContractCreate,
           ),
       },
@@ -422,38 +381,25 @@ export const routes: Routes = [
         path: 'contracts/iberdrola/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-contract-detail/iberdrola-contract-detail'
-          ).then(
+          import('./features/contracts/iberdrola-contract-detail/iberdrola-contract-detail').then(
             (m) => m.IberdrolaContractDetail,
           ),
       },
       {
         path: 'profile',
-        loadComponent: () =>
-          import('./features/profile/profile').then((m) => m.Profile),
+        loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
       },
       {
         path: 'contracts/iberdrola-solar',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-solar-contracts/iberdrola-solar-contracts'
-          ).then(
+          import('./features/contracts/iberdrola-solar-contracts/iberdrola-solar-contracts').then(
             (m) => m.IberdrolaSolarContracts,
           ),
       },
@@ -461,16 +407,10 @@ export const routes: Routes = [
         path: 'contracts/iberdrola-solar/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-solar-contract-create/iberdrola-solar-contract-create'
-          ).then(
+          import('./features/contracts/iberdrola-solar-contract-create/iberdrola-solar-contract-create').then(
             (m) => m.IberdrolaSolarContractCreate,
           ),
       },
@@ -478,16 +418,10 @@ export const routes: Routes = [
         path: 'contracts/iberdrola-solar/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Iberdrola',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/iberdrola-solar-contract-detail/iberdrola-solar-contract-detail'
-          ).then(
+          import('./features/contracts/iberdrola-solar-contract-detail/iberdrola-solar-contract-detail').then(
             (m) => m.IberdrolaSolarContractDetail,
           ),
       },
@@ -495,16 +429,10 @@ export const routes: Routes = [
         path: 'contracts/meo-energias',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Meo Energia',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Meo Energia'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/meo-energias-contracts/meo-energias-contracts'
-          ).then(
+          import('./features/contracts/meo-energias-contracts/meo-energias-contracts').then(
             (m) => m.MeoEnergiasContracts,
           ),
       },
@@ -512,16 +440,10 @@ export const routes: Routes = [
         path: 'contracts/meo-energias/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Meo Energia',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Meo Energia'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/meo-energias-contract-create/meo-energias-contract-create'
-          ).then(
+          import('./features/contracts/meo-energias-contract-create/meo-energias-contract-create').then(
             (m) => m.MeoEnergiasContractCreate,
           ),
       },
@@ -529,16 +451,10 @@ export const routes: Routes = [
         path: 'contracts/meo-energias/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Meo Energia',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Meo Energia'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/meo-energias-contract-detail/meo-energias-contract-detail'
-          ).then(
+          import('./features/contracts/meo-energias-contract-detail/meo-energias-contract-detail').then(
             (m) => m.MeoEnergiasContractDetail,
           ),
       },
@@ -546,16 +462,10 @@ export const routes: Routes = [
         path: 'contracts/vodafone',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Vodafone',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Vodafone'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/vodafone-contracts/vodafone-contracts'
-          ).then(
+          import('./features/contracts/vodafone-contracts/vodafone-contracts').then(
             (m) => m.VodafoneContracts,
           ),
       },
@@ -563,16 +473,10 @@ export const routes: Routes = [
         path: 'contracts/vodafone/create',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Vodafone',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Vodafone'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/vodafone-contract-create/vodafone-contract-create'
-          ).then(
+          import('./features/contracts/vodafone-contract-create/vodafone-contract-create').then(
             (m) => m.VodafoneContractCreate,
           ),
       },
@@ -580,41 +484,32 @@ export const routes: Routes = [
         path: 'contracts/vodafone/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: [
-            'Super Admin',
-            'DU',
-            'Vodafone',
-          ],
+          allowedRoles: ['Super Admin', 'DU', 'Vodafone'],
         },
         loadComponent: () =>
-          import(
-            './features/contracts/vodafone-contract-detail/vodafone-contract-detail'
-          ).then(
+          import('./features/contracts/vodafone-contract-detail/vodafone-contract-detail').then(
             (m) => m.VodafoneContractDetail,
           ),
       },
       {
         path: 'profile',
-        loadComponent: () =>
-          import('./features/profile/profile').then((m) => m.Profile),
+        loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
       },
       {
         path: 'profile',
-        loadComponent: () =>
-          import('./features/profile/profile').then((m) => m.Profile),
+        loadComponent: () => import('./features/profile/profile').then((m) => m.Profile),
       },
-     {
+      {
         path: 'preferences',
         loadComponent: () =>
-          import('./features/preferences/preferences').then(
-            (m) => m.Preferences,
-          ),
+          import('./features/preferences/preferences').then((m) => m.Preferences),
       },
       {
         path: 'knowledge-base',
         loadComponent: () =>
-          import('./features/knowledge-base/knowledge-base-home/knowledge-base-home')
-            .then((m) => m.KnowledgeBaseHome),
+          import('./features/knowledge-base/knowledge-base-home/knowledge-base-home').then(
+            (m) => m.KnowledgeBaseHome,
+          ),
       },
       {
         path: 'companies',
@@ -623,9 +518,7 @@ export const routes: Routes = [
           allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
-          import('./features/admin/companies/companies').then(
-            (m) => m.Companies,
-          ),
+          import('./features/admin/companies/companies').then((m) => m.Companies),
       },
       {
         path: 'system-notice',
@@ -641,14 +534,16 @@ export const routes: Routes = [
       {
         path: 'knowledge-base/folders/:id',
         loadComponent: () =>
-          import('./features/knowledge-base/knowledge-folder/knowledge-folder')
-            .then((m) => m.KnowledgeFolder),
+          import('./features/knowledge-base/knowledge-folder/knowledge-folder').then(
+            (m) => m.KnowledgeFolder,
+          ),
       },
       {
         path: 'knowledge-base/articles/:id',
         loadComponent: () =>
-          import('./features/knowledge-base/knowledge-article/knowledge-article')
-            .then((m) => m.KnowledgeArticle),
+          import('./features/knowledge-base/knowledge-article/knowledge-article').then(
+            (m) => m.KnowledgeArticle,
+          ),
       },
       {
         path: 'knowledge-base/campaigns/:companyId',
@@ -687,9 +582,7 @@ export const routes: Routes = [
           allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
-          import('./features/simulator/tariff-create/tariff-create').then(
-            (m) => m.TariffCreate,
-          ),
+          import('./features/simulator/tariff-create/tariff-create').then((m) => m.TariffCreate),
       },
       {
         path: 'tariffs/edit',
@@ -698,9 +591,7 @@ export const routes: Routes = [
           allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
-          import('./features/simulator/tariff-edit/tariff-edit').then(
-            (m) => m.TariffEdit,
-          ),
+          import('./features/simulator/tariff-edit/tariff-edit').then((m) => m.TariffEdit),
       },
       {
         path: 'tariffs/calculation-profiles',
@@ -715,10 +606,7 @@ export const routes: Routes = [
       },
       {
         path: 'simulator',
-        loadComponent: () =>
-          import('./features/simulator/simulator').then(
-            (m) => m.Simulator,
-          ),
+        loadComponent: () => import('./features/simulator/simulator').then((m) => m.Simulator),
       },
       {
         path: 'invoice-compare',
@@ -726,14 +614,12 @@ export const routes: Routes = [
           import('./features/simulator/invoice-compare/invoice-compare').then(
             (m) => m.InvoiceCompare,
           ),
-      }
+      },
     ],
   },
   {
     path: 'error',
-    loadComponent: () =>
-      import('./features/not-found/not-found')
-        .then((m) => m.NotFound),
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
   },
   {
     path: '',
@@ -742,8 +628,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    loadComponent: () =>
-      import('./features/not-found/not-found')
-        .then((m) => m.NotFound),
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
   },
 ];

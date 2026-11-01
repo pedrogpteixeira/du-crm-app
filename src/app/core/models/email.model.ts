@@ -144,6 +144,83 @@ export interface EmailMessagePage {
   hasMore: boolean;
 }
 
+/** DTO conhecido da listagem de conversas devolvida por /messages/threads. */
+export interface EmailThreadApiSummary {
+  id: string;
+  subject: string;
+  messageCount: number;
+  unreadCount: number;
+  folders: Array<Exclude<EmailFolder, 'DRAFTS'>>;
+  hasAttachments: boolean;
+  lastMessageAt: string;
+  participants: string[];
+}
+
+export interface EmailThreadApiPage {
+  total: number;
+  offset: number;
+  limit: number;
+  items: EmailThreadApiSummary[];
+}
+
+/** Mensagem individual embebida no detalhe de uma conversa. */
+export interface EmailThreadApiMessage {
+  id: string;
+  folder: Exclude<EmailFolder, 'DRAFTS'>;
+  kind: 'inbound' | 'outbound';
+  from: string;
+  to: string[];
+  cc: string[];
+  subject: string;
+  preview: string;
+  hasAttachments: boolean;
+  read: boolean;
+  text: string;
+  /** Message-ID MIME; não confundir com o `id` interno CRM. */
+  messageId: string | null;
+  references: string[];
+  sentAt?: string;
+  receivedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  inReplyTo?: string | null;
+  bcc?: string[];
+}
+
+export interface EmailThreadApiDetail extends EmailThreadApiSummary {
+  messages: EmailThreadApiMessage[];
+}
+
+/** Modelo normalizado usado pela futura listagem de INBOX/SENT. */
+export interface EmailThreadSummary {
+  id: string;
+  subject: string;
+  participants: string[];
+  messageCount: number;
+  unreadCount: number;
+  folders: Array<Exclude<EmailFolder, 'DRAFTS'>>;
+  hasAttachments: boolean;
+  lastMessageAt: string | null;
+}
+
+export interface EmailThreadPage {
+  items: EmailThreadSummary[];
+  offset: number;
+  limit: number;
+  total: number | null;
+  hasMore: boolean;
+}
+
+/** Mensagem individual dentro de uma conversa, mantendo ações por mensagem. */
+export interface EmailThreadMessage extends EmailMessageDetail {
+  kind: 'inbound' | 'outbound';
+  folder: Exclude<EmailFolder, 'DRAFTS'>;
+}
+
+export interface EmailThreadDetail extends EmailThreadSummary {
+  messages: EmailThreadMessage[];
+}
+
 export interface EmailDraftApiItem {
   id: string;
   accountId: string;

@@ -14,7 +14,7 @@ export interface ContractFormValidationOptions {
   ibanMode?: 'portuguese' | 'international';
 }
 
-const CPE_PREFIX = 'PT 0002';
+const CPE_PREFIX = 'PT';
 const CUI_PREFIX = 'PT';
 
 function digitsOnly(value: unknown): string {
@@ -61,20 +61,18 @@ export function formatCpe(value: unknown): string {
   const raw = String(value ?? '')
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
-  let payload = raw.startsWith('PT') ? raw.slice(2) : raw;
-
-  if (payload.startsWith('0002')) {
-    payload = payload.slice(4);
-  }
-
-  const digits = digitsOnly(payload).slice(0, 12);
+  const payload = raw.startsWith('PT') ? raw.slice(2) : raw;
+  const digits = digitsOnly(payload).slice(0, 16);
   const letters = lettersOnly(payload).slice(0, 2);
 
   if (!digits) {
     return CPE_PREFIX;
   }
 
-  return `${CPE_PREFIX} ${digits}${letters ? ` ${letters}` : ''}`;
+  const networkCode = digits.slice(0, 4);
+  const identifier = digits.slice(4, 16);
+
+  return [CPE_PREFIX, networkCode, identifier, letters].filter(Boolean).join(' ');
 }
 
 export function formatCui(value: unknown): string {
@@ -167,7 +165,7 @@ export function isValidInternationalIban(value: unknown): boolean {
 
 export function isValidCpe(value: unknown): boolean {
   const normalized = formatCpe(value);
-  return /^PT 0002 \d{12} [A-Z]{2}$/.test(normalized);
+  return /^PT \d{4} \d{12} [A-Z]{2}$/.test(normalized);
 }
 
 export function isValidCui(value: unknown): boolean {

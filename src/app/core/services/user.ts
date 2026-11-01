@@ -17,6 +17,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { Auth } from './auth';
 import { SocketService } from './socket';
+import { TeamService } from './team';
 import type { ContractLayout } from './preferences';
 
 export interface UpdateProfilePictureResponse {
@@ -113,6 +114,7 @@ export class UserService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
   private readonly socketService = inject(SocketService);
+  private readonly teamService = inject(TeamService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly apiUrl = `${environment.apiUrl}/api/users`;
 
@@ -214,6 +216,46 @@ export class UserService {
 
   getAssignableUsersSnapshot(): ProfileUser[] {
     return this.assignableUsersStateSubject.value.users;
+  }
+
+  /**
+   * Resolve as equipas válidas para persistência num contrato.
+   * `user.teams` fornece a associação/posição do utilizador; o cache global
+   * de equipas fornece o estado atual e o nome da equipa quando disponível.
+   */
+  getAssignableContractTeams(user: ProfileUser): UserTeam[] {
+    const cachedTeamsById = new Map(
+      this.teamService
+        .getTeamsSnapshot()
+        .filter((team) => Boolean(team?.id))
+        .map((team) => [team.id, team] as const),
+    );
+
+    return (user.teams ?? [])
+      .filter((membership) => {
+        if (
+          !membership?.id ||
+          !Number.isInteger(membership.positionIndex) ||
+          Number(membership.positionIndex) < 0
+        ) {
+          return false;
+        }
+
+        const cachedTeam = cachedTeamsById.get(membership.id);
+
+        return cachedTeam
+          ? cachedTeam.active !== false
+          : membership.active !== false;
+      })
+      .map((membership) => {
+        const cachedTeam = cachedTeamsById.get(membership.id);
+
+        return {
+          ...membership,
+          name: cachedTeam?.name?.trim() || membership.name,
+          active: cachedTeam?.active ?? membership.active,
+        };
+      });
   }
 
   clearAssignableUsersCache(): void {

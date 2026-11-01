@@ -22,8 +22,7 @@ import { CriticalRequestService } from './critical-request';
 import { SystemNoticeService } from './system-notice';
 import type { TicketApiModel } from './ticket';
 
-interface ContractSocketBaseEvent
-  extends ContractActivitySocketPayload, ContractListSocketPayload {
+interface ContractSocketBaseEvent extends ContractActivitySocketPayload, ContractListSocketPayload {
   contractId: string;
   estado: string;
   updatedBy?: string;
@@ -64,6 +63,8 @@ export interface GalpPowerGasContractSocketEvent extends ContractSocketBaseEvent
 export interface RepsolContractSocketEvent extends ContractSocketBaseEvent {}
 
 export interface PortulogosContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface PortulogosB2BContractSocketEvent extends ContractSocketBaseEvent {}
 
 export interface WallboxContractSocketEvent extends ContractSocketBaseEvent {}
 
@@ -201,6 +202,18 @@ export class SocketService {
 
   listenPortulogosContractUpdated(): Observable<PortulogosContractSocketEvent> {
     return this.createEventObservable<PortulogosContractSocketEvent>('portulogos-contract:updated');
+  }
+
+  listenPortulogosB2BContractCreated(): Observable<PortulogosB2BContractSocketEvent> {
+    return this.createEventObservable<PortulogosB2BContractSocketEvent>(
+      'portulogos-b2b-contract:created',
+    );
+  }
+
+  listenPortulogosB2BContractUpdated(): Observable<PortulogosB2BContractSocketEvent> {
+    return this.createEventObservable<PortulogosB2BContractSocketEvent>(
+      'portulogos-b2b-contract:updated',
+    );
   }
 
   listenGalpSolarContractCreated(): Observable<GalpSolarContractSocketEvent> {

@@ -11,6 +11,7 @@ export const SUPPLY_POINT_PREFLIGHT_PROVIDERS = [
   'yes-energy',
   'meo-energias',
   'portulogos',
+  'portulogos-b2b',
 ] as const;
 
 export type ContractPreflightProvider = (typeof SUPPLY_POINT_PREFLIGHT_PROVIDERS)[number];
@@ -94,7 +95,6 @@ export function buildContractPreflightRequest(
 
   return payload;
 }
-
 
 export function getNewSupplyPointReentryWarnings(
   finalWarnings: SupplyPointReentryWarning[],

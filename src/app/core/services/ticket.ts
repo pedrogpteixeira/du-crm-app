@@ -1,25 +1,18 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { canAccessPortulogosB2B, isPortulogosB2BCompany } from '../config/portulogos-b2b-access';
+import { Auth } from './auth';
 import { ContractCancellationReason } from '../constants/contract-cancellation-reasons';
 
 export type TicketTipo =
-  | 'Novo Pedido de Chamada'
-  | 'Tratamento de Pendência'
-  | 'Pedido de Anulação';
+  'Novo Pedido de Chamada' | 'Tratamento de Pendência' | 'Pedido de Anulação';
 
-export type TicketEstado =
-  | 'Novo'
-  | 'Em Tratamento'
-  | 'Concluído';
+export type TicketEstado = 'Novo' | 'Em Tratamento' | 'Concluído';
 
-export type TicketPrioridade =
-  | 'Baixo'
-  | 'Normal'
-  | 'Alto'
-  | 'Urgente';
+export type TicketPrioridade = 'Baixo' | 'Normal' | 'Alto' | 'Urgente';
 
 export interface TicketFollower {
   id: string;
@@ -217,9 +210,7 @@ interface TicketFollowerListEnvelope {
   results?: TicketApiModel[];
 }
 
-type TicketFollowerListResponse =
-  | TicketApiModel[]
-  | TicketFollowerListEnvelope;
+type TicketFollowerListResponse = TicketApiModel[] | TicketFollowerListEnvelope;
 
 export const TICKET_TYPE_OPTIONS: readonly TicketTipo[] = [
   'Novo Pedido de Chamada',
@@ -267,10 +258,7 @@ export function prepareTicketCreatePayload(
   payload: CreateTicketRequest,
   hasDocuments: boolean,
 ): CreateTicketRequest {
-  const {
-    documentosConfirmados: _documentosConfirmados,
-    ...sanitizedPayload
-  } = payload;
+  const { documentosConfirmados: _documentosConfirmados, ...sanitizedPayload } = payload;
 
   if (payload.tipo === TREATMENT_TICKET_TYPE && hasDocuments) {
     return {
@@ -286,14 +274,8 @@ export function prepareTicketUpdatePayload(
   currentTicket: TicketDetail,
   changes: UpdateTicketRequest,
 ): UpdateTicketRequest {
-  const {
-    documentosConfirmados: _documentosConfirmados,
-    ...sanitizedChanges
-  } = changes;
-  const effectiveType = getEffectiveTicketType(
-    currentTicket,
-    sanitizedChanges,
-  );
+  const { documentosConfirmados: _documentosConfirmados, ...sanitizedChanges } = changes;
+  const effectiveType = getEffectiveTicketType(currentTicket, sanitizedChanges);
 
   if (effectiveType === TREATMENT_TICKET_TYPE) {
     return {
@@ -319,9 +301,7 @@ export function buildCancellationDescription(
   return description ? `${description}\n\n${cancellationReason}` : cancellationReason;
 }
 
-export function isDocumentConfirmationApiError(
-  message: string | null | undefined,
-): boolean {
+export function isDocumentConfirmationApiError(message: string | null | undefined): boolean {
   const normalizedMessage = (message ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -329,8 +309,7 @@ export function isDocumentConfirmationApiError(
 
   return (
     normalizedMessage.includes('documentosconfirmados') ||
-    (normalizedMessage.includes('document') &&
-      normalizedMessage.includes('confirm'))
+    (normalizedMessage.includes('document') && normalizedMessage.includes('confirm'))
   );
 }
 
@@ -339,78 +318,44 @@ export function isDocumentConfirmationApiError(
 })
 export class TicketService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
   private readonly baseUrl = `${environment.apiUrl}/api/tickets`;
 
-  createTicket(
-    payload: CreateTicketRequest,
-  ): Observable<CreatedTicket> {
+  createTicket(payload: CreateTicketRequest): Observable<CreatedTicket> {
     return this.http
-      .post<TicketApiModel | TicketApiEnvelope>(
-        this.baseUrl,
-        payload,
-      )
-      .pipe(
-        map((response) =>
-          this.normalizeCreatedTicket(
-            response,
-            payload,
-          ),
-        ),
-      );
+      .post<TicketApiModel | TicketApiEnvelope>(this.baseUrl, payload)
+      .pipe(map((response) => this.normalizeCreatedTicket(response, payload)));
   }
 
   getTicketsByFollower(userId: string): Observable<TicketListItem[]> {
     return this.http
-      .get<TicketFollowerListResponse>(
-        `${this.baseUrl}/followers/${encodeURIComponent(userId)}`,
-      )
+      .get<TicketFollowerListResponse>(`${this.baseUrl}/followers/${encodeURIComponent(userId)}`)
       .pipe(
         map((response) =>
           this.unwrapTicketList(response)
             .map((ticket) => this.normalizeTicketListItem(ticket))
-            .filter((ticket): ticket is TicketListItem => ticket !== null),
+            .filter((ticket): ticket is TicketListItem => ticket !== null)
+            .filter((ticket) => this.canExposeTicketCompany(ticket.companyId)),
         ),
       );
   }
 
   getTicketById(ticketId: string): Observable<TicketDetail> {
     return this.http
-      .get<TicketApiModel | TicketApiEnvelope>(
-        `${this.baseUrl}/${encodeURIComponent(ticketId)}`,
-      )
-      .pipe(
-        map((response) =>
-          this.normalizeTicketDetail(
-            response,
-            ticketId,
-          ),
-        ),
-      );
+      .get<TicketApiModel | TicketApiEnvelope>(`${this.baseUrl}/${encodeURIComponent(ticketId)}`)
+      .pipe(map((response) => this.normalizeTicketDetail(response, ticketId)));
   }
 
-  updateTicket(
-    ticketId: string,
-    payload: UpdateTicketRequest,
-  ): Observable<TicketDetail> {
+  updateTicket(ticketId: string, payload: UpdateTicketRequest): Observable<TicketDetail> {
     return this.http
       .patch<TicketApiModel | TicketApiEnvelope>(
         `${this.baseUrl}/${encodeURIComponent(ticketId)}`,
         payload,
       )
-      .pipe(
-        map((response) =>
-          this.normalizeTicketDetail(
-            response,
-            ticketId,
-          ),
-        ),
-      );
+      .pipe(map((response) => this.normalizeTicketDetail(response, ticketId)));
   }
 
-  uploadAttachments(
-    ticketId: string,
-    files: File[],
-  ): Observable<TicketDetail> {
+  uploadAttachments(ticketId: string, files: File[]): Observable<TicketDetail> {
     const formData = new FormData();
 
     files.forEach((file) => {
@@ -422,34 +367,17 @@ export class TicketService {
         `${this.baseUrl}/${encodeURIComponent(ticketId)}/attachments`,
         formData,
       )
-      .pipe(
-        map((response) =>
-          this.normalizeTicketDetail(
-            response,
-            ticketId,
-          ),
-        ),
-      );
+      .pipe(map((response) => this.normalizeTicketDetail(response, ticketId)));
   }
 
-  deleteAttachment(
-    ticketId: string,
-    fileName: string,
-  ): Observable<TicketDetail> {
+  deleteAttachment(ticketId: string, fileName: string): Observable<TicketDetail> {
     return this.http
       .delete<TicketApiModel | TicketApiEnvelope>(
         `${this.baseUrl}/${encodeURIComponent(ticketId)}/attachments/${encodeURIComponent(
           fileName,
         )}`,
       )
-      .pipe(
-        map((response) =>
-          this.normalizeTicketDetail(
-            response,
-            ticketId,
-          ),
-        ),
-      );
+      .pipe(map((response) => this.normalizeTicketDetail(response, ticketId)));
   }
 
   transferAttachmentsToContract(
@@ -457,11 +385,7 @@ export class TicketService {
     fileNames: readonly string[],
   ): Observable<TransferTicketAttachmentsResult> {
     const uniqueFileNames = Array.from(
-      new Set(
-        fileNames
-          .map((fileName) => fileName.trim())
-          .filter(Boolean),
-      ),
+      new Set(fileNames.map((fileName) => fileName.trim()).filter(Boolean)),
     );
 
     return this.http
@@ -485,10 +409,7 @@ export class TicketService {
       );
   }
 
-  downloadDocument(
-    ticketId: string,
-    fileName: string,
-  ): Observable<Blob> {
+  downloadDocument(ticketId: string, fileName: string): Observable<Blob> {
     return this.http.get(
       `${this.baseUrl}/${encodeURIComponent(ticketId)}/attachments/${encodeURIComponent(
         fileName,
@@ -512,11 +433,7 @@ export class TicketService {
     currentTicket: TicketListItem | null = null,
   ): TicketListItem | null {
     const id =
-      payload.id ??
-      payload._id ??
-      payload.ticketId ??
-      currentTicket?.id ??
-      fallbackTicketId;
+      payload.id ?? payload._id ?? payload.ticketId ?? currentTicket?.id ?? fallbackTicketId;
 
     const contractId = payload.contractId ?? currentTicket?.contractId ?? '';
     const companyId = payload.companyId ?? currentTicket?.companyId ?? '';
@@ -531,19 +448,15 @@ export class TicketService {
       currentTicket?.userId ??
       '';
 
-    if (
-      !id ||
-      !contractId ||
-      !companyId ||
-      !tipo ||
-      !estado ||
-      !prioridade ||
-      !userId
-    ) {
+    if (!id || !contractId || !companyId || !tipo || !estado || !prioridade || !userId) {
       return null;
     }
 
     const now = new Date().toISOString();
+
+    if (!this.canExposeTicketCompany(companyId)) {
+      return null;
+    }
 
     return {
       id,
@@ -555,32 +468,26 @@ export class TicketService {
       agendamento:
         payload.agendamento !== undefined
           ? payload.agendamento
-          : currentTicket?.agendamento ?? null,
+          : (currentTicket?.agendamento ?? null),
       descricao:
         payload.descricao !== undefined
-          ? payload.descricao ?? ''
-          : currentTicket?.descricao ?? '',
+          ? (payload.descricao ?? '')
+          : (currentTicket?.descricao ?? ''),
       observacoes:
         payload.observacoes !== undefined
-          ? payload.observacoes ?? ''
-          : currentTicket?.observacoes ?? '',
+          ? (payload.observacoes ?? '')
+          : (currentTicket?.observacoes ?? ''),
       userId,
       userName:
         payload.userName !== undefined
           ? payload.userName
-          : payload.user?.name ??
-            payload.user?.userName ??
-            currentTicket?.userName ??
-            null,
+          : (payload.user?.name ?? payload.user?.userName ?? currentTicket?.userName ?? null),
       createdAt: payload.createdAt ?? currentTicket?.createdAt ?? now,
       updatedAt: payload.updatedAt ?? now,
     };
   }
 
-  getSocketFollowerMembership(
-    payload: TicketApiModel,
-    userId: string,
-  ): boolean | null {
+  getSocketFollowerMembership(payload: TicketApiModel, userId: string): boolean | null {
     if (!Array.isArray(payload.followers)) {
       return null;
     }
@@ -590,11 +497,7 @@ export class TicketService {
         return follower === userId;
       }
 
-      return (
-        follower.id === userId ||
-        follower._id === userId ||
-        follower.userId === userId
-      );
+      return follower.id === userId || follower._id === userId || follower.userId === userId;
     });
   }
 
@@ -616,10 +519,11 @@ export class TicketService {
     };
   }
 
+  private canExposeTicketCompany(companyId: string): boolean {
+    return !isPortulogosB2BCompany(companyId) || canAccessPortulogosB2B(this.auth.getCurrentUser());
+  }
 
-  private unwrapTicketList(
-    response: TicketFollowerListResponse,
-  ): TicketApiModel[] {
+  private unwrapTicketList(response: TicketFollowerListResponse): TicketApiModel[] {
     if (Array.isArray(response)) {
       return response;
     }
@@ -643,9 +547,7 @@ export class TicketService {
     return [];
   }
 
-  private normalizeTicketListItem(
-    ticket: TicketApiModel,
-  ): TicketListItem | null {
+  private normalizeTicketListItem(ticket: TicketApiModel): TicketListItem | null {
     const id = ticket.id ?? ticket._id ?? ticket.ticketId ?? '';
 
     if (!id) {
@@ -653,11 +555,7 @@ export class TicketService {
     }
 
     const userId =
-      ticket.userId ??
-      ticket.user?.id ??
-      ticket.user?._id ??
-      ticket.user?.userId ??
-      '';
+      ticket.userId ?? ticket.user?.id ?? ticket.user?._id ?? ticket.user?.userId ?? '';
 
     return {
       id,
@@ -670,11 +568,7 @@ export class TicketService {
       descricao: ticket.descricao ?? '',
       observacoes: ticket.observacoes ?? '',
       userId,
-      userName:
-        ticket.userName ??
-        ticket.user?.name ??
-        ticket.user?.userName ??
-        null,
+      userName: ticket.userName ?? ticket.user?.name ?? ticket.user?.userName ?? null,
       createdAt: ticket.createdAt ?? '',
       updatedAt: ticket.updatedAt ?? '',
     };
@@ -688,9 +582,7 @@ export class TicketService {
     const ticketId = ticket.ticketId ?? ticket.id ?? ticket._id;
 
     if (!ticketId) {
-      throw new Error(
-        'O Ticket foi criado, mas a API não devolveu o respetivo identificador.',
-      );
+      throw new Error('O Ticket foi criado, mas a API não devolveu o respetivo identificador.');
     }
 
     return {
@@ -698,8 +590,7 @@ export class TicketService {
       estado: ticket.estado ?? 'Novo',
       tipo: ticket.tipo ?? payload.tipo,
       motivoAnulacao: ticket.motivoAnulacao ?? payload.motivoAnulacao ?? null,
-      motivoAnulacaoOutras:
-        ticket.motivoAnulacaoOutras ?? payload.motivoAnulacaoOutras ?? null,
+      motivoAnulacaoOutras: ticket.motivoAnulacaoOutras ?? payload.motivoAnulacaoOutras ?? null,
       prioridade: ticket.prioridade ?? payload.prioridade ?? 'Normal',
       agendamento: ticket.agendamento ?? payload.agendamento ?? null,
       descricao: ticket.descricao ?? payload.descricao ?? null,
@@ -707,11 +598,7 @@ export class TicketService {
       contractId: ticket.contractId ?? payload.contractId,
       companyId: ticket.companyId ?? payload.companyId,
       userId: ticket.userId ?? payload.userId,
-      userName:
-        ticket.userName ??
-        ticket.user?.name ??
-        ticket.user?.userName ??
-        null,
+      userName: ticket.userName ?? ticket.user?.name ?? ticket.user?.userName ?? null,
     };
   }
 
@@ -723,25 +610,23 @@ export class TicketService {
     const id = ticket.id ?? ticket._id ?? ticket.ticketId ?? fallbackTicketId;
 
     if (!id) {
-      throw new Error(
-        'A API não devolveu um identificador válido para o Ticket.',
-      );
+      throw new Error('A API não devolveu um identificador válido para o Ticket.');
     }
 
     const userId =
-      ticket.userId ??
-      ticket.user?.id ??
-      ticket.user?._id ??
-      ticket.user?.userId ??
-      '';
+      ticket.userId ?? ticket.user?.id ?? ticket.user?._id ?? ticket.user?.userId ?? '';
 
-    const userName =
-      ticket.userName ??
-      ticket.user?.name ??
-      ticket.user?.userName ??
-      null;
+    const userName = ticket.userName ?? ticket.user?.name ?? ticket.user?.userName ?? null;
 
     const username = ticket.user?.username ?? null;
+
+    if (!this.canExposeTicketCompany(ticket.companyId ?? '')) {
+      throw new HttpErrorResponse({
+        status: 403,
+        statusText: 'Forbidden',
+        error: { message: 'Não tem acesso à Portulogos B2B.' },
+      });
+    }
 
     return {
       id,
@@ -761,9 +646,7 @@ export class TicketService {
       agendamento: ticket.agendamento ?? null,
       descricao: ticket.descricao ?? '',
       observacoes: ticket.observacoes ?? '',
-      anexos: this.normalizeDocuments(
-        ticket.anexos ?? ticket.documentos ?? [],
-      ),
+      anexos: this.normalizeDocuments(ticket.anexos ?? ticket.documentos ?? []),
       userId,
       user: userId
         ? {
@@ -779,9 +662,7 @@ export class TicketService {
     };
   }
 
-  private normalizeFollowers(
-    followers: Array<TicketApiFollower | string>,
-  ): TicketFollower[] {
+  private normalizeFollowers(followers: Array<TicketApiFollower | string>): TicketFollower[] {
     return followers
       .map((follower) => {
         if (typeof follower === 'string') {
@@ -793,11 +674,7 @@ export class TicketService {
         }
 
         return {
-          id:
-            follower.id ??
-            follower._id ??
-            follower.userId ??
-            '',
+          id: follower.id ?? follower._id ?? follower.userId ?? '',
           name: follower.name ?? follower.userName ?? null,
           username: follower.username ?? null,
         };
@@ -816,33 +693,23 @@ export class TicketService {
       .filter((entry) => Boolean(entry.acao || entry.dataHora));
   }
 
-  private normalizeDocuments(
-    documents: TicketApiDocument[],
-  ): TicketDocument[] {
+  private normalizeDocuments(documents: TicketApiDocument[]): TicketDocument[] {
     return documents
       .map((document) => {
         const fileName = document.fileName ?? document.filename ?? '';
 
         return {
           fileName,
-          originalName:
-            document.originalName ??
-            document.originalname ??
-            fileName,
+          originalName: document.originalName ?? document.originalname ?? fileName,
           mimetype: document.mimetype ?? null,
-          size:
-            typeof document.size === 'number'
-              ? document.size
-              : null,
+          size: typeof document.size === 'number' ? document.size : null,
           storageProvider: document.storageProvider ?? null,
         };
       })
       .filter((document) => Boolean(document.fileName));
   }
 
-  private unwrapTicket(
-    response: TicketApiModel | TicketApiEnvelope,
-  ): TicketApiModel {
+  private unwrapTicket(response: TicketApiModel | TicketApiEnvelope): TicketApiModel {
     const envelope = response as TicketApiEnvelope;
 
     if (envelope.ticket || envelope.data) {

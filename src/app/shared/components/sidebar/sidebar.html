@@ -12,62 +12,49 @@
   </button>
 
   <!-- BRAND / DASHBOARD -->
-  <a
-    class="brand"
-    [routerLink]="brandRoute"
-    title="Início"
-    aria-label="Ir para o início"
-  >
-    <div class="brand-icon">
-      Certo
-    </div>
+  <a class="brand" [routerLink]="brandRoute" title="Início" aria-label="Ir para o início">
+    <div class="brand-icon">Certo</div>
 
-    <span class="brand-text">
-      CRM
-    </span>
+    <span class="brand-text"> CRM </span>
   </a>
 
   <nav class="sidebar-nav">
-
     <!-- PORTULOGOS -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Portulogos')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Portulogos')">
       <span class="section-title">CRM Portulogos</span>
 
-      <a
-        routerLink="/home/contracts/portulogos"
-        routerLinkActive="active"
-        title="Portulogos"
-      >
+      <a routerLink="/home/contracts/portulogos" routerLinkActive="active" title="Portulogos">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Portulogos</span>
       </a>
     </div>
 
-    <!-- REPSOL -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
-    >
-      <span class="section-title">CRM Repsol</span>
+    <!-- PORTULOGOS B2B -->
+    <div class="nav-section" *ngIf="canAccessPortulogosB2B()">
+      <span class="section-title">CRM Portulogos B2B</span>
 
       <a
-        routerLink="/home/contracts/repsol"
+        routerLink="/home/contracts/portulogos-b2b"
         routerLinkActive="active"
-        title="Repsol"
+        title="Portulogos B2B"
       >
+        <span class="icon material-symbols-rounded">business_center</span>
+        <span class="label">Portulogos B2B</span>
+      </a>
+    </div>
+
+    <!-- REPSOL -->
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')">
+      <span class="section-title">CRM Repsol</span>
+
+      <a routerLink="/home/contracts/repsol" routerLinkActive="active" title="Repsol">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Repsol</span>
       </a>
     </div>
 
     <!-- GALP -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')">
       <span class="section-title">CRM Galp</span>
 
       <a
@@ -79,54 +66,32 @@
         <span class="label">Galp Power & Gás</span>
       </a>
 
-      <a
-        routerLink="/home/contracts/galp-solar"
-        routerLinkActive="active"
-        title="Galp Solar"
-      >
+      <a routerLink="/home/contracts/galp-solar" routerLinkActive="active" title="Galp Solar">
         <span class="icon material-symbols-rounded">solar_power</span>
         <span class="label">Galp Solar</span>
       </a>
 
-      <a
-        routerLink="/home/contracts/wallbox"
-        routerLinkActive="active"
-        title="Wallbox"
-      >
+      <a routerLink="/home/contracts/wallbox" routerLinkActive="active" title="Wallbox">
         <span class="icon material-symbols-rounded">ev_station</span>
         <span class="label">Wallbox</span>
       </a>
     </div>
 
     <!-- YES ENERGY -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')">
       <span class="section-title">CRM Yes Energy</span>
 
-      <a
-        routerLink="/home/contracts/yes-energy"
-        routerLinkActive="active"
-        title="Yes Energy"
-      >
+      <a routerLink="/home/contracts/yes-energy" routerLinkActive="active" title="Yes Energy">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Yes Energy</span>
       </a>
     </div>
 
     <!-- IBERDROLA -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')">
       <span class="section-title">CRM Iberdrola</span>
 
-      <a
-        routerLink="/home/contracts/iberdrola"
-        routerLinkActive="active"
-        title="Iberdrola"
-      >
+      <a routerLink="/home/contracts/iberdrola" routerLinkActive="active" title="Iberdrola">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Iberdrola</span>
       </a>
@@ -142,44 +107,27 @@
     </div>
 
     <!-- VODAFONE -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Vodafone')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Vodafone')">
       <span class="section-title">CRM Vodafone</span>
 
-      <a
-        routerLink="/home/contracts/vodafone"
-        routerLinkActive="active"
-        title="Vodafone"
-      >
+      <a routerLink="/home/contracts/vodafone" routerLinkActive="active" title="Vodafone">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">Vodafone</span>
       </a>
     </div>
 
     <!-- MEO ENERGIAS -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')">
       <span class="section-title">CRM MEO Energias</span>
 
-      <a
-        routerLink="/home/contracts/meo-energias"
-        routerLinkActive="active"
-        title="MEO Energias"
-      >
+      <a routerLink="/home/contracts/meo-energias" routerLinkActive="active" title="MEO Energias">
         <span class="icon material-symbols-rounded">description</span>
         <span class="label">MEO Energias</span>
       </a>
     </div>
 
     <!-- FERRAMENTAS DE CONTRATOS -->
-    <div
-      class="nav-section"
-      *ngIf="canAccessRoles('Super Admin', 'DU')"
-    >
+    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU')">
       <span class="section-title">Gestão de Contratos</span>
 
       <a
@@ -196,11 +144,7 @@
     <div class="nav-section">
       <span class="section-title">Simulações</span>
 
-      <a
-        routerLink="/home/invoice-compare"
-        routerLinkActive="active"
-        title="Comparar Fatura"
-      >
+      <a routerLink="/home/invoice-compare" routerLinkActive="active" title="Comparar Fatura">
         <span class="icon material-symbols-rounded">receipt_long</span>
         <span class="label">Comparar Fatura</span>
       </a>
@@ -224,7 +168,6 @@
         <span class="icon material-symbols-rounded">edit_note</span>
         <span class="label">Editar Tarifários</span>
       </a>
-
 
       <a
         *ngIf="canAccessRoles('Super Admin')"
@@ -251,11 +194,7 @@
     <div class="nav-section">
       <span class="section-title">Recursos</span>
 
-      <a
-        routerLink="/home/knowledge-base"
-        routerLinkActive="active"
-        title="Base de Conhecimento"
-      >
+      <a routerLink="/home/knowledge-base" routerLinkActive="active" title="Base de Conhecimento">
         <span class="icon material-symbols-rounded">library_books</span>
         <span class="label">Base de Conhecimento</span>
       </a>
@@ -295,14 +234,8 @@
         <span class="label">Dashboard</span>
       </a>
 
-      <a
-        routerLink="/home/tickets"
-        routerLinkActive="active"
-        title="Tickets"
-      >
-        <span class="icon material-symbols-rounded">
-          confirmation_number
-        </span>
+      <a routerLink="/home/tickets" routerLinkActive="active" title="Tickets">
+        <span class="icon material-symbols-rounded"> confirmation_number </span>
         <span class="label">Tickets</span>
       </a>
 
@@ -349,17 +282,9 @@
   </nav>
 
   <!-- PERFIL -->
-  <a
-    class="profile-card"
-    routerLink="/home/profile"
-    title="Perfil"
-  >
+  <a class="profile-card" routerLink="/home/profile" title="Perfil">
     <div class="avatar">
-      <img
-        *ngIf="profilePictureUrl; else initials"
-        [src]="profilePictureUrl"
-        [alt]="user?.name"
-      />
+      <img *ngIf="profilePictureUrl; else initials" [src]="profilePictureUrl" [alt]="user?.name" />
 
       <ng-template #initials>
         {{ userInitial }}

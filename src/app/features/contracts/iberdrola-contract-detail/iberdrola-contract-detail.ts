@@ -37,6 +37,7 @@ import { environment } from '../../../../environments/environment';
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
+import { resolveContractRegistrationFromUser } from '../../../core/utils/contract-registration';
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
   canMutateContractByBusinessRule,
@@ -49,6 +50,7 @@ import {
   preserveContractActivity,
 } from '../../../core/models/contract-activity';
 import { Auth } from '../../../core/services/auth';
+import { UserService } from '../../../core/services/user';
 import { FileAccessService } from '../../../core/services/file-access';
 import { DocumentPreviewService } from '../../../core/services/document-preview';
 import type { Campaign } from '../../../core/services/campaign';
@@ -172,6 +174,8 @@ import { EditableSelectCombobox } from '../../../shared/components/editable-sele
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
+import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/entity-email-panel';
+
 @Component({
   selector: 'app-iberdrola-contract-detail',
   imports: [
@@ -182,6 +186,7 @@ import { FileDropzone } from '../../../shared/components/file-dropzone/file-drop
     VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
+    EntityEmailPanel,
     ObservationsThread,
     FileDropzone,
   ],
@@ -200,6 +205,7 @@ export class IberdrolaContractDetail implements OnInit {
   private readonly router = inject(Router);
 
   private readonly auth = inject(Auth);
+  private readonly userService = inject(UserService);
 
   private readonly iberdrolaContractService = inject(IberdrolaContractService);
 
@@ -838,9 +844,46 @@ export class IberdrolaContractDetail implements OnInit {
     this.selectedFiles = [];
 
     this.isEditing = true;
+    this.syncRegistrationFromAssignedUser();
 
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private syncRegistrationFromAssignedUser(): void {
+    const assignedUserId = this.contract?.user?.id;
+
+    if (!assignedUserId) {
+      return;
+    }
+
+    const applyRegistration = (users: ReturnType<UserService['getAssignableUsersSnapshot']>): void => {
+      if (!this.isEditing || this.contract?.user?.id !== assignedUserId) {
+        return;
+      }
+
+      const assignedUser = users.find((user) => user.id === assignedUserId);
+
+      if (!assignedUser) {
+        return;
+      }
+
+      const registration = resolveContractRegistrationFromUser(assignedUser);
+      this.editForm.codigoRegistoCE = registration.codigoRegistoCE;
+      this.editForm.nomeRegistoCE = registration.nomeRegistoCE;
+    };
+
+    const cachedUsers = this.userService.getAssignableUsersSnapshot();
+
+    if (cachedUsers.some((user) => user.id === assignedUserId)) {
+      applyRegistration(cachedUsers);
+      return;
+    }
+
+    this.userService.getAssignableUsers().subscribe({
+      next: applyRegistration,
+      error: () => undefined,
+    });
   }
 
   cancelEditing(): void {

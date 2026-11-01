@@ -3,6 +3,12 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import {
+  canAccessPortulogosB2B,
+  isPortulogosB2BCompany,
+  PORTULOGOS_B2B_PROVIDER,
+} from '../config/portulogos-b2b-access';
+import { Auth } from './auth';
 import type { ClientContractProvider } from './client';
 import {
   CreateEmailCrmRelationPayload,
@@ -20,6 +26,7 @@ type UnknownRecord = Record<string, unknown>;
 @Injectable({ providedIn: 'root' })
 export class EmailCrmRelationService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
   private readonly baseUrl = `${environment.apiUrl}/api/email-crm-relations`;
 
   getMessageRelations(accountId: string, messageId: string): Observable<EmailCrmRelation[]> {
@@ -57,7 +64,12 @@ export class EmailCrmRelationService {
       map((response) =>
         this.extractArray(response, ['items', 'results', 'data'])
           .map((record) => this.normalizeContractSearch(record))
-          .filter((item): item is EmailContractSearchResult => item !== null),
+          .filter((item): item is EmailContractSearchResult => item !== null)
+          .filter(
+            (item) =>
+              item.provider !== PORTULOGOS_B2B_PROVIDER ||
+              canAccessPortulogosB2B(this.auth.getCurrentUser()),
+          ),
       ),
     );
   }
@@ -69,7 +81,12 @@ export class EmailCrmRelationService {
       map((response) =>
         this.extractArray(response, ['items', 'results', 'data'])
           .map((record) => this.normalizeTicketSearch(record))
-          .filter((item): item is EmailTicketSearchResult => item !== null),
+          .filter((item): item is EmailTicketSearchResult => item !== null)
+          .filter(
+            (item) =>
+              !isPortulogosB2BCompany(item.companyId) ||
+              canAccessPortulogosB2B(this.auth.getCurrentUser()),
+          ),
       ),
     );
   }
@@ -229,6 +246,7 @@ export class EmailCrmRelationService {
     const allowed: readonly ClientContractProvider[] = [
       'repsol',
       'portulogos',
+      'portulogos-b2b',
       'wallbox',
       'yes-energy',
       'galp-power-gas',

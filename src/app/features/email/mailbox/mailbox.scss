@@ -978,3 +978,616 @@ select:focus-visible,
 :host-context(.dark-theme) .email-page{color:#e5edf3}:host-context(.dark-theme) .email-title-icon,:host-context(.dark-theme) .panel-icon{background:rgba(8,145,178,.15);color:#67e8f9}:host-context(.dark-theme) .compose-header-button,:host-context(.dark-theme) .sidebar-compose,:host-context(.dark-theme) .folder-nav button.active{background:#dce8ee;color:#12202b}:host-context(.dark-theme) .mailbox-shell,:host-context(.dark-theme) .panel-header,:host-context(.dark-theme) .message-reader-panel,:host-context(.dark-theme) .message-row,:host-context(.dark-theme) .message-body,:host-context(.dark-theme) .reader-actions button,:host-context(.dark-theme) .account-block select{border-color:#263647;background:#0f1720;color:#e5edf3}:host-context(.dark-theme) .mailbox-sidebar,:host-context(.dark-theme) .pagination-bar,:host-context(.dark-theme) .message-meta,:host-context(.dark-theme) .attachments-panel{border-color:#263647;background:#111c27}:host-context(.dark-theme) .account-block,:host-context(.dark-theme) .reader-header{border-color:#263647}:host-context(.dark-theme) .account-address{color:#8fa1b2}:host-context(.dark-theme) .message-row:hover{background:#12212d}:host-context(.dark-theme) .message-row.unread{background:#111d28}:host-context(.dark-theme) .message-row.unread .message-subject,:host-context(.dark-theme) .message-row.unread .message-row-topline strong{color:#f3f7fa}:host-context(.dark-theme) .message-row.selected{background:rgba(8,145,178,.13)}:host-context(.dark-theme) .reader-actions button:hover:not(:disabled),:host-context(.dark-theme) .reader-actions .crm-relation-action{border-color:rgba(103,232,249,.22);background:rgba(8,145,178,.1);color:#67e8f9}
 
 @media(max-width:760px){.email-title-icon{width:42px;height:42px}.email-header{align-items:flex-start}.panel-icon{display:none}.mailbox-shell{border-radius:16px}.message-body{padding:14px}}
+
+/* Email threading — listagem de conversas */
+.thread-row .message-subject-row { gap: 7px; flex-wrap: wrap; }
+.thread-count,
+.thread-unread-count,
+.thread-meta-row span { display: inline-flex; align-items: center; min-height: 20px; border-radius: 999px; font-size: 10px; font-weight: 750; line-height: 1; white-space: nowrap; }
+.thread-count { padding: 0 7px; background: #eef3f6; color: #607180; }
+.thread-unread-count { min-width: 20px; justify-content: center; padding: 0 6px; background: #243646; color: #fff; }
+.thread-meta-row { display: flex; gap: 6px; margin-top: 5px; }
+.thread-meta-row span { padding: 0 7px; background: #f3f7f9; color: #7a8a98; }
+:host-context(.dark-theme) .thread-count,
+:host-context(.dark-theme) .thread-meta-row span { background: #1a2935; color: #9fb0bd; }
+:host-context(.dark-theme) .thread-unread-count { background: #dce8ee; color: #12202b; }
+
+/* Email threading — conversation reader */
+.thread-reader-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.thread-reader-header h2 {
+  margin: 5px 0 6px;
+  color: #243646;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.thread-reader-participants {
+  max-width: 680px;
+  overflow: hidden;
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-reader-summary {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.thread-summary-pill {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid #dbe7ed;
+  border-radius: 999px;
+  background: #f8fbfc;
+  color: #536579;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.thread-summary-pill .material-symbols-rounded {
+  color: #008db1;
+  font-size: 15px;
+}
+
+.thread-summary-pill.unread {
+  border-color: #bfe3ec;
+  background: #eef8fb;
+  color: #007c9c;
+}
+
+.thread-history {
+  display: grid;
+  gap: 9px;
+  padding: 18px 0 4px;
+}
+
+.thread-message {
+  overflow: hidden;
+  border: 1px solid #e1e8ee;
+  border-radius: 13px;
+  background: #ffffff;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.thread-message:hover {
+  border-color: #cbd9e2;
+}
+
+.thread-message.expanded {
+  border-color: #c9dde5;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
+}
+
+.thread-message.unread {
+  border-left: 3px solid #008db1;
+}
+
+.thread-message-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thread-message-header:hover {
+  background: #f9fbfc;
+}
+
+.thread-message-avatar {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #edf4f7;
+  color: #597080;
+  font-size: 18px;
+}
+
+.thread-message-heading {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thread-message-sender,
+.thread-message-recipient {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-message-sender {
+  color: #243646;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.thread-message.unread .thread-message-sender {
+  color: #007c9c;
+}
+
+.thread-message-recipient {
+  color: #8392a2;
+  font-size: 10px;
+}
+
+.thread-message-header-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: #8b99a8;
+  white-space: nowrap;
+}
+
+.thread-message-header-meta time {
+  font-size: 10px;
+}
+
+.thread-message-kind {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.thread-message-attachment,
+.thread-message-chevron {
+  font-size: 17px;
+}
+
+.thread-message-attachment {
+  color: #64748b;
+}
+
+.thread-message-chevron {
+  color: #94a3b8;
+}
+
+.thread-message-collapsed-preview {
+  overflow: hidden;
+  padding: 0 12px 11px 56px;
+  color: #768697;
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-message-content {
+  padding: 0 16px 16px 56px;
+  border-top: 1px solid #eef2f6;
+}
+
+.thread-message-meta {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 14px;
+}
+
+.thread-message-meta div {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.thread-message-meta dt {
+  color: #9aa7b5;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.thread-message-meta dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #526273;
+  font-size: 10px;
+}
+
+.thread-message-body {
+  min-height: 72px;
+  padding: 4px 0 2px;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.thread-message-attachment-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: #f5f8fa;
+  color: #718095;
+  font-size: 10px;
+}
+
+.thread-message-attachment-note .material-symbols-rounded {
+  color: #008db1;
+  font-size: 16px;
+}
+
+.compact-empty {
+  min-height: 220px;
+}
+
+:host-context(.dark-theme) .thread-reader-header {
+  border-bottom-color: #334155;
+}
+
+:host-context(.dark-theme) .thread-reader-header h2,
+:host-context(.dark-theme) .thread-message-sender {
+  color: #e5eef5;
+}
+
+:host-context(.dark-theme) .thread-reader-participants,
+:host-context(.dark-theme) .thread-message-recipient,
+:host-context(.dark-theme) .thread-message-header-meta,
+:host-context(.dark-theme) .thread-message-meta dd,
+:host-context(.dark-theme) .thread-message-attachment-note {
+  color: #9fb0bf;
+}
+
+:host-context(.dark-theme) .thread-summary-pill,
+:host-context(.dark-theme) .thread-message-kind,
+:host-context(.dark-theme) .thread-message-attachment-note {
+  border-color: #334155;
+  background: #17212c;
+}
+
+:host-context(.dark-theme) .thread-message {
+  border-color: #334155;
+  background: #111923;
+}
+
+:host-context(.dark-theme) .thread-message:hover,
+:host-context(.dark-theme) .thread-message-header:hover {
+  background: #16212c;
+}
+
+:host-context(.dark-theme) .thread-message-avatar {
+  background: #22303d;
+  color: #a9bac8;
+}
+
+:host-context(.dark-theme) .thread-message-content {
+  border-top-color: #263442;
+}
+
+:host-context(.dark-theme) .thread-message-body {
+  color: #d4dee7;
+}
+
+@media (max-width: 760px) {
+  .thread-reader-header {
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .thread-reader-summary {
+    justify-content: flex-start;
+  }
+
+  .thread-message-header {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .thread-message-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .thread-message-header-meta {
+    grid-column: 2;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .thread-message-collapsed-preview,
+  .thread-message-content {
+    padding-left: 48px;
+  }
+}
+
+@media (max-width: 520px) {
+  .thread-message-kind {
+    display: none;
+  }
+
+  .thread-message-header-meta time {
+    font-size: 9px;
+  }
+
+  .thread-message-content {
+    padding-right: 12px;
+  }
+}
+
+/* Email threading — ações e anexos por mensagem */
+.thread-message-attachments {
+  display: grid;
+  gap: 9px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2f7;
+}
+
+.thread-message-attachments-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #536579;
+  font-size: 11px;
+}
+
+.thread-message-attachments-header .material-symbols-rounded {
+  color: #008db1;
+  font-size: 17px;
+}
+
+.thread-message-attachments-loading,
+.thread-message-attachment-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.thread-message-attachments-loading {
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.thread-message-attachments-loading .loading-spinner {
+  width: 14px;
+  height: 14px;
+}
+
+.thread-message-attachment-error {
+  justify-content: space-between;
+  color: #b42318;
+  background: #fff5f5;
+}
+
+.thread-message-attachment-error button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.thread-message-attachment-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 7px;
+}
+
+.thread-message-attachment-item {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid #dce6ec;
+  border-radius: 10px;
+  background: #fbfdfe;
+  color: #31465a;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.thread-message-attachment-item:hover:not(:disabled) {
+  border-color: #b9dce6;
+  background: #f4fbfd;
+}
+
+.thread-message-attachment-item:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.thread-message-attachment-item > .material-symbols-rounded {
+  flex: 0 0 auto;
+  color: #008db1;
+  font-size: 19px;
+}
+
+.thread-message-attachment-item > .material-symbols-rounded:last-child {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 18px;
+}
+
+.thread-message-attachment-item:disabled > .material-symbols-rounded:last-child {
+  animation: email-spin 0.8s linear infinite;
+}
+
+.thread-message-attachment-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.thread-message-attachment-copy strong,
+.thread-message-attachment-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-message-attachment-copy strong {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.thread-message-attachment-copy small {
+  color: #7b8b9b;
+  font-size: 10px;
+}
+
+.thread-message-attachment-empty {
+  margin: 0;
+  color: #7b8b9b;
+  font-size: 11px;
+}
+
+.thread-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #edf2f7;
+}
+
+.thread-message-actions button {
+  min-height: 31px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid #dce6ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #43576a;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.thread-message-actions button:hover:not(:disabled) {
+  border-color: #b9dce6;
+  background: #f5fbfd;
+  color: #007c9c;
+}
+
+.thread-message-actions button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.thread-message-actions .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.thread-message-actions .thread-message-crm-action {
+  margin-left: auto;
+  border-color: #b9dce6;
+  background: #f5fbfd;
+  color: #007c9c;
+}
+
+:host-context(.dark-theme) .thread-message-attachments {
+  border-color: #263647;
+}
+
+:host-context(.dark-theme) .thread-message-attachments-header,
+:host-context(.dark-theme) .thread-message-attachment-copy strong {
+  color: #d5e0e7;
+}
+
+:host-context(.dark-theme) .thread-message-attachments-loading,
+:host-context(.dark-theme) .thread-message-attachment-item {
+  border-color: #2a3b4a;
+  background: #111c27;
+  color: #d5e0e7;
+}
+
+:host-context(.dark-theme) .thread-message-attachment-item:hover:not(:disabled) {
+  border-color: rgba(103, 232, 249, 0.3);
+  background: rgba(8, 145, 178, 0.09);
+}
+
+:host-context(.dark-theme) .thread-message-attachment-error {
+  background: rgba(220, 38, 38, 0.12);
+  color: #fca5a5;
+}
+
+:host-context(.dark-theme) .thread-message-attachment-copy small,
+:host-context(.dark-theme) .thread-message-attachment-empty {
+  color: #8fa1b2;
+}
+
+:host-context(.dark-theme) .thread-message-actions {
+  border-color: #263647;
+}
+
+:host-context(.dark-theme) .thread-message-actions button {
+  border-color: #2a3b4a;
+  background: #0f1720;
+  color: #c8d5de;
+}
+
+:host-context(.dark-theme) .thread-message-actions button:hover:not(:disabled),
+:host-context(.dark-theme) .thread-message-actions .thread-message-crm-action {
+  border-color: rgba(103, 232, 249, 0.24);
+  background: rgba(8, 145, 178, 0.1);
+  color: #67e8f9;
+}
+
+@media (max-width: 760px) {
+  .thread-message-attachment-list {
+    grid-template-columns: 1fr;
+  }
+
+  .thread-message-actions button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .thread-message-actions .thread-message-crm-action {
+    margin-left: 0;
+  }
+}

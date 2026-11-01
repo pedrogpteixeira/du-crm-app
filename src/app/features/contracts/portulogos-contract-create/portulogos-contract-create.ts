@@ -20,7 +20,6 @@ import {
 
 import { getContractEnergyValidationError } from '../../../core/utils/contract-energy-validation';
 import { getContractFormValidationError } from '../../../core/utils/contract-field-formatting';
-import { resolveLightContractRegistration } from '../../../core/utils/contract-light-registration';
 
 import { Client, ClientService } from '../../../core/services/client';
 
@@ -49,10 +48,7 @@ import { ProfileUser, UserService } from '../../../core/services/user';
 
 import { ContractLayout, PreferencesService } from '../../../core/services/preferences';
 
-import {
-  ELECTRICITY_POWERS,
-  GAS_LEVELS,
-} from '../../../core/constants/energy';
+import { ELECTRICITY_POWERS, GAS_LEVELS } from '../../../core/constants/energy';
 
 type TipoSegmento = 'Residencial' | 'Empresarial' | 'Condomínios';
 
@@ -89,7 +85,14 @@ import { ContractPreflightModal } from '../../../shared/components/contract-pref
 @Component({
   selector: 'app-portulogos-contract-create',
   imports: [
-    EditableSelectCombobox,CommonModule, FormsModule, ContractFieldMaskDirective, RouterLink, FileDropzone, ContractPreflightModal],
+    EditableSelectCombobox,
+    CommonModule,
+    FormsModule,
+    ContractFieldMaskDirective,
+    RouterLink,
+    FileDropzone,
+    ContractPreflightModal,
+  ],
   templateUrl: './portulogos-contract-create.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './portulogos-contract-create.scss',
@@ -184,10 +187,7 @@ export class PortulogosContractCreate implements OnInit {
 
   readonly availablePowers = ELECTRICITY_POWERS;
 
-
   readonly availableGasLevels = GAS_LEVELS;
-
-
 
   campaignSelectionMode: 'existing' | 'other' = 'existing';
 
@@ -311,7 +311,6 @@ export class PortulogosContractCreate implements OnInit {
     return this.assignableUsers.length > 1;
   }
 
-
   get selectedTeams(): AssignableContractTeam[] {
     return this.selectedTeamIds
       .map((teamId) => this.availableTeams.find((team) => team.id === teamId))
@@ -337,15 +336,19 @@ export class PortulogosContractCreate implements OnInit {
       return;
     }
 
-    this.selectedTeamIds = [...new Set([...this.selectedTeamIds, this.teamToAddId])];
+    this.selectedTeamIds = [this.teamToAddId];
+    this.onRegistrationTeamChange(this.teamToAddId);
 
     this.teamToAddId = '';
   }
 
   removeSelectedTeam(teamId: string): void {
-    this.selectedTeamIds = this.selectedTeamIds.filter(
-      (selectedTeamId) => selectedTeamId !== teamId,
-    );
+    if (!this.selectedTeamIds.includes(teamId)) {
+      return;
+    }
+
+    this.selectedTeamIds = [];
+    this.clearRegistrationFields();
   }
 
   private loadContractLayout(): void {
@@ -383,8 +386,7 @@ export class PortulogosContractCreate implements OnInit {
         this.assignmentErrorMessage = '';
         this.assignableUsers = state.users;
 
-        const currentUser =
-          state.users.find((user) => user.id === authenticatedUser.id) ?? null;
+        const currentUser = state.users.find((user) => user.id === authenticatedUser.id) ?? null;
 
         if (!currentUser) {
           this.currentUser = null;
@@ -401,8 +403,7 @@ export class PortulogosContractCreate implements OnInit {
           return;
         }
 
-        const selectedUser =
-          state.users.find((user) => user.id === this.assignedUserId) ?? null;
+        const selectedUser = state.users.find((user) => user.id === this.assignedUserId) ?? null;
 
         if (!selectedUser) {
           this.assignmentErrorMessage =
@@ -422,18 +423,15 @@ export class PortulogosContractCreate implements OnInit {
     this.availableTeams = this.resolveAssignableTeams(user);
 
     const availableTeamIds = new Set(this.availableTeams.map((team) => team.id));
-    this.selectedTeamIds = previousSelectedTeamIds.filter((teamId) =>
-      availableTeamIds.has(teamId),
-    );
+    this.selectedTeamIds = previousSelectedTeamIds
+      .filter((teamId) => availableTeamIds.has(teamId))
+      .slice(0, 1);
 
     if (!this.selectedTeamIds.length) {
       this.selectedTeamIds = this.resolveInitialTeamIds(user);
     }
 
-    if (
-      previousRegistrationTeamId &&
-      availableTeamIds.has(previousRegistrationTeamId)
-    ) {
+    if (previousRegistrationTeamId && availableTeamIds.has(previousRegistrationTeamId)) {
       this.onRegistrationTeamChange(previousRegistrationTeamId);
     } else {
       this.syncRegistrationFields(user);
@@ -477,7 +475,6 @@ export class PortulogosContractCreate implements OnInit {
     this.initializeAssignment(selectedUser, false);
   }
 
-
   private initializeAssignment(user: ProfileUser, updateAssignedUser = true): void {
     if (updateAssignedUser) {
       this.assignedUserId = user.id;
@@ -493,22 +490,27 @@ export class PortulogosContractCreate implements OnInit {
   }
 
   private resolveAssignableTeams(user: ProfileUser): AssignableContractTeam[] {
-    const rawTeams = (user as ProfileUserWithTeamPositions).teams ?? [];
+    const rawTeams = this.userService.getAssignableContractTeams(user);
 
     return rawTeams
       .filter((team) => {
         return (
           Boolean(team?.id) &&
           Number.isInteger(team.positionIndex) &&
-          team.positionIndex >= 0 &&
-          team.active === true
+          Number(team.positionIndex) >= 0
         );
       })
       .map((team) => ({
         id: team.id,
         name: team.name,
-        registrationNumber: team.registrationNumber ?? null,
-        positionIndex: team.positionIndex,
+        registrationNumber:
+          team.registrationNumber !== null &&
+          team.registrationNumber !== undefined &&
+          String(team.registrationNumber).trim() !== '' &&
+          Number.isFinite(Number(team.registrationNumber))
+            ? Number(team.registrationNumber)
+            : null,
+        positionIndex: Number(team.positionIndex),
         position: team.position?.trim() || `Posição ${team.positionIndex}`,
         active: team.active,
       }));
@@ -561,12 +563,11 @@ export class PortulogosContractCreate implements OnInit {
   private resolveInitialTeamIds(user: ProfileUser): string[] {
     const defaultTeamId = (user as ProfileUserWithTeamPositions).defaultTeam?.id;
 
-    const initialTeamId =
-      defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)
-        ? defaultTeamId
-        : this.availableTeams[0]?.id;
+    if (defaultTeamId && this.availableTeams.some((team) => team.id === defaultTeamId)) {
+      return [defaultTeamId];
+    }
 
-    return initialTeamId ? [initialTeamId] : [];
+    return this.availableTeams[0]?.id ? [this.availableTeams[0].id] : [];
   }
 
   private getRequiredTeamIds(): string[] {
@@ -580,6 +581,10 @@ export class PortulogosContractCreate implements OnInit {
   }
 
   private validateSelectedTeams(): string | null {
+    if (this.selectedTeamIds.length !== 1) {
+      return 'Selecione exatamente uma equipa do utilizador atribuído para o contrato.';
+    }
+
     const invalidTeamId = this.selectedTeamIds.find((teamId) => {
       const team = this.availableTeams.find((availableTeam) => availableTeam.id === teamId);
 
@@ -885,8 +890,7 @@ export class PortulogosContractCreate implements OnInit {
           this.createContractAfterPreflight(payload, []);
         },
         error: () => {
-          this.errorMessage =
-            'Não foi possível validar o CPE/CUI neste momento. Tente novamente.';
+          this.errorMessage = 'Não foi possível validar o CPE/CUI neste momento. Tente novamente.';
         },
       });
   }
@@ -966,21 +970,23 @@ export class PortulogosContractCreate implements OnInit {
 
           this.isUploadingDocuments = true;
 
-          return this.portulogosContractService.uploadAttachments(contract.id, this.selectedFiles).pipe(
-            tap(() => {
-              this.isUploadingDocuments = false;
-            }),
+          return this.portulogosContractService
+            .uploadAttachments(contract.id, this.selectedFiles)
+            .pipe(
+              tap(() => {
+                this.isUploadingDocuments = false;
+              }),
 
-            catchError((error) => {
-              this.isUploadingDocuments = false;
+              catchError((error) => {
+                this.isUploadingDocuments = false;
 
-              this.errorMessage =
-                error?.error?.message ||
-                'O contrato foi criado, mas não foi possível carregar os documentos.';
+                this.errorMessage =
+                  error?.error?.message ||
+                  'O contrato foi criado, mas não foi possível carregar os documentos.';
 
-              return EMPTY;
-            }),
-          );
+                return EMPTY;
+              }),
+            );
         }),
 
         finalize(() => {
@@ -1055,7 +1061,6 @@ export class PortulogosContractCreate implements OnInit {
     return this.contractForm.moradaFaturacaoSelecao === 'Outra';
   }
 
-
   private buildContractPayload(): CreatePortulogosContractRequest {
     if (!this.client) {
       throw new Error('Cliente não identificado.');
@@ -1090,14 +1095,8 @@ export class PortulogosContractCreate implements OnInit {
   }
 
   private addLightRegistrationFields(payload: CreatePortulogosContractRequest): void {
-    const registration = resolveLightContractRegistration(
-      this.selectedTeamIds,
-      this.availableTeams,
-      this.getRequiredTeamIds(),
-    );
-
-    payload.codigoRegistoCE = registration.codigoRegistoCE;
-    payload.nomeRegistoCE = registration.nomeRegistoCE;
+    payload.codigoRegistoCE = this.contractForm.codigoRegistoCE.trim();
+    payload.nomeRegistoCE = this.contractForm.nomeRegistoCE.trim();
   }
 
   private addSharedFields(payload: CreatePortulogosContractRequest): void {

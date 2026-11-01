@@ -1,22 +1,10 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import {
-  Company,
-  CompanyService,
-} from '../../../core/services/company';
+import { Company, CompanyService } from '../../../core/services/company';
 
-type KnowledgeCompanyAction =
-  | 'campaigns'
-  | 'support'
-  | 'forms'
-  | 'training';
+type KnowledgeCompanyAction = 'campaigns' | 'support' | 'forms' | 'training';
 
 interface KnowledgeCompanyConfig {
   companyId: string;
@@ -140,6 +128,14 @@ export class KnowledgeBaseHome implements OnInit {
       trainingFolderId: 'kfo_7gsz8xw1r2',
     },
     {
+      companyId: 'cmp_8rkornAQ4H',
+      name: 'Portulogos B2B',
+      logo: 'assets/companies/knowledge-base-home/portulogos.png',
+      supportFolderId: 'kfo_wizci3939f',
+      formsFolderId: 'kfo_is4rt939hz',
+      trainingFolderId: 'kfo_ijnosgjmyr',
+    },
+    {
       companyId: 'cmp_s4mjPGw-gJ',
       name: 'Nossa Energia',
       logo: 'assets/companies/knowledge-base-home/nossa-energia.png',
@@ -175,13 +171,10 @@ export class KnowledgeBaseHome implements OnInit {
 
     this.companyService.getCompanies().subscribe({
       next: (companies) => {
-        this.companies = companies.filter(
-          (company) => company.active,
-        );
+        this.companies = companies.filter((company) => company.active);
       },
       error: () => {
-        this.errorMessage =
-          'Não foi possível carregar as empresas.';
+        this.errorMessage = 'Não foi possível carregar as empresas.';
 
         this.isLoading = false;
       },
@@ -200,8 +193,7 @@ export class KnowledgeBaseHome implements OnInit {
       this.companies.some(
         (company) =>
           company.id === config.companyId ||
-          company.name.trim().toLowerCase() ===
-            config.name.trim().toLowerCase(),
+          company.name.trim().toLowerCase() === config.name.trim().toLowerCase(),
       ),
     );
   }
@@ -211,10 +203,7 @@ export class KnowledgeBaseHome implements OnInit {
     action: KnowledgeCompanyAction,
   ): string[] | null {
     if (action === 'campaigns') {
-      return [
-        '/home/knowledge-base/campaigns',
-        company.companyId,
-      ];
+      return ['/home/knowledge-base/campaigns', company.companyId];
     }
 
     const folderId = this.getFolderId(company, action);
@@ -223,10 +212,7 @@ export class KnowledgeBaseHome implements OnInit {
       return null;
     }
 
-    return [
-      '/home/knowledge-base/folders',
-      folderId,
-    ];
+    return ['/home/knowledge-base/folders', folderId];
   }
 
   companyActionQueryParams(
@@ -234,10 +220,7 @@ export class KnowledgeBaseHome implements OnInit {
     action: KnowledgeCompanyAction,
   ): Record<string, string> {
     return {
-      name:
-        action === 'campaigns'
-          ? company.name
-          : this.getFolderName(company, action),
+      name: action === 'campaigns' ? company.name : this.getFolderName(company, action),
       supplier: company.name,
       companyId: company.companyId,
     };
@@ -253,16 +236,12 @@ export class KnowledgeBaseHome implements OnInit {
     }
 
     event.preventDefault();
-    this.errorMessage =
-      'Ainda não existe uma pasta configurada para esta opção.';
+    this.errorMessage = 'Ainda não existe uma pasta configurada para esta opção.';
   }
 
   private getFolderId(
     company: KnowledgeCompanyConfig,
-    action: Exclude<
-      KnowledgeCompanyAction,
-      'campaigns'
-    >,
+    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
   ): string {
     switch (action) {
       case 'support':
@@ -278,10 +257,7 @@ export class KnowledgeBaseHome implements OnInit {
 
   private getFolderName(
     company: KnowledgeCompanyConfig,
-    action: Exclude<
-      KnowledgeCompanyAction,
-      'campaigns'
-    >,
+    action: Exclude<KnowledgeCompanyAction, 'campaigns'>,
   ): string {
     switch (action) {
       case 'support':

@@ -8,24 +8,18 @@ import {
   Output,
   inject,
 } from '@angular/core';
-import {
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../../environments/environment';
 
 import { Auth } from '../../../core/services/auth';
 import { AuthUser } from '../../../core/models/auth-user';
+import { canAccessPortulogosB2B as hasPortulogosB2BAccess } from '../../../core/config/portulogos-b2b-access';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [
-    CommonModule,
-    RouterLink,
-    RouterLinkActive
-  ],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.Default,
@@ -41,11 +35,9 @@ export class Sidebar {
   user: AuthUser | null = this.auth.getCurrentUser();
 
   constructor() {
-    this.auth.currentUser$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        this.user = user;
-      });
+    this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((user) => {
+      this.user = user;
+    });
   }
 
   get userInitial(): string {
@@ -53,16 +45,11 @@ export class Sidebar {
       return '?';
     }
 
-    return this.user.name
-      .charAt(0)
-      .toUpperCase();
+    return this.user.name.charAt(0).toUpperCase();
   }
 
   get profilePictureUrl(): string | null {
-    if (
-      !this.user?.profilePicture ||
-      !this.user?.id
-    ) {
+    if (!this.user?.profilePicture || !this.user?.id) {
       return null;
     }
 
@@ -70,9 +57,11 @@ export class Sidebar {
   }
 
   get brandRoute(): string {
-    return this.canAccessRoles('Super Admin', 'DU')
-      ? '/home/dashboard'
-      : '/home/tickets';
+    return this.canAccessRoles('Super Admin', 'DU') ? '/home/dashboard' : '/home/tickets';
+  }
+
+  canAccessPortulogosB2B(): boolean {
+    return hasPortulogosB2BAccess(this.user);
   }
 
   canAccessRoles(...allowedRoles: string[]): boolean {
@@ -84,10 +73,6 @@ export class Sidebar {
 
     const normalizedRole = role.toLowerCase();
 
-    return allowedRoles.some((allowedRole) =>
-      normalizedRole.includes(
-        allowedRole.toLowerCase(),
-      ),
-    );
+    return allowedRoles.some((allowedRole) => normalizedRole.includes(allowedRole.toLowerCase()));
   }
 }

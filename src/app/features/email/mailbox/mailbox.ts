@@ -14,12 +14,15 @@ import {
   EmailFolder,
   EmailFolderSummary,
   EmailMessageDetail,
-  EmailMessagePage,
   EmailMessageSummary,
   EmailReadChangedEvent,
   EmailSentEvent,
   EmailSyncCompletedEvent,
   EmailSyncFailedEvent,
+  EmailThreadDetail,
+  EmailThreadMessage,
+  EmailThreadPage,
+  EmailThreadSummary,
 } from '../../../core/models/email.model';
 import { Auth } from '../../../core/services/auth';
 import { EmailService } from '../../../core/services/email';
@@ -37,7 +40,7 @@ interface MailboxRequest {
 }
 
 type MailboxPageResult =
-  | { kind: 'messages'; page: EmailMessagePage }
+  | { kind: 'threads'; page: EmailThreadPage }
   | { kind: 'drafts'; page: EmailDraftPage };
 
 @Component({
@@ -69,18 +72,29 @@ export class Mailbox {
   private readOperationVersion = 0;
   private syncOperationVersion = 0;
   private pendingSocketListRefresh = false;
+  private pendingSocketThreadRefresh = false;
+  private isSocketThreadRefreshInFlight = false;
 
   accounts: EmailAccountSummary[] = [];
   selectedAccount: EmailAccountSummary | null = null;
   folders: EmailFolderSummary[] = [];
   folder: EmailFolder = 'INBOX';
+  threads: EmailThreadSummary[] = [];
   messages: EmailMessageSummary[] = [];
   drafts: EmailDraftSummary[] = [];
+  selectedThreadId: string | null = null;
+  selectedThread: EmailThreadDetail | null = null;
+  expandedThreadMessageIds = new Set<string>();
   selectedMessage: EmailMessageDetail | null = null;
   selectedDraft: EmailDraftSummary | null = null;
   messageAttachments: EmailAttachmentSummary[] = [];
   isLoadingAttachments = false;
   attachmentsError = '';
+  threadMessageAttachments: Record<string, EmailAttachmentSummary[]> = {};
+  threadMessageAttachmentErrors: Record<string, string> = {};
+  threadMessageAttachmentsLoaded = new Set<string>();
+  loadingThreadMessageAttachmentIds = new Set<string>();
+  downloadingThreadAttachmentKeys = new Set<string>();
   isLoadingFolders = false;
   foldersError = '';
   isUpdatingRead = false;
@@ -126,7 +140,7 @@ export class Mailbox {
     if (!this.canReadSelectedAccount || this.folder === 'DRAFTS') return false;
     return this.folders.some((item) => item.folder === this.folder && item.remoteSync);
   }
-  get visibleItemsCount(): number { return this.folder === 'DRAFTS' ? this.drafts.length : this.messages.length; }
+  get visibleItemsCount(): number { return this.folder === 'DRAFTS' ? this.drafts.length : this.threads.length; }
   get selectedAccountPermissionLabel(): string {
     const permissions = this.selectedAccount?.permissions;
     if (!permissions) return 'Sem permissões';
@@ -181,6 +195,39 @@ export class Mailbox {
     this.clearSelection();
     this.requestMessages('initial');
     void this.router.navigate([], { relativeTo: this.route, queryParams: { folder, message: null }, queryParamsHandling: 'merge', replaceUrl: true });
+  }
+
+  selectThread(thread: EmailThreadSummary): void {
+    const account = this.selectedAccount;
+    if (!account || !this.canReadSelectedAccount || this.folder === 'DRAFTS') return;
+
+    const version = ++this.messageDetailLoadVersion;
+    const accountId = account.id;
+    this.selectedThreadId = thread.id;
+    this.selectedThread = null;
+    this.expandedThreadMessageIds.clear();
+    this.selectedMessage = null;
+    this.messageError = '';
+    this.isLoadingMessage = true;
+    ++this.attachmentLoadVersion;
+    this.isLoadingAttachments = false;
+    this.messageAttachments = [];
+    this.attachmentsError = '';
+    this.resetThreadAttachmentState();
+
+    this.emailService.getThread(accountId, thread.id).pipe(
+      catchError((error: unknown) => {
+        if (version === this.messageDetailLoadVersion && this.selectedThreadId === thread.id) {
+          this.messageError = this.getErrorMessage(error);
+        }
+        return EMPTY;
+      }),
+      finalize(() => {
+        if (version === this.messageDetailLoadVersion) this.isLoadingMessage = false;
+        this.flushPendingSocketThreadRefresh();
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((detail) => this.openThreadDetail(detail, version, accountId));
   }
 
   selectMessage(message: EmailMessageSummary): void {
@@ -244,6 +291,11 @@ export class Mailbox {
   retryLoadAccounts(): void { if (!this.isLoadingAccounts) this.loadAccounts(); }
   retryLoadFolders(): void { if (!this.isLoadingFolders) this.loadFolders(); }
   retrySelectedMessage(): void {
+    if (this.selectedThreadId && this.folder !== 'DRAFTS' && !this.isLoadingMessage) {
+      const thread = this.threads.find((item) => item.id === this.selectedThreadId);
+      if (thread) this.selectThread(thread);
+      return;
+    }
     const messageId = this.route.snapshot.queryParamMap.get('message');
     if (messageId && this.canReadSelectedAccount && !this.isLoadingMessage) this.selectedMessageId$.next(messageId);
   }
@@ -277,16 +329,46 @@ export class Mailbox {
     const sourceMessageId = this.composerSourceMessage?.id ?? null;
     const newMessageId = event.result.messageId;
     const accountId = event.accountId;
+    const threadId = this.selectedThreadId;
     this.closeComposer();
-    if (this.folder === 'SENT' || this.folder === 'DRAFTS') {
-      this.offset = 0;
+
+    if (sourceMessageId || this.folder === 'SENT' || this.folder === 'DRAFTS') {
+      if (this.folder === 'SENT' || this.folder === 'DRAFTS') this.offset = 0;
       this.requestMessages('refresh');
+    }
+
+    if (sourceMessageId && threadId && this.folder !== 'DRAFTS') {
+      this.reloadOpenThread(threadId, accountId);
     }
     if (sourceMessageId && newMessageId) this.copySourceRelations(accountId, sourceMessageId, newMessageId);
   }
 
   openRelationModal(): void { if (this.selectedAccount && this.selectedMessage) this.isRelationModalOpen = true; }
   closeRelationModal(): void { this.isRelationModalOpen = false; }
+
+  openComposerForThreadMessage(message: EmailThreadMessage, mode: Extract<EmailComposerMode, 'reply' | 'replyAll' | 'forward'>): void {
+    if (!this.canSendSelectedAccount) {
+      this.toast.warning('Não tens permissão de envio nesta conta.');
+      return;
+    }
+    this.selectedMessage = message;
+    this.composerMode = mode;
+    this.composerSourceMessage = message;
+    this.composerDraft = null;
+    this.isComposerOpen = true;
+  }
+
+  openRelationForThreadMessage(message: EmailThreadMessage): void {
+    if (!this.selectedAccount) return;
+    this.selectedMessage = message;
+    this.isRelationModalOpen = true;
+  }
+
+  toggleThreadMessageRead(message: EmailThreadMessage): void {
+    if (!this.canManageMessagesSelectedAccount || message.isRead === null || this.isUpdatingRead) return;
+    this.selectedMessage = message;
+    this.updateMessageRead(message.id, !message.isRead, true);
+  }
 
   toggleSelectedMessageRead(): void {
     const message = this.selectedMessage;
@@ -317,6 +399,71 @@ export class Mailbox {
   }
 
   trackByAccountId(_: number, account: EmailAccountSummary): string { return account.id; }
+  trackByThreadId(_: number, thread: EmailThreadSummary): string { return thread.id; }
+  trackByThreadMessageId(_: number, message: EmailThreadMessage): string { return message.id; }
+  isThreadMessageExpanded(messageId: string): boolean { return this.expandedThreadMessageIds.has(messageId); }
+  toggleThreadMessage(messageId: string): void {
+    const next = new Set(this.expandedThreadMessageIds);
+    if (next.has(messageId)) {
+      next.delete(messageId);
+    } else {
+      next.add(messageId);
+      const message = this.selectedThread?.messages.find((item) => item.id === messageId) ?? null;
+      if (message) {
+        this.selectedMessage = message;
+        if (message.hasAttachments) this.ensureThreadMessageAttachments(message);
+      }
+    }
+    this.expandedThreadMessageIds = next;
+  }
+  getThreadMessageAttachments(messageId: string): EmailAttachmentSummary[] {
+    return this.threadMessageAttachments[messageId] ?? [];
+  }
+  getThreadMessageAttachmentError(messageId: string): string {
+    return this.threadMessageAttachmentErrors[messageId] ?? '';
+  }
+  isLoadingThreadMessageAttachments(messageId: string): boolean {
+    return this.loadingThreadMessageAttachmentIds.has(messageId);
+  }
+  areThreadMessageAttachmentsLoaded(messageId: string): boolean {
+    return this.threadMessageAttachmentsLoaded.has(messageId);
+  }
+  ensureThreadMessageAttachments(message: EmailThreadMessage): void {
+    if (!message.hasAttachments || this.areThreadMessageAttachmentsLoaded(message.id) || this.isLoadingThreadMessageAttachments(message.id)) return;
+    this.loadThreadMessageAttachments(message);
+  }
+  retryThreadMessageAttachments(message: EmailThreadMessage): void {
+    if (this.isLoadingThreadMessageAttachments(message.id)) return;
+    this.threadMessageAttachmentsLoaded.delete(message.id);
+    this.loadThreadMessageAttachments(message);
+  }
+  downloadThreadMessageAttachment(message: EmailThreadMessage, attachment: EmailAttachmentSummary): void {
+    const account = this.selectedAccount;
+    if (!account) return;
+    const accountId = account.id;
+    const key = `${message.id}:${attachment.index}`;
+    if (this.downloadingThreadAttachmentKeys.has(key)) return;
+    this.downloadingThreadAttachmentKeys.add(key);
+    this.emailService.downloadAttachment(accountId, message.id, attachment.index).pipe(
+      finalize(() => this.downloadingThreadAttachmentKeys.delete(key)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (blob) => {
+        if (this.selectedAccount?.id !== accountId || this.selectedThreadId === null) return;
+        this.saveBlob(blob, attachment.filename);
+      },
+      error: (error: unknown) => {
+        if (this.selectedAccount?.id === accountId) this.toast.error(this.getErrorMessage(error));
+      },
+    });
+  }
+  isDownloadingThreadMessageAttachment(messageId: string, index: number): boolean {
+    return this.downloadingThreadAttachmentKeys.has(`${messageId}:${index}`);
+  }
+  getThreadMessageBody(message: EmailThreadMessage): string { return message.text?.trim() || ''; }
+  getThreadMessageKindLabel(message: EmailThreadMessage): string {
+    return message.kind === 'outbound' ? 'Enviado' : 'Recebido';
+  }
   trackByMessageId(_: number, message: EmailMessageSummary): string { return message.id; }
   trackByDraftId(_: number, draft: EmailDraftSummary): string { return draft.id; }
   trackByAttachmentIndex(_: number, attachment: EmailAttachmentSummary): number { return attachment.index; }
@@ -329,6 +476,12 @@ export class Mailbox {
 
   formatAddress(address: EmailAddress | null): string { return !address ? '—' : address.name ? `${address.name} <${address.address}>` : address.address; }
   formatAddressList(addresses: EmailAddress[]): string { return addresses.length ? addresses.map((address) => this.formatAddress(address)).join(', ') : '—'; }
+  formatThreadParticipants(participants: string[]): string {
+    if (!participants.length) return 'Sem participantes';
+    const ownAddress = this.selectedAccount?.address.trim().toLowerCase() ?? '';
+    const external = participants.filter((participant) => participant.trim().toLowerCase() !== ownAddress);
+    return (external.length ? external : participants).join(', ');
+  }
   getVisibleMessageBody(): string { return this.selectedMessage?.text?.trim() || ''; }
 
   getMessageCounterLabel(): string {
@@ -336,7 +489,7 @@ export class Mailbox {
       const first = this.visibleItemsCount ? this.offset + 1 : 0;
       return `${first}–${this.offset + this.visibleItemsCount} de ${this.total}`;
     }
-    return this.visibleItemsCount ? `${this.offset + 1}–${this.offset + this.visibleItemsCount}` : this.folder === 'DRAFTS' ? '0 rascunhos' : '0 mensagens';
+    return this.visibleItemsCount ? `${this.offset + 1}–${this.offset + this.visibleItemsCount}` : this.folder === 'DRAFTS' ? '0 rascunhos' : '0 conversas';
   }
 
   private loadAccounts(): void {
@@ -447,6 +600,7 @@ export class Mailbox {
         this.isPagingMessages = request.reason === 'pagination';
 
         if (isInitial) {
+          this.threads = [];
           this.messages = [];
           this.drafts = [];
           this.hasMore = false;
@@ -455,7 +609,7 @@ export class Mailbox {
 
         const call = request.folder === 'DRAFTS'
           ? this.emailService.getDrafts(request.accountId, request.offset, Mailbox.pageSize).pipe(map((page): MailboxPageResult => ({ kind: 'drafts', page })))
-          : this.emailService.getMessages(request.accountId, request.folder, request.offset, Mailbox.pageSize).pipe(map((page): MailboxPageResult => ({ kind: 'messages', page })));
+          : this.emailService.getThreads(request.accountId, request.folder, request.offset, Mailbox.pageSize).pipe(map((page): MailboxPageResult => ({ kind: 'threads', page })));
 
         return call.pipe(
           catchError((error: unknown) => {
@@ -481,7 +635,7 @@ export class Mailbox {
       this.hasMore = result.page.hasMore;
       this.total = result.page.total;
       if (result.kind === 'drafts') this.drafts = result.page.items;
-      else this.messages = result.page.items;
+      else this.threads = result.page.items;
     });
   }
 
@@ -517,6 +671,113 @@ export class Mailbox {
     });
   }
 
+  private openThreadDetail(
+    detail: EmailThreadDetail,
+    version: number,
+    accountId: string,
+  ): void {
+    if (
+      version !== this.messageDetailLoadVersion ||
+      this.selectedAccount?.id !== accountId ||
+      this.selectedThreadId !== detail.id
+    )
+      return;
+
+    const messages = [...detail.messages].sort((a, b) => {
+      const aTime = a.date ? Date.parse(a.date) : 0;
+      const bTime = b.date ? Date.parse(b.date) : 0;
+      return aTime - bTime;
+    });
+
+    if (!messages.length) {
+      this.selectedThread = { ...detail, messages: [] };
+      this.selectedMessage = null;
+      this.messageError = 'Esta conversa não contém mensagens disponíveis.';
+      return;
+    }
+
+    this.selectedThread = { ...detail, messages };
+    const latest = messages[messages.length - 1];
+    this.selectedMessage = latest;
+    this.expandedThreadMessageIds = new Set([latest.id]);
+    if (latest.hasAttachments) this.ensureThreadMessageAttachments(latest);
+  }
+
+  private loadThreadMessageAttachments(message: EmailThreadMessage): void {
+    const account = this.selectedAccount;
+    const threadId = this.selectedThreadId;
+    if (!account || !threadId || !message.hasAttachments) return;
+
+    const accountId = account.id;
+    const messageId = message.id;
+    const loading = new Set(this.loadingThreadMessageAttachmentIds);
+    loading.add(messageId);
+    this.loadingThreadMessageAttachmentIds = loading;
+    this.threadMessageAttachmentErrors = { ...this.threadMessageAttachmentErrors, [messageId]: '' };
+
+    this.emailService.getAttachments(accountId, messageId).pipe(
+      finalize(() => {
+        const next = new Set(this.loadingThreadMessageAttachmentIds);
+        next.delete(messageId);
+        this.loadingThreadMessageAttachmentIds = next;
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (attachments) => {
+        if (this.selectedAccount?.id !== accountId || this.selectedThreadId !== threadId) return;
+        this.threadMessageAttachments = { ...this.threadMessageAttachments, [messageId]: attachments };
+        const loaded = new Set(this.threadMessageAttachmentsLoaded);
+        loaded.add(messageId);
+        this.threadMessageAttachmentsLoaded = loaded;
+      },
+      error: (error: unknown) => {
+        if (this.selectedAccount?.id !== accountId || this.selectedThreadId !== threadId) return;
+        this.threadMessageAttachmentErrors = {
+          ...this.threadMessageAttachmentErrors,
+          [messageId]: this.getErrorMessage(error),
+        };
+      },
+    });
+  }
+
+  private resetThreadAttachmentState(): void {
+    this.threadMessageAttachments = {};
+    this.threadMessageAttachmentErrors = {};
+    this.threadMessageAttachmentsLoaded = new Set<string>();
+    this.loadingThreadMessageAttachmentIds = new Set<string>();
+    this.downloadingThreadAttachmentKeys = new Set<string>();
+  }
+
+  private reloadOpenThread(threadId: string, accountId: string): void {
+    if (this.selectedAccount?.id !== accountId || this.selectedThreadId !== threadId) return;
+    const version = ++this.messageDetailLoadVersion;
+    const previousExpanded = new Set(this.expandedThreadMessageIds);
+    this.emailService.getThread(accountId, threadId).pipe(
+      catchError((error: unknown) => {
+        if (version === this.messageDetailLoadVersion && this.selectedThreadId === threadId) {
+          this.toast.error(this.getErrorMessage(error));
+        }
+        return EMPTY;
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((detail) => {
+      if (version !== this.messageDetailLoadVersion || this.selectedAccount?.id !== accountId || this.selectedThreadId !== threadId) return;
+      const messages = [...detail.messages].sort((a, b) => {
+        const aTime = a.date ? Date.parse(a.date) : 0;
+        const bTime = b.date ? Date.parse(b.date) : 0;
+        return aTime - bTime;
+      });
+      this.selectedThread = { ...detail, messages };
+      const validIds = new Set(messages.map((message) => message.id));
+      const keptExpanded = [...previousExpanded].filter((id) => validIds.has(id));
+      const latest = messages[messages.length - 1] ?? null;
+      if (latest) keptExpanded.push(latest.id);
+      this.expandedThreadMessageIds = new Set(keptExpanded);
+      this.selectedMessage = latest;
+      if (latest?.hasAttachments) this.ensureThreadMessageAttachments(latest);
+    });
+  }
+
   private markOpenedMessageRead(messageId: string): void {
     if (this.isUpdatingRead) return;
     this.updateMessageRead(messageId, true, false);
@@ -548,8 +809,32 @@ export class Mailbox {
   }
 
   private applyReadState(messageId: string, isRead: boolean): void {
+    const threadMessage = this.selectedThread?.messages.find((item) => item.id === messageId) ?? null;
+    const previousRead = threadMessage?.isRead
+      ?? (this.selectedMessage?.id === messageId ? this.selectedMessage.isRead : null);
+
     if (this.selectedMessage?.id === messageId) this.selectedMessage = { ...this.selectedMessage, isRead };
+    if (this.selectedThread) {
+      this.selectedThread = {
+        ...this.selectedThread,
+        messages: this.selectedThread.messages.map((item) =>
+          item.id === messageId ? { ...item, isRead } : item,
+        ),
+      };
+    }
     this.messages = this.messages.map((item) => item.id === messageId ? { ...item, isRead } : item);
+    if (this.selectedThreadId && previousRead !== null && previousRead !== isRead) {
+      const delta = isRead ? -1 : 1;
+      this.threads = this.threads.map((thread) => thread.id === this.selectedThreadId
+        ? { ...thread, unreadCount: Math.max(0, thread.unreadCount + delta) }
+        : thread);
+      if (this.selectedThread) {
+        this.selectedThread = {
+          ...this.selectedThread,
+          unreadCount: Math.max(0, this.selectedThread.unreadCount + delta),
+        };
+      }
+    }
   }
 
   private loadAttachments(messageId: string): void {
@@ -581,6 +866,7 @@ export class Mailbox {
     const account = this.selectedAccount;
     const allowed = this.folder === 'DRAFTS' ? this.canSendSelectedAccount : this.canReadSelectedAccount;
     if (!account || !account.isActive || !allowed) {
+      this.threads = [];
       this.messages = [];
       this.drafts = [];
       this.hasMore = false;
@@ -595,9 +881,13 @@ export class Mailbox {
     ++this.readOperationVersion;
     this.isUpdatingRead = false;
     this.readError = '';
+    this.selectedThreadId = null;
+    this.selectedThread = null;
+    this.expandedThreadMessageIds.clear();
     this.selectedMessage = null;
     this.selectedDraft = null;
     this.messageAttachments = [];
+    this.resetThreadAttachmentState();
     this.messageError = '';
     this.selectedMessageId$.next(null);
   }
@@ -626,11 +916,16 @@ export class Mailbox {
     this.mailboxRequest$.next(null);
     this.selectedMessageId$.next(null);
     this.folders = [];
+    this.threads = [];
     this.messages = [];
     this.drafts = [];
+    this.selectedThreadId = null;
+    this.selectedThread = null;
+    this.expandedThreadMessageIds.clear();
     this.selectedMessage = null;
     this.selectedDraft = null;
     this.messageAttachments = [];
+    this.resetThreadAttachmentState();
     this.messagesError = '';
     this.messageError = '';
     this.foldersError = '';
@@ -651,6 +946,8 @@ export class Mailbox {
     this.isSyncingMessages = false;
     this.syncError = '';
     this.pendingSocketListRefresh = false;
+    this.pendingSocketThreadRefresh = false;
+    this.isSocketThreadRefreshInFlight = false;
   }
 
   private resolveInitialFolder(): EmailFolder {
@@ -679,17 +976,31 @@ export class Mailbox {
 
   private handleEmailReadChanged(event: EmailReadChangedEvent): void {
     if (this.selectedAccount?.id !== event.accountId) return;
-    this.applyReadState(event.id, event.read);
+
+    const belongsToOpenThread = Boolean(
+      this.selectedThread?.messages.some((message) => message.id === event.id),
+    );
+    if (belongsToOpenThread || this.selectedMessage?.id === event.id) {
+      this.applyReadState(event.id, event.read);
+      return;
+    }
+
+    if (this.folder !== 'DRAFTS') this.queueSocketListRefresh();
   }
 
   private handleEmailSyncCompleted(event: EmailSyncCompletedEvent): void {
-    if (this.selectedAccount?.id !== event.accountId || this.folder !== event.folder) return;
+    if (this.selectedAccount?.id !== event.accountId) return;
 
-    // O pedido HTTP da sincronização manual já atualiza a lista e apresenta o feedback.
-    if (this.isSyncingMessages) return;
+    // Threads podem conter simultaneamente mensagens de INBOX e SENT. Uma alteração
+    // em qualquer uma destas pastas pode alterar contagem, data e unread da thread
+    // visível na outra pasta.
+    if (this.folder !== 'DRAFTS') {
+      const handledByManualSync = this.isSyncingMessages && this.folder === event.folder;
+      if (!handledByManualSync) this.queueSocketListRefresh();
+      this.queueSocketThreadRefresh();
+    }
 
-    this.syncError = '';
-    this.queueSocketListRefresh();
+    if (this.folder === event.folder) this.syncError = '';
   }
 
   private handleEmailSyncFailed(event: EmailSyncFailedEvent): void {
@@ -702,8 +1013,12 @@ export class Mailbox {
   }
 
   private handleEmailSent(event: EmailSentEvent): void {
-    if (this.selectedAccount?.id !== event.accountId || this.folder !== 'SENT') return;
+    if (this.selectedAccount?.id !== event.accountId || this.folder === 'DRAFTS') return;
+
+    // Uma mensagem enviada pode atualizar uma thread que também está presente na
+    // Caixa de Entrada, por isso não limitamos o refresh à pasta SENT.
     this.queueSocketListRefresh();
+    this.queueSocketThreadRefresh();
   }
 
   private queueSocketListRefresh(): void {
@@ -722,6 +1037,74 @@ export class Mailbox {
     if (!this.pendingSocketListRefresh || this.isLoadingMessages || this.isRefreshingMessages || this.isPagingMessages || this.isSyncingMessages) return;
     this.pendingSocketListRefresh = false;
     this.requestMessages('refresh');
+  }
+
+  private queueSocketThreadRefresh(): void {
+    const accountId = this.selectedAccount?.id;
+    const threadId = this.selectedThreadId;
+    if (!accountId || !threadId || this.folder === 'DRAFTS') return;
+
+    if (this.isLoadingMessage || this.isSocketThreadRefreshInFlight) {
+      this.pendingSocketThreadRefresh = true;
+      return;
+    }
+
+    this.pendingSocketThreadRefresh = false;
+    this.refreshOpenThreadFromSocket(accountId, threadId);
+  }
+
+  private refreshOpenThreadFromSocket(accountId: string, threadId: string): void {
+    if (
+      this.selectedAccount?.id !== accountId ||
+      this.selectedThreadId !== threadId ||
+      this.folder === 'DRAFTS'
+    ) return;
+
+    const version = ++this.messageDetailLoadVersion;
+    const previousExpanded = new Set(this.expandedThreadMessageIds);
+    this.isSocketThreadRefreshInFlight = true;
+
+    this.emailService.getThread(accountId, threadId).pipe(
+      catchError(() => EMPTY),
+      finalize(() => {
+        this.isSocketThreadRefreshInFlight = false;
+        this.flushPendingSocketThreadRefresh();
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((detail) => {
+      if (
+        version !== this.messageDetailLoadVersion ||
+        this.selectedAccount?.id !== accountId ||
+        this.selectedThreadId !== threadId
+      ) return;
+
+      const messages = [...detail.messages].sort((a, b) => {
+        const aTime = a.date ? Date.parse(a.date) : 0;
+        const bTime = b.date ? Date.parse(b.date) : 0;
+        return aTime - bTime;
+      });
+      const validIds = new Set(messages.map((message) => message.id));
+      const keptExpanded = [...previousExpanded].filter((id) => validIds.has(id));
+      const previousMessageIds = new Set(this.selectedThread?.messages.map((message) => message.id) ?? []);
+      const latest = messages[messages.length - 1] ?? null;
+
+      // Só expande automaticamente a última mensagem se ela for realmente nova.
+      // Caso contrário preserva exatamente as escolhas de expansão do utilizador.
+      if (latest && !previousMessageIds.has(latest.id)) keptExpanded.push(latest.id);
+
+      this.selectedThread = { ...detail, messages };
+      this.expandedThreadMessageIds = new Set(keptExpanded);
+      if (latest && !this.selectedMessage) this.selectedMessage = latest;
+      if (latest?.hasAttachments && this.expandedThreadMessageIds.has(latest.id)) {
+        this.ensureThreadMessageAttachments(latest);
+      }
+    });
+  }
+
+  private flushPendingSocketThreadRefresh(): void {
+    if (!this.pendingSocketThreadRefresh || this.isLoadingMessage || this.isSocketThreadRefreshInFlight) return;
+    this.pendingSocketThreadRefresh = false;
+    this.queueSocketThreadRefresh();
   }
 
   private copySourceRelations(accountId: string, sourceMessageId: string, newMessageId: string): void {
@@ -754,6 +1137,10 @@ export class Mailbox {
 
   private getErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
+      const apiCode = this.readApiCode(error.error);
+      if (apiCode === 'EMAIL_THREADS_BACKFILL_REQUIRED') {
+        return 'As conversas desta conta ainda precisam de ser preparadas no servidor antes de poderem ser apresentadas.';
+      }
       const apiMessage = this.readApiMessage(error.error);
       if (apiMessage) return apiMessage;
       if (error.status === 0) return 'Não foi possível contactar a API. Verifica a ligação e tenta novamente.';
@@ -766,6 +1153,14 @@ export class Mailbox {
       return `O pedido falhou (HTTP ${error.status}).`;
     }
     return error instanceof Error ? error.message : 'Ocorreu um erro inesperado. Tenta novamente.';
+  }
+
+  private readApiCode(value: unknown): string | null {
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      const code = (value as Record<string, unknown>)['code'];
+      return typeof code === 'string' && code.trim() ? code.trim() : null;
+    }
+    return null;
   }
 
   private readApiMessage(value: unknown): string | null {

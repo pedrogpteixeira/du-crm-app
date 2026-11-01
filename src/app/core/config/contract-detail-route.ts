@@ -5,6 +5,7 @@ import { IBERDROLA_SOLAR_COMPANY_ID } from '../services/iberdrola-solar-contract
 import { MEO_ENERGIAS_COMPANY_ID } from '../services/meo-energias-contract';
 import { YES_ENERGY_COMPANY_ID } from '../services/yes-energy-contract';
 import { VODAFONE_COMPANY_ID } from '../services/vodafone-contract';
+import { PORTULOGOS_B2B_COMPANY_ID, PORTULOGOS_B2B_CONTRACT_PREFIX } from './portulogos-b2b-access';
 
 interface ContractRouteConfig {
   companyId?: string;
@@ -23,6 +24,12 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
     companyId: environment.PORTULOGOS_COMPANY_ID,
     companyName: 'Portulogos',
     segment: 'portulogos',
+  },
+  {
+    companyId: PORTULOGOS_B2B_COMPANY_ID,
+    contractIdPrefix: PORTULOGOS_B2B_CONTRACT_PREFIX,
+    companyName: 'Portulogos B2B',
+    segment: 'portulogos-b2b',
   },
   {
     companyId: environment.WALLBOX_COMPANY_ID,
@@ -96,10 +103,7 @@ export function getContractProviderByCompanyId(
   return resolveContractRouteConfig(companyId, contractId)?.segment ?? null;
 }
 
-export function getContractDetailRoute(
-  companyId: string,
-  contractId: string,
-): string[] | null {
+export function getContractDetailRoute(companyId: string, contractId: string): string[] | null {
   const config = resolveContractRouteConfig(companyId, contractId);
 
   if (!config || !contractId) {
@@ -113,9 +117,7 @@ export function getContractDetailRouteByProvider(
   provider: ClientContractProvider,
   contractId: string,
 ): string[] | null {
-  const config = CONTRACT_ROUTE_CONFIGS.find(
-    (entry) => entry.segment === provider,
-  );
+  const config = CONTRACT_ROUTE_CONFIGS.find((entry) => entry.segment === provider);
 
   if (!config || !contractId) {
     return null;
@@ -125,9 +127,7 @@ export function getContractDetailRouteByProvider(
 }
 
 export function getContractProviderName(provider: ClientContractProvider): string {
-  const config = CONTRACT_ROUTE_CONFIGS.find(
-    (entry) => entry.segment === provider,
-  );
+  const config = CONTRACT_ROUTE_CONFIGS.find((entry) => entry.segment === provider);
 
   return config?.companyName ?? 'Comercializadora desconhecida';
 }

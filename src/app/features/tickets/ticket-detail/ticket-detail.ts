@@ -882,6 +882,7 @@ export class TicketDetail implements OnInit {
     merge(
       this.socketService.listenRepsolContractUpdated(),
       this.socketService.listenPortulogosContractUpdated(),
+      this.socketService.listenPortulogosB2BContractUpdated(),
       this.socketService.listenWallboxContractUpdated(),
       this.socketService.listenYesEnergyContractUpdated(),
       this.socketService.listenGalpPowerGasContractUpdated(),
