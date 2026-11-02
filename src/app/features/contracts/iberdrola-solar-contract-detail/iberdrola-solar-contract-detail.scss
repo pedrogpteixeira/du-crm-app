@@ -196,8 +196,7 @@
 
 .info-grid {
   display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 22px 42px;
 }
 
@@ -875,7 +874,6 @@ strong {
   }
 }
 
-
 /* Dynamic Data de Registo validation */
 .data-registo-label {
   display: inline-flex;
@@ -945,9 +943,6 @@ strong {
   opacity: 1;
 }
 
-
-
-
 .client-info-grid {
   grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(0, 1fr));
   column-gap: 24px;
@@ -977,4 +972,70 @@ strong {
   .client-secondary-field {
     grid-column: auto;
   }
+}
+
+/* =========================
+   REDESIGN DE SECÇÕES
+   Máximo de dois campos por linha na informação do contrato.
+   Estado da Venda usa classes próprias e não é alterado por estas regras.
+========================= */
+
+.info-grid,
+.client-info-grid,
+.product-info-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 30px;
+  row-gap: 22px;
+  align-items: start;
+}
+
+.info-grid > *,
+.info-grid > label,
+.client-info-grid > *,
+.product-info-grid > * {
+  min-width: 0;
+}
+
+/* Remove posicionamentos antigos de 3/4 colunas que criavam colunas implícitas. */
+.client-info-grid > label,
+.product-info-grid > label {
+  grid-column: auto !important;
+}
+
+/* Conteúdo longo mantém uma linha completa e legível. */
+.info-grid > .full-width,
+.info-grid > .iban-field,
+.client-info-grid > .full-width,
+.client-info-grid > .iban-field,
+.product-info-grid > .full-width {
+  grid-column: 1 / -1 !important;
+}
+
+/* Evita sobreposição de valores compridos, especialmente em edição. */
+.info-grid strong,
+.info-grid input,
+.info-grid select,
+.info-grid textarea,
+.info-grid app-editable-select-combobox {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.info-grid strong {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+@media (max-width: 760px) {
+  .info-grid,
+  .client-info-grid,
+  .product-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.iban-field > strong {
+  overflow-wrap: normal;
+  word-break: normal;
 }

@@ -615,3 +615,53 @@ button:disabled {
   font-size: 11px;
   font-weight: 500;
 }
+
+/* =========================
+   REDESIGN DE SECÇÕES
+   Máximo de dois campos por linha.
+   Estado da Venda mantém o layout dedicado existente.
+========================= */
+
+.form-grid,
+.form-grid.two-columns,
+.form-grid.three-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 20px;
+  align-items: start;
+}
+
+.form-grid > *,
+.form-grid > label {
+  min-width: 0;
+}
+
+/* Campos que representam conteúdo longo continuam numa linha própria. */
+.form-grid > .full-width,
+.product-provider-field {
+  grid-column: 1 / -1;
+}
+
+/* Moradas podem manter três campos pequenos por linha, sem ultrapassar esse limite. */
+.address-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .form-grid,
+  .form-grid.two-columns,
+  .form-grid.three-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .form-grid,
+  .form-grid.two-columns,
+  .form-grid.three-columns,
+  .address-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -86,7 +86,7 @@ interface EditableContractForm {
   crc: string;
   nomeGerente: string;
   nomeResponsavel: string;
-  contactoResponsavel: string;
+  contactoResponsavel: number | null;
 
   tipoSegmento: string;
   tipoProduto: string;
@@ -801,7 +801,9 @@ export class PortulogosB2BContractDetail implements OnInit {
       return;
     }
 
-    const applyRegistration = (users: ReturnType<UserService['getAssignableUsersSnapshot']>): void => {
+    const applyRegistration = (
+      users: ReturnType<UserService['getAssignableUsersSnapshot']>,
+    ): void => {
       if (!this.isEditing || this.contract?.user?.id !== assignedUserId) {
         return;
       }
@@ -863,10 +865,18 @@ export class PortulogosB2BContractDetail implements OnInit {
   }
 
   private validateB2BSpecificRequirements(): boolean {
-    if (this.editForm.nomeResponsavel.trim() && !this.editForm.contactoResponsavel.trim()) {
+    if (this.editForm.nomeResponsavel.trim() && !this.editForm.contactoResponsavel) {
       this.showError(
         'O contacto do responsável é obrigatório quando o nome do responsável está preenchido.',
       );
+      return false;
+    }
+
+    if (
+      this.editForm.contactoResponsavel !== null &&
+      !/^\d{9}$/.test(String(this.editForm.contactoResponsavel))
+    ) {
+      this.showError('O contacto do responsável deve ter exatamente 9 dígitos.');
       return false;
     }
 
@@ -1573,7 +1583,7 @@ export class PortulogosB2BContractDetail implements OnInit {
         crc: contract.crc ?? '',
         nomeGerente: contract.nomeGerente ?? '',
         nomeResponsavel: contract.nomeResponsavel ?? '',
-        contactoResponsavel: contract.contactoResponsavel ?? '',
+        contactoResponsavel: contract.contactoResponsavel ?? null,
 
         tipoSegmento: contract.tipoSegmento ?? '',
         tipoProduto: contract.tipoProduto ?? '',
@@ -1974,7 +1984,7 @@ export class PortulogosB2BContractDetail implements OnInit {
       crc: '',
       nomeGerente: '',
       nomeResponsavel: '',
-      contactoResponsavel: '',
+      contactoResponsavel: null,
 
       tipoSegmento: '',
       tipoProduto: '',

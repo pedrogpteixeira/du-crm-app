@@ -259,7 +259,7 @@ export class PortulogosB2BContractCreate implements OnInit {
     email: '',
     nomeGerente: '',
     nomeResponsavel: '',
-    contactoResponsavel: '',
+    contactoResponsavel: null as number | null,
     cae: '',
     crc: '',
 
@@ -803,9 +803,17 @@ export class PortulogosB2BContractCreate implements OnInit {
       return;
     }
 
-    if (this.contractForm.nomeResponsavel.trim() && !this.contractForm.contactoResponsavel.trim()) {
+    if (this.contractForm.nomeResponsavel.trim() && !this.contractForm.contactoResponsavel) {
       this.errorMessage =
         'O contacto do responsável é obrigatório quando o nome do responsável está preenchido.';
+      return;
+    }
+
+    if (
+      this.contractForm.contactoResponsavel !== null &&
+      !/^\d{9}$/.test(String(this.contractForm.contactoResponsavel))
+    ) {
+      this.errorMessage = 'O contacto do responsável deve ter exatamente 9 dígitos.';
       return;
     }
 

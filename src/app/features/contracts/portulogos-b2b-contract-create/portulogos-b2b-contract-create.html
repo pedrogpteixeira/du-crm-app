@@ -142,15 +142,6 @@
         </label>
 
         <label>
-          Tipo Tarifa
-
-          <select [(ngModel)]="contractForm.tipoTarifa">
-            <option value="">Selecionar tipo de tarifa</option>
-            <option *ngFor="let option of tipoTarifaOptions" [value]="option">{{ option }}</option>
-          </select>
-        </label>
-
-        <label>
           Contratação *
 
           <select [(ngModel)]="contractForm.contratacao">
@@ -320,7 +311,12 @@
 
         <label>
           Contacto Responsável{{ contractForm.nomeResponsavel.trim() ? ' *' : '' }}
-          <input type="text" [(ngModel)]="contractForm.contactoResponsavel" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.contactoResponsavel"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -459,119 +455,150 @@
       </div>
     </article>
 
-    <article class="card">
+    <article class="card product-card">
       <div class="section-title">Dados Produto</div>
 
-      <div class="form-grid two-columns">
-        <label>
-          Tipo de campanha *
+      <div class="product-layout">
+        <div class="product-block product-block--tariff">
+          <div class="product-block-title">Tarifa</div>
 
-          <select [(ngModel)]="campaignSelectionMode">
-            <option value="existing">Campanha existente</option>
+          <div class="product-row product-row--single">
+            <label>
+              Tipo Tarifa
 
-            <option value="other">Outra campanha</option>
-          </select>
-        </label>
+              <select [(ngModel)]="contractForm.tipoTarifa">
+                <option value="">Selecionar tipo de tarifa</option>
+                <option *ngFor="let option of tipoTarifaOptions" [value]="option">
+                  {{ option }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </div>
 
-        <label *ngIf="campaignSelectionMode === 'existing'">
-          Campanha *
+        <div class="product-block">
+          <div class="product-block-title">Campanha</div>
 
-          <select [(ngModel)]="contractForm.campanha">
-            <option value="">Selecionar campanha</option>
+          <div class="product-row product-row--two">
+            <label>
+              Tipo de campanha *
 
-            <option *ngFor="let campaign of campaigns" [value]="campaign.id">
-              {{ campaign.name }}
-            </option>
-          </select>
-        </label>
+              <select [(ngModel)]="campaignSelectionMode">
+                <option value="existing">Campanha existente</option>
+                <option value="other">Outra campanha</option>
+              </select>
+            </label>
 
-        <label *ngIf="campaignSelectionMode === 'other'">
-          Nome da campanha *
+            <label *ngIf="campaignSelectionMode === 'existing'">
+              Campanha *
 
-          <input type="text" [(ngModel)]="customCampaign" />
-        </label>
-      </div>
+              <select [(ngModel)]="contractForm.campanha">
+                <option value="">Selecionar campanha</option>
+                <option *ngFor="let campaign of campaigns" [value]="campaign.id">
+                  {{ campaign.name }}
+                </option>
+              </select>
+            </label>
 
-      <div class="form-grid two-columns product-data-grid" *ngIf="isProLayout()">
-        <label class="product-provider-field">
-          Antiga Comercializadora
+            <label *ngIf="campaignSelectionMode === 'other'">
+              Nome da campanha *
 
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.antigaComercializadora"
-            [options]="antigaComercializadoraSuggestions"
-          />
-        </label>
+              <input type="text" [(ngModel)]="customCampaign" />
+            </label>
+          </div>
+        </div>
 
-        <label>
-          CPE{{ shouldShowLuzFields() ? ' *' : '' }}
+        <div class="product-block" *ngIf="isProLayout()">
+          <div class="product-block-title">Dados técnicos</div>
 
-          <input
-            type="text"
-            [(ngModel)]="contractForm.cpe"
-            [required]="shouldShowLuzFields()"
-            appContractMask="cpe"
-            appContractMaskPlaceholder=""
-          />
-        </label>
+          <div class="product-row product-row--single">
+            <label>
+              Antiga Comercializadora
 
-        <label>
-          CUI{{ shouldShowGasFields() ? ' *' : '' }}
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.antigaComercializadora"
+                [options]="antigaComercializadoraSuggestions"
+              />
+            </label>
+          </div>
 
-          <input
-            type="text"
-            [(ngModel)]="contractForm.cui"
-            [required]="shouldShowGasFields()"
-            appContractMask="cui"
-            appContractMaskPlaceholder=""
-          />
-        </label>
+          <div class="product-row product-row--two">
+            <label>
+              CPE{{ shouldShowLuzFields() ? ' *' : '' }}
 
-        <label>
-          Potência{{ shouldShowLuzFields() ? ' *' : '' }}
+              <input
+                type="text"
+                [(ngModel)]="contractForm.cpe"
+                [required]="shouldShowLuzFields()"
+                appContractMask="cpe"
+                appContractMaskPlaceholder=""
+              />
+            </label>
 
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.potencia"
-            [options]="availablePowers"
-            [optionDecimalPlaces]="2"
-            optionLabelSuffix=" kVA"
-            [required]="shouldShowLuzFields()"
-            inputMode="decimal"
-          />
-        </label>
+            <label>
+              CUI{{ shouldShowGasFields() ? ' *' : '' }}
 
-        <label>
-          Escalão{{ shouldShowGasFields() ? ' *' : '' }}
+              <input
+                type="text"
+                [(ngModel)]="contractForm.cui"
+                [required]="shouldShowGasFields()"
+                appContractMask="cui"
+                appContractMaskPlaceholder=""
+              />
+            </label>
+          </div>
 
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.escalao"
-            [options]="availableGasLevels"
-            optionLabelPrefix="Escalão "
-            valueType="number"
-            inputMode="decimal"
-            [emptyValue]="null"
-            [required]="shouldShowGasFields()"
-          />
-        </label>
+          <div class="product-row product-row--two">
+            <label>
+              Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
-        <label>
-          Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.potencia"
+                [options]="availablePowers"
+                [optionDecimalPlaces]="2"
+                optionLabelSuffix=" kVA"
+                [required]="shouldShowLuzFields()"
+                inputMode="decimal"
+              />
+            </label>
 
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.cicloHorario"
-            [options]="cicloHorarioOptions"
-            [required]="shouldShowLuzFields()"
-          />
-        </label>
+            <label>
+              Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
-        <label>
-          Nível Tensão
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.cicloHorario"
+                [options]="cicloHorarioOptions"
+                [required]="shouldShowLuzFields()"
+              />
+            </label>
+          </div>
 
-          <app-editable-select-combobox
-            [(ngModel)]="contractForm.nivelTensao"
-            [options]="nivelTensaoOptions"
-            emptyOptionLabel="Sem valor"
-          />
-        </label>
+          <div class="product-row product-row--two">
+            <label>
+              Escalão{{ shouldShowGasFields() ? ' *' : '' }}
+
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.escalao"
+                [options]="availableGasLevels"
+                optionLabelPrefix="Escalão "
+                valueType="number"
+                inputMode="decimal"
+                [emptyValue]="null"
+                [required]="shouldShowGasFields()"
+              />
+            </label>
+
+            <label>
+              Nível Tensão
+
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.nivelTensao"
+                [options]="nivelTensaoOptions"
+                emptyOptionLabel="Sem valor"
+              />
+            </label>
+          </div>
+        </div>
       </div>
     </article>
 

@@ -143,7 +143,7 @@ export interface PortulogosB2BContractDetail {
   nomeClienteEmpresa: string;
   nomeGerente?: string;
   nomeResponsavel?: string;
-  contactoResponsavel?: string;
+  contactoResponsavel?: number | null;
   nif: number;
   telefone: number;
   email: string;
@@ -216,7 +216,7 @@ export interface CreatePortulogosB2BContractRequest {
   nomeClienteEmpresa: string;
   nomeGerente?: string;
   nomeResponsavel?: string;
-  contactoResponsavel?: string;
+  contactoResponsavel?: number;
   nif: number;
   telefone?: number;
   email?: string;
@@ -256,6 +256,7 @@ export type UpdatePortulogosB2BContractRequest = Partial<
     | 'teams'
     | 'nif'
     | 'telefone'
+    | 'contactoResponsavel'
     | 'potencia'
     | 'escalao'
     | 'dataRegisto'
@@ -272,6 +273,7 @@ export type UpdatePortulogosB2BContractRequest = Partial<
   dataBaixaCUI?: string | null;
   nif?: number | null;
   telefone?: number | null;
+  contactoResponsavel?: number | null;
   potencia?: string | number | null;
   escalao?: number | null;
   observacoesInternas?: string;

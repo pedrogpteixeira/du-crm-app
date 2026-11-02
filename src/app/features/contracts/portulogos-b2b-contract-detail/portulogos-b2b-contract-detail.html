@@ -195,10 +195,12 @@
               <label>
                 Código Registo C.E.
 
-                <input *ngIf="isEditing; else codigoView"
+                <input
+                  *ngIf="isEditing; else codigoView"
                   type="text"
                   [value]="editForm.codigoRegistoCE"
-                readonly />
+                  readonly
+                />
 
                 <ng-template #codigoView>
                   <strong>
@@ -210,10 +212,12 @@
               <label>
                 Nome Registo C.E.
 
-                <input *ngIf="isEditing; else nomeRegistoView"
+                <input
+                  *ngIf="isEditing; else nomeRegistoView"
                   type="text"
                   [value]="editForm.nomeRegistoCE"
-                readonly />
+                  readonly
+                />
 
                 <ng-template #nomeRegistoView>
                   <strong>
@@ -695,8 +699,10 @@
                 Contacto Responsável{{ isEditing && editForm.nomeResponsavel.trim() ? ' *' : '' }}
                 <input
                   *ngIf="isEditing; else contactoResponsavelView"
-                  type="text"
+                  type="tel"
                   [(ngModel)]="editForm.contactoResponsavel"
+                  appContractMask="phone"
+                  appContractMaskPlaceholder=""
                 />
                 <ng-template #contactoResponsavelView
                   ><strong>{{ getValue(contract.contactoResponsavel) }}</strong></ng-template
@@ -838,7 +844,7 @@
              5. DADOS PRODUTO
         ========================== -->
 
-        <article class="card">
+        <article class="card product-card">
           <button type="button" class="section-toggle" (click)="toggleSection('energy')">
             <span>Dados Produto</span>
 
@@ -846,185 +852,202 @@
           </button>
 
           <div class="section-content" *ngIf="!collapsedSections.energy">
-            <div class="info-grid product-info-grid">
-              <label *ngIf="isEditing">
-                Tipo de campanha *
+            <div class="product-layout">
+              <div class="product-block product-block--tariff">
+                <div class="product-block-title">Tarifa</div>
 
-                <select
-                  [(ngModel)]="campaignSelectionMode"
-                  (ngModelChange)="onCampaignModeChange()"
-                >
-                  <option value="existing">Campanha existente</option>
+                <div class="product-row product-row--single">
+                  <label>
+                    Tipo Tarifa
 
-                  <option value="other">Outra campanha</option>
-                </select>
-              </label>
+                    <select
+                      *ngIf="isEditing; else tipoTarifaView"
+                      [(ngModel)]="editForm.tipoTarifa"
+                    >
+                      <option value="">Selecionar tipo de tarifa</option>
+                      <option *ngFor="let option of tipoTarifaOptions" [value]="option">
+                        {{ option }}
+                      </option>
+                    </select>
 
-              <label *ngIf="isEditing && campaignSelectionMode === 'existing'">
-                Campanha *
+                    <ng-template #tipoTarifaView>
+                      <strong>{{ getValue(contract.tipoTarifa) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
+              </div>
 
-                <select [(ngModel)]="editForm.campaignId">
-                  <option value="">Selecionar campanha</option>
+              <div class="product-block">
+                <div class="product-block-title">Campanha</div>
 
-                  <option
-                    *ngIf="inactiveCurrentCampaignOption as inactiveCampaign"
-                    [value]="inactiveCampaign.id"
-                  >
-                    {{ inactiveCampaign.name }} (Inativa)
-                  </option>
-                  <option *ngFor="let campaign of campaigns" [value]="campaign.id">
-                    {{ campaign.name }}
-                  </option>
-                </select>
-              </label>
+                <div class="product-row product-row--two">
+                  <label *ngIf="isEditing">
+                    Tipo de campanha *
 
-              <label *ngIf="isEditing && campaignSelectionMode === 'other'">
-                Nome da campanha *
+                    <select
+                      [(ngModel)]="campaignSelectionMode"
+                      (ngModelChange)="onCampaignModeChange()"
+                    >
+                      <option value="existing">Campanha existente</option>
+                      <option value="other">Outra campanha</option>
+                    </select>
+                  </label>
 
-                <input type="text" [(ngModel)]="editForm.customCampaign" />
-              </label>
+                  <label *ngIf="isEditing && campaignSelectionMode === 'existing'">
+                    Campanha *
 
-              <label *ngIf="!isEditing">
-                Campanha *
+                    <select [(ngModel)]="editForm.campaignId">
+                      <option value="">Selecionar campanha</option>
+                      <option
+                        *ngIf="inactiveCurrentCampaignOption as inactiveCampaign"
+                        [value]="inactiveCampaign.id"
+                      >
+                        {{ inactiveCampaign.name }} (Inativa)
+                      </option>
+                      <option *ngFor="let campaign of campaigns" [value]="campaign.id">
+                        {{ campaign.name }}
+                      </option>
+                    </select>
+                  </label>
 
-                <strong>
-                  {{ getValue(contract.campaign?.name) }}
-                </strong>
-              </label>
+                  <label *ngIf="isEditing && campaignSelectionMode === 'other'">
+                    Nome da campanha *
 
-              <label>
-                Antiga Comercializadora
+                    <input type="text" [(ngModel)]="editForm.customCampaign" />
+                  </label>
 
-                <app-editable-select-combobox
-                  *ngIf="isEditing; else antigaView"
-                  [(ngModel)]="editForm.antigaComercializadora"
-                  [options]="antigaComercializadoraSuggestions"
-                />
+                  <label *ngIf="!isEditing">
+                    Campanha
 
-                <ng-template #antigaView>
-                  <strong>
-                    {{ getValue(contract.antigaComercializadora) }}
-                  </strong>
-                </ng-template>
-              </label>
+                    <strong>{{ getValue(contract.campaign?.name) }}</strong>
+                  </label>
+                </div>
+              </div>
 
-              <label class="product-tariff-field">
-                Tipo Tarifa
+              <div class="product-block">
+                <div class="product-block-title">Dados técnicos</div>
 
-                <select *ngIf="isEditing; else tipoTarifaView" [(ngModel)]="editForm.tipoTarifa">
-                  <option value="">Selecionar tipo de tarifa</option>
-                  <option *ngFor="let option of tipoTarifaOptions" [value]="option">
-                    {{ option }}
-                  </option>
-                </select>
+                <div class="product-row product-row--single">
+                  <label>
+                    Antiga Comercializadora
 
-                <ng-template #tipoTarifaView>
-                  <strong>{{ getValue(contract.tipoTarifa) }}</strong>
-                </ng-template>
-              </label>
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else antigaView"
+                      [(ngModel)]="editForm.antigaComercializadora"
+                      [options]="antigaComercializadoraSuggestions"
+                    />
 
-              <label>
-                CPE{{ shouldShowLuzFields() ? ' *' : '' }}
+                    <ng-template #antigaView>
+                      <strong>{{ getValue(contract.antigaComercializadora) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
 
-                <input
-                  *ngIf="isEditing; else cpeView"
-                  type="text"
-                  [(ngModel)]="editForm.cpe"
-                  [required]="shouldShowLuzFields()"
-                  appContractMask="cpe"
-                  appContractMaskPlaceholder=""
-                />
+                <div class="product-row product-row--two">
+                  <label>
+                    CPE{{ shouldShowLuzFields() ? ' *' : '' }}
 
-                <ng-template #cpeView>
-                  <strong>
-                    {{ getValue(contract.cpe) }}
-                  </strong>
-                </ng-template>
-              </label>
+                    <input
+                      *ngIf="isEditing; else cpeView"
+                      type="text"
+                      [(ngModel)]="editForm.cpe"
+                      [required]="shouldShowLuzFields()"
+                      appContractMask="cpe"
+                      appContractMaskPlaceholder=""
+                    />
 
-              <label>
-                CUI{{ shouldShowGasFields() ? ' *' : '' }}
+                    <ng-template #cpeView>
+                      <strong>{{ getValue(contract.cpe) }}</strong>
+                    </ng-template>
+                  </label>
 
-                <input
-                  *ngIf="isEditing; else cuiView"
-                  type="text"
-                  [(ngModel)]="editForm.cui"
-                  [required]="shouldShowGasFields()"
-                  appContractMask="cui"
-                  appContractMaskPlaceholder=""
-                />
+                  <label>
+                    CUI{{ shouldShowGasFields() ? ' *' : '' }}
 
-                <ng-template #cuiView>
-                  <strong>
-                    {{ getValue(contract.cui) }}
-                  </strong>
-                </ng-template>
-              </label>
+                    <input
+                      *ngIf="isEditing; else cuiView"
+                      type="text"
+                      [(ngModel)]="editForm.cui"
+                      [required]="shouldShowGasFields()"
+                      appContractMask="cui"
+                      appContractMaskPlaceholder=""
+                    />
 
-              <label class="product-technical-field product-technical-potencia">
-                Potência{{ shouldShowLuzFields() ? ' *' : '' }}
+                    <ng-template #cuiView>
+                      <strong>{{ getValue(contract.cui) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
 
-                <app-editable-select-combobox
-                  *ngIf="isEditing; else potenciaView"
-                  [(ngModel)]="editForm.potencia"
-                  [options]="powerSuggestions"
-                  [required]="shouldShowLuzFields()"
-                  inputMode="decimal"
-                />
+                <div class="product-row product-row--two">
+                  <label>
+                    Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
-                <ng-template #potenciaView>
-                  <strong>{{ getValue(contract.potencia) }}</strong>
-                </ng-template>
-              </label>
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else potenciaView"
+                      [(ngModel)]="editForm.potencia"
+                      [options]="powerSuggestions"
+                      [required]="shouldShowLuzFields()"
+                      inputMode="decimal"
+                    />
 
-              <label class="product-technical-field product-technical-escalao">
-                Escalão{{ shouldShowGasFields() ? ' *' : '' }}
+                    <ng-template #potenciaView>
+                      <strong>{{ getValue(contract.potencia) }}</strong>
+                    </ng-template>
+                  </label>
 
-                <app-editable-select-combobox
-                  *ngIf="isEditing; else escalaoView"
-                  [(ngModel)]="editForm.escalao"
-                  [options]="gasLevelSuggestions"
-                  [required]="shouldShowGasFields()"
-                  inputMode="decimal"
-                  valueType="number"
-                  [emptyValue]="null"
-                />
+                  <label>
+                    Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
-                <ng-template #escalaoView>
-                  <strong>{{ getValue(contract.escalao) }}</strong>
-                </ng-template>
-              </label>
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else cicloView"
+                      [(ngModel)]="editForm.cicloHorario"
+                      [options]="cicloHorarioOptions"
+                      emptyOptionLabel="Sem valor"
+                      [required]="shouldShowLuzFields()"
+                    />
 
-              <label class="product-technical-field product-technical-ciclo">
-                Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
+                    <ng-template #cicloView>
+                      <strong>{{ getValue(contract.cicloHorario) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
 
-                <app-editable-select-combobox
-                  *ngIf="isEditing; else cicloView"
-                  [(ngModel)]="editForm.cicloHorario"
-                  [options]="cicloHorarioOptions"
-                  emptyOptionLabel="Sem valor"
-                  [required]="shouldShowLuzFields()"
-                />
+                <div class="product-row product-row--two">
+                  <label>
+                    Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
-                <ng-template #cicloView>
-                  <strong>{{ getValue(contract.cicloHorario) }}</strong>
-                </ng-template>
-              </label>
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else escalaoView"
+                      [(ngModel)]="editForm.escalao"
+                      [options]="gasLevelSuggestions"
+                      [required]="shouldShowGasFields()"
+                      inputMode="decimal"
+                      valueType="number"
+                      [emptyValue]="null"
+                    />
 
-              <label class="product-technical-field product-technical-tensao">
-                Nível Tensão
+                    <ng-template #escalaoView>
+                      <strong>{{ getValue(contract.escalao) }}</strong>
+                    </ng-template>
+                  </label>
 
-                <app-editable-select-combobox
-                  *ngIf="isEditing; else tensaoView"
-                  [(ngModel)]="editForm.nivelTensao"
-                  [options]="nivelTensaoOptions"
-                  emptyOptionLabel="Sem valor"
-                />
+                  <label>
+                    Nível Tensão
 
-                <ng-template #tensaoView>
-                  <strong>{{ getValue(contract.nivelTensao) }}</strong>
-                </ng-template>
-              </label>
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else tensaoView"
+                      [(ngModel)]="editForm.nivelTensao"
+                      [options]="nivelTensaoOptions"
+                      emptyOptionLabel="Sem valor"
+                    />
+
+                    <ng-template #tensaoView>
+                      <strong>{{ getValue(contract.nivelTensao) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </article>
@@ -1146,11 +1169,6 @@
               <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
                 {{ contract.estado }}
               </span>
-            </label>
-
-            <label>
-              ID Contrato
-              <strong class="contract-id-value">{{ contract.id }}</strong>
             </label>
 
             <label>
