@@ -1,12 +1,5 @@
 export type ContractFieldMask =
-  | 'crc'
-  | 'iban'
-  | 'ibanInternational'
-  | 'cpe'
-  | 'cui'
-  | 'postalCode'
-  | 'phone'
-  | 'email';
+  'crc' | 'iban' | 'ibanInternational' | 'cpe' | 'cui' | 'postalCode' | 'phone' | 'nif' | 'email';
 
 export interface ContractFormValidationOptions {
   validateCpe?: boolean;
@@ -107,6 +100,10 @@ export function formatPhone(value: unknown): string {
   return digitsOnly(value).slice(0, 9);
 }
 
+export function formatNif(value: unknown): string {
+  return digitsOnly(value).slice(0, 9);
+}
+
 export function formatContractField(mask: ContractFieldMask, value: unknown): string {
   switch (mask) {
     case 'crc':
@@ -123,6 +120,8 @@ export function formatContractField(mask: ContractFieldMask, value: unknown): st
       return formatPostalCode(value);
     case 'phone':
       return formatPhone(value);
+    case 'nif':
+      return formatNif(value);
     case 'email':
       return String(value ?? '').replace(/\s/g, '');
   }
@@ -151,9 +150,7 @@ export function isValidInternationalIban(value: unknown): boolean {
   let remainder = 0;
 
   for (const character of rearranged) {
-    const numericValue = /\d/.test(character)
-      ? character
-      : String(character.charCodeAt(0) - 55);
+    const numericValue = /\d/.test(character) ? character : String(character.charCodeAt(0) - 55);
 
     for (const digit of numericValue) {
       remainder = (remainder * 10 + Number(digit)) % 97;

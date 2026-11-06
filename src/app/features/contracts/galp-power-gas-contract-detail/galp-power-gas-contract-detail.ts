@@ -114,6 +114,7 @@ interface EditableContractForm {
   debitoDireto: boolean;
   iban: string;
 
+  cartaoContinente: string;
   antigaComercializadora: string;
   cpe: string;
   cui: string;
@@ -857,6 +858,14 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.editForm.telefone = digits ? Number(digits) : null;
   }
 
+  onCartaoContinenteInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 32);
+
+    input.value = digits;
+    this.editForm.cartaoContinente = digits;
+  }
+
   saveChanges(): void {
     if (!this.canEditContract || !this.contract || !this.contractId) {
       return;
@@ -1555,6 +1564,7 @@ export class GalpPowerGasContractDetail implements OnInit {
         debitoDireto: Boolean(contract.debitoDireto),
         iban: contract.iban ?? '',
 
+        cartaoContinente: contract.cartaoContinente ?? '',
         antigaComercializadora: contract.antigaComercializadora ?? '',
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
@@ -1791,6 +1801,12 @@ export class GalpPowerGasContractDetail implements OnInit {
     this.assignChangedValue(payload, 'iban', this.editForm.iban, this.originalEditForm.iban);
     this.assignChangedValue(
       payload,
+      'cartaoContinente',
+      this.editForm.cartaoContinente,
+      this.originalEditForm.cartaoContinente,
+    );
+    this.assignChangedValue(
+      payload,
       'antigaComercializadora',
       this.editForm.antigaComercializadora,
       this.originalEditForm.antigaComercializadora,
@@ -1930,6 +1946,7 @@ export class GalpPowerGasContractDetail implements OnInit {
       debitoDireto: false,
       iban: '',
 
+      cartaoContinente: '',
       antigaComercializadora: '',
       cpe: '',
       cui: '',
@@ -1964,6 +1981,7 @@ export class GalpPowerGasContractDetail implements OnInit {
     const classes: Record<GalpPowerGasContractStatus, string> = {
       'Pedido de chamada': 'status-call-request',
       'Em validação': 'status-validation',
+      'Pendente de Assinatura Digital': 'status-signature',
       'Não Conformidade': 'status-non-compliance',
       'Documentos Enviados': 'status-docs-sent',
       'Sem Registo': 'status-call-done',

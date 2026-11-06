@@ -6,6 +6,7 @@ const CONTRACT_STATUS_COLORS: Readonly<Record<string, string>> = {
 
   'Em validação': '#6d28d9',
   'Pendente Assinatura Digital': '#6d28d9',
+  'Pendente de Assinatura Digital': '#6d28d9',
   'Registo Plataforma Galp': '#6d28d9',
   'Pendente Validação Comercial': '#6d28d9',
   'Registo MEO': '#6d28d9',

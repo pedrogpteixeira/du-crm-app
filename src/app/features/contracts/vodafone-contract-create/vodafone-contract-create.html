@@ -27,7 +27,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"
@@ -257,13 +263,23 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label>
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
+          <input
+            type="email"
+            [(ngModel)]="contractForm.email"
+            appContractMask="email"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -275,7 +291,12 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.crc"
+            appContractMask="crc"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -320,7 +341,8 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -351,7 +373,8 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -387,7 +410,8 @@
             type="text"
             [(ngModel)]="contractForm.iban"
             autocomplete="off"
-            appContractMask="ibanInternational" appContractMaskPlaceholder=""
+            appContractMask="ibanInternational"
+            appContractMaskPlaceholder=""
           />
         </label>
       </div>
@@ -475,10 +499,7 @@
       <label>
         Observações internas
 
-        <textarea
-          rows="6"
-          [(ngModel)]="contractForm.observacoesInternas"
-        ></textarea>
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
       </label>
     </article>
 

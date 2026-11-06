@@ -275,6 +275,7 @@ export class GalpPowerGasContractCreate implements OnInit {
     iban: '',
 
     campanha: '',
+    cartaoContinente: '',
     antigaComercializadora: '',
     cpe: DEFAULT_CPE_PREFIX,
     cui: DEFAULT_CUI_PREFIX,
@@ -354,9 +355,6 @@ export class GalpPowerGasContractCreate implements OnInit {
   private loadContractLayout(): void {
     this.contractLayout = this.preferencesService.getContractLayout();
 
-    if (this.isLightLayout()) {
-      this.contractForm.estado = 'Pedido de chamada';
-    }
   }
   private loadAssignmentData(): void {
     const authenticatedUser = this.auth.getCurrentUser() as Partial<ProfileUser> | null;
@@ -647,6 +645,12 @@ export class GalpPowerGasContractCreate implements OnInit {
       return;
     }
 
+    if (String(this.nif).length !== 9) {
+      this.errorMessage = 'O NIF deve ter exatamente 9 dígitos.';
+
+      return;
+    }
+
     this.isCheckingClient = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -693,6 +697,12 @@ export class GalpPowerGasContractCreate implements OnInit {
   createClient(): void {
     if (!this.nif || !this.clientName.trim()) {
       this.errorMessage = 'O NIF e o nome do cliente são obrigatórios.';
+
+      return;
+    }
+
+    if (String(this.nif).length !== 9) {
+      this.errorMessage = 'O NIF deve ter exatamente 9 dígitos.';
 
       return;
     }
@@ -770,8 +780,6 @@ export class GalpPowerGasContractCreate implements OnInit {
       return;
     }
 
-    this.contractForm.estado = this.estadoOptions[0];
-
     if (!this.client) {
       this.errorMessage = 'É necessário identificar ou criar o cliente.';
 
@@ -830,10 +838,6 @@ export class GalpPowerGasContractCreate implements OnInit {
       this.errorMessage = teamValidationError;
 
       return;
-    }
-
-    if (this.isLightLayout()) {
-      this.contractForm.estado = 'Pedido de chamada';
     }
 
     const fieldValidationError = getContractFormValidationError(
@@ -1061,12 +1065,20 @@ export class GalpPowerGasContractCreate implements OnInit {
     return this.contractForm.moradaFaturacaoSelecao === 'Outra';
   }
 
+  onCartaoContinenteInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 32);
+
+    input.value = digits;
+    this.contractForm.cartaoContinente = digits;
+  }
+
   private buildContractPayload(): CreateGalpPowerGasContractRequest {
     if (!this.client) {
       throw new Error('Cliente não identificado.');
     }
 
-    const estado: GalpPowerGasContractStatus = this.estadoOptions[0];
+    const estado: GalpPowerGasContractStatus = this.contractForm.estado;
 
     const payload: CreateGalpPowerGasContractRequest = {
       clientId: this.client.id,
@@ -1126,6 +1138,8 @@ export class GalpPowerGasContractCreate implements OnInit {
         : this.contractForm.campanha;
 
     this.addIfFilled(payload, 'campanha', campaign);
+
+    this.addIfFilled(payload, 'cartaoContinente', this.contractForm.cartaoContinente);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 

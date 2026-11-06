@@ -30,6 +30,7 @@ export class ContractFieldMaskDirective implements AfterViewInit {
     return this.appContractMask === 'email'
       ? 'email'
       : this.appContractMask === 'phone' ||
+          this.appContractMask === 'nif' ||
           this.appContractMask === 'postalCode' ||
           this.appContractMask === 'crc' ||
           this.appContractMask === 'iban'
@@ -58,6 +59,8 @@ export class ContractFieldMaskDirective implements AfterViewInit {
         return '4510-507';
       case 'phone':
         return '912345678';
+      case 'nif':
+        return '123456789';
       case 'email':
         return 'nome@exemplo.pt';
     }
@@ -79,6 +82,8 @@ export class ContractFieldMaskDirective implements AfterViewInit {
       case 'postalCode':
         return 8;
       case 'phone':
+        return 9;
+      case 'nif':
         return 9;
       case 'email':
         return 254;
@@ -138,7 +143,7 @@ export class ContractFieldMaskDirective implements AfterViewInit {
     }
 
     const modelValue: string | number | null =
-      this.appContractMask === 'phone'
+      this.appContractMask === 'phone' || this.appContractMask === 'nif'
         ? formattedValue
           ? Number(formattedValue)
           : null

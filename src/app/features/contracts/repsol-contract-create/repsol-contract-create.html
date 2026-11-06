@@ -23,7 +23,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"
@@ -199,7 +205,9 @@
               class="editable-select-toggle"
               tabindex="-1"
               [disabled]="!canManageQualityControl()"
-              [attr.aria-label]="isEditableSelectOpen('qualityControl') ? 'Fechar opções' : 'Abrir opções'"
+              [attr.aria-label]="
+                isEditableSelectOpen('qualityControl') ? 'Fechar opções' : 'Abrir opções'
+              "
               (mousedown)="$event.preventDefault()"
               (click)="toggleEditableSelect('qualityControl')"
             >
@@ -324,13 +332,23 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
+          <input
+            type="email"
+            [(ngModel)]="contractForm.email"
+            appContractMask="email"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -342,7 +360,12 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.crc"
+            appContractMask="crc"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -464,7 +487,12 @@
         <label>
           IBAN
 
-          <input type="text" [(ngModel)]="contractForm.iban" appContractMask="ibanInternational" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.iban"
+            appContractMask="ibanInternational"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -539,10 +567,7 @@
         <label>
           Potência{{ shouldShowLuzFields() ? ' *' : '' }}
 
-          <div
-            class="editable-select-combobox"
-            [class.is-open]="isEditableSelectOpen('power')"
-          >
+          <div class="editable-select-combobox" [class.is-open]="isEditableSelectOpen('power')">
             <input
               type="text"
               autocomplete="off"
@@ -592,10 +617,7 @@
         <label>
           Escalão{{ shouldShowGasFields() ? ' *' : '' }}
 
-          <div
-            class="editable-select-combobox"
-            [class.is-open]="isEditableSelectOpen('gasLevel')"
-          >
+          <div class="editable-select-combobox" [class.is-open]="isEditableSelectOpen('gasLevel')">
             <input
               type="text"
               inputmode="decimal"
@@ -617,7 +639,9 @@
               type="button"
               class="editable-select-toggle"
               tabindex="-1"
-              [attr.aria-label]="isEditableSelectOpen('gasLevel') ? 'Fechar opções' : 'Abrir opções'"
+              [attr.aria-label]="
+                isEditableSelectOpen('gasLevel') ? 'Fechar opções' : 'Abrir opções'
+              "
               (mousedown)="$event.preventDefault()"
               (click)="toggleEditableSelect('gasLevel')"
             >
@@ -647,10 +671,7 @@
         <label>
           Ciclo Horário{{ shouldShowLuzFields() ? ' *' : '' }}
 
-          <div
-            class="editable-select-combobox"
-            [class.is-open]="isEditableSelectOpen('cycle')"
-          >
+          <div class="editable-select-combobox" [class.is-open]="isEditableSelectOpen('cycle')">
             <input
               type="text"
               autocomplete="off"
@@ -700,10 +721,7 @@
         <label>
           Nível Tensão
 
-          <div
-            class="editable-select-combobox"
-            [class.is-open]="isEditableSelectOpen('voltage')"
-          >
+          <div class="editable-select-combobox" [class.is-open]="isEditableSelectOpen('voltage')">
             <input
               type="text"
               autocomplete="off"
@@ -793,10 +811,7 @@
       <label>
         Observações internas
 
-        <textarea
-          rows="6"
-          [(ngModel)]="contractForm.observacoesInternas"
-        ></textarea>
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
       </label>
     </article>
 
@@ -810,7 +825,11 @@
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isPreflightLoading || isCreatingContract" (click)="createContract()">
+      <button
+        type="button"
+        [disabled]="isPreflightLoading || isCreatingContract"
+        (click)="createContract()"
+      >
         {{
           isPreflightLoading
             ? 'A verificar CPE/CUI...'
@@ -840,4 +859,3 @@
   [warnings]="postCreateWarnings"
   (closed)="acknowledgePostCreateWarnings()"
 ></app-contract-preflight-modal>
-

@@ -23,7 +23,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"

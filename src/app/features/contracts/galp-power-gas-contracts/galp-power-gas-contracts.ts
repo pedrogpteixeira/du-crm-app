@@ -369,6 +369,8 @@ export class GalpPowerGasContracts implements OnInit {
 
       'Em validação': 'status-validation',
 
+      'Pendente de Assinatura Digital': 'status-validation',
+
       'Não Conformidade': 'status-non-compliance',
 
       'Documentos Enviados': 'status-docs-sent',

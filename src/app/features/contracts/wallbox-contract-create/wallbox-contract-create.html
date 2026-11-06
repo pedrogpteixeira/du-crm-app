@@ -23,7 +23,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"
@@ -248,7 +254,12 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -293,7 +304,8 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -324,7 +336,8 @@
               type="text"
               placeholder="Código postal"
               [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-              appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
             />
           </div>
 
@@ -454,10 +467,7 @@
       <label>
         Observações internas
 
-        <textarea
-          rows="6"
-          [(ngModel)]="contractForm.observacoesInternas"
-        ></textarea>
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
       </label>
     </article>
 

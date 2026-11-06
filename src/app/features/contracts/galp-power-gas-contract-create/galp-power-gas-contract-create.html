@@ -23,7 +23,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"
@@ -204,10 +210,11 @@
           <label>
             Estado
 
-            <div class="initial-status-field">
-              <input type="text" class="readonly-status" [value]="estadoOptions[0]" readonly />
-              <small>O contrato é criado sempre no estado inicial.</small>
-            </div>
+            <select [(ngModel)]="contractForm.estado">
+              <option *ngFor="let option of estadoOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
           </label>
         </div>
 
@@ -280,13 +287,23 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
+          <input
+            type="email"
+            [(ngModel)]="contractForm.email"
+            appContractMask="email"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -298,7 +315,12 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.crc"
+            appContractMask="crc"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -344,7 +366,8 @@
                 type="text"
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-                appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+                appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -375,7 +398,8 @@
                 type="text"
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-                appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+                appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -418,7 +442,12 @@
         <label>
           IBAN
 
-          <input type="text" [(ngModel)]="contractForm.iban" appContractMask="ibanInternational" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.iban"
+            appContractMask="ibanInternational"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -454,6 +483,20 @@
 
           <input type="text" [(ngModel)]="customCampaign" />
         </label>
+
+        <label>
+          Nº Cartão Continente
+
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="32"
+            pattern="[0-9]*"
+            autocomplete="off"
+            [(ngModel)]="contractForm.cartaoContinente"
+            (input)="onCartaoContinenteInput($event)"
+          />
+        </label>
       </div>
 
       <div class="form-grid two-columns product-data-grid" *ngIf="isProLayout()">
@@ -473,7 +516,8 @@
             type="text"
             [(ngModel)]="contractForm.cpe"
             [required]="shouldShowLuzFields()"
-            appContractMask="cpe" appContractMaskPlaceholder=""
+            appContractMask="cpe"
+            appContractMaskPlaceholder=""
           />
         </label>
 
@@ -484,7 +528,8 @@
             type="text"
             [(ngModel)]="contractForm.cui"
             [required]="shouldShowGasFields()"
-            appContractMask="cui" appContractMaskPlaceholder=""
+            appContractMask="cui"
+            appContractMaskPlaceholder=""
           />
         </label>
 
@@ -568,10 +613,7 @@
       <label>
         Observações internas
 
-        <textarea
-          rows="6"
-          [(ngModel)]="contractForm.observacoesInternas"
-        ></textarea>
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
       </label>
     </article>
 
@@ -585,7 +627,11 @@
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isPreflightLoading || isCreatingContract" (click)="createContract()">
+      <button
+        type="button"
+        [disabled]="isPreflightLoading || isCreatingContract"
+        (click)="createContract()"
+      >
         {{
           isPreflightLoading
             ? 'A verificar CPE/CUI...'
@@ -615,4 +661,3 @@
   [warnings]="postCreateWarnings"
   (closed)="acknowledgePostCreateWarnings()"
 ></app-contract-preflight-modal>
-

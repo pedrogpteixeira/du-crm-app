@@ -23,7 +23,13 @@
         NIF do Cliente *
 
         <div class="inline-field">
-          <input type="number" [(ngModel)]="nif" [disabled]="!!client" />
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
 
           <button
             type="button"
@@ -280,13 +286,23 @@
         <label>
           Telefone *
 
-          <input type="tel" [(ngModel)]="contractForm.telefone" appContractMask="phone" appContractMaskPlaceholder="" />
+          <input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
           Email
 
-          <input type="email" [(ngModel)]="contractForm.email" appContractMask="email" appContractMaskPlaceholder="" />
+          <input
+            type="email"
+            [(ngModel)]="contractForm.email"
+            appContractMask="email"
+            appContractMaskPlaceholder=""
+          />
         </label>
 
         <label *ngIf="isProLayout()">
@@ -298,7 +314,12 @@
         <label *ngIf="isProLayout()">
           CRC
 
-          <input type="text" [(ngModel)]="contractForm.crc" appContractMask="crc" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.crc"
+            appContractMask="crc"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -344,7 +365,8 @@
                 type="text"
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
-                appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+                appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -375,7 +397,8 @@
                 type="text"
                 placeholder="Código postal"
                 [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
-                appContractMask="postalCode" appContractMaskPlaceholder="Código postal"
+                appContractMask="postalCode"
+                appContractMaskPlaceholder="Código postal"
               />
             </div>
 
@@ -418,7 +441,12 @@
         <label>
           IBAN
 
-          <input type="text" [(ngModel)]="contractForm.iban" appContractMask="ibanInternational" appContractMaskPlaceholder="" />
+          <input
+            type="text"
+            [(ngModel)]="contractForm.iban"
+            appContractMask="ibanInternational"
+            appContractMaskPlaceholder=""
+          />
         </label>
       </div>
     </article>
@@ -473,7 +501,8 @@
             type="text"
             [(ngModel)]="contractForm.cpe"
             [required]="shouldShowLuzFields()"
-            appContractMask="cpe" appContractMaskPlaceholder=""
+            appContractMask="cpe"
+            appContractMaskPlaceholder=""
           />
         </label>
 
@@ -484,7 +513,8 @@
             type="text"
             [(ngModel)]="contractForm.cui"
             [required]="shouldShowGasFields()"
-            appContractMask="cui" appContractMaskPlaceholder=""
+            appContractMask="cui"
+            appContractMaskPlaceholder=""
           />
         </label>
 
@@ -568,10 +598,7 @@
       <label>
         Observações internas
 
-        <textarea
-          rows="6"
-          [(ngModel)]="contractForm.observacoesInternas"
-        ></textarea>
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
       </label>
     </article>
 
@@ -585,7 +612,11 @@
         Cancelar
       </button>
 
-      <button type="button" [disabled]="isPreflightLoading || isCreatingContract" (click)="createContract()">
+      <button
+        type="button"
+        [disabled]="isPreflightLoading || isCreatingContract"
+        (click)="createContract()"
+      >
         {{
           isPreflightLoading
             ? 'A verificar CPE/CUI...'
@@ -615,4 +646,3 @@
   [warnings]="postCreateWarnings"
   (closed)="acknowledgePostCreateWarnings()"
 ></app-contract-preflight-modal>
-

@@ -647,6 +647,12 @@ export class PortulogosContractCreate implements OnInit {
       return;
     }
 
+    if (String(this.nif).length !== 9) {
+      this.errorMessage = 'O NIF deve ter exatamente 9 dígitos.';
+
+      return;
+    }
+
     this.isCheckingClient = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -693,6 +699,12 @@ export class PortulogosContractCreate implements OnInit {
   createClient(): void {
     if (!this.nif || !this.clientName.trim()) {
       this.errorMessage = 'O NIF e o nome do cliente são obrigatórios.';
+
+      return;
+    }
+
+    if (String(this.nif).length !== 9) {
+      this.errorMessage = 'O NIF deve ter exatamente 9 dígitos.';
 
       return;
     }

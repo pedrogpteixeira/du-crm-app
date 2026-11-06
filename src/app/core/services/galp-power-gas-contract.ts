@@ -24,6 +24,7 @@ import {
 export type GalpPowerGasContractStatus =
   | 'Pedido de chamada'
   | 'Em validação'
+  | 'Pendente de Assinatura Digital'
   | 'Não Conformidade'
   | 'Pendente Docs'
   | 'Documentos Enviados'
@@ -38,6 +39,7 @@ export type GalpPowerGasContractStatus =
 export const GALP_POWER_GAS_STATUSES: GalpPowerGasContractStatus[] = [
   'Pedido de chamada',
   'Em validação',
+  'Pendente de Assinatura Digital',
   'Não Conformidade',
   'Pendente Docs',
   'Documentos Enviados',
@@ -71,6 +73,7 @@ export interface GalpPowerGasContract {
   nomeRegistoCE?: string;
   clientId?: string;
   campanha?: string;
+  cartaoContinente?: string;
   campaign?: GalpPowerGasContractCampaign | null;
   cpe?: string;
   cui?: string;
@@ -171,6 +174,7 @@ export interface GalpPowerGasContractDetail {
 
   campaign: GalpPowerGasContractCampaign | null;
   campaigns?: Campaign[];
+  cartaoContinente?: string;
   antigaComercializadora: string;
 
   cpe: string;
@@ -240,6 +244,7 @@ export interface CreateGalpPowerGasContractRequest {
   iban?: string;
 
   campanha?: string;
+  cartaoContinente?: string;
   antigaComercializadora?: string;
 
   cpe?: string;
