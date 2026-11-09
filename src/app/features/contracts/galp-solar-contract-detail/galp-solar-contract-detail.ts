@@ -114,6 +114,7 @@ interface AuthenticatedUserLike {
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
   canMutateContractByBusinessRule,
+  isContractEditExceptionUserId,
   isRequiredContractTeamMember,
 } from '../../../core/utils/contract-mutation-access';
 import { ContractActivityPanel } from '../../../shared/components/contract-activity-panel/contract-activity-panel';
@@ -373,7 +374,10 @@ export class GalpSolarContractDetail implements OnInit {
   }
 
   get canEditContract(): boolean {
-    return this.isSuperAdmin && this.canMutateContract;
+    return (
+      isContractEditExceptionUserId(this.currentUserId) ||
+      (this.isSuperAdmin && this.canMutateContract)
+    );
   }
 
   ngOnInit(): void {

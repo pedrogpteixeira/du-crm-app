@@ -9,6 +9,10 @@ export interface ContractAccessUserLike {
   defaultTeam?: ContractTeamMembershipLike | null;
 }
 
+const CONTRACT_EDIT_EXCEPTION_USER_IDS = new Set([
+  'usr_JtUHUWXBwF',
+]);
+
 const LOCKED_CONTRACT_STATUSES = new Set([
   'ativo',
   'atribuido',
@@ -26,6 +30,12 @@ function normalizeStatus(value: string | null | undefined): string {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ');
+}
+
+export function isContractEditExceptionUserId(
+  userId: string | null | undefined,
+): boolean {
+  return Boolean(userId && CONTRACT_EDIT_EXCEPTION_USER_IDS.has(userId));
 }
 
 export function getRequiredContractTeamIds(): string[] {

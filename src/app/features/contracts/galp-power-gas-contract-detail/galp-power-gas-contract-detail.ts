@@ -40,6 +40,7 @@ import { resolveContractRegistrationFromUser } from '../../../core/utils/contrac
 import { appendObservationHistory } from '../../../core/utils/observation-history';
 import {
   canMutateContractByBusinessRule,
+  isContractEditExceptionUserId,
   isRequiredContractTeamMember,
 } from '../../../core/utils/contract-mutation-access';
 
@@ -525,7 +526,10 @@ export class GalpPowerGasContractDetail implements OnInit {
   }
 
   get canEditContract(): boolean {
-    return this.isSuperAdmin && this.canMutateContract;
+    return (
+      isContractEditExceptionUserId(this.currentUserId) ||
+      (this.isSuperAdmin && this.canMutateContract)
+    );
   }
 
   get inactiveCurrentCampaignOption(): { id: string; name: string } | null {
