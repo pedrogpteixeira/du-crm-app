@@ -171,7 +171,6 @@ import { EditableSelectCombobox } from '../../../shared/components/editable-sele
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
-import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/entity-email-panel';
 
 @Component({
   selector: 'app-meo-energias-contract-detail',
@@ -183,7 +182,6 @@ import { EntityEmailPanel } from '../../../shared/components/entity-email-panel/
     VisibleAttachmentsPipe,
     RouterLink,
     ContractActivityPanel,
-    EntityEmailPanel,
     ObservationsThread,
     FileDropzone,
   ],

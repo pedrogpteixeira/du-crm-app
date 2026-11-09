@@ -162,8 +162,8 @@
       <span>NIF</span>
       <span>Nome Registo C.E.</span>
       <span>Data Assinatura</span>
-      <span>Data Registo</span>
-      <span>Data Agendamento</span>
+      <span>Registo</span>
+      <span>Agendamento</span>
       <span>Estado</span>
       </div>
     </div>
@@ -283,7 +283,7 @@
               <span class="kanban-meta-value">{{ getValue(contract.nif) }}</span>
             </span>
 
-            <span class="kanban-meta">
+            <span class="kanban-meta kanban-meta--registration-name">
               <span class="kanban-meta-label">Registo C.E.:</span>
               <span class="kanban-meta-value">{{ getValue(contract.nomeRegistoCE) }}</span>
             </span>
@@ -294,12 +294,12 @@
             </span>
 
             <span class="kanban-meta kanban-meta--date">
-              <span class="kanban-meta-label">Data Agendamento:</span>
+              <span class="kanban-meta-label">Agendamento:</span>
               <span class="kanban-meta-value">{{ formatListDate(contract.dataAgendamento, true) }}</span>
             </span>
 
             <span class="kanban-meta kanban-meta--date">
-              <span class="kanban-meta-label">Data Registo:</span>
+              <span class="kanban-meta-label">Registo:</span>
               <span class="kanban-meta-value">{{ formatListDate(contract.dataRegisto) }}</span>
             </span>
           </a>

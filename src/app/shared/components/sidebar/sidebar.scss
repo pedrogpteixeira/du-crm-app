@@ -6,9 +6,8 @@
   position: fixed;
   inset: 0 auto 0 0;
 
-  width: 280px;
+  width: 248px;
   height: 100vh;
-
   box-sizing: border-box;
 
   display: flex;
@@ -17,14 +16,11 @@
   background: #2f4050;
   color: #ffffff;
 
-  padding: 16px 14px;
-
+  padding: 12px 10px 11px;
   overflow: hidden;
 
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-
-  box-shadow:
-    4px 0 18px rgba(15, 23, 42, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.045);
+  box-shadow: 3px 0 14px rgba(15, 23, 42, 0.07);
 
   transition:
     width 0.25s ease,
@@ -38,41 +34,40 @@
    ========================================================= */
 
 .toggle-btn {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
 
   flex-shrink: 0;
   align-self: flex-end;
 
   border: 0;
-  border-radius: 11px;
+  border-radius: 10px;
 
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.045);
   color: #ffffff;
-
   cursor: pointer;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 
   transition:
-    background 0.2s ease,
-    transform 0.2s ease,
+    background 0.18s ease,
+    transform 0.18s ease,
     margin 0.25s ease;
 
   .material-symbols-rounded {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.11);
   }
 
   &:active {
-    transform: scale(0.94);
+    transform: scale(0.95);
   }
 }
 
@@ -82,42 +77,37 @@
 
 .brand {
   width: 100%;
-
   box-sizing: border-box;
-
   flex-shrink: 0;
 
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  gap: 9px;
 
-  gap: 10px;
-
-  margin-bottom: 24px;
-  padding: 6px 8px;
+  margin-bottom: 16px;
+  padding: 4px 6px;
 
   color: #ffffff;
   text-decoration: none;
-
-  border-radius: 14px;
+  border-radius: 11px;
 
   transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+    background 0.18s ease,
+    transform 0.18s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.055);
   }
 
   &:active {
-    transform: scale(0.98);
+    transform: scale(0.985);
   }
 }
 
 .brand-icon {
-  width: 68px;
-  height: 46px;
-
+  width: 58px;
+  height: 39px;
   flex-shrink: 0;
 
   display: grid;
@@ -126,9 +116,9 @@
   background: #ffffff;
   color: #2f4050;
 
-  border-radius: 12px;
+  border-radius: 10px;
 
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: -0.02em;
 
@@ -139,10 +129,9 @@
 }
 
 .brand-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
-  letter-spacing: 0.02em;
-
+  letter-spacing: 0.015em;
   white-space: nowrap;
 
   transition:
@@ -162,32 +151,22 @@
 
   display: flex;
   flex-direction: column;
-
-  gap: 18px;
+  gap: 12px;
 
   overflow-y: auto;
   overflow-x: hidden;
 
-  padding:
-    2px
-    3px
-    20px
-    0;
+  padding: 1px 3px 14px 0;
 
   overscroll-behavior: contain;
-
   scrollbar-gutter: stable;
 
   scrollbar-width: thin;
-  scrollbar-color:
-    rgba(255, 255, 255, 0.18)
-    transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
-/* Chrome / Edge / Safari */
-
 .sidebar-nav::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .sidebar-nav::-webkit-scrollbar-track {
@@ -195,16 +174,15 @@
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 999px;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.27);
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.38);
   }
 }
 
@@ -217,25 +195,20 @@
 
   display: flex;
   flex-direction: column;
-
-  gap: 5px;
+  gap: 3px;
 }
 
 .section-title {
-  padding: 0 12px;
-
-  margin:
-    5px
-    0
-    4px;
+  padding: 0 9px;
+  margin: 3px 0 3px;
 
   color: #94a3b8;
 
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 800;
-
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.105em;
+  line-height: 1.35;
 
   white-space: nowrap;
 
@@ -252,56 +225,56 @@
   position: relative;
 
   width: 100%;
-
+  min-height: 36px;
   box-sizing: border-box;
 
   display: flex;
   align-items: center;
+  gap: 10px;
 
-  gap: 12px;
+  padding: 8px 9px;
 
-  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
 
-  border-radius: 11px;
-
-  color: #dbeafe;
+  color: #dce7f2;
   text-decoration: none;
 
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.2;
 
   white-space: nowrap;
 
   transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease,
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease,
     padding 0.25s ease;
 
   &:hover {
-    background: rgba(36, 54, 70, 0.7);
+    background: rgba(36, 54, 70, 0.64);
     color: #ffffff;
   }
 
   &.active {
     background: #243646;
+    border-color: rgba(255, 255, 255, 0.04);
     color: #ffffff;
-
-    box-shadow:
-      inset 3px 0 0 rgba(255, 255, 255, 0.55);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.58);
   }
 }
 
 .icon {
-  width: 22px;
-  min-width: 22px;
+  width: 20px;
+  min-width: 20px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 19px;
-
+  font-size: 18px;
   flex-shrink: 0;
 }
 
@@ -315,7 +288,6 @@
     opacity 0.18s ease,
     width 0.2s ease;
 }
-
 
 /* =========================================================
    SYSTEM NOTICE ADMIN
@@ -332,69 +304,60 @@
 
 .profile-card {
   width: 100%;
-  min-height: 58px;
-
+  min-height: 52px;
   box-sizing: border-box;
 
   flex-shrink: 0;
 
   display: flex;
   align-items: center;
+  gap: 9px;
 
-  gap: 10px;
-
-  margin-top: 12px;
-
-  padding: 10px;
+  margin-top: 8px;
+  padding: 7px 8px;
 
   overflow: hidden;
 
-  background: rgba(255, 255, 255, 0.07);
-
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.065);
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  border-radius: 11px;
 
   color: #ffffff;
   text-decoration: none;
 
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
     padding 0.25s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.13);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.075);
   }
 }
 
 .avatar {
-  width: 38px;
-  height: 38px;
-
-  min-width: 38px;
-
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
   flex-shrink: 0;
 
   display: grid;
   place-items: center;
-
   overflow: hidden;
 
-  border-radius: 10px;
+  border-radius: 9px;
 
   background: #ffffff;
   color: #2f4050;
 
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 
   img {
     width: 100%;
     height: 100%;
-
     display: block;
-
     object-fit: cover;
   }
 }
@@ -404,8 +367,7 @@
 
   display: flex;
   flex-direction: column;
-
-  gap: 2px;
+  gap: 1px;
 
   overflow: hidden;
 
@@ -414,8 +376,9 @@
 
     color: #ffffff;
 
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
+    line-height: 1.25;
 
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -426,7 +389,8 @@
 
     color: #cbd5e1;
 
-    font-size: 11px;
+    font-size: 10px;
+    line-height: 1.25;
 
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -438,87 +402,54 @@
    ========================================================= */
 
 .sidebar.collapsed {
-  width: 72px;
-
-  padding:
-    16px
-    8px;
-
-  /* -------------------------
-     Toggle
-     ------------------------- */
+  width: 68px;
+  padding: 12px 7px 10px;
 
   .toggle-btn {
     align-self: center;
-
-    margin-bottom: 12px;
+    margin-bottom: 9px;
   }
-
-  /* -------------------------
-     Brand continua acessível
-     como Dashboard
-     ------------------------- */
 
   .brand {
     width: 100%;
-
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     padding: 0;
-
+    justify-content: center;
     background: transparent;
   }
 
   .brand-icon {
-    width: 46px;
-    height: 42px;
-
-    font-size: 11px;
-
-    border-radius: 11px;
+    width: 42px;
+    height: 38px;
+    font-size: 10px;
+    border-radius: 9px;
   }
 
   .brand-text {
     display: none;
   }
 
-  /* -------------------------
-     Navigation
-     ------------------------- */
-
   .sidebar-nav {
     width: 100%;
-
     align-items: center;
-
-    gap: 13px;
-
-    padding:
-      10px
-      0
-      14px;
-
-    /*
-     * Em vez de mostrar uma scrollbar minúscula,
-     * escondemo-la e utilizamos um fade no topo
-     * e fundo para transmitir que a área continua
-     * a ser scrollável.
-     */
+    gap: 10px;
+    padding: 8px 0 12px;
 
     scrollbar-width: none;
 
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      #000 12px,
-      #000 calc(100% - 12px),
+      #000 10px,
+      #000 calc(100% - 10px),
       transparent 100%
     );
 
     mask-image: linear-gradient(
       to bottom,
       transparent 0,
-      #000 12px,
-      #000 calc(100% - 12px),
+      #000 10px,
+      #000 calc(100% - 10px),
       transparent 100%
     );
   }
@@ -527,32 +458,20 @@
     display: none;
   }
 
-  /* -------------------------
-     Sections
-     ------------------------- */
-
   .nav-section {
     width: 100%;
-
     align-items: center;
+    gap: 5px;
+    padding-bottom: 9px;
 
-    gap: 7px;
-
-    padding-bottom: 12px;
-
-    /*
-     * Pequeno separador visual entre grupos
-     * quando já não existem os títulos.
-     */
     &::after {
       content: '';
 
-      width: 26px;
+      width: 23px;
       height: 1px;
+      margin-top: 4px;
 
-      margin-top: 5px;
-
-      background: rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.085);
     }
 
     &:last-child {
@@ -564,48 +483,36 @@
     }
   }
 
-  .section-title {
-    display: none;
-  }
-
+  .section-title,
   .system-notice-sidebar {
     display: none;
   }
 
-  /* -------------------------
-     Links
-     ------------------------- */
-
   .sidebar-nav a {
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
 
     flex-shrink: 0;
-
     justify-content: center;
 
     gap: 0;
-
     padding: 0;
-
-    border-radius: 12px;
+    border-radius: 10px;
 
     &:hover {
       transform: translateY(-1px);
     }
 
     &.active {
-      box-shadow:
-        inset 0 -3px 0 rgba(255, 255, 255, 0.5);
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.55);
     }
   }
 
   .icon {
     width: 100%;
     min-width: auto;
-
-    font-size: 20px;
-
+    font-size: 19px;
     text-align: center;
   }
 
@@ -613,66 +520,124 @@
     display: none;
   }
 
-  /* -------------------------
-     Profile
-     ------------------------- */
-
   .profile-card {
-    width: 48px;
-    height: 48px;
-
-    min-height: 48px;
+    width: 42px;
+    min-height: 42px;
+    height: 42px;
 
     align-self: center;
-
     justify-content: center;
 
+    gap: 0;
+    margin-top: 7px;
     padding: 0;
-
-    border-radius: 12px;
+    border-radius: 10px;
   }
 
   .avatar {
-    width: 34px;
-    height: 34px;
-
-    min-width: 34px;
-
-    border-radius: 9px;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 8px;
   }
 
   .profile-info {
     display: none;
   }
 }
-/* =========================================================
-   MOBILE DRAWER
-   On small screens the collapsed state means "closed" rather
-   than a permanently visible 72px rail.
-   ========================================================= */
-@media (max-width: 900px) {
-  :host {
-    position: relative;
-    z-index: 1000;
-  }
 
-  .sidebar {
-    width: min(86vw, 300px);
-    max-width: 300px;
+/* =========================================================
+   MOBILE / TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .sidebar,
+  .sidebar.collapsed {
+    width: min(82vw, 270px);
     height: 100dvh;
-    padding: 14px 12px;
+
+    padding: 12px 10px;
+
     transform: translateX(0);
-    transition:
-      transform 0.22s ease,
-      box-shadow 0.22s ease;
-    box-shadow: 10px 0 36px rgba(15, 23, 42, 0.24);
+    transition: transform 0.22s ease;
+    box-shadow: 12px 0 30px rgba(15, 23, 42, 0.22);
   }
 
   .sidebar.collapsed {
-    width: min(86vw, 300px);
-    max-width: 300px;
-    padding: 14px 12px;
     transform: translateX(-105%);
-    box-shadow: none;
+    .brand {
+      justify-content: flex-start;
+      gap: 9px;
+      padding: 4px 6px;
+    }
+
+    .brand-icon {
+      width: 58px;
+      height: 39px;
+      font-size: 13px;
+    }
+
+    .brand-text,
+    .section-title,
+    .label,
+    .profile-info {
+      display: initial;
+    }
+
+    .sidebar-nav {
+      align-items: stretch;
+      gap: 12px;
+      padding: 1px 3px 14px 0;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    .nav-section {
+      align-items: stretch;
+      gap: 3px;
+      padding-bottom: 0;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    .system-notice-sidebar {
+      display: block;
+    }
+
+    .sidebar-nav a {
+      width: 100%;
+      height: auto;
+      min-height: 36px;
+
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 8px 9px;
+    }
+
+    .icon {
+      width: 20px;
+      min-width: 20px;
+      font-size: 18px;
+    }
+
+    .profile-card {
+      width: 100%;
+      min-height: 52px;
+      height: auto;
+
+      align-self: stretch;
+      justify-content: flex-start;
+
+      gap: 9px;
+      padding: 7px 8px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+    }
   }
 }

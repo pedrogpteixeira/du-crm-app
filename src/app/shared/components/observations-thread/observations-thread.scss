@@ -238,3 +238,184 @@
     max-width: 62%;
   }
 }
+
+/* =========================================================
+   Compact contract-detail presentation
+   The observations component is style-encapsulated, so density must
+   be handled here instead of relying on global contract-detail rules.
+========================================================= */
+
+:host-context(.contract-detail-page) .observations-thread {
+  border-radius: 12px;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.04),
+    0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+:host-context(.contract-detail-page) .thread-header {
+  gap: 10px;
+  padding: 9px 12px 8px;
+}
+
+:host-context(.contract-detail-page) .thread-header h3 {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+:host-context(.contract-detail-page) .thread-header p {
+  margin-top: 2px;
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+
+:host-context(.contract-detail-page) .thread-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 0.66rem;
+}
+
+:host-context(.contract-detail-page) .thread-body {
+  min-height: 72px;
+  max-height: 220px;
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+:host-context(.contract-detail-page) .thread-entry {
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  width: min(94%, 760px);
+  padding: 7px 9px;
+  border-radius: 10px;
+}
+
+:host-context(.contract-detail-page) .entry-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 0.62rem;
+}
+
+:host-context(.contract-detail-page) .entry-meta {
+  gap: 3px 10px;
+  margin-bottom: 2px;
+}
+
+:host-context(.contract-detail-page) .entry-meta strong {
+  font-size: 0.72rem;
+}
+
+:host-context(.contract-detail-page) .entry-meta time {
+  font-size: 0.64rem;
+}
+
+:host-context(.contract-detail-page) .entry-content p {
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+:host-context(.contract-detail-page) .thread-empty-state {
+  gap: 2px;
+  padding: 14px 12px;
+}
+
+:host-context(.contract-detail-page) .thread-empty-state > span {
+  font-size: 1.05rem;
+}
+
+:host-context(.contract-detail-page) .thread-empty-state strong {
+  font-size: 0.74rem;
+}
+
+:host-context(.contract-detail-page) .thread-empty-state small {
+  font-size: 0.66rem;
+}
+
+:host-context(.contract-detail-page) .thread-composer {
+  padding: 8px 10px 9px;
+}
+
+:host-context(.contract-detail-page) .thread-composer textarea {
+  min-height: 44px;
+  max-height: 110px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+:host-context(.contract-detail-page) .composer-actions {
+  gap: 8px;
+  margin-top: 6px;
+}
+
+:host-context(.contract-detail-page) .composer-actions small {
+  font-size: 0.63rem;
+}
+
+:host-context(.contract-detail-page) .send-button {
+  min-height: 29px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+}
+
+/* Balanced comfort scale for contract details. */
+:host-context(.contract-detail-page) .thread-header {
+  padding: 10px 13px 9px;
+}
+
+:host-context(.contract-detail-page) .thread-header h3 {
+  font-size: 0.82rem;
+}
+
+:host-context(.contract-detail-page) .thread-header p {
+  font-size: 0.69rem;
+}
+
+:host-context(.contract-detail-page) .thread-body {
+  min-height: 78px;
+  gap: 7px;
+  padding: 9px 11px;
+}
+
+:host-context(.contract-detail-page) .thread-entry {
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  padding: 8px 10px;
+}
+
+:host-context(.contract-detail-page) .entry-avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.65rem;
+}
+
+:host-context(.contract-detail-page) .entry-meta strong {
+  font-size: 0.75rem;
+}
+
+:host-context(.contract-detail-page) .entry-meta time {
+  font-size: 0.66rem;
+}
+
+:host-context(.contract-detail-page) .entry-content p {
+  font-size: 0.79rem;
+  line-height: 1.4;
+}
+
+:host-context(.contract-detail-page) .thread-composer {
+  padding: 9px 11px 10px;
+}
+
+:host-context(.contract-detail-page) .thread-composer textarea {
+  min-height: 48px;
+  padding: 8px 10px;
+  font-size: 0.79rem;
+}
+
+:host-context(.contract-detail-page) .send-button {
+  min-height: 31px;
+  padding: 0 13px;
+  font-size: 0.72rem;
+}

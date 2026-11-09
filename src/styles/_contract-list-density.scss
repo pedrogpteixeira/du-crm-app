@@ -1,0 +1,338 @@
+@mixin styles {
+  /* ==========================================================
+     CONTRACT LISTS — BALANCED DENSITY
+     Keeps Kanban card typography intact while improving the
+     amount of useful information visible in each viewport.
+  ========================================================== */
+
+  .contracts-page {
+    gap: 10px;
+  }
+
+  /* Header: closer to the legacy CRM density without losing hierarchy. */
+  .page-header {
+    min-height: 42px;
+    align-items: center;
+    gap: 14px;
+
+    h1 {
+      margin: 0 0 2px;
+      font-size: 24px;
+      line-height: 1.12;
+      letter-spacing: -0.015em;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .view-toggle {
+    padding: 3px;
+    border-radius: 10px;
+
+    button {
+      min-height: 32px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      font-size: 12px;
+    }
+  }
+
+  .filters-toggle-button,
+  .create-btn {
+    min-height: 36px !important;
+    border-radius: 9px !important;
+    padding: 7px 12px !important;
+    font-size: 12.5px !important;
+  }
+
+  .contracts-total-summary {
+    min-height: 20px;
+    font-size: 12px;
+
+    > .material-symbols-rounded {
+      font-size: 16px;
+    }
+
+    strong {
+      font-size: 13px;
+    }
+  }
+
+  /* Filters use less vertical real estate while remaining comfortable. */
+  .filters-card {
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 14px;
+  }
+
+  .filter-field {
+    gap: 5px;
+
+    label {
+      font-size: 11.5px;
+    }
+
+    input,
+    select {
+      height: 38px;
+      border-radius: 9px;
+      padding: 0 11px;
+      font-size: 13px;
+    }
+  }
+
+  .clear-filters-button {
+    height: 38px;
+    border-radius: 9px;
+    padding: 0 13px;
+  }
+
+  .status-filter-options {
+    min-height: 38px;
+    max-height: 118px;
+    gap: 5px;
+    padding: 6px;
+    border-radius: 9px;
+  }
+
+  .status-filter-option {
+    gap: 5px !important;
+    padding: 5px 7px;
+    border-radius: 7px;
+  }
+
+  /* ==========================================================
+     TABLE
+     Reduce row chrome/padding, not the information hierarchy.
+  ========================================================== */
+  .card {
+    padding: 8px 10px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.055);
+  }
+
+  .table-header,
+  .contract-row {
+    gap: 10px;
+  }
+
+  .table-header {
+    min-height: 32px;
+    padding: 4px 10px 7px;
+    border-bottom: 1px solid #dbe5ed;
+    font-size: 11.5px;
+    letter-spacing: 0.015em;
+  }
+
+  .contract-row {
+    min-height: 42px;
+    padding: 6px 10px;
+    border-bottom: 1px solid #edf2f6;
+    border-radius: 0;
+
+    &:last-of-type {
+      border-bottom-color: transparent;
+    }
+
+    &:hover {
+      background: #f3f8fb;
+      transform: none;
+    }
+
+    span {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    strong {
+      font-size: 13.5px;
+      line-height: 1.2;
+    }
+  }
+
+  .status-badge {
+    padding: 4px 7px;
+    border-radius: 4px;
+    font-size: 11.5px !important;
+  }
+
+  .table-pagination {
+    gap: 10px;
+    padding: 10px 10px 2px;
+  }
+
+  .table-load-more {
+    padding: 7px 13px;
+    border-radius: 8px;
+  }
+
+  /* ==========================================================
+     KANBAN
+     Card typography is intentionally NOT reduced here.
+  ========================================================== */
+  .kanban-wrapper {
+    padding-bottom: 5px;
+  }
+
+  .kanban-board {
+    gap: 7px;
+  }
+
+  .kanban-column {
+    /*
+      A largura anterior (238px) era suficiente para a densidade, mas
+      apertava demasiado labels longas como "Data Agendamento" e
+      provocava truncamentos excessivos nos valores. 252px mantém o
+      mesmo número de informação visível sem miniaturizar o conteúdo.
+    */
+    width: 252px;
+    min-width: 252px;
+    border-radius: 9px;
+    background: #f1f6f9;
+  }
+
+  .kanban-column-header {
+    height: 35px;
+    gap: 7px;
+    padding: 0 10px;
+    border-radius: 9px 9px 4px 4px;
+    font-size: 12px;
+    box-shadow: 0 3px 7px rgba(15, 23, 42, 0.14);
+
+    small {
+      min-width: 21px;
+      height: 21px;
+      font-size: 10px;
+    }
+  }
+
+  .kanban-list {
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .kanban-card {
+    gap: 3px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.065);
+
+    /* Intentionally keep the established information sizes. */
+    .contract-id {
+      font-size: 10.5px;
+    }
+
+    .contract-client {
+      /*
+        O nome usa apenas a altura de que precisa. Nomes longos podem ocupar
+        uma segunda linha, mas nomes curtos deixam de reservar uma linha vazia
+        antes do NIF.
+      */
+      min-height: 0;
+      margin-bottom: 4px;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .kanban-meta-label {
+      font-size: 10.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .kanban-meta-value {
+      font-size: 12px;
+    }
+
+    .kanban-meta {
+      /*
+        106px acomoda "Data Agendamento:" sem a label invadir o valor.
+        O valor continua flexível e usa ellipsis quando realmente necessário.
+      */
+      grid-template-columns: 94px minmax(0, 1fr);
+      column-gap: 6px;
+      min-height: 16px;
+    }
+
+    /*
+      Datas com hora podem quebrar depois da data. A segunda linha mantém-se
+      exatamente alinhada com o início do valor, em vez de cortar a hora.
+    */
+    .kanban-meta--date .kanban-meta-value {
+      min-width: 0;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      overflow-wrap: normal;
+      word-break: normal;
+      line-height: 1.25;
+    }
+
+    /*
+      O Nome Registo C.E. pode ser bastante maior do que a coluna disponível.
+      Em vez de truncar com reticências, permite uma segunda linha mantendo
+      a continuação alinhada com o início do valor.
+    */
+    .kanban-meta--registration-name .kanban-meta-value {
+      min-width: 0;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      line-height: 1.25;
+    }
+  }
+
+  .empty-column {
+    padding: 7px;
+    font-size: 12px;
+  }
+
+  /* Keep list/board as tall as possible inside the app viewport. */
+  @media (min-width: 721px) {
+    .contracts-page {
+      height: calc(100dvh - 86px);
+    }
+  }
+
+  @media (max-width: 1100px) and (min-width: 721px) {
+    .page-header {
+      align-items: flex-start;
+    }
+
+    .header-actions {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 620px) {
+    .contracts-page {
+      gap: 12px;
+    }
+
+    .page-header h1 {
+      font-size: 22px;
+    }
+
+    .card {
+      padding: 7px;
+      border-radius: 11px;
+    }
+
+    .kanban-column {
+      width: 252px;
+      min-width: 252px;
+    }
+  }
+}

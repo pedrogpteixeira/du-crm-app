@@ -489,3 +489,837 @@ body.dark-theme .cancellation-required-marker,
 body.dark-theme .cancellation-field-error {
   color: #f87171;
 }
+
+/* =========================================================
+   CONTRACT DETAILS · DENSE PRODUCT LAYOUT
+   Compact without sacrificing hierarchy or proportions.
+========================================================= */
+body .contract-detail-page {
+  width: min(100%, 1320px) !important;
+  margin-inline: auto !important;
+  gap: 12px !important;
+}
+
+body .contract-detail-page > .breadcrumb {
+  min-height: 20px !important;
+  gap: 6px !important;
+  margin: 0 !important;
+}
+
+body .contract-detail-page > .breadcrumb a,
+body .contract-detail-page > .breadcrumb span,
+body .contract-detail-page > .breadcrumb strong {
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+}
+
+/* Keep the header as a product feature, but make it efficient. */
+body .contract-detail-page > .page-header {
+  top: 76px !important;
+  min-height: 58px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 9px 12px 9px 14px !important;
+  border-radius: 13px !important;
+  box-shadow:
+    0 5px 16px rgba(15, 23, 42, 0.055),
+    0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+body .contract-detail-page > .page-header h1 {
+  margin: 0 0 1px !important;
+  font-size: 21px !important;
+  line-height: 1.12 !important;
+  letter-spacing: -0.025em !important;
+}
+
+body .contract-detail-page > .page-header p {
+  margin: 0 !important;
+  font-size: 11.5px !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page > .page-header .header-actions {
+  gap: 5px !important;
+  padding: 3px !important;
+}
+
+body .contract-detail-page > .page-header .edit-action-button,
+body .contract-detail-page > .page-header .cancel-action-button,
+body .contract-detail-page > .page-header .save-action-button {
+  min-height: 32px !important;
+  padding: 6px 11px !important;
+  font-size: 11px !important;
+}
+
+/* Main content: a compact but deliberate 80/20 composition. */
+body .contract-detail-page > .detail-grid {
+  grid-template-columns: minmax(0, 1fr) 250px !important;
+  gap: 12px !important;
+}
+
+body .contract-detail-page .main-column,
+body .contract-detail-page .side-column {
+  gap: 10px !important;
+}
+
+body .contract-detail-page .side-column {
+  top: 76px !important;
+}
+
+/* Cards are flatter, not tiny. */
+body .contract-detail-page .card {
+  padding: 12px 15px 13px !important;
+  border-radius: 13px !important;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.045),
+    0 1px 2px rgba(15, 23, 42, 0.025) !important;
+}
+
+body .contract-detail-page .section-title {
+  margin-bottom: 9px !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page .section-toggle {
+  min-height: 20px !important;
+  gap: 10px !important;
+  font-size: 12.5px !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page .section-toggle .chevron,
+body .contract-detail-page .chevron {
+  font-size: 13px !important;
+}
+
+body .contract-detail-page .section-content {
+  margin-top: 9px !important;
+}
+
+/*
+ * General information grids use content-sized columns.  This is the key
+ * difference from the previous attempt: columns don't stretch into huge
+ * empty areas, and the page gains density by fitting one extra useful field
+ * when there is real room.
+ */
+body .contract-detail-page .info-grid,
+body .contract-detail-page .client-info-grid,
+body .contract-detail-page .product-info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)) !important;
+  column-gap: 22px !important;
+  row-gap: 9px !important;
+  align-items: start !important;
+}
+
+body .contract-detail-page .info-grid > .full-width,
+body .contract-detail-page .client-info-grid > .full-width,
+body .contract-detail-page .product-info-grid > .full-width,
+body .contract-detail-page .info-grid > .iban-field,
+body .contract-detail-page .client-info-grid > .iban-field {
+  grid-column: 1 / -1 !important;
+}
+
+body .contract-detail-page label {
+  gap: 2px !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+  color: #64748b !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page strong {
+  min-height: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.28 !important;
+}
+
+/* Editing controls remain comfortable, but no longer expand sections. */
+body .contract-detail-page input,
+body .contract-detail-page select {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+}
+
+body .contract-detail-page input {
+  padding-inline: 9px !important;
+}
+
+body .contract-detail-page select {
+  padding-left: 9px !important;
+  padding-right: 34px !important;
+  background-position:
+    calc(100% - 15px) 50%,
+    calc(100% - 10px) 50% !important;
+}
+
+body .contract-detail-page textarea {
+  min-height: 66px !important;
+  padding: 7px 9px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+body .contract-detail-page input:focus,
+body .contract-detail-page select:focus,
+body .contract-detail-page textarea:focus {
+  box-shadow: 0 0 0 2px rgba(0, 141, 177, 0.11) !important;
+}
+
+/* Status section: dates are short, so use the available width efficiently. */
+body .contract-detail-page .status-sale-layout {
+  gap: 8px !important;
+}
+
+body .contract-detail-page .status-sale-state {
+  width: min(100%, 230px) !important;
+}
+
+body .contract-detail-page .status-sale-row {
+  gap: 8px 22px !important;
+}
+
+body .contract-detail-page .status-sale-row--three {
+  grid-template-columns: repeat(3, minmax(150px, 1fr)) !important;
+}
+
+body .contract-detail-page .status-sale-row--two {
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) !important;
+  max-width: 68% !important;
+}
+
+body .contract-detail-page .status-badge {
+  min-height: 19px !important;
+  padding: 3px 7px !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+/* Product-specific groups keep visual grouping, but no oversized blocks. */
+body .contract-detail-page .product-layout {
+  gap: 9px !important;
+}
+
+body .contract-detail-page .product-block {
+  gap: 7px !important;
+  padding-top: 7px !important;
+}
+
+body .contract-detail-page .product-block-title {
+  font-size: 10.5px !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page .product-row {
+  gap: 8px 22px !important;
+}
+
+body .contract-detail-page .product-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+body .contract-detail-page .product-row--single {
+  grid-template-columns: minmax(0, 1fr) !important;
+  max-width: 50% !important;
+}
+
+/* Sidebar should read as a compact summary, not another full form. */
+body .contract-detail-page .side-column .card {
+  padding: 11px 12px !important;
+  border-radius: 12px !important;
+}
+
+body .contract-detail-page .side-column .section-title {
+  margin-bottom: 7px !important;
+  font-size: 12px !important;
+}
+
+body .contract-detail-page .side-list {
+  gap: 7px !important;
+}
+
+body .contract-detail-page .stack-list {
+  gap: 4px !important;
+}
+
+body .contract-detail-page .side-column label {
+  font-size: 10px !important;
+}
+
+body .contract-detail-page .side-column strong,
+body .contract-detail-page .linked-item {
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+}
+
+body .contract-detail-page .observations-layout,
+body .contract-detail-page .attachment-upload,
+body .contract-detail-page .attachments-list,
+body .contract-detail-page .selected-files {
+  gap: 8px !important;
+}
+
+body .contract-detail-page .observations-history {
+  min-height: 62px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
+  line-height: 1.4 !important;
+}
+
+body .contract-detail-page .field-label {
+  margin-bottom: 4px !important;
+  font-size: 10.5px !important;
+}
+
+body .contract-detail-page .field-help,
+body .contract-detail-page .empty-state {
+  font-size: 10.5px !important;
+}
+
+body .contract-detail-page .attachment-item,
+body .contract-detail-page .selected-file-item {
+  border-radius: 9px !important;
+}
+
+body .contract-detail-page .attachment-download,
+body .contract-detail-page .selected-file-item {
+  padding: 8px 10px !important;
+}
+
+body .contract-detail-page .file-icon,
+body .contract-detail-page .upload-icon {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 9px !important;
+  font-size: 15px !important;
+}
+
+body .contract-detail-page .attachment-info strong,
+body .contract-detail-page .upload-copy strong {
+  font-size: 11.5px !important;
+}
+
+body .contract-detail-page .attachment-info span,
+body .contract-detail-page .upload-copy small {
+  font-size: 10px !important;
+}
+
+body .contract-detail-page .upload-dropzone {
+  gap: 10px !important;
+  padding: 10px !important;
+  border-radius: 9px !important;
+}
+
+/* Keep layout composed on medium desktops instead of forcing cramped columns. */
+@media (max-width: 1180px) {
+  body .contract-detail-page {
+    width: 100% !important;
+  }
+
+  body .contract-detail-page > .detail-grid {
+    grid-template-columns: minmax(0, 1fr) 230px !important;
+  }
+
+  body .contract-detail-page .info-grid,
+  body .contract-detail-page .client-info-grid,
+  body .contract-detail-page .product-info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+    column-gap: 18px !important;
+  }
+}
+
+@media (max-width: 980px) {
+  body .contract-detail-page > .detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body .contract-detail-page .side-column {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body .contract-detail-page .status-sale-row--two,
+  body .contract-detail-page .product-row--single {
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body .contract-detail-page {
+    gap: 9px !important;
+  }
+
+  body .contract-detail-page > .page-header {
+    position: static !important;
+    min-height: 54px !important;
+    padding: 9px 10px !important;
+  }
+
+  body .contract-detail-page > .page-header h1 {
+    font-size: 18px !important;
+  }
+
+  body .contract-detail-page > .page-header p {
+    font-size: 10.5px !important;
+  }
+
+  body .contract-detail-page .card,
+  body .contract-detail-page .side-column .card {
+    padding: 11px 12px !important;
+  }
+
+  body .contract-detail-page .info-grid,
+  body .contract-detail-page .client-info-grid,
+  body .contract-detail-page .product-info-grid,
+  body .contract-detail-page .status-sale-row--three,
+  body .contract-detail-page .status-sale-row--two,
+  body .contract-detail-page .product-row--two,
+  body .contract-detail-page .side-column {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================================
+   CONTRACT DETAILS — DENSITY CONSISTENCY PASS
+   Keeps the compact product layout while aligning section rhythm,
+   preserving long values such as email, and using width according
+   to the semantic size of each field.
+========================================================= */
+
+/* Long client data needs room without becoming a full-width row. */
+body .contract-detail-page .info-grid > .email-field,
+body .contract-detail-page .client-info-grid > .email-field {
+  grid-column: span 2 !important;
+  min-width: 0 !important;
+}
+
+body .contract-detail-page .email-field strong,
+body .contract-detail-page .email-field .linked-item {
+  display: block !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+body .contract-detail-page .email-field input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* The two addresses form one balanced row instead of consuming two rows. */
+body .contract-detail-page .info-grid > .address-field,
+body .contract-detail-page .client-info-grid > .address-field {
+  grid-column: span 2 !important;
+  min-width: 0 !important;
+}
+
+body .contract-detail-page .address-field textarea {
+  min-height: 48px !important;
+  height: 48px !important;
+  resize: vertical !important;
+}
+
+/* Use the same four-column baseline for short status/date data. */
+body .contract-detail-page .status-sale-row--three,
+body .contract-detail-page .status-sale-row--two {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  max-width: none !important;
+  column-gap: 22px !important;
+  row-gap: 9px !important;
+}
+
+/* Keep the state itself compact and aligned with the first grid column. */
+body .contract-detail-page .status-sale-state {
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* Section spacing should feel identical from card to card. */
+body .contract-detail-page .main-column > .card,
+body .contract-detail-page .main-column > app-entity-email-panel,
+body .contract-detail-page .main-column > app-contract-activity-panel {
+  margin: 0 !important;
+}
+
+body .contract-detail-page .section-content > .info-grid,
+body .contract-detail-page .section-content > .client-info-grid,
+body .contract-detail-page .section-content > .product-info-grid {
+  margin: 0 !important;
+}
+
+@media (max-width: 1180px) {
+  body .contract-detail-page .status-sale-row--three,
+  body .contract-detail-page .status-sale-row--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body .contract-detail-page .info-grid > .email-field,
+  body .contract-detail-page .client-info-grid > .email-field,
+  body .contract-detail-page .info-grid > .address-field,
+  body .contract-detail-page .client-info-grid > .address-field {
+    grid-column: 1 / -1 !important;
+  }
+
+  body .contract-detail-page .email-field strong,
+  body .contract-detail-page .email-field .linked-item {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+/* =========================================================
+   CONTRACT DETAILS — FORM FINISHING PASS
+   Final spacing/alignment polish for edit mode. Keeps the
+   dense layout while giving controls a cleaner visual rhythm.
+========================================================= */
+body .contract-detail-page .section-content {
+  margin-top: 10px !important;
+}
+
+body .contract-detail-page .info-grid,
+body .contract-detail-page .client-info-grid,
+body .contract-detail-page .product-info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  column-gap: 20px !important;
+  row-gap: 10px !important;
+}
+
+body .contract-detail-page .info-grid > label,
+body .contract-detail-page .client-info-grid > label,
+body .contract-detail-page .product-info-grid > label {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+body .contract-detail-page label {
+  color: #5f7085 !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.005em !important;
+}
+
+body .contract-detail-page input,
+body .contract-detail-page select {
+  width: 100% !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  border-color: #cbd8e6 !important;
+  border-radius: 8px !important;
+  background-color: #fff !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease !important;
+}
+
+body .contract-detail-page input {
+  padding: 0 10px !important;
+}
+
+/* One real chevron instead of the two-gradient arrow. It remains perfectly
+   centred regardless of compact control height. */
+body .contract-detail-page select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  padding: 0 34px 0 10px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%2364758b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 12px 12px !important;
+}
+
+body .contract-detail-page input:hover:not(:disabled),
+body .contract-detail-page select:hover:not(:disabled),
+body .contract-detail-page textarea:hover:not(:disabled) {
+  border-color: #aebfd0 !important;
+}
+
+body .contract-detail-page input:focus,
+body .contract-detail-page select:focus,
+body .contract-detail-page textarea:focus {
+  border-color: #4aa7bd !important;
+  box-shadow: 0 0 0 2px rgba(0, 141, 177, 0.10) !important;
+  outline: none !important;
+}
+
+body .contract-detail-page input:disabled,
+body .contract-detail-page select:disabled,
+body .contract-detail-page textarea:disabled {
+  background-color: #f7f9fb !important;
+}
+
+/* Slightly more breathing room around form-heavy cards without making the
+   sections tall again. */
+body .contract-detail-page .card {
+  padding: 12px 15px 14px !important;
+}
+
+body .contract-detail-page .section-toggle {
+  margin-bottom: 0 !important;
+}
+
+/* Short rows should visually line up with the normal form grid. */
+body .contract-detail-page .status-sale-row,
+body .contract-detail-page .product-row {
+  column-gap: 20px !important;
+  row-gap: 10px !important;
+}
+
+@media (max-width: 1180px) {
+  body .contract-detail-page .info-grid,
+  body .contract-detail-page .client-info-grid,
+  body .contract-detail-page .product-info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)) !important;
+    column-gap: 16px !important;
+  }
+}
+
+
+/* =========================================================
+   CONTRACT DETAILS — BALANCED COMFORT SCALE
+   Slightly larger than the dense pass, while preserving the
+   compact section footprint and the clean product composition.
+========================================================= */
+body .contract-detail-page {
+  width: min(100%, 1440px) !important;
+  gap: 14px !important;
+}
+
+/* Supplier identity should read as a page title, not tiny navigation. */
+body .contract-detail-page > .breadcrumb {
+  min-height: 24px !important;
+  gap: 7px !important;
+}
+
+body .contract-detail-page > .breadcrumb a {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page > .breadcrumb strong {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page > .breadcrumb span {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+/* Keep the edit header prominent, but still materially smaller than the old large version. */
+body .contract-detail-page > .page-header {
+  min-height: 64px !important;
+  gap: 16px !important;
+  padding: 10px 14px 10px 16px !important;
+  border-radius: 14px !important;
+}
+
+body .contract-detail-page > .page-header h1 {
+  font-size: 23px !important;
+  line-height: 1.12 !important;
+}
+
+body .contract-detail-page > .page-header p {
+  font-size: 12.5px !important;
+  line-height: 1.3 !important;
+}
+
+body .contract-detail-page > .page-header .edit-action-button,
+body .contract-detail-page > .page-header .cancel-action-button,
+body .contract-detail-page > .page-header .save-action-button {
+  min-height: 34px !important;
+  padding: 7px 13px !important;
+  font-size: 11.5px !important;
+}
+
+/* Use a little more of the desktop width, including a more readable summary rail. */
+body .contract-detail-page > .detail-grid {
+  grid-template-columns: minmax(0, 1fr) 275px !important;
+  gap: 14px !important;
+}
+
+body .contract-detail-page .main-column,
+body .contract-detail-page .side-column {
+  gap: 11px !important;
+}
+
+/* Increase legibility without reintroducing excessive vertical padding. */
+body .contract-detail-page .card {
+  padding: 13px 16px 15px !important;
+  border-radius: 13px !important;
+}
+
+body .contract-detail-page .section-title,
+body .contract-detail-page .section-toggle {
+  font-size: 13.5px !important;
+  line-height: 1.25 !important;
+}
+
+body .contract-detail-page .section-toggle {
+  min-height: 22px !important;
+}
+
+body .contract-detail-page .section-content {
+  margin-top: 10px !important;
+}
+
+body .contract-detail-page .info-grid,
+body .contract-detail-page .client-info-grid,
+body .contract-detail-page .product-info-grid {
+  grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)) !important;
+  column-gap: 22px !important;
+  row-gap: 11px !important;
+}
+
+body .contract-detail-page label {
+  font-size: 11.25px !important;
+  line-height: 1.25 !important;
+  gap: 4px !important;
+}
+
+body .contract-detail-page strong {
+  font-size: 12.75px !important;
+  line-height: 1.32 !important;
+}
+
+body .contract-detail-page input,
+body .contract-detail-page select {
+  height: 36px !important;
+  min-height: 36px !important;
+  font-size: 12px !important;
+}
+
+body .contract-detail-page input {
+  padding-inline: 11px !important;
+}
+
+body .contract-detail-page select {
+  padding-left: 11px !important;
+  padding-right: 36px !important;
+  background-position: right 11px center !important;
+}
+
+body .contract-detail-page textarea {
+  min-height: 70px !important;
+  padding: 8px 10px !important;
+  font-size: 12px !important;
+}
+
+body .contract-detail-page .status-sale-row,
+body .contract-detail-page .product-row {
+  column-gap: 22px !important;
+  row-gap: 11px !important;
+}
+
+body .contract-detail-page .status-badge {
+  min-height: 21px !important;
+  padding: 3px 8px !important;
+  font-size: 10.5px !important;
+}
+
+body .contract-detail-page .side-column .card {
+  padding: 12px 13px !important;
+}
+
+body .contract-detail-page .side-column .section-title {
+  font-size: 13px !important;
+}
+
+body .contract-detail-page .side-column label {
+  font-size: 10.75px !important;
+}
+
+body .contract-detail-page .side-column strong,
+body .contract-detail-page .linked-item {
+  font-size: 11.75px !important;
+  line-height: 1.34 !important;
+}
+
+@media (max-width: 1180px) {
+  body .contract-detail-page > .detail-grid {
+    grid-template-columns: minmax(0, 1fr) 250px !important;
+  }
+
+  body .contract-detail-page .info-grid,
+  body .contract-detail-page .client-info-grid,
+  body .contract-detail-page .product-info-grid {
+    grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)) !important;
+  }
+}
+
+@media (max-width: 980px) {
+  body .contract-detail-page > .detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  body .contract-detail-page > .breadcrumb a,
+  body .contract-detail-page > .breadcrumb strong,
+  body .contract-detail-page > .breadcrumb span {
+    font-size: 12.5px !important;
+  }
+
+  body .contract-detail-page > .page-header h1 {
+    font-size: 20px !important;
+  }
+}
+
+/* Contract details — file upload action aligned with CRM accent */
+body .contract-detail-page app-file-dropzone .file-select-btn {
+  min-width: 148px !important;
+  padding: 9px 16px !important;
+  border: 1px solid #008db1 !important;
+  border-radius: 9px !important;
+  background: #008db1 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease !important;
+}
+
+body .contract-detail-page app-file-dropzone .file-select-btn:hover:not(.disabled) {
+  border-color: #007894 !important;
+  background: #007894 !important;
+  box-shadow: 0 3px 8px rgba(0, 141, 177, 0.18) !important;
+}
+
+body .contract-detail-page app-file-dropzone .file-select-btn:active:not(.disabled) {
+  transform: translateY(1px) !important;
+}
+
+body .contract-detail-page app-file-dropzone .file-select-btn.disabled {
+  border-color: #94a3b8 !important;
+  background: #94a3b8 !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}

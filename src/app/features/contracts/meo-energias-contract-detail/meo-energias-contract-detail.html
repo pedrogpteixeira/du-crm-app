@@ -12,7 +12,7 @@
 
   <ng-container *ngIf="contract">
     <div class="breadcrumb">
-      <a routerLink="/home/contracts/meo-energias"> Contratos Meo Energias </a>
+      <a routerLink="/home/contracts/meo-energias"> Meo Energias </a>
 
       <span>›</span>
 
@@ -649,7 +649,7 @@
                 </ng-template>
               </label>
 
-              <label>
+              <label class="email-field">
                 Email
 
                 <input
@@ -711,7 +711,7 @@
 
           <div class="section-content" *ngIf="!collapsedSections.billing">
             <div class="info-grid">
-              <label class="full-width">
+              <label class="full-width address-field">
                 Morada Instalação
 
                 <textarea
@@ -727,7 +727,7 @@
                 </ng-template>
               </label>
 
-              <label class="full-width">
+              <label class="full-width address-field">
                 Morada Faturação
 
                 <textarea
@@ -1135,13 +1135,6 @@
             (submitObservation)="submitInternalObservation($event)"
           />
         </article>
-
-        <app-entity-email-panel
-          entityType="contract"
-          [entityId]="contractId"
-          provider="meo-energias"
-          [recipientEmail]="contract.email || null"
-        ></app-entity-email-panel>
 
         <app-contract-activity-panel
           [fluxo]="contract.fluxo ?? []"

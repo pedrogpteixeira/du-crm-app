@@ -8,7 +8,7 @@
 
   <ng-container *ngIf="contract">
     <div class="breadcrumb">
-      <a routerLink="/home/contracts/portulogos-b2b">Contratos Portulogos B2B</a>
+      <a routerLink="/home/contracts/portulogos-b2b">Portulogos B2B</a>
       <span>›</span>
       <strong>{{ contract.nomeClienteEmpresa }}</strong>
     </div>
@@ -653,7 +653,7 @@
                 </ng-template>
               </label>
 
-              <label class="client-secondary-field client-secondary-email">
+              <label class="client-secondary-field client-secondary-email email-field">
                 Email
 
                 <input
@@ -755,7 +755,7 @@
 
           <div class="section-content" *ngIf="!collapsedSections.billing">
             <div class="info-grid">
-              <label class="full-width">
+              <label class="full-width address-field">
                 Morada Instalação
 
                 <textarea
@@ -771,7 +771,7 @@
                 </ng-template>
               </label>
 
-              <label class="full-width">
+              <label class="full-width address-field">
                 Morada Faturação
 
                 <textarea
