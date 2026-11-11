@@ -94,7 +94,7 @@ export class Login {
 
         const target = this.auth.roleIncludes(['Super Admin', 'DU'])
           ? ['/home/dashboard']
-          : ['/home/tickets'];
+          : ['/home/my-dashboard'];
 
         void this.router.navigate(target);
       },

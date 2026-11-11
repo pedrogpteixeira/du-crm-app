@@ -2,9 +2,11 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   OnInit,
+  Input,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -66,7 +68,9 @@ interface TicketCompanyOption {
   styleUrl: './tickets.scss',
 })
 export class Tickets implements OnInit {
+  @Input() embedded = false;
   private readonly auth = inject(Auth);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly socketService = inject(SocketService);
   private readonly ticketService = inject(TicketService);
@@ -246,6 +250,7 @@ export class Tickets implements OnInit {
       .pipe(
         finalize(() => {
           this.isLoading = false;
+          this.changeDetectorRef.markForCheck();
         }),
         takeUntilDestroyed(this.destroyRef),
       )

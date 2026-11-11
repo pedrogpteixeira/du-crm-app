@@ -9,6 +9,11 @@ export const environment = {
   GALP_SOLAR_COMPANY_ID: 'cmp_qZUMPp-x7f',
   PORTULOGOS_COMPANY_ID: 'cmp_2AH_yvQ8Wn',
   PORTULOGOS_B2B_COMPANY_ID: 'cmp_8rkornAQ4H',
+  EZU_B2B_COMPANY_ID: 'cmp_cYTHohh7uo',
+  NOSSA_ENERGIA_B2B_COMPANY_ID: 'cmp_s4mjPGw-gJ',
+  AUDAX_B2B_COMPANY_ID: 'cmp_r26ycsfqpu',
+  PLENITUDE_B2B_COMPANY_ID: 'cmp_KXGnjPcbx-',
+  ENDESA_B2B_COMPANY_ID: 'cmp_4xFQ0RiwtJ',
   WALLBOX_COMPANY_ID: 'cmp_StOnumtpT5',
   YES_ENERGY_COMPANY_ID: 'cmp_1GdwakqCnA',
   EQUIPA_CRM_ID: 'tea_cvktr8yba0',
@@ -22,7 +27,7 @@ export const environment = {
     },
     {
       id: 'cmp_4xFQ0RiwtJ',
-      name: 'Endesa',
+      name: 'Endesa B2B',
       active: true,
     },
     {
@@ -47,7 +52,7 @@ export const environment = {
     },
     {
       id: 'cmp_r26ycsfqpu',
-      name: 'Audax',
+      name: 'Audax B2B',
       active: true,
     },
     {
@@ -62,12 +67,12 @@ export const environment = {
     },
     {
       id: 'cmp_s4mjPGw-gJ',
-      name: 'Nossa Energia',
+      name: 'Nossa Energia B2B',
       active: true,
     },
     {
       id: 'cmp_KXGnjPcbx-',
-      name: 'Plenitude',
+      name: 'Plenitude B2B',
       active: true,
     },
     {
@@ -82,7 +87,7 @@ export const environment = {
     },
     {
       id: 'cmp_cYTHohh7uo',
-      name: 'Ezu',
+      name: 'Ezu B2B',
       active: true,
     },
     {

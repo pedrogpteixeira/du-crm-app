@@ -66,6 +66,16 @@ export interface PortulogosContractSocketEvent extends ContractSocketBaseEvent {
 
 export interface PortulogosB2BContractSocketEvent extends ContractSocketBaseEvent {}
 
+export interface EzuB2BContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface NossaEnergiaB2BContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface AudaxB2BContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface PlenitudeB2BContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface EndesaB2BContractSocketEvent extends ContractSocketBaseEvent {}
+
 export interface WallboxContractSocketEvent extends ContractSocketBaseEvent {}
 
 export interface YesEnergyContractSocketEvent extends ContractSocketBaseEvent {}
@@ -213,6 +223,71 @@ export class SocketService {
   listenPortulogosB2BContractUpdated(): Observable<PortulogosB2BContractSocketEvent> {
     return this.createEventObservable<PortulogosB2BContractSocketEvent>(
       'portulogos-b2b-contract:updated',
+    );
+  }
+
+
+  listenEzuB2BContractCreated(): Observable<EzuB2BContractSocketEvent> {
+    return this.createEventObservable<EzuB2BContractSocketEvent>(
+      'ezu-b2b-contract:created',
+    );
+  }
+
+  listenEzuB2BContractUpdated(): Observable<EzuB2BContractSocketEvent> {
+    return this.createEventObservable<EzuB2BContractSocketEvent>(
+      'ezu-b2b-contract:updated',
+    );
+  }
+
+
+  listenNossaEnergiaB2BContractCreated(): Observable<NossaEnergiaB2BContractSocketEvent> {
+    return this.createEventObservable<NossaEnergiaB2BContractSocketEvent>(
+      'nossa-energia-b2b-contract:created',
+    );
+  }
+
+  listenNossaEnergiaB2BContractUpdated(): Observable<NossaEnergiaB2BContractSocketEvent> {
+    return this.createEventObservable<NossaEnergiaB2BContractSocketEvent>(
+      'nossa-energia-b2b-contract:updated',
+    );
+  }
+
+
+  listenAudaxB2BContractCreated(): Observable<AudaxB2BContractSocketEvent> {
+    return this.createEventObservable<AudaxB2BContractSocketEvent>(
+      'audax-b2b-contract:created',
+    );
+  }
+
+  listenAudaxB2BContractUpdated(): Observable<AudaxB2BContractSocketEvent> {
+    return this.createEventObservable<AudaxB2BContractSocketEvent>(
+      'audax-b2b-contract:updated',
+    );
+  }
+
+
+  listenPlenitudeB2BContractCreated(): Observable<PlenitudeB2BContractSocketEvent> {
+    return this.createEventObservable<PlenitudeB2BContractSocketEvent>(
+      'plenitude-b2b-contract:created',
+    );
+  }
+
+  listenPlenitudeB2BContractUpdated(): Observable<PlenitudeB2BContractSocketEvent> {
+    return this.createEventObservable<PlenitudeB2BContractSocketEvent>(
+      'plenitude-b2b-contract:updated',
+    );
+  }
+
+
+  listenEndesaB2BContractCreated(): Observable<EndesaB2BContractSocketEvent> {
+    return this.createEventObservable<EndesaB2BContractSocketEvent>(
+      'endesa-b2b-contract:created',
+    );
+  }
+
+  listenEndesaB2BContractUpdated(): Observable<EndesaB2BContractSocketEvent> {
+    return this.createEventObservable<EndesaB2BContractSocketEvent>(
+      'endesa-b2b-contract:updated',
     );
   }
 

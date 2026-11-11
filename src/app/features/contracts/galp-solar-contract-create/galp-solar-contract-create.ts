@@ -1,3 +1,4 @@
+import { applyContractDuplicateDraft } from '../../../core/utils/contract-duplicate';
 import { ToastService } from '../../../core/services/toast';
 
 import {
@@ -254,6 +255,31 @@ export class GalpSolarContractCreate implements OnInit {
 
   ngOnInit(): void {
     this.loadAssignmentData();
+  }
+
+  private applyDuplicateContractDraft(): void {
+    const duplicate = applyContractDuplicateDraft('galp-solar', this.contractForm);
+
+    if (!duplicate) {
+      return;
+    }
+
+    this.nif = duplicate.nif;
+    this.clientName = duplicate.clientName;
+    this.client = duplicate.client;
+
+    if (duplicate.assignedUserId) {
+      this.assignedUserId = duplicate.assignedUserId;
+    }
+
+    if (duplicate.selectedTeamIds.length) {
+      this.selectedTeamIds = duplicate.selectedTeamIds;
+    }
+
+    if ('selectedRegistrationTeamId' in this && duplicate.selectedRegistrationTeamId) {
+      (this as unknown as { selectedRegistrationTeamId: string }).selectedRegistrationTeamId =
+        duplicate.selectedRegistrationTeamId;
+    }
   }
 
   canManageQualityControl(): boolean {

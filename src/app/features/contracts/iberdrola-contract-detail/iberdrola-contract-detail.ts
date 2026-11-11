@@ -1,3 +1,5 @@
+import { getContractCreateRouteByProvider } from '../../../core/config/contract-detail-route';
+import { storeContractDuplicateDraft } from '../../../core/utils/contract-duplicate';
 import { ToastService } from '../../../core/services/toast';
 
 import {
@@ -831,6 +833,19 @@ export class IberdrolaContractDetail implements OnInit {
           );
         },
       });
+  }
+
+  duplicateContract(): void {
+    if (!this.contract) {
+      return;
+    }
+
+    storeContractDuplicateDraft('iberdrola', this.contract);
+    const route = getContractCreateRouteByProvider('iberdrola');
+
+    if (route) {
+      void this.router.navigate(route);
+    }
   }
 
   startEditing(): void {

@@ -1,0 +1,1 @@
+export { NOSSA_ENERGIA_B2B_COMPANY_ID, NOSSA_ENERGIA_B2B_PROVIDER, NOSSA_ENERGIA_B2B_CONTRACT_PREFIX, canAccessB2BContracts } from './portulogos-b2b-access';

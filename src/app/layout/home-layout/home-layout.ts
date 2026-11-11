@@ -19,6 +19,7 @@ import { PreferencesService } from '../../core/services/preferences';
 import { Sidebar } from '../../shared/components/sidebar/sidebar';
 import { SystemNoticeComponent } from '../../shared/components/system-notice/system-notice';
 import { NotificationDropdown } from '../../shared/notification-dropdown/notification-dropdown';
+import { GlobalContractCreate } from '../../shared/components/global-contract-create/global-contract-create';
 
 @Component({
   selector: 'app-home-layout',
@@ -27,6 +28,7 @@ import { NotificationDropdown } from '../../shared/notification-dropdown/notific
     RouterOutlet,
     Sidebar,
     NotificationDropdown,
+    GlobalContractCreate,
     SystemNoticeComponent,
   ],
   templateUrl: './home-layout.html',

@@ -7,6 +7,12 @@ export type NotificationType =
 export type ContractNotificationResource =
   | 'contracts/repsol'
   | 'contracts/portulogos'
+  | 'contracts/portulogos-b2b'
+  | 'contracts/ezu-b2b'
+  | 'contracts/nossa-energia-b2b'
+  | 'contracts/audax-b2b'
+  | 'contracts/plenitude-b2b'
+  | 'contracts/endesa-b2b'
   | 'contracts/wallbox'
   | 'contracts/yes-energy'
   | 'contracts/galp-power-gas'

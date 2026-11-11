@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { canAccessPortulogosB2B, isPortulogosB2BCompany } from '../config/portulogos-b2b-access';
+import { canAccessB2BContracts, isRestrictedB2BCompany } from '../config/portulogos-b2b-access';
 import { Auth } from './auth';
 import { ContractCancellationReason } from '../constants/contract-cancellation-reasons';
 
@@ -520,7 +520,7 @@ export class TicketService {
   }
 
   private canExposeTicketCompany(companyId: string): boolean {
-    return !isPortulogosB2BCompany(companyId) || canAccessPortulogosB2B(this.auth.getCurrentUser());
+    return !isRestrictedB2BCompany(companyId) || canAccessB2BContracts(this.auth.getCurrentUser());
   }
 
   private unwrapTicketList(response: TicketFollowerListResponse): TicketApiModel[] {

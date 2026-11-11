@@ -34,9 +34,18 @@
         </p>
       </div>
 
-      <div class="header-actions" *ngIf="canEditContract">
+      <div class="header-actions">
         <button
           *ngIf="!isEditing"
+          type="button"
+          class="secondary-button duplicate-action-button"
+          (click)="duplicateContract()"
+        >
+          Duplicar
+        </button>
+
+        <button
+          *ngIf="canEditContract && !isEditing"
           type="button"
           class="primary-button edit-action-button"
           (click)="startEditing()"
@@ -44,7 +53,7 @@
           Editar
         </button>
 
-        <ng-container *ngIf="isEditing">
+        <ng-container *ngIf="canEditContract && isEditing">
           <span class="editing-label">A editar contrato</span>
           <button
             type="button"

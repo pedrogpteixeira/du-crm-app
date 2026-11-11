@@ -47,6 +47,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/home/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
+        path: 'my-dashboard',
+        loadComponent: () =>
+          import('./features/home/my-dashboard/my-dashboard').then((m) => m.MyDashboard),
+      },
+      {
         path: 'autos',
         canActivate: [roleIncludesGuard],
         data: {
@@ -233,6 +238,126 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/contracts/portulogos-b2b-contract-detail/portulogos-b2b-contract-detail').then(
             (m) => m.PortulogosB2BContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/ezu-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/ezu-b2b-contracts/ezu-b2b-contracts').then(
+            (m) => m.EzuB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/ezu-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/ezu-b2b-contract-create/ezu-b2b-contract-create').then(
+            (m) => m.EzuB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/ezu-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/ezu-b2b-contract-detail/ezu-b2b-contract-detail').then(
+            (m) => m.EzuB2BContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/nossa-energia-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/nossa-energia-b2b-contracts/nossa-energia-b2b-contracts').then(
+            (m) => m.NossaEnergiaB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/nossa-energia-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/nossa-energia-b2b-contract-create/nossa-energia-b2b-contract-create').then(
+            (m) => m.NossaEnergiaB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/nossa-energia-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/nossa-energia-b2b-contract-detail/nossa-energia-b2b-contract-detail').then(
+            (m) => m.NossaEnergiaB2BContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/audax-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/audax-b2b-contracts/audax-b2b-contracts').then(
+            (m) => m.AudaxB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/audax-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/audax-b2b-contract-create/audax-b2b-contract-create').then(
+            (m) => m.AudaxB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/audax-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/audax-b2b-contract-detail/audax-b2b-contract-detail').then(
+            (m) => m.AudaxB2BContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/plenitude-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/plenitude-b2b-contracts/plenitude-b2b-contracts').then(
+            (m) => m.PlenitudeB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/plenitude-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/plenitude-b2b-contract-create/plenitude-b2b-contract-create').then(
+            (m) => m.PlenitudeB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/plenitude-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/plenitude-b2b-contract-detail/plenitude-b2b-contract-detail').then(
+            (m) => m.PlenitudeB2BContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/endesa-b2b',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/endesa-b2b-contracts/endesa-b2b-contracts').then(
+            (m) => m.EndesaB2BContracts,
+          ),
+      },
+      {
+        path: 'contracts/endesa-b2b/create',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/endesa-b2b-contract-create/endesa-b2b-contract-create').then(
+            (m) => m.EndesaB2BContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/endesa-b2b/:id',
+        canActivate: [portulogosB2BAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/endesa-b2b-contract-detail/endesa-b2b-contract-detail').then(
+            (m) => m.EndesaB2BContractDetail,
           ),
       },
       {

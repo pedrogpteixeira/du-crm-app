@@ -19,111 +19,207 @@
   </a>
 
   <nav class="sidebar-nav">
-    <!-- PORTULOGOS -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Portulogos')">
-      <span class="section-title">CRM Portulogos</span>
+    <!-- CONTRATOS -->
+    <div class="nav-section contracts-section" *ngIf="canAccessB2CContracts() || canAccessPortulogosB2B()">
+      <span class="section-title">Contratos</span>
 
-      <a routerLink="/home/contracts/portulogos" routerLinkActive="active" title="Portulogos">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Portulogos</span>
-      </a>
-    </div>
+      <div class="contract-drawer" *ngIf="canAccessB2CContracts()">
+        <button
+          class="contract-drawer-toggle"
+          type="button"
+          (click)="toggleB2CContracts()"
+          [class.open]="b2cContractsOpen"
+          [attr.aria-expanded]="b2cContractsOpen"
+          aria-controls="sidebar-contracts-b2c"
+          title="Contratos B2C"
+        >
+          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true">person</span>
+          <span class="drawer-label">B2C</span>
+          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true">expand_more</span>
+        </button>
 
-    <!-- PORTULOGOS B2B -->
-    <div class="nav-section" *ngIf="canAccessPortulogosB2B()">
-      <span class="section-title">CRM Portulogos B2B</span>
+        <div
+          id="sidebar-contracts-b2c"
+          class="contract-drawer-content"
+          [class.open]="b2cContractsOpen"
+        >
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Portulogos')"
+            routerLink="/home/contracts/portulogos"
+            routerLinkActive="active"
+            title="Portulogos"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Portulogos</span>
+          </a>
 
-      <a
-        routerLink="/home/contracts/portulogos-b2b"
-        routerLinkActive="active"
-        title="Portulogos B2B"
-      >
-        <span class="icon material-symbols-rounded">business_center</span>
-        <span class="label">Portulogos B2B</span>
-      </a>
-    </div>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')"
+            routerLink="/home/contracts/repsol"
+            routerLinkActive="active"
+            title="Repsol"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Repsol</span>
+          </a>
 
-    <!-- REPSOL -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Repsol')">
-      <span class="section-title">CRM Repsol</span>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
+            routerLink="/home/contracts/galp-power-gas"
+            routerLinkActive="active"
+            title="Galp Power & Gás"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Galp Power & Gás</span>
+          </a>
 
-      <a routerLink="/home/contracts/repsol" routerLinkActive="active" title="Repsol">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Repsol</span>
-      </a>
-    </div>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
+            routerLink="/home/contracts/galp-solar"
+            routerLinkActive="active"
+            title="Galp Solar"
+          >
+            <span class="icon material-symbols-rounded">solar_power</span>
+            <span class="label">Galp Solar</span>
+          </a>
 
-    <!-- GALP -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')">
-      <span class="section-title">CRM Galp</span>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
+            routerLink="/home/contracts/wallbox"
+            routerLinkActive="active"
+            title="Wallbox"
+          >
+            <span class="icon material-symbols-rounded">ev_station</span>
+            <span class="label">Wallbox</span>
+          </a>
 
-      <a
-        routerLink="/home/contracts/galp-power-gas"
-        routerLinkActive="active"
-        title="Galp Power & Gás"
-      >
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Galp Power & Gás</span>
-      </a>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')"
+            routerLink="/home/contracts/yes-energy"
+            routerLinkActive="active"
+            title="Yes Energy"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Yes Energy</span>
+          </a>
 
-      <a routerLink="/home/contracts/galp-solar" routerLinkActive="active" title="Galp Solar">
-        <span class="icon material-symbols-rounded">solar_power</span>
-        <span class="label">Galp Solar</span>
-      </a>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
+            routerLink="/home/contracts/iberdrola"
+            routerLinkActive="active"
+            title="Iberdrola"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Iberdrola</span>
+          </a>
 
-      <a routerLink="/home/contracts/wallbox" routerLinkActive="active" title="Wallbox">
-        <span class="icon material-symbols-rounded">ev_station</span>
-        <span class="label">Wallbox</span>
-      </a>
-    </div>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')"
+            routerLink="/home/contracts/iberdrola-solar"
+            routerLinkActive="active"
+            title="Iberdrola Solar"
+          >
+            <span class="icon material-symbols-rounded">solar_power</span>
+            <span class="label">Iberdrola Solar</span>
+          </a>
 
-    <!-- YES ENERGY -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Yes Energy')">
-      <span class="section-title">CRM Yes Energy</span>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Vodafone')"
+            routerLink="/home/contracts/vodafone"
+            routerLinkActive="active"
+            title="Vodafone"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">Vodafone</span>
+          </a>
 
-      <a routerLink="/home/contracts/yes-energy" routerLinkActive="active" title="Yes Energy">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Yes Energy</span>
-      </a>
-    </div>
+          <a
+            *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')"
+            routerLink="/home/contracts/meo-energias"
+            routerLinkActive="active"
+            title="MEO Energias"
+          >
+            <span class="icon material-symbols-rounded">description</span>
+            <span class="label">MEO Energias</span>
+          </a>
+        </div>
+      </div>
 
-    <!-- IBERDROLA -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Iberdrola')">
-      <span class="section-title">CRM Iberdrola</span>
+      <div class="contract-drawer" *ngIf="canAccessPortulogosB2B()">
+        <button
+          class="contract-drawer-toggle"
+          type="button"
+          (click)="toggleB2BContracts()"
+          [class.open]="b2bContractsOpen"
+          [attr.aria-expanded]="b2bContractsOpen"
+          aria-controls="sidebar-contracts-b2b"
+          title="Contratos B2B"
+        >
+          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true">business_center</span>
+          <span class="drawer-label">B2B</span>
+          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true">expand_more</span>
+        </button>
 
-      <a routerLink="/home/contracts/iberdrola" routerLinkActive="active" title="Iberdrola">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Iberdrola</span>
-      </a>
+        <div
+          id="sidebar-contracts-b2b"
+          class="contract-drawer-content"
+          [class.open]="b2bContractsOpen"
+        >
+          <a
+            routerLink="/home/contracts/portulogos-b2b"
+            routerLinkActive="active"
+            title="Portulogos B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Portulogos B2B</span>
+          </a>
 
-      <a
-        routerLink="/home/contracts/iberdrola-solar"
-        routerLinkActive="active"
-        title="Iberdrola Solar"
-      >
-        <span class="icon material-symbols-rounded">solar_power</span>
-        <span class="label">Iberdrola Solar</span>
-      </a>
-    </div>
+          <a
+            routerLink="/home/contracts/ezu-b2b"
+            routerLinkActive="active"
+            title="Ezu B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Ezu B2B</span>
+          </a>
 
-    <!-- VODAFONE -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Vodafone')">
-      <span class="section-title">CRM Vodafone</span>
+          <a
+            routerLink="/home/contracts/nossa-energia-b2b"
+            routerLinkActive="active"
+            title="Nossa Energia B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Nossa Energia B2B</span>
+          </a>
 
-      <a routerLink="/home/contracts/vodafone" routerLinkActive="active" title="Vodafone">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">Vodafone</span>
-      </a>
-    </div>
+          <a
+            routerLink="/home/contracts/audax-b2b"
+            routerLinkActive="active"
+            title="Audax B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Audax B2B</span>
+          </a>
 
-    <!-- MEO ENERGIAS -->
-    <div class="nav-section" *ngIf="canAccessRoles('Super Admin', 'DU', 'Meo Energia')">
-      <span class="section-title">CRM MEO Energias</span>
+          <a
+            routerLink="/home/contracts/plenitude-b2b"
+            routerLinkActive="active"
+            title="Plenitude B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Plenitude B2B</span>
+          </a>
 
-      <a routerLink="/home/contracts/meo-energias" routerLinkActive="active" title="MEO Energias">
-        <span class="icon material-symbols-rounded">description</span>
-        <span class="label">MEO Energias</span>
-      </a>
+          <a
+            routerLink="/home/contracts/endesa-b2b"
+            routerLinkActive="active"
+            title="Endesa B2B"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">Endesa B2B</span>
+          </a>
+        </div>
+      </div>
     </div>
 
     <!-- FERRAMENTAS DE CONTRATOS -->
@@ -232,6 +328,16 @@
       >
         <span class="icon material-symbols-rounded">dashboard</span>
         <span class="label">Dashboard</span>
+      </a>
+
+      <a
+        *ngIf="!canAccessRoles('Super Admin', 'DU')"
+        routerLink="/home/my-dashboard"
+        routerLinkActive="active"
+        title="Início"
+      >
+        <span class="icon material-symbols-rounded">home</span>
+        <span class="label">Início</span>
       </a>
 
       <a routerLink="/home/tickets" routerLinkActive="active" title="Tickets">

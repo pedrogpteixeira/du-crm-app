@@ -1,8 +1,8 @@
-<section class="tickets-page">
+<section class="tickets-page" [class.embedded]="embedded">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Tickets</span>
-      <h1>Os meus Tickets</h1>
+      <span class="breadcrumb">{{ embedded ? 'Tickets associados' : 'Tickets' }}</span>
+      <h1>{{ embedded ? 'Os meus Tickets' : 'Os meus Tickets' }}</h1>
     </div>
 
     <div class="header-actions">

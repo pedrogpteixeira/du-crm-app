@@ -1323,3 +1323,64 @@ body .contract-detail-page app-file-dropzone .file-select-btn.disabled {
   color: #f8fafc !important;
   box-shadow: none !important;
 }
+
+/* Contract details — ação global de duplicação */
+.contract-detail-page > .page-header .duplicate-action-button {
+  min-height: 38px !important;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 13px !important;
+  border: 1px solid #d5dde5 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.045);
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease !important;
+}
+
+.contract-detail-page > .page-header .duplicate-action-button::before {
+  content: '';
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border: 1.6px solid #64748b;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow:
+    3px -3px 0 -1px #ffffff,
+    3px -3px 0 0 #94a3b8;
+  transform: translate(-1px, 1px);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.contract-detail-page > .page-header .duplicate-action-button:hover:not(:disabled) {
+  border-color: #b8c5d1 !important;
+  background: #f8fafc !important;
+  color: #243646 !important;
+  box-shadow: 0 4px 11px rgba(15, 23, 42, 0.075);
+  transform: translateY(-1px);
+}
+
+.contract-detail-page > .page-header .duplicate-action-button:hover:not(:disabled)::before {
+  border-color: #008db1;
+  box-shadow:
+    3px -3px 0 -1px #f8fafc,
+    3px -3px 0 0 #7dd3e7;
+}
+
+.contract-detail-page > .page-header .duplicate-action-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, #008db1 34%, transparent);
+  outline-offset: 2px;
+}

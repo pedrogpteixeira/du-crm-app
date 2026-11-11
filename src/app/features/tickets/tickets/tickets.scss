@@ -657,3 +657,28 @@
     gap: 10px;
   }
 }
+
+
+/* Embedded dashboard mode */
+.tickets-page.embedded {
+  gap: 14px;
+}
+
+.tickets-page.embedded .page-header h1 {
+  font-size: 24px;
+}
+
+.tickets-page.embedded .breadcrumb {
+  font-size: 12px;
+}
+
+.tickets-page.embedded .company-ticket-section {
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+:host-context(.dark-theme) .tickets-page.embedded .company-ticket-section {
+  border-color: #263647;
+  background: #0f1720;
+  box-shadow: none;
+}

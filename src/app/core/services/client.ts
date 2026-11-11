@@ -3,13 +3,18 @@ import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { canAccessPortulogosB2B, isPortulogosB2BCompany } from '../config/portulogos-b2b-access';
+import { canAccessB2BContracts, isRestrictedB2BCompany } from '../config/portulogos-b2b-access';
 import { Auth } from './auth';
 
 export type ClientContractProvider =
   | 'repsol'
   | 'portulogos'
   | 'portulogos-b2b'
+  | 'ezu-b2b'
+  | 'nossa-energia-b2b'
+  | 'audax-b2b'
+  | 'plenitude-b2b'
+  | 'endesa-b2b'
   | 'wallbox'
   | 'yes-energy'
   | 'galp-power-gas'
@@ -79,14 +84,14 @@ export class ClientService {
       .get<ClientDetails>(`${this.apiUrl}/api/clients/${encodeURIComponent(clientId)}`)
       .pipe(
         map((client) => {
-          if (canAccessPortulogosB2B(this.auth.getCurrentUser())) {
+          if (canAccessB2BContracts(this.auth.getCurrentUser())) {
             return client;
           }
 
           return {
             ...client,
             contracts: (client.contracts ?? []).filter(
-              (contract) => !isPortulogosB2BCompany(contract.companyId),
+              (contract) => !isRestrictedB2BCompany(contract.companyId),
             ),
           };
         }),

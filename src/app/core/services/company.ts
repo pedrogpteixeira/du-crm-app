@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { finalize, map, Observable, of, shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { canAccessPortulogosB2B, isPortulogosB2BCompany } from '../config/portulogos-b2b-access';
+import { canAccessB2BContracts, isRestrictedB2BCompany } from '../config/portulogos-b2b-access';
 import { Auth } from './auth';
 
 export interface Company {
@@ -106,11 +106,11 @@ export class CompanyService {
   }
 
   private filterRestrictedCompanies(companies: Company[]): Company[] {
-    if (canAccessPortulogosB2B(this.auth.getCurrentUser())) {
+    if (canAccessB2BContracts(this.auth.getCurrentUser())) {
       return companies;
     }
 
-    return companies.filter((company) => !isPortulogosB2BCompany(company.domainId || company.id));
+    return companies.filter((company) => !isRestrictedB2BCompany(company.domainId || company.id));
   }
 
   private invalidateCompaniesCache(): void {

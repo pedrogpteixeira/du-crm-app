@@ -12,6 +12,11 @@ export const SUPPLY_POINT_PREFLIGHT_PROVIDERS = [
   'meo-energias',
   'portulogos',
   'portulogos-b2b',
+  'ezu-b2b',
+  'nossa-energia-b2b',
+  'audax-b2b',
+  'plenitude-b2b',
+  'endesa-b2b',
 ] as const;
 
 export type ContractPreflightProvider = (typeof SUPPLY_POINT_PREFLIGHT_PROVIDERS)[number];

@@ -4,9 +4,9 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
-  canAccessPortulogosB2B,
-  isPortulogosB2BCompany,
-  PORTULOGOS_B2B_PROVIDER,
+  canAccessB2BContracts,
+  isRestrictedB2BCompany,
+  isRestrictedB2BProvider,
 } from '../config/portulogos-b2b-access';
 import { Auth } from './auth';
 import type { ClientContractProvider } from './client';
@@ -67,8 +67,8 @@ export class EmailCrmRelationService {
           .filter((item): item is EmailContractSearchResult => item !== null)
           .filter(
             (item) =>
-              item.provider !== PORTULOGOS_B2B_PROVIDER ||
-              canAccessPortulogosB2B(this.auth.getCurrentUser()),
+              !isRestrictedB2BProvider(item.provider) ||
+              canAccessB2BContracts(this.auth.getCurrentUser()),
           ),
       ),
     );
@@ -84,8 +84,8 @@ export class EmailCrmRelationService {
           .filter((item): item is EmailTicketSearchResult => item !== null)
           .filter(
             (item) =>
-              !isPortulogosB2BCompany(item.companyId) ||
-              canAccessPortulogosB2B(this.auth.getCurrentUser()),
+              !isRestrictedB2BCompany(item.companyId) ||
+              canAccessB2BContracts(this.auth.getCurrentUser()),
           ),
       ),
     );
@@ -247,6 +247,11 @@ export class EmailCrmRelationService {
       'repsol',
       'portulogos',
       'portulogos-b2b',
+      'ezu-b2b',
+      'nossa-energia-b2b',
+      'audax-b2b',
+      'plenitude-b2b',
+      'endesa-b2b',
       'wallbox',
       'yes-energy',
       'galp-power-gas',

@@ -34,6 +34,9 @@ export class Sidebar {
 
   user: AuthUser | null = this.auth.getCurrentUser();
 
+  b2cContractsOpen = true;
+  b2bContractsOpen = true;
+
   constructor() {
     this.auth.currentUser$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((user) => {
       this.user = user;
@@ -57,11 +60,31 @@ export class Sidebar {
   }
 
   get brandRoute(): string {
-    return this.canAccessRoles('Super Admin', 'DU') ? '/home/dashboard' : '/home/tickets';
+    return this.canAccessRoles('Super Admin', 'DU') ? '/home/dashboard' : '/home/my-dashboard';
   }
 
   canAccessPortulogosB2B(): boolean {
     return hasPortulogosB2BAccess(this.user);
+  }
+
+  canAccessB2CContracts(): boolean {
+    return (
+      this.canAccessRoles('Super Admin', 'DU', 'Portulogos') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Repsol') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Galp') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Yes Energy') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Iberdrola') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Vodafone') ||
+      this.canAccessRoles('Super Admin', 'DU', 'Meo Energia')
+    );
+  }
+
+  toggleB2CContracts(): void {
+    this.b2cContractsOpen = !this.b2cContractsOpen;
+  }
+
+  toggleB2BContracts(): void {
+    this.b2bContractsOpen = !this.b2bContractsOpen;
   }
 
   canAccessRoles(...allowedRoles: string[]): boolean {

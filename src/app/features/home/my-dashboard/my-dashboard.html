@@ -1,0 +1,52 @@
+<section class="my-dashboard-page">
+  <header class="dashboard-heading">
+    <div>
+      <span class="dashboard-kicker">Início</span>
+      <h1>As minhas pendências</h1>
+      <p>Contratos que precisam da tua atenção e Tickets associados ao teu utilizador.</p>
+    </div>
+  </header>
+
+  <section class="summary-grid" aria-label="Resumo de pendências">
+    <article class="summary-card non-compliance">
+      <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+      <div><span>Não Conformidade</span><strong>{{ loading() ? '—' : nonComplianceCount }}</strong></div>
+    </article>
+    <article class="summary-card pending-docs">
+      <span class="material-symbols-rounded" aria-hidden="true">description</span>
+      <div><span>Pendente Docs</span><strong>{{ loading() ? '—' : pendingDocsCount }}</strong></div>
+    </article>
+    <article class="summary-card total-pending">
+      <span class="material-symbols-rounded" aria-hidden="true">pending_actions</span>
+      <div><span>Total pendente</span><strong>{{ loading() ? '—' : totalPending }}</strong></div>
+    </article>
+  </section>
+
+  <section class="attention-section">
+    <div class="section-heading">
+      <div><span class="section-kicker">Pendências</span><h2>Contratos que necessitam de atenção</h2></div>
+      <span class="returned-count" *ngIf="!loading() && data()">{{ contracts().length }} apresentados · {{ data()?.totals?.ticketsForReturnedContracts ?? 0 }} tickets relacionados</span>
+    </div>
+
+    <div class="compact-state loading" *ngIf="loading()"><span class="spinner"></span><span>A carregar contratos pendentes...</span></div>
+    <div class="compact-state error" *ngIf="!loading() && errorMessage()"><span class="material-symbols-rounded">error</span><span>{{ errorMessage() }}</span><button type="button" (click)="retry()">Tentar novamente</button></div>
+    <div class="compact-state empty" *ngIf="!loading() && !errorMessage() && !contracts().length"><span class="material-symbols-rounded">task_alt</span><span>Não existem contratos que necessitem de atenção.</span></div>
+
+    <div class="contracts-list" *ngIf="!loading() && !errorMessage() && contracts().length">
+      <button class="contract-row" type="button" *ngFor="let contract of contracts()" [disabled]="!contractRoute(contract)" (click)="openContract(contract)">
+        <div class="contract-primary"><strong>{{ contract.nomeClienteEmpresa || '-' }}</strong><span>{{ companyName(contract) }}</span></div>
+        <span class="status-pill" [style.--status-color]="statusColor(contract.estado)">{{ contract.estado || '-' }}</span>
+        <div class="contract-meta"><span>NIF</span><strong>{{ contract.nif ?? '-' }}</strong></div>
+        <div class="contract-meta"><span>Atualizado</span><strong>{{ contract.updatedAt ? (contract.updatedAt | date:'dd/MM/yyyy HH:mm') : '-' }}</strong></div>
+        <div class="ticket-indicator" [class.has-tickets]="ticketCount(contract.contractId) > 0"><span class="material-symbols-rounded">confirmation_number</span><strong>{{ ticketCount(contract.contractId) }}</strong><span>{{ ticketCount(contract.contractId) === 1 ? 'Ticket' : 'Tickets' }}</span></div>
+        <span class="material-symbols-rounded row-arrow" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+
+    <p class="more-note" *ngIf="!loading() && !errorMessage() && data()?.hasMoreContracts">Existem mais contratos pendentes do que os apresentados nesta página.</p>
+  </section>
+
+  <section class="tickets-dashboard-section">
+    <app-tickets [embedded]="true"></app-tickets>
+  </section>
+</section>

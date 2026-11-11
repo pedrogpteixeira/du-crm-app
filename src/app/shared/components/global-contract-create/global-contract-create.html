@@ -1,0 +1,106 @@
+<div class="global-contract-create" *ngIf="availableOptions.length">
+  <button
+    type="button"
+    class="create-trigger"
+    aria-label="Criar contrato"
+    title="Criar contrato"
+    [attr.aria-expanded]="isOpen"
+    (click)="toggle($event)"
+  >
+    <span class="material-symbols-rounded" aria-hidden="true">note_add</span>
+  </button>
+
+  <section
+    class="create-dropdown"
+    *ngIf="isOpen"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="create-dropdown-header">
+      <div>
+        <strong>Criar contrato</strong>
+        <span>Escolha a comercializadora</span>
+      </div>
+
+      <button
+        type="button"
+        class="close-button"
+        aria-label="Fechar"
+        title="Fechar"
+        (click)="close()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="search-wrapper" *ngIf="availableOptions.length > 5">
+      <span class="material-symbols-rounded" aria-hidden="true">search</span>
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        placeholder="Pesquisar comercializadora"
+        aria-label="Pesquisar comercializadora"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="create-options" *ngIf="hasFilteredOptions; else noResults">
+      <div class="option-group" *ngIf="filteredB2COptions.length">
+        <div class="group-title">
+          <span class="material-symbols-rounded" aria-hidden="true">person</span>
+          <span>B2C</span>
+        </div>
+
+        <button
+          type="button"
+          class="company-option"
+          *ngFor="let option of filteredB2COptions; trackBy: trackByRoute"
+          (click)="createContract(option)"
+        >
+          <span class="option-icon material-symbols-rounded" aria-hidden="true">
+            {{ option.icon }}
+          </span>
+          <span class="option-copy">
+            <strong>{{ option.name }}</strong>
+            <small>Novo contrato</small>
+          </span>
+          <span class="option-arrow material-symbols-rounded" aria-hidden="true">
+            arrow_forward
+          </span>
+        </button>
+      </div>
+
+      <div class="option-group" *ngIf="filteredB2BOptions.length">
+        <div class="group-title">
+          <span class="material-symbols-rounded" aria-hidden="true">business_center</span>
+          <span>B2B</span>
+        </div>
+
+        <button
+          type="button"
+          class="company-option"
+          *ngFor="let option of filteredB2BOptions; trackBy: trackByRoute"
+          (click)="createContract(option)"
+        >
+          <span class="option-icon material-symbols-rounded" aria-hidden="true">
+            {{ option.icon }}
+          </span>
+          <span class="option-copy">
+            <strong>{{ option.name }}</strong>
+            <small>Novo contrato</small>
+          </span>
+          <span class="option-arrow material-symbols-rounded" aria-hidden="true">
+            arrow_forward
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <ng-template #noResults>
+      <div class="empty-results">
+        <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
+        <strong>Sem resultados</strong>
+        <span>Não foi encontrada nenhuma comercializadora.</span>
+      </div>
+    </ng-template>
+  </section>
+</div>

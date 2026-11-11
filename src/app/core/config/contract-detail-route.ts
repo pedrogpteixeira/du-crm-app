@@ -5,7 +5,14 @@ import { IBERDROLA_SOLAR_COMPANY_ID } from '../services/iberdrola-solar-contract
 import { MEO_ENERGIAS_COMPANY_ID } from '../services/meo-energias-contract';
 import { YES_ENERGY_COMPANY_ID } from '../services/yes-energy-contract';
 import { VODAFONE_COMPANY_ID } from '../services/vodafone-contract';
-import { PORTULOGOS_B2B_COMPANY_ID, PORTULOGOS_B2B_CONTRACT_PREFIX } from './portulogos-b2b-access';
+import {
+  PORTULOGOS_B2B_COMPANY_ID, PORTULOGOS_B2B_CONTRACT_PREFIX,
+  EZU_B2B_COMPANY_ID, EZU_B2B_CONTRACT_PREFIX,
+  NOSSA_ENERGIA_B2B_COMPANY_ID, NOSSA_ENERGIA_B2B_CONTRACT_PREFIX,
+  AUDAX_B2B_COMPANY_ID, AUDAX_B2B_CONTRACT_PREFIX,
+  PLENITUDE_B2B_COMPANY_ID, PLENITUDE_B2B_CONTRACT_PREFIX,
+  ENDESA_B2B_COMPANY_ID, ENDESA_B2B_CONTRACT_PREFIX,
+} from './portulogos-b2b-access';
 
 interface ContractRouteConfig {
   companyId?: string;
@@ -30,6 +37,36 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
     contractIdPrefix: PORTULOGOS_B2B_CONTRACT_PREFIX,
     companyName: 'Portulogos B2B',
     segment: 'portulogos-b2b',
+  },
+  {
+    companyId: EZU_B2B_COMPANY_ID,
+    contractIdPrefix: EZU_B2B_CONTRACT_PREFIX,
+    companyName: 'Ezu B2B',
+    segment: 'ezu-b2b',
+  },
+  {
+    companyId: NOSSA_ENERGIA_B2B_COMPANY_ID,
+    contractIdPrefix: NOSSA_ENERGIA_B2B_CONTRACT_PREFIX,
+    companyName: 'Nossa Energia B2B',
+    segment: 'nossa-energia-b2b',
+  },
+  {
+    companyId: AUDAX_B2B_COMPANY_ID,
+    contractIdPrefix: AUDAX_B2B_CONTRACT_PREFIX,
+    companyName: 'Audax B2B',
+    segment: 'audax-b2b',
+  },
+  {
+    companyId: PLENITUDE_B2B_COMPANY_ID,
+    contractIdPrefix: PLENITUDE_B2B_CONTRACT_PREFIX,
+    companyName: 'Plenitude B2B',
+    segment: 'plenitude-b2b',
+  },
+  {
+    companyId: ENDESA_B2B_COMPANY_ID,
+    contractIdPrefix: ENDESA_B2B_CONTRACT_PREFIX,
+    companyName: 'Endesa B2B',
+    segment: 'endesa-b2b',
   },
   {
     companyId: environment.WALLBOX_COMPANY_ID,
@@ -137,4 +174,12 @@ export function getContractCompanyName(companyId: string, contractId = ''): stri
     resolveContractRouteConfig(companyId, contractId)?.companyName ??
     'Comercializadora desconhecida'
   );
+}
+
+export function getContractCreateRouteByProvider(
+  provider: ClientContractProvider,
+): string[] | null {
+  const config = CONTRACT_ROUTE_CONFIGS.find((entry) => entry.segment === provider);
+
+  return config ? ['/home/contracts', config.segment, 'create'] : null;
 }
