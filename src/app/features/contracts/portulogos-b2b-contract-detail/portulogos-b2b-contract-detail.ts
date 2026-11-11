@@ -58,6 +58,7 @@ import { DocumentPreviewService } from '../../../core/services/document-preview'
 import type { Campaign } from '../../../core/services/campaign';
 import {
   PORTULOGOS_B2B_CONTRACT_STATUSES,
+  PORTULOGOS_B2B_LOYALTY_OPTIONS,
   PortulogosB2BContractDetail as PortulogosB2BContractDetailModel,
   PortulogosB2BContractDocument,
   PortulogosB2BContractService,
@@ -119,6 +120,7 @@ interface EditableContractForm {
   debitoDireto: boolean;
   iban: string;
 
+  fidelizacao: string;
   antigaComercializadora: string;
   cpe: string;
   cui: string;
@@ -251,6 +253,7 @@ export class PortulogosB2BContractDetail implements OnInit {
 
   readonly tipoSegmentoOptions = ['Empresarial', 'Condomínios'];
   readonly tipoTarifaOptions = ['MT', 'BTE', 'BTN'];
+  readonly fidelizacaoOptions = PORTULOGOS_B2B_LOYALTY_OPTIONS;
 
   readonly tipoProdutoOptions = ['Luz', 'Luz + Gás', 'Gás'];
 
@@ -1619,6 +1622,7 @@ export class PortulogosB2BContractDetail implements OnInit {
         debitoDireto: Boolean(contract.debitoDireto),
         iban: contract.iban ?? '',
 
+        fidelizacao: contract.fidelizacao ?? '',
         antigaComercializadora: contract.antigaComercializadora ?? '',
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
@@ -1876,6 +1880,12 @@ export class PortulogosB2BContractDetail implements OnInit {
       this.originalEditForm.debitoDireto,
     );
     this.assignChangedValue(payload, 'iban', this.editForm.iban, this.originalEditForm.iban);
+    this.assignRawStringChangedValue(
+      payload,
+      'fidelizacao',
+      this.editForm.fidelizacao,
+      this.originalEditForm.fidelizacao,
+    );
     this.assignChangedValue(
       payload,
       'antigaComercializadora',
@@ -1916,6 +1926,17 @@ export class PortulogosB2BContractDetail implements OnInit {
     }
 
     return payload;
+  }
+
+  private assignRawStringChangedValue(
+    payload: UpdatePortulogosB2BContractRequest,
+    key: 'fidelizacao',
+    currentValue: string,
+    originalValue: string,
+  ): void {
+    if (currentValue !== originalValue) {
+      payload[key] = currentValue;
+    }
   }
 
   private assignChangedValue<Key extends keyof UpdatePortulogosB2BContractRequest>(
@@ -2020,6 +2041,7 @@ export class PortulogosB2BContractDetail implements OnInit {
       debitoDireto: false,
       iban: '',
 
+      fidelizacao: '',
       antigaComercializadora: '',
       cpe: '',
       cui: '',

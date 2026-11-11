@@ -43,6 +43,7 @@ export class EditableSelectCombobox implements ControlValueAccessor {
   @Input() emptyValue: EditableSelectValue = '';
   @Input() valueType: EditableSelectValueType = 'string';
   @Input() inputMode: 'text' | 'decimal' | 'numeric' = 'text';
+  @Input() placeholder = '';
   @Input() required = false;
   @Input() disabled = false;
 

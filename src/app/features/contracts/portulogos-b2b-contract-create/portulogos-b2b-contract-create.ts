@@ -36,6 +36,7 @@ import {
 
 import {
   PORTULOGOS_B2B_CONTRACT_STATUSES,
+  PORTULOGOS_B2B_LOYALTY_OPTIONS,
   CreatePortulogosB2BContractRequest,
   PortulogosB2BContractDetail,
   PortulogosB2BContractService,
@@ -197,6 +198,7 @@ export class PortulogosB2BContractCreate implements OnInit {
   tipoSegmentoOptions: TipoSegmento[] = ['Empresarial', 'Condomínios'];
 
   readonly tipoTarifaOptions = ['MT', 'BTE', 'BTN'];
+  readonly fidelizacaoOptions = PORTULOGOS_B2B_LOYALTY_OPTIONS;
 
   tipoProdutoOptions: TipoProduto[] = ['Luz', 'Luz + Gás', 'Gás'];
 
@@ -282,6 +284,7 @@ export class PortulogosB2BContractCreate implements OnInit {
     iban: '',
 
     campanha: '',
+    fidelizacao: '',
     antigaComercializadora: '',
     cpe: DEFAULT_CPE_PREFIX,
     cui: DEFAULT_CUI_PREFIX,
@@ -1165,6 +1168,8 @@ export class PortulogosB2BContractCreate implements OnInit {
         : this.contractForm.campanha;
 
     this.addIfFilled(payload, 'campanha', campaign);
+
+    this.addIfFilled(payload, 'fidelizacao', this.contractForm.fidelizacao);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 

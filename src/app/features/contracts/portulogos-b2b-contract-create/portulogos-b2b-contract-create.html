@@ -512,6 +512,19 @@
               <input type="text" [(ngModel)]="customCampaign" />
             </label>
           </div>
+
+          <div class="product-row product-row--single">
+            <label>
+              Fidelização
+
+              <app-editable-select-combobox
+                [(ngModel)]="contractForm.fidelizacao"
+                [options]="fidelizacaoOptions"
+                placeholder="Selecionar ou introduzir fidelização"
+                emptyOptionLabel="Sem fidelização"
+              />
+            </label>
+          </div>
         </div>
 
         <div class="product-block" *ngIf="isProLayout()">

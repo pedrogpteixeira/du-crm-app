@@ -48,6 +48,7 @@ export const PORTULOGOS_B2B_CONTRACT_STATUSES: readonly PortulogosB2BContractSta
 
 export const PORTULOGOS_B2B_SEGMENT_OPTIONS = ['Empresarial', 'Condomínios'] as const;
 export const PORTULOGOS_B2B_TARIFF_TYPE_OPTIONS = ['MT', 'BTE', 'BTN'] as const;
+export const PORTULOGOS_B2B_LOYALTY_OPTIONS = ['12 meses', '24 meses'] as const;
 
 export interface PortulogosB2BContractListUser {
   id: string;
@@ -159,6 +160,7 @@ export interface PortulogosB2BContractDetail {
 
   campaign: PortulogosB2BContractCampaign | null;
   campaigns?: Campaign[];
+  fidelizacao?: string | null;
   antigaComercializadora: string;
 
   cpe: string;
@@ -231,6 +233,7 @@ export interface CreatePortulogosB2BContractRequest {
   iban?: string;
 
   campanha?: string;
+  fidelizacao?: string;
   antigaComercializadora?: string;
 
   cpe?: string;

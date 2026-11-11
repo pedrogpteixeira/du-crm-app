@@ -922,6 +922,24 @@
                     <strong>{{ getValue(contract.campaign?.name) }}</strong>
                   </label>
                 </div>
+
+                <div class="product-row product-row--single">
+                  <label>
+                    Fidelização
+
+                    <app-editable-select-combobox
+                      *ngIf="isEditing; else fidelizacaoView"
+                      [(ngModel)]="editForm.fidelizacao"
+                      [options]="fidelizacaoOptions"
+                      placeholder="Selecionar ou introduzir fidelização"
+                      emptyOptionLabel="Sem fidelização"
+                    />
+
+                    <ng-template #fidelizacaoView>
+                      <strong>{{ getValue(contract.fidelizacao) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
               </div>
 
               <div class="product-block">
