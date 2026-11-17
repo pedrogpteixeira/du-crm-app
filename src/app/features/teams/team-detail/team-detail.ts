@@ -15,41 +15,21 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-} from '@angular/router';
-import {
-  catchError,
-  finalize,
-  forkJoin,
-  map,
-  of,
-} from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 
 import { ToastService } from '../../../core/services/toast';
 
 import { environment } from '../../../../environments/environment';
 
 import { Auth } from '../../../core/services/auth';
+import { SocketService } from '../../../core/services/socket';
 
-import {
-  Company,
-  CompanyService,
-} from '../../../core/services/company';
+import { Company, CompanyService } from '../../../core/services/company';
 
-import {
-  AddUserToTeamRequest,
-  Team,
-  TeamService,
-  TeamUser,
-} from '../../../core/services/team';
+import { AddUserToTeamRequest, Team, TeamService, TeamUser } from '../../../core/services/team';
 
-import {
-  ProfileUser,
-  UserService,
-} from '../../../core/services/user';
+import { ProfileUser, UserService } from '../../../core/services/user';
 
 import {
   CreateTeamCommissionRequest,
@@ -65,6 +45,7 @@ interface AddUserResult {
   status?: number;
   code?: string;
   message?: string;
+  teamUser?: TeamUser;
 }
 
 interface PowerCommissionFormValue {
@@ -74,46 +55,35 @@ interface PowerCommissionFormValue {
 
 @Component({
   selector: 'app-team-detail',
-  imports: [
-    CommonModule,
-    RouterLink,
-    FormsModule,
-    ReactiveFormsModule,
-  ],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
   templateUrl: './team-detail.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './team-detail.scss',
 })
 export class TeamDetail implements OnInit {
-  private readonly route =
-    inject(ActivatedRoute);
+  private readonly route = inject(ActivatedRoute);
 
-  private readonly router =
-    inject(Router);
+  private readonly router = inject(Router);
 
-  private readonly teamService =
-    inject(TeamService);
+  private readonly teamService = inject(TeamService);
 
-  private readonly userService =
-    inject(UserService);
+  private readonly userService = inject(UserService);
 
-  private readonly companyService =
-    inject(CompanyService);
+  private readonly socketService = inject(SocketService);
 
-  private readonly teamCommissionService =
-    inject(TeamCommissionService);
+  private readonly companyService = inject(CompanyService);
 
-  private readonly fb =
-    inject(FormBuilder);
+  private readonly teamCommissionService = inject(TeamCommissionService);
 
-  private readonly auth =
-    inject(Auth);
+  private readonly fb = inject(FormBuilder);
 
-  private readonly cdr =
-    inject(ChangeDetectorRef);
+  private readonly auth = inject(Auth);
 
-  private readonly destroyRef =
-    inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly locallyHandledMemberships = new Map<string, number>();
 
   teamId: string | null = null;
 
@@ -129,8 +99,7 @@ export class TeamDetail implements OnInit {
   commissionsExpanded = false;
   commissionsLoaded = false;
 
-  readonly companyNameById =
-    new Map<string, string>();
+  readonly companyNameById = new Map<string, string>();
 
   isLoadingCommissions = false;
   isLoadingCompanies = false;
@@ -145,10 +114,7 @@ export class TeamDetail implements OnInit {
 
   selectedUserIds: string[] = [];
 
-  selectedUserPositions: Record<
-    string,
-    number | null
-  > = {};
+  selectedUserPositions: Record<string, number | null> = {};
 
   userSearch = '';
 
@@ -197,167 +163,75 @@ export class TeamDetail implements OnInit {
 
   addUserErrorMessage = '';
 
-  readonly commissionForm =
-    this.fb.group({
-      companyId:
-        this.fb.nonNullable.control(
-          '',
-          Validators.required,
-        ),
+  readonly commissionForm = this.fb.group({
+    companyId: this.fb.nonNullable.control('', Validators.required),
 
-      segment:
-        this.fb.control<
-          TeamCommissionSegment | null
-        >(
-          null,
-          Validators.required,
-        ),
+    segment: this.fb.control<TeamCommissionSegment | null>(null, Validators.required),
 
-      electricityCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    electricityCommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      electricityPowerCommissions:
-        this.fb.array([]),
+    electricityPowerCommissions: this.fb.array([]),
 
-      gasCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    gasCommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      directDebitCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    directDebitCommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      electronicInvoiceCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    electronicInvoiceCommission: this.fb.nonNullable.control(0, [
+      Validators.required,
+      Validators.min(0),
+    ]),
 
-      SVACommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    SVACommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      PELCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    PELCommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      PGICommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    PGICommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      MGICommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    MGICommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      PELPlusCommission:
-        this.fb.nonNullable.control(
-          0,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+    PELPlusCommission: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
 
-      active:
-        this.fb.nonNullable.control(
-          true,
-        ),
-    });
+    active: this.fb.nonNullable.control(true),
+  });
 
   ngOnInit(): void {
     this.observeTeamsCache();
+    this.observeMembershipChanges();
+    this.observeUserChanges();
 
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        const teamId =
-          params.get('id');
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const teamId = params.get('id');
 
-        if (!teamId) {
-          void this.router.navigateByUrl(
-            '/error',
-          );
+      if (!teamId) {
+        void this.router.navigateByUrl('/error');
 
-          return;
-        }
+        return;
+      }
 
-        this.teamId = teamId;
+      this.teamId = teamId;
 
-        this.validateTeamAccess(
-          teamId,
-        );
-      },
-    );
+      this.validateTeamAccess(teamId);
+    });
   }
 
   get canManageTeamUsers(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
   get canAddTeamUsers(): boolean {
-    return (
-      this.canManageTeamUsers &&
-      this.team?.active === true
-    );
+    return this.canManageTeamUsers && this.team?.active === true;
   }
 
   get canManageTeamActive(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
   get canManageTeamPositions(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
   get canEditTeam(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
   startTeamEditing(): void {
@@ -384,16 +258,11 @@ export class TeamDetail implements OnInit {
       return false;
     }
 
-    const current = this.editablePositionList.map((position) =>
-      position.trim(),
-    );
+    const current = this.editablePositionList.map((position) => position.trim());
 
     return (
       current.length !== this.originalPositionList.length ||
-      current.some(
-        (position, index) =>
-          position !== this.originalPositionList[index],
-      )
+      current.some((position, index) => position !== this.originalPositionList[index])
     );
   }
 
@@ -518,25 +387,19 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    const normalizedPositions = this.editablePositionList.map((position) =>
-      position.trim(),
-    );
+    const normalizedPositions = this.editablePositionList.map((position) => position.trim());
 
     if (!normalizedPositions.length) {
-      this.positionsErrorMessage =
-        'A hierarquia deve ter pelo menos um cargo.';
+      this.positionsErrorMessage = 'A hierarquia deve ter pelo menos um cargo.';
       return;
     }
 
     if (normalizedPositions.some((position) => !position)) {
-      this.positionsErrorMessage =
-        'Todos os cargos devem ter um nome válido.';
+      this.positionsErrorMessage = 'Todos os cargos devem ter um nome válido.';
       return;
     }
 
-    const normalizedKeys = normalizedPositions.map((position) =>
-      this.normalizeText(position),
-    );
+    const normalizedKeys = normalizedPositions.map((position) => this.normalizeText(position));
 
     if (new Set(normalizedKeys).size !== normalizedKeys.length) {
       this.positionsErrorMessage =
@@ -563,35 +426,20 @@ export class TeamDetail implements OnInit {
             positionList: normalizedPositions,
           };
 
+          this.userService.applyTeamSnapshot(this.team);
+
           this.originalPositionList = [...normalizedPositions];
           this.editablePositionList = [...normalizedPositions];
           this.isEditingPositions = false;
           this.isEditingTeam = false;
           this.pendingRemovePositionIndex = null;
 
-          this.toast.success(
-            'A hierarquia de cargos foi atualizada com sucesso.',
-          );
-
-          this.loadTeam(team.id);
-
-          this.userService.refreshAssignableUsers().subscribe({
-            error: () => undefined,
-          });
-
-          this.userService.refreshUsers().subscribe({
-            error: () => undefined,
-          });
+          this.toast.success('A hierarquia de cargos foi atualizada com sucesso.');
         },
         error: (error) => {
-          const apiCode =
-            typeof error?.error?.code === 'string'
-              ? error.error.code
-              : '';
+          const apiCode = typeof error?.error?.code === 'string' ? error.error.code : '';
           const apiMessage =
-            typeof error?.error?.message === 'string'
-              ? error.error.message.trim()
-              : '';
+            typeof error?.error?.message === 'string' ? error.error.message.trim() : '';
 
           if (error?.status === 409 && apiCode === 'POSITION_IN_USE') {
             this.positionsErrorMessage =
@@ -603,19 +451,14 @@ export class TeamDetail implements OnInit {
           }
 
           this.positionsErrorMessage =
-            apiMessage ||
-            'Não foi possível atualizar a hierarquia de cargos.';
+            apiMessage || 'Não foi possível atualizar a hierarquia de cargos.';
           this.toast.error(this.positionsErrorMessage);
         },
       });
   }
 
   requestTeamActiveChange(): void {
-    if (
-      !this.canManageTeamActive ||
-      !this.team ||
-      this.isUpdatingTeamActive
-    ) {
+    if (!this.canManageTeamActive || !this.team || this.isUpdatingTeamActive) {
       return;
     }
 
@@ -636,10 +479,7 @@ export class TeamDetail implements OnInit {
   }
 
   confirmTeamDeactivation(): void {
-    if (
-      !this.team ||
-      this.isUpdatingTeamActive
-    ) {
+    if (!this.team || this.isUpdatingTeamActive) {
       return;
     }
 
@@ -649,11 +489,7 @@ export class TeamDetail implements OnInit {
   private updateTeamActive(active: boolean): void {
     const team = this.team;
 
-    if (
-      !this.canManageTeamActive ||
-      !team ||
-      this.isUpdatingTeamActive
-    ) {
+    if (!this.canManageTeamActive || !team || this.isUpdatingTeamActive) {
       return;
     }
 
@@ -676,11 +512,9 @@ export class TeamDetail implements OnInit {
             active,
           };
 
-          if (
-            !active &&
-            this.showAddUserModal &&
-            !this.isAddingUser
-          ) {
+          this.userService.applyTeamSnapshot(this.team);
+
+          if (!active && this.showAddUserModal && !this.isAddingUser) {
             this.closeAddUserModal();
           }
 
@@ -692,9 +526,7 @@ export class TeamDetail implements OnInit {
         },
         error: (error) => {
           const apiMessage =
-            typeof error?.error?.message === 'string'
-              ? error.error.message.trim()
-              : '';
+            typeof error?.error?.message === 'string' ? error.error.message.trim() : '';
 
           this.toast.error(
             apiMessage ||
@@ -707,21 +539,15 @@ export class TeamDetail implements OnInit {
   }
 
   get canManageCommissions(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
   get canViewWalletBalance(): boolean {
-    return this.auth.roleIncludes(
-      'Super Admin',
-    );
+    return this.auth.roleIncludes('Super Admin');
   }
 
-  get powerCommissions():
-    FormArray {
-    return this.commissionForm.controls
-      .electricityPowerCommissions;
+  get powerCommissions(): FormArray {
+    return this.commissionForm.controls.electricityPowerCommissions;
   }
 
   get selectedUsersCount(): number {
@@ -731,84 +557,47 @@ export class TeamDetail implements OnInit {
   get canSubmitSelectedUsers(): boolean {
     return (
       this.selectedUserIds.length > 0 &&
-      this.selectedUserIds.every(
-        (userId) =>
-          this.hasValidSelectedPosition(
-            userId,
-          ),
-      )
+      this.selectedUserIds.every((userId) => this.hasValidSelectedPosition(userId))
     );
   }
 
-  private validateTeamAccess(
-    teamId: string,
-  ): void {
-    if (
-      this.auth.roleIncludes(
-        'Super Admin',
-      )
-    ) {
+  private validateTeamAccess(teamId: string): void {
+    if (this.auth.roleIncludes('Super Admin')) {
       this.initializeTeam(teamId);
 
       return;
     }
 
-    const currentUser =
-      this.auth.getCurrentUser();
+    const currentUser = this.auth.getCurrentUser();
 
     if (!currentUser?.id) {
-      void this.router.navigateByUrl(
-        '/error',
-      );
+      void this.router.navigateByUrl('/error');
 
       return;
     }
 
-    this.userService
-      .getUserById(currentUser.id)
-      .subscribe({
-        next: (user: ProfileUser) => {
-          if (
-            !this.userBelongsToTeam(
-              user,
-              teamId,
-            )
-          ) {
-            void this.router.navigateByUrl(
-              '/error',
-            );
+    this.userService.getUserById(currentUser.id).subscribe({
+      next: (user: ProfileUser) => {
+        if (!this.userBelongsToTeam(user, teamId)) {
+          void this.router.navigateByUrl('/error');
 
-            return;
-          }
+          return;
+        }
 
-          this.initializeTeam(
-            teamId,
-          );
-        },
+        this.initializeTeam(teamId);
+      },
 
-        error: () => {
-          void this.router.navigateByUrl(
-            '/error',
-          );
-        },
-      });
+      error: () => {
+        void this.router.navigateByUrl('/error');
+      },
+    });
   }
 
-  private userBelongsToTeam(
-    user: ProfileUser,
-    teamId: string,
-  ): boolean {
-    return Boolean(
-      user.teams?.some(
-        (team) =>
-          team.id === teamId,
-      ),
-    );
+  private userBelongsToTeam(user: ProfileUser, teamId: string): boolean {
+    return Boolean(user.teams?.some((team) => team.id === teamId));
   }
 
-  private initializeTeam(
-    teamId: string,
-  ): void {
+  private initializeTeam(teamId: string): void {
     this.resetCommissionsLazyState();
     this.syncTeamFromCache();
 
@@ -823,11 +612,9 @@ export class TeamDetail implements OnInit {
   }
 
   private observeTeamsCache(): void {
-    this.teamService.teamsState$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.syncTeamFromCache();
-      });
+    this.teamService.teamsState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.syncTeamFromCache();
+    });
   }
 
   private syncTeamFromCache(): void {
@@ -835,9 +622,7 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    const cachedTeam = this.teamService
-      .getTeamsSnapshot()
-      .find((team) => team.id === this.teamId);
+    const cachedTeam = this.teamService.getTeamsSnapshot().find((team) => team.id === this.teamId);
 
     if (!cachedTeam) {
       return;
@@ -850,15 +635,91 @@ export class TeamDetail implements OnInit {
         }
       : cachedTeam;
 
-    if (
-      this.team.active !== true &&
-      this.showAddUserModal &&
-      !this.isAddingUser
-    ) {
+    if (this.team.active !== true && this.showAddUserModal && !this.isAddingUser) {
       this.closeAddUserModal();
     }
 
     this.cdr.detectChanges();
+  }
+
+  private observeMembershipChanges(): void {
+    this.socketService
+      .listenTeamMembershipChanged()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (!this.teamId || event.teamId !== this.teamId) {
+          return;
+        }
+
+        if (this.wasMembershipHandledLocally(event.teamId, event.userId)) {
+          return;
+        }
+
+        // The incremental membership event intentionally carries only ids.
+        // When this team is open, reconcile just its member endpoint instead
+        // of reloading every team/user in the application.
+        this.loadTeam(event.teamId);
+      });
+  }
+
+  private observeUserChanges(): void {
+    this.socketService
+      .listenUsersChanged()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (!this.teamId || !event?.userId) {
+          return;
+        }
+
+        if (event.action === 'delete' || event.changes?.active === false) {
+          this.users = this.users.filter((user) => user.id !== event.userId);
+          this.cdr.detectChanges();
+          return;
+        }
+
+        const existingIndex = this.users.findIndex((user) => user.id === event.userId);
+
+        if (existingIndex >= 0 && event.changes) {
+          const users = [...this.users];
+          users[existingIndex] = {
+            ...users[existingIndex],
+            ...(event.changes.name !== undefined ? { name: event.changes.name } : {}),
+            ...(event.changes.role !== undefined ? { role: event.changes.role } : {}),
+            ...(event.changes.profilePicture !== undefined
+              ? { profilePicture: event.changes.profilePicture }
+              : {}),
+          };
+          this.users = users;
+          this.cdr.detectChanges();
+        }
+
+        if (event.changes?.active === true && existingIndex < 0) {
+          // Reactivation may make an existing membership visible again, but
+          // users:changed does not carry team membership data. Reconcile only
+          // the team currently open.
+          this.loadTeam(this.teamId);
+        }
+      });
+  }
+
+  private markMembershipHandled(teamId: string, userId: string): void {
+    this.locallyHandledMemberships.set(`${teamId}:${userId}`, Date.now());
+  }
+
+  private wasMembershipHandledLocally(teamId: string, userId: string): boolean {
+    const key = `${teamId}:${userId}`;
+    const handledAt = this.locallyHandledMemberships.get(key);
+    if (!handledAt) {
+      return false;
+    }
+
+    if (Date.now() - handledAt > 2500) {
+      this.locallyHandledMemberships.delete(key);
+      return false;
+    }
+
+    this.locallyHandledMemberships.delete(key);
+    return true;
   }
 
   toggleCommissions(): void {
@@ -866,14 +727,9 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    this.commissionsExpanded =
-      !this.commissionsExpanded;
+    this.commissionsExpanded = !this.commissionsExpanded;
 
-    if (
-      this.commissionsExpanded &&
-      !this.commissionsLoaded &&
-      !this.isLoadingCommissions
-    ) {
+    if (this.commissionsExpanded && !this.commissionsLoaded && !this.isLoadingCommissions) {
       this.loadCommissionData();
     }
   }
@@ -927,15 +783,8 @@ export class TeamDetail implements OnInit {
             this.editablePositionList = [...response.team.positionList];
           }
 
-          this.users = [
-            ...(response.users || []),
-          ].sort(
-            (
-              firstUser,
-              secondUser,
-            ) =>
-              firstUser.positionIndex -
-              secondUser.positionIndex,
+          this.users = [...(response.users || [])].sort(
+            (firstUser, secondUser) => firstUser.positionIndex - secondUser.positionIndex,
           );
 
           // If the global cache refreshed while this request was in flight,
@@ -944,18 +793,13 @@ export class TeamDetail implements OnInit {
         },
 
         error: () => {
-          this.errorMessage =
-            'Não foi possível carregar a equipa.';
+          this.errorMessage = 'Não foi possível carregar a equipa.';
         },
       });
   }
 
   private loadCompanies(): void {
-    if (
-      !this.canManageCommissions ||
-      this.isLoadingCompanies ||
-      this.companies.length
-    ) {
+    if (!this.canManageCommissions || this.isLoadingCompanies || this.companies.length) {
       return;
     }
 
@@ -972,44 +816,26 @@ export class TeamDetail implements OnInit {
       .subscribe({
         next: (companies) => {
           this.companies = companies
-            .filter(
-              (company) =>
-                company.active,
-            )
-            .sort((first, second) =>
-              first.name.localeCompare(
-                second.name,
-                'pt',
-              ),
-            );
+            .filter((company) => company.active)
+            .sort((first, second) => first.name.localeCompare(second.name, 'pt'));
 
           this.companyNameById.clear();
 
-          companies.forEach(
-            (company) => {
-              this.companyNameById.set(
-                company.id,
-                company.name,
-              );
-            },
-          );
+          companies.forEach((company) => {
+            this.companyNameById.set(company.id, company.name);
+          });
 
           this.sortTeamCommissions();
         },
 
         error: () => {
-          this.commissionsError =
-            'Não foi possível carregar as comercializadoras.';
+          this.commissionsError = 'Não foi possível carregar as comercializadoras.';
         },
       });
   }
 
   private loadTeamCommissions(): void {
-    if (
-      !this.canManageCommissions ||
-      !this.teamId ||
-      this.isLoadingCommissions
-    ) {
+    if (!this.canManageCommissions || !this.teamId || this.isLoadingCommissions) {
       return;
     }
 
@@ -1026,9 +852,7 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: (commissions) => {
-          this.teamCommissions = [
-            ...(commissions || []),
-          ];
+          this.teamCommissions = [...(commissions || [])];
 
           this.commissionsLoaded = true;
           this.sortTeamCommissions();
@@ -1036,17 +860,13 @@ export class TeamDetail implements OnInit {
 
         error: () => {
           this.commissionsLoaded = false;
-          this.commissionsError =
-            'Não foi possível carregar as comissões da equipa.';
+          this.commissionsError = 'Não foi possível carregar as comissões da equipa.';
         },
       });
   }
 
   openCreateCommissionModal(): void {
-    if (
-      !this.canManageCommissions ||
-      !this.teamId
-    ) {
+    if (!this.canManageCommissions || !this.teamId) {
       return;
     }
 
@@ -1058,15 +878,12 @@ export class TeamDetail implements OnInit {
     this.showCommissionModal = true;
   }
 
-  openEditCommissionModal(
-    commission: TeamCommission,
-  ): void {
+  openEditCommissionModal(commission: TeamCommission): void {
     if (!this.canManageCommissions) {
       return;
     }
 
-    this.editingCommission =
-      commission;
+    this.editingCommission = commission;
 
     this.commissionFormError = '';
 
@@ -1074,51 +891,36 @@ export class TeamDetail implements OnInit {
 
     this.commissionForm.reset(
       {
-        companyId:
-          commission.companyId,
+        companyId: commission.companyId,
 
-        segment:
-          commission.segment,
+        segment: commission.segment,
 
-        electricityCommission:
-          commission.electricityCommission,
+        electricityCommission: commission.electricityCommission,
 
-        gasCommission:
-          commission.gasCommission,
+        gasCommission: commission.gasCommission,
 
-        directDebitCommission:
-          commission.directDebitCommission,
+        directDebitCommission: commission.directDebitCommission,
 
-        electronicInvoiceCommission:
-          commission.electronicInvoiceCommission,
+        electronicInvoiceCommission: commission.electronicInvoiceCommission,
 
-        SVACommission:
-          commission.SVACommission,
+        SVACommission: commission.SVACommission,
 
-        PELCommission:
-          commission.PELCommission,
+        PELCommission: commission.PELCommission,
 
-        PGICommission:
-          commission.PGICommission,
+        PGICommission: commission.PGICommission,
 
-        MGICommission:
-          commission.MGICommission,
+        MGICommission: commission.MGICommission,
 
-        PELPlusCommission:
-          commission.PELPlusCommission,
+        PELPlusCommission: commission.PELPlusCommission,
 
-        active:
-          commission.active,
+        active: commission.active,
       },
       {
         emitEvent: false,
       },
     );
 
-    (
-      commission
-        .electricityPowerCommissions ?? []
-    ).forEach((powerCommission) => {
+    (commission.electricityPowerCommissions ?? []).forEach((powerCommission) => {
       this.powerCommissions.push(
         this.createPowerCommissionGroup(
           Number(powerCommission.powerKva),
@@ -1150,31 +952,21 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    this.powerCommissions.push(
-      this.createPowerCommissionGroup(),
-    );
+    this.powerCommissions.push(this.createPowerCommissionGroup());
   }
 
-  removePowerCommission(
-    index: number,
-  ): void {
+  removePowerCommission(index: number): void {
     if (this.isSavingCommission) {
       return;
     }
 
-    this.powerCommissions.removeAt(
-      index,
-    );
+    this.powerCommissions.removeAt(index);
 
     this.commissionFormError = '';
   }
 
   saveCommission(): void {
-    if (
-      !this.canManageCommissions ||
-      !this.teamId ||
-      this.isSavingCommission
-    ) {
+    if (!this.canManageCommissions || !this.teamId || this.isSavingCommission) {
       return;
     }
 
@@ -1183,46 +975,32 @@ export class TeamDetail implements OnInit {
     if (this.commissionForm.invalid) {
       this.commissionForm.markAllAsTouched();
 
-      this.commissionFormError =
-        'Preenche corretamente todos os campos obrigatórios.';
+      this.commissionFormError = 'Preenche corretamente todos os campos obrigatórios.';
 
       return;
     }
 
-    if (
-      this.hasDuplicatePowerCommissions()
-    ) {
-      this.commissionFormError =
-        'Já existe uma comissão definida para esta potência.';
+    if (this.hasDuplicatePowerCommissions()) {
+      this.commissionFormError = 'Já existe uma comissão definida para esta potência.';
 
       return;
     }
 
-    const rawValue =
-      this.commissionForm.getRawValue();
+    const rawValue = this.commissionForm.getRawValue();
 
-    const powerCommissions =
-      (
-        rawValue
-          .electricityPowerCommissions as
-          PowerCommissionFormValue[]
-      ).map((item) => ({
-        powerKva:
-          Number(item.powerKva),
-        commission:
-          Number(item.commission),
-      }));
+    const powerCommissions = (
+      rawValue.electricityPowerCommissions as PowerCommissionFormValue[]
+    ).map((item) => ({
+      powerKva: Number(item.powerKva),
+      commission: Number(item.commission),
+    }));
 
-    const duplicateConfiguration =
-      this.teamCommissions.some(
-        (commission) =>
-          commission.companyId ===
-            rawValue.companyId &&
-          commission.segment ===
-            rawValue.segment &&
-          commission.id !==
-            this.editingCommission?.id,
-      );
+    const duplicateConfiguration = this.teamCommissions.some(
+      (commission) =>
+        commission.companyId === rawValue.companyId &&
+        commission.segment === rawValue.segment &&
+        commission.id !== this.editingCommission?.id,
+    );
 
     if (duplicateConfiguration) {
       this.commissionFormError =
@@ -1234,79 +1012,39 @@ export class TeamDetail implements OnInit {
     this.isSavingCommission = true;
 
     if (this.editingCommission) {
-      const payload:
-        UpdateTeamCommissionRequest = {
-          companyId:
-            rawValue.companyId,
+      const payload: UpdateTeamCommissionRequest = {
+        companyId: rawValue.companyId,
 
-          segment:
-            rawValue.segment!,
+        segment: rawValue.segment!,
 
-          electricityCommission:
-            Number(
-              rawValue
-                .electricityCommission,
-            ),
+        electricityCommission: Number(rawValue.electricityCommission),
 
-          electricityPowerCommissions:
-            powerCommissions,
+        electricityPowerCommissions: powerCommissions,
 
-          gasCommission:
-            Number(
-              rawValue.gasCommission,
-            ),
+        gasCommission: Number(rawValue.gasCommission),
 
-          directDebitCommission:
-            Number(
-              rawValue
-                .directDebitCommission,
-            ),
+        directDebitCommission: Number(rawValue.directDebitCommission),
 
-          electronicInvoiceCommission:
-            Number(
-              rawValue
-                .electronicInvoiceCommission,
-            ),
+        electronicInvoiceCommission: Number(rawValue.electronicInvoiceCommission),
 
-          SVACommission:
-            Number(
-              rawValue.SVACommission,
-            ),
+        SVACommission: Number(rawValue.SVACommission),
 
-          PELCommission:
-            Number(
-              rawValue.PELCommission,
-            ),
+        PELCommission: Number(rawValue.PELCommission),
 
-          PGICommission:
-            Number(
-              rawValue.PGICommission,
-            ),
+        PGICommission: Number(rawValue.PGICommission),
 
-          MGICommission:
-            Number(
-              rawValue.MGICommission,
-            ),
+        MGICommission: Number(rawValue.MGICommission),
 
-          PELPlusCommission:
-            Number(
-              rawValue
-                .PELPlusCommission,
-            ),
+        PELPlusCommission: Number(rawValue.PELPlusCommission),
 
-          active:
-            Boolean(rawValue.active),
-        };
+        active: Boolean(rawValue.active),
+      };
 
       this.teamCommissionService
-        .update(
-          this.editingCommission.id,
-          payload,
-        )
+        .update(this.editingCommission.id, payload)
         .pipe(
           finalize(() => {
-            this.isSavingCommission =
-              false;
+            this.isSavingCommission = false;
 
             this.cdr.detectChanges();
           }),
@@ -1315,77 +1053,48 @@ export class TeamDetail implements OnInit {
           next: (updatedCommission) => {
             this.finishCommissionSave();
 
-            this.successMessage =
-              'Configuração de comissões atualizada com sucesso.';
+            this.successMessage = 'Configuração de comissões atualizada com sucesso.';
 
-            this.upsertTeamCommission(
-              updatedCommission,
-            );
+            this.upsertTeamCommission(updatedCommission);
 
             this.clearSuccessMessageLater();
           },
 
           error: (error) => {
-            this.handleCommissionSaveError(
-              error,
-            );
+            this.handleCommissionSaveError(error);
           },
         });
 
       return;
     }
 
-    const payload:
-      CreateTeamCommissionRequest = {
-        teamId: this.teamId,
+    const payload: CreateTeamCommissionRequest = {
+      teamId: this.teamId,
 
-        companyId:
-          rawValue.companyId,
+      companyId: rawValue.companyId,
 
-        segment:
-          rawValue.segment!,
+      segment: rawValue.segment!,
 
-        electricityCommission:
-          Number(
-            rawValue
-              .electricityCommission,
-          ),
+      electricityCommission: Number(rawValue.electricityCommission),
 
-        electricityPowerCommissions:
-          powerCommissions,
+      electricityPowerCommissions: powerCommissions,
 
-        gasCommission:
-          Number(rawValue.gasCommission),
+      gasCommission: Number(rawValue.gasCommission),
 
-        directDebitCommission:
-          Number(
-            rawValue
-              .directDebitCommission,
-          ),
+      directDebitCommission: Number(rawValue.directDebitCommission),
 
-        electronicInvoiceCommission:
-          Number(
-            rawValue
-              .electronicInvoiceCommission,
-          ),
+      electronicInvoiceCommission: Number(rawValue.electronicInvoiceCommission),
 
-        SVACommission:
-          Number(rawValue.SVACommission),
+      SVACommission: Number(rawValue.SVACommission),
 
-        PELCommission:
-          Number(rawValue.PELCommission),
+      PELCommission: Number(rawValue.PELCommission),
 
-        PGICommission:
-          Number(rawValue.PGICommission),
+      PGICommission: Number(rawValue.PGICommission),
 
-        MGICommission:
-          Number(rawValue.MGICommission),
+      MGICommission: Number(rawValue.MGICommission),
 
-        PELPlusCommission:
-          Number(
-            rawValue.PELPlusCommission,
-          ),
-      };
+      PELPlusCommission: Number(rawValue.PELPlusCommission),
+    };
 
     this.teamCommissionService
       .create(payload)
@@ -1399,49 +1108,35 @@ export class TeamDetail implements OnInit {
         next: (createdCommission) => {
           this.finishCommissionSave();
 
-          this.successMessage =
-            'Configuração de comissões criada com sucesso.';
+          this.successMessage = 'Configuração de comissões criada com sucesso.';
 
-          this.upsertTeamCommission(
-            createdCommission,
-          );
+          this.upsertTeamCommission(createdCommission);
 
           this.clearSuccessMessageLater();
         },
 
         error: (error) => {
-          this.handleCommissionSaveError(
-            error,
-          );
+          this.handleCommissionSaveError(error);
         },
       });
   }
 
-  deleteCommission(
-    commission: TeamCommission,
-  ): void {
-    if (
-      !this.canManageCommissions ||
-      this.deletingCommissionId
-    ) {
+  deleteCommission(commission: TeamCommission): void {
+    if (!this.canManageCommissions || this.deletingCommissionId) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Eliminar configuração de comissões de ${this.getCompanyName(
-          commission.companyId,
-        )} - ${this.getSegmentLabel(
-          commission.segment,
-        )}?`,
-      );
+    const confirmed = window.confirm(
+      `Eliminar configuração de comissões de ${this.getCompanyName(
+        commission.companyId,
+      )} - ${this.getSegmentLabel(commission.segment)}?`,
+    );
 
     if (!confirmed) {
       return;
     }
 
-    this.deletingCommissionId =
-      commission.id;
+    this.deletingCommissionId = commission.id;
 
     this.commissionsError = '';
 
@@ -1455,46 +1150,31 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.teamCommissions =
-            this.teamCommissions.filter(
-              (item) =>
-                item.id !== commission.id,
-            );
+          this.teamCommissions = this.teamCommissions.filter((item) => item.id !== commission.id);
 
-          this.successMessage =
-            'Configuração de comissões eliminada com sucesso.';
+          this.successMessage = 'Configuração de comissões eliminada com sucesso.';
 
           this.clearSuccessMessageLater();
         },
 
         error: (error) => {
           this.commissionsError =
-            error?.error?.message ||
-            'Não foi possível eliminar a configuração de comissões.';
+            error?.error?.message || 'Não foi possível eliminar a configuração de comissões.';
         },
       });
   }
 
-  toggleCommissionActive(
-    commission: TeamCommission,
-  ): void {
-    if (
-      !this.canManageCommissions ||
-      this.isSavingCommission
-    ) {
+  toggleCommissionActive(commission: TeamCommission): void {
+    if (!this.canManageCommissions || this.isSavingCommission) {
       return;
     }
 
     this.isSavingCommission = true;
 
     this.teamCommissionService
-      .update(
-        commission.id,
-        {
-          active:
-            !commission.active,
-        },
-      )
+      .update(commission.id, {
+        active: !commission.active,
+      })
       .pipe(
         finalize(() => {
           this.isSavingCommission = false;
@@ -1505,107 +1185,66 @@ export class TeamDetail implements OnInit {
         next: () => {
           this.loadTeamCommissions();
 
-          this.successMessage =
-            'Estado da configuração atualizado com sucesso.';
+          this.successMessage = 'Estado da configuração atualizado com sucesso.';
 
           this.clearSuccessMessageLater();
         },
 
         error: (error) => {
           this.commissionsError =
-            error?.error?.message ||
-            'Não foi possível atualizar o estado da configuração.';
+            error?.error?.message || 'Não foi possível atualizar o estado da configuração.';
         },
       });
   }
 
-  getCompanyName(
-    companyId: string,
-  ): string {
-    return (
-      this.companyNameById.get(
-        companyId,
-      ) ??
-      companyId
-    );
+  getCompanyName(companyId: string): string {
+    return this.companyNameById.get(companyId) ?? companyId;
   }
 
-  getSegmentLabel(
-    segment:
-      TeamCommissionSegment,
-  ): string {
-    const labels:
-      Record<
-        TeamCommissionSegment,
-        string
-      > = {
-        residential: 'Residencial',
-        business: 'Empresarial',
-        condominium: 'Condomínio',
-      };
+  getSegmentLabel(segment: TeamCommissionSegment): string {
+    const labels: Record<TeamCommissionSegment, string> = {
+      residential: 'Residencial',
+      business: 'Empresarial',
+      condominium: 'Condomínio',
+    };
 
     return labels[segment];
   }
 
-  formatCommission(
-    value:
-      number |
-      null |
-      undefined,
-  ): string {
-    return new Intl.NumberFormat(
-      'pt-PT',
-      {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 2,
-      },
-    ).format(Number(value ?? 0));
+  formatCommission(value: number | null | undefined): string {
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+    }).format(Number(value ?? 0));
   }
 
-  formatPower(
-    value: number,
-  ): string {
+  formatPower(value: number): string {
     return `${Number(value).toFixed(2)} kVA`;
   }
 
-  trackCommissionById(
-    _index: number,
-    commission: TeamCommission,
-  ): string {
+  trackCommissionById(_index: number, commission: TeamCommission): string {
     return commission.id;
   }
 
-  trackPowerByIndex(
-    index: number,
-  ): number {
+  trackPowerByIndex(index: number): number {
     return index;
   }
 
   private createPowerCommissionGroup(
-    powerKva:
-      number | null = null,
-    commission:
-      number | null = null,
+    powerKva: number | null = null,
+    commission: number | null = null,
   ) {
     return this.fb.group({
-      powerKva:
-        this.fb.control<number | null>(
-          powerKva,
-          [
-            Validators.required,
-            Validators.min(0.01),
-          ],
-        ),
+      powerKva: this.fb.control<number | null>(powerKva, [
+        Validators.required,
+        Validators.min(0.01),
+      ]),
 
-      commission:
-        this.fb.control<number | null>(
-          commission,
-          [
-            Validators.required,
-            Validators.min(0),
-          ],
-        ),
+      commission: this.fb.control<number | null>(commission, [
+        Validators.required,
+        Validators.min(0),
+      ]),
     });
   }
 
@@ -1641,78 +1280,41 @@ export class TeamDetail implements OnInit {
     this.commissionForm.markAsUntouched();
   }
 
-  private hasDuplicatePowerCommissions():
-    boolean {
-    const values =
-      (
-        this.powerCommissions
-          .getRawValue() as
-          PowerCommissionFormValue[]
-      )
-        .map((item) =>
-          Number(item.powerKva),
-        )
-        .filter((value) =>
-          Number.isFinite(value),
-        );
+  private hasDuplicatePowerCommissions(): boolean {
+    const values = (this.powerCommissions.getRawValue() as PowerCommissionFormValue[])
+      .map((item) => Number(item.powerKva))
+      .filter((value) => Number.isFinite(value));
 
-    return (
-      new Set(values).size !==
-      values.length
-    );
+    return new Set(values).size !== values.length;
   }
 
   private sortTeamCommissions(): void {
-    this.teamCommissions.sort(
-      (first, second) => {
-        const companyComparison =
-          this.getCompanyName(
-            first.companyId,
-          ).localeCompare(
-            this.getCompanyName(
-              second.companyId,
-            ),
-            'pt',
-          );
-
-        if (companyComparison !== 0) {
-          return companyComparison;
-        }
-
-        return this.getSegmentLabel(
-          first.segment,
-        ).localeCompare(
-          this.getSegmentLabel(
-            second.segment,
-          ),
-          'pt',
-        );
-      },
-    );
-  }
-
-  private upsertTeamCommission(
-    commission: TeamCommission,
-  ): void {
-    const existingIndex =
-      this.teamCommissions.findIndex(
-        (item) =>
-          item.id === commission.id,
+    this.teamCommissions.sort((first, second) => {
+      const companyComparison = this.getCompanyName(first.companyId).localeCompare(
+        this.getCompanyName(second.companyId),
+        'pt',
       );
 
+      if (companyComparison !== 0) {
+        return companyComparison;
+      }
+
+      return this.getSegmentLabel(first.segment).localeCompare(
+        this.getSegmentLabel(second.segment),
+        'pt',
+      );
+    });
+  }
+
+  private upsertTeamCommission(commission: TeamCommission): void {
+    const existingIndex = this.teamCommissions.findIndex((item) => item.id === commission.id);
+
     if (existingIndex === -1) {
-      this.teamCommissions = [
-        ...this.teamCommissions,
-        commission,
-      ];
+      this.teamCommissions = [...this.teamCommissions, commission];
     } else {
-      this.teamCommissions =
-        this.teamCommissions.map(
-          (item, index) =>
-            index === existingIndex
-              ? commission
-              : item,
-        );
+      this.teamCommissions = this.teamCommissions.map((item, index) =>
+        index === existingIndex ? commission : item,
+      );
     }
 
     this.sortTeamCommissions();
@@ -1725,14 +1327,12 @@ export class TeamDetail implements OnInit {
     this.resetCommissionForm();
   }
 
-  private handleCommissionSaveError(
-    error: {
-      status?: number;
-      error?: {
-        message?: string;
-      };
-    },
-  ): void {
+  private handleCommissionSaveError(error: {
+    status?: number;
+    error?: {
+      message?: string;
+    };
+  }): void {
     if (error?.status === 409) {
       this.commissionFormError =
         'Já existe uma configuração de comissões para esta comercializadora e segmento.';
@@ -1741,8 +1341,7 @@ export class TeamDetail implements OnInit {
     }
 
     this.commissionFormError =
-      error?.error?.message ||
-      'Não foi possível guardar a configuração de comissões.';
+      error?.error?.message || 'Não foi possível guardar a configuração de comissões.';
   }
 
   private clearSuccessMessageLater(): void {
@@ -1753,11 +1352,7 @@ export class TeamDetail implements OnInit {
   }
 
   openAddUserModal(): void {
-    if (
-      !this.canAddTeamUsers ||
-      !this.teamId ||
-      this.isLoadingUsers
-    ) {
+    if (!this.canAddTeamUsers || !this.teamId || this.isLoadingUsers) {
       return;
     }
 
@@ -1809,95 +1404,51 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: (users) => {
-          const existingUserIds =
-            new Set(
-              this.users.map(
-                (user) => user.id,
-              ),
-            );
+          const existingUserIds = new Set(this.users.map((user) => user.id));
 
-          this.availableUsers =
-            users.filter(
-              (user) =>
-                user.active &&
-                !existingUserIds.has(
-                  user.id,
-                ),
-            );
+          this.availableUsers = users.filter(
+            (user) => user.active && !existingUserIds.has(user.id),
+          );
 
           this.applyUserSearch();
         },
 
         error: () => {
-          this.addUserErrorMessage =
-            'Não foi possível carregar os utilizadores disponíveis.';
+          this.addUserErrorMessage = 'Não foi possível carregar os utilizadores disponíveis.';
         },
       });
   }
 
   applyUserSearch(): void {
-    const searchedValue =
-      this.normalizeText(
-        this.userSearch,
+    const searchedValue = this.normalizeText(this.userSearch);
+
+    this.filteredAvailableUsers = this.availableUsers.filter((user) => {
+      if (!searchedValue) {
+        return true;
+      }
+
+      const searchableText = this.normalizeText(
+        [user.name, user.email, user.role].filter(Boolean).join(' '),
       );
 
-    this.filteredAvailableUsers =
-      this.availableUsers.filter(
-        (user) => {
-          if (!searchedValue) {
-            return true;
-          }
-
-          const searchableText =
-            this.normalizeText(
-              [
-                user.name,
-                user.email,
-                user.role,
-              ]
-                .filter(Boolean)
-                .join(' '),
-            );
-
-          return searchableText.includes(
-            searchedValue,
-          );
-        },
-      );
+      return searchableText.includes(searchedValue);
+    });
   }
 
-  toggleUserSelection(
-    userId: string,
-  ): void {
-    if (
-      !this.canManageTeamUsers ||
-      this.isAddingUser
-    ) {
+  toggleUserSelection(userId: string): void {
+    if (!this.canManageTeamUsers || this.isAddingUser) {
       return;
     }
 
-    if (
-      this.selectedUserIds.includes(
-        userId,
-      )
-    ) {
-      this.selectedUserIds =
-        this.selectedUserIds.filter(
-          (selectedId) =>
-            selectedId !== userId,
-        );
+    if (this.selectedUserIds.includes(userId)) {
+      this.selectedUserIds = this.selectedUserIds.filter((selectedId) => selectedId !== userId);
 
-      this.removeSelectedUserPosition(
-        userId,
-      );
+      this.removeSelectedUserPosition(userId);
 
       return;
     }
 
-    this.selectedUserIds = [
-      ...this.selectedUserIds,
-      userId,
-    ];
+    this.selectedUserIds = [...this.selectedUserIds, userId];
 
     this.selectedUserPositions = {
       ...this.selectedUserPositions,
@@ -1907,22 +1458,12 @@ export class TeamDetail implements OnInit {
     this.addUserErrorMessage = '';
   }
 
-  isUserSelected(
-    userId: string,
-  ): boolean {
-    return this.selectedUserIds.includes(
-      userId,
-    );
+  isUserSelected(userId: string): boolean {
+    return this.selectedUserIds.includes(userId);
   }
 
-  setSelectedUserPosition(
-    userId: string,
-    positionIndex: number | null,
-  ): void {
-    if (
-      !this.isUserSelected(userId) ||
-      this.isAddingUser
-    ) {
+  setSelectedUserPosition(userId: string, positionIndex: number | null): void {
+    if (!this.isUserSelected(userId) || this.isAddingUser) {
       return;
     }
 
@@ -1934,32 +1475,19 @@ export class TeamDetail implements OnInit {
     this.addUserErrorMessage = '';
   }
 
-  getSelectedUserPosition(
-    userId: string,
-  ): number | null {
-    return (
-      this.selectedUserPositions[
-        userId
-      ] ??
-      null
-    );
+  getSelectedUserPosition(userId: string): number | null {
+    return this.selectedUserPositions[userId] ?? null;
   }
 
-  hasValidSelectedPosition(
-    userId: string,
-  ): boolean {
-    const positionIndex =
-      this.getSelectedUserPosition(
-        userId,
-      );
+  hasValidSelectedPosition(userId: string): boolean {
+    const positionIndex = this.getSelectedUserPosition(userId);
 
     return Boolean(
       this.team &&
       Number.isInteger(positionIndex) &&
       positionIndex !== null &&
       positionIndex >= 0 &&
-      positionIndex <
-        this.team.positionList.length,
+      positionIndex < this.team.positionList.length,
     );
   }
 
@@ -1972,99 +1500,55 @@ export class TeamDetail implements OnInit {
   }
 
   selectAllVisibleUsers(): void {
-    if (
-      this.isAddingUser ||
-      !this.filteredAvailableUsers.length
-    ) {
+    if (this.isAddingUser || !this.filteredAvailableUsers.length) {
       return;
     }
 
-    const visibleUserIds =
-      this.filteredAvailableUsers.map(
-        (user) => user.id,
-      );
+    const visibleUserIds = this.filteredAvailableUsers.map((user) => user.id);
 
-    this.selectedUserIds =
-      Array.from(
-        new Set([
-          ...this.selectedUserIds,
-          ...visibleUserIds,
-        ]),
-      );
+    this.selectedUserIds = Array.from(new Set([...this.selectedUserIds, ...visibleUserIds]));
 
     const nextPositions = {
       ...this.selectedUserPositions,
     };
 
-    visibleUserIds.forEach(
-      (userId) => {
-        if (
-          nextPositions[userId] ===
-          undefined
-        ) {
-          nextPositions[userId] =
-            null;
-        }
-      },
-    );
+    visibleUserIds.forEach((userId) => {
+      if (nextPositions[userId] === undefined) {
+        nextPositions[userId] = null;
+      }
+    });
 
-    this.selectedUserPositions =
-      nextPositions;
+    this.selectedUserPositions = nextPositions;
 
     this.addUserErrorMessage = '';
   }
 
   areAllVisibleUsersSelected(): boolean {
     return (
-      this.filteredAvailableUsers.length >
-        0 &&
-      this.filteredAvailableUsers.every(
-        (user) =>
-          this.selectedUserIds.includes(
-            user.id,
-          ),
-      )
+      this.filteredAvailableUsers.length > 0 &&
+      this.filteredAvailableUsers.every((user) => this.selectedUserIds.includes(user.id))
     );
   }
 
   toggleAllVisibleUsers(): void {
-    if (
-      this.isAddingUser ||
-      !this.filteredAvailableUsers.length
-    ) {
+    if (this.isAddingUser || !this.filteredAvailableUsers.length) {
       return;
     }
 
-    if (
-      this.areAllVisibleUsersSelected()
-    ) {
-      const visibleUserIds =
-        new Set(
-          this.filteredAvailableUsers.map(
-            (user) => user.id,
-          ),
-        );
+    if (this.areAllVisibleUsersSelected()) {
+      const visibleUserIds = new Set(this.filteredAvailableUsers.map((user) => user.id));
 
-      this.selectedUserIds =
-        this.selectedUserIds.filter(
-          (userId) =>
-            !visibleUserIds.has(
-              userId,
-            ),
-        );
+      this.selectedUserIds = this.selectedUserIds.filter((userId) => !visibleUserIds.has(userId));
 
       const nextPositions = {
         ...this.selectedUserPositions,
       };
 
-      visibleUserIds.forEach(
-        (userId) => {
-          delete nextPositions[userId];
-        },
-      );
+      visibleUserIds.forEach((userId) => {
+        delete nextPositions[userId];
+      });
 
-      this.selectedUserPositions =
-        nextPositions;
+      this.selectedUserPositions = nextPositions;
 
       return;
     }
@@ -2079,86 +1563,53 @@ export class TeamDetail implements OnInit {
       !this.selectedUserIds.length ||
       this.isAddingUser
     ) {
-      if (
-        this.canAddTeamUsers &&
-        !this.selectedUserIds.length
-      ) {
-        this.addUserErrorMessage =
-          'Seleciona pelo menos um utilizador.';
+      if (this.canAddTeamUsers && !this.selectedUserIds.length) {
+        this.addUserErrorMessage = 'Seleciona pelo menos um utilizador.';
       }
 
       return;
     }
 
     if (!this.canSubmitSelectedUsers) {
-      this.addUserErrorMessage =
-        'Seleciona uma posição para todos os utilizadores escolhidos.';
+      this.addUserErrorMessage = 'Seleciona uma posição para todos os utilizadores escolhidos.';
 
       return;
     }
 
     const teamId = this.teamId;
 
-    const uniqueUserIds =
-      Array.from(
-        new Set(
-          this.selectedUserIds,
-        ),
-      );
+    const uniqueUserIds = Array.from(new Set(this.selectedUserIds));
 
     this.isAddingUser = true;
     this.addUserErrorMessage = '';
 
-    const requests =
-      uniqueUserIds.map(
-        (userId) => {
-          const payload:
-            AddUserToTeamRequest = {
-              teamId,
-              userId,
-              positionIndex:
-                this.selectedUserPositions[
-                  userId
-                ] as number,
-            };
+    const requests = uniqueUserIds.map((userId) => {
+      const payload: AddUserToTeamRequest = {
+        teamId,
+        userId,
+        positionIndex: this.selectedUserPositions[userId] as number,
+      };
 
-          return this.teamService
-            .addUserToTeam(payload)
-            .pipe(
-              map(
-                (): AddUserResult => ({
-                  userId,
-                  success: true,
-                }),
-              ),
+      return this.teamService.addUserToTeam(payload).pipe(
+        map((teamUser): AddUserResult => ({
+          userId,
+          success: true,
+          teamUser,
+        })),
 
-              catchError((error) => {
-                const result:
-                  AddUserResult = {
-                    userId,
-                    success: false,
-                    status:
-                      error?.status,
-                    code:
-                      typeof error?.error
-                        ?.code ===
-                      'string'
-                        ? error.error.code
-                        : undefined,
-                    message:
-                      typeof error?.error
-                        ?.message ===
-                      'string'
-                        ? error.error
-                            .message
-                        : undefined,
-                  };
+        catchError((error) => {
+          const result: AddUserResult = {
+            userId,
+            success: false,
+            status: error?.status,
+            code: typeof error?.error?.code === 'string' ? error.error.code : undefined,
+            message: typeof error?.error?.message === 'string' ? error.error.message : undefined,
+          };
 
-                return of(result);
-              }),
-            );
-        },
+          return of(result);
+        }),
       );
+    });
 
     forkJoin(requests)
       .pipe(
@@ -2169,93 +1620,62 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: (results) => {
-          const successfulResults =
-            results.filter(
-              (result) =>
-                result.success,
-            );
+          const successfulResults = results.filter((result) => result.success);
 
-          const failedResults =
-            results.filter(
-              (result) =>
-                !result.success,
-            );
+          const failedResults = results.filter((result) => !result.success);
 
-          if (
-            successfulResults.length
-          ) {
-            this.loadTeam(teamId);
+          if (successfulResults.length) {
+            const currentIds = new Set(this.users.map((user) => user.id));
+            const addedUsers = successfulResults
+              .map((result) => result.teamUser)
+              .filter((teamUser): teamUser is TeamUser => Boolean(teamUser))
+              .filter((teamUser) => !currentIds.has(teamUser.id));
+
+            if (addedUsers.length) {
+              this.users = [...this.users, ...addedUsers].sort(
+                (firstUser, secondUser) => firstUser.positionIndex - secondUser.positionIndex,
+              );
+            }
+
+            successfulResults.forEach((result) => {
+              this.markMembershipHandled(teamId, result.userId);
+            });
           }
 
-          if (
-            !failedResults.length
-          ) {
+          if (!failedResults.length) {
             this.closeModalAfterSuccess();
             return;
           }
 
-          const inactiveTeamFailure =
-            failedResults.find(
-              (result) =>
-                result.status === 409 &&
-                result.code === 'TEAM_INACTIVE',
-            );
+          const inactiveTeamFailure = failedResults.find(
+            (result) => result.status === 409 && result.code === 'TEAM_INACTIVE',
+          );
 
           if (inactiveTeamFailure) {
             this.addUserErrorMessage =
               inactiveTeamFailure.message ||
               'Esta equipa está inativa e não pode receber novos utilizadores.';
 
-            this.teamService.refreshTeams().subscribe({
-              error: () => undefined,
-            });
+            this.loadTeam(teamId);
 
             return;
           }
 
-          const duplicatedUsers =
-            failedResults.filter(
-              (result) =>
-                result.status === 409,
-            );
+          const duplicatedUsers = failedResults.filter((result) => result.status === 409);
 
-          const otherFailures =
-            failedResults.filter(
-              (result) =>
-                result.status !== 409,
-            );
+          const otherFailures = failedResults.filter((result) => result.status !== 409);
 
-          const failedUserIds =
-            new Set(
-              failedResults.map(
-                (result) =>
-                  result.userId,
-              ),
-            );
+          const failedUserIds = new Set(failedResults.map((result) => result.userId));
 
-          this.selectedUserIds =
-            this.selectedUserIds.filter(
-              (userId) =>
-                failedUserIds.has(
-                  userId,
-                ),
-            );
+          this.selectedUserIds = this.selectedUserIds.filter((userId) => failedUserIds.has(userId));
 
-          this.selectedUserPositions =
-            Object.fromEntries(
-              Object.entries(
-                this.selectedUserPositions,
-              ).filter(([userId]) =>
-                failedUserIds.has(
-                  userId,
-                ),
-              ),
-            );
+          this.selectedUserPositions = Object.fromEntries(
+            Object.entries(this.selectedUserPositions).filter(([userId]) =>
+              failedUserIds.has(userId),
+            ),
+          );
 
-          if (
-            duplicatedUsers.length &&
-            !otherFailures.length
-          ) {
+          if (duplicatedUsers.length && !otherFailures.length) {
             this.addUserErrorMessage =
               duplicatedUsers.length === 1
                 ? 'Um dos utilizadores selecionados já pertence à equipa.'
@@ -2264,74 +1684,46 @@ export class TeamDetail implements OnInit {
             return;
           }
 
-          if (
-            successfulResults.length
-          ) {
-            this.addUserErrorMessage =
-              `${successfulResults.length} utilizador${
-                successfulResults.length ===
-                1
-                  ? ''
-                  : 'es'
-              } adicionado${
-                successfulResults.length ===
-                1
-                  ? ''
-                  : 's'
-              }, mas não foi possível adicionar ${failedResults.length}.`;
+          if (successfulResults.length) {
+            this.addUserErrorMessage = `${successfulResults.length} utilizador${
+              successfulResults.length === 1 ? '' : 'es'
+            } adicionado${
+              successfulResults.length === 1 ? '' : 's'
+            }, mas não foi possível adicionar ${failedResults.length}.`;
 
             return;
           }
 
           this.addUserErrorMessage =
-            failedResults[0]
-              ?.message ||
-            'Não foi possível adicionar os utilizadores à equipa.';
+            failedResults[0]?.message || 'Não foi possível adicionar os utilizadores à equipa.';
         },
       });
   }
 
-  removeUserFromTeam(
-    user: TeamUser,
-  ): void {
-    if (
-      !this.canManageTeamUsers ||
-      !this.teamId ||
-      this.removingUserId
-    ) {
+  removeUserFromTeam(user: TeamUser): void {
+    if (!this.canManageTeamUsers || !this.teamId || this.removingUserId) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Tens a certeza que pretendes remover ${user.name} desta equipa?`,
-      );
+    const confirmed = window.confirm(
+      `Tens a certeza que pretendes remover ${user.name} desta equipa?`,
+    );
 
     if (!confirmed) {
       return;
     }
 
-    const previousUsers = [
-      ...this.users,
-    ];
+    const previousUsers = [...this.users];
 
-    this.removingUserId =
-      user.id;
+    this.removingUserId = user.id;
 
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.users =
-      this.users.filter(
-        (teamUser) =>
-          teamUser.id !== user.id,
-      );
+    this.users = this.users.filter((teamUser) => teamUser.id !== user.id);
 
     this.teamService
-      .removeUserFromTeam(
-        this.teamId,
-        user.id,
-      )
+      .removeUserFromTeam(this.teamId, user.id)
       .pipe(
         finalize(() => {
           this.removingUserId = '';
@@ -2340,8 +1732,8 @@ export class TeamDetail implements OnInit {
       )
       .subscribe({
         next: () => {
-          this.successMessage =
-            `${user.name} foi removido da equipa com sucesso.`;
+          this.markMembershipHandled(this.teamId!, user.id);
+          this.successMessage = `${user.name} foi removido da equipa com sucesso.`;
 
           window.setTimeout(() => {
             this.successMessage = '';
@@ -2350,41 +1742,27 @@ export class TeamDetail implements OnInit {
         },
 
         error: (error) => {
-          this.users =
-            previousUsers;
+          this.users = previousUsers;
 
           this.errorMessage =
-            error?.error?.message ||
-            'Não foi possível remover o utilizador da equipa.';
+            error?.error?.message || 'Não foi possível remover o utilizador da equipa.';
         },
       });
   }
 
-  isRemovingUser(
-    userId: string,
-  ): boolean {
-    return (
-      this.removingUserId ===
-      userId
-    );
+  isRemovingUser(userId: string): boolean {
+    return this.removingUserId === userId;
   }
 
-  getTeamUserPositionLabel(
-    user: TeamUser,
-  ): string {
+  getTeamUserPositionLabel(user: TeamUser): string {
     const position =
       user.position?.trim() ||
-      this.team?.positionList[
-        user.positionIndex
-      ]?.trim() ||
+      this.team?.positionList[user.positionIndex]?.trim() ||
       'Sem posição selecionada';
 
-    const teamRole =
-      this.team?.role?.trim();
+    const teamRole = this.team?.role?.trim();
 
-    return teamRole
-      ? `${teamRole} - ${position}`
-      : position;
+    return teamRole ? `${teamRole} - ${position}` : position;
   }
 
   getAddUsersButtonText(): string {
@@ -2392,26 +1770,18 @@ export class TeamDetail implements OnInit {
       return 'A adicionar...';
     }
 
-    if (
-      this.selectedUsersCount === 1
-    ) {
+    if (this.selectedUsersCount === 1) {
       return 'Adicionar 1 utilizador';
     }
 
-    if (
-      this.selectedUsersCount > 1
-    ) {
+    if (this.selectedUsersCount > 1) {
       return `Adicionar ${this.selectedUsersCount} utilizadores`;
     }
 
     return 'Adicionar à equipa';
   }
 
-  getProfilePictureUrl(
-    user:
-      TeamUser |
-      ProfileUser,
-  ): string | null {
+  getProfilePictureUrl(user: TeamUser | ProfileUser): string | null {
     if (!user.profilePicture) {
       return null;
     }
@@ -2419,28 +1789,15 @@ export class TeamDetail implements OnInit {
     return `${environment.apiUrl}/api/users/${user.id}/profile-picture`;
   }
 
-  getInitial(
-    name: string,
-  ): string {
-    return (
-      name
-        ?.charAt(0)
-        .toUpperCase() ||
-      '?'
-    );
+  getInitial(name: string): string {
+    return name?.charAt(0).toUpperCase() || '?';
   }
 
-  trackUserById(
-    _index: number,
-    user: ProfileUser,
-  ): string {
+  trackUserById(_index: number, user: ProfileUser): string {
     return user.id;
   }
 
-  trackTeamUserById(
-    _index: number,
-    user: TeamUser,
-  ): string {
+  trackTeamUserById(_index: number, user: TeamUser): string {
     return user.id;
   }
 
@@ -2449,17 +1806,14 @@ export class TeamDetail implements OnInit {
     this.selectedUserPositions = {};
   }
 
-  private removeSelectedUserPosition(
-    userId: string,
-  ): void {
+  private removeSelectedUserPosition(userId: string): void {
     const nextPositions = {
       ...this.selectedUserPositions,
     };
 
     delete nextPositions[userId];
 
-    this.selectedUserPositions =
-      nextPositions;
+    this.selectedUserPositions = nextPositions;
   }
 
   private closeModalAfterSuccess(): void {
@@ -2475,56 +1829,32 @@ export class TeamDetail implements OnInit {
     this.addUserErrorMessage = '';
   }
 
-  private normalizeText(
-    value:
-      string |
-      null |
-      undefined,
-  ): string {
+  private normalizeText(value: string | null | undefined): string {
     return (value || '')
       .trim()
       .toLocaleLowerCase('pt-PT')
       .normalize('NFD')
-      .replace(
-        /[\u0300-\u036f]/g,
-        '',
-      );
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
-  isFirstUserOfPosition(
-    index: number,
-    user: TeamUser,
-  ): boolean {
+  isFirstUserOfPosition(index: number, user: TeamUser): boolean {
     if (index === 0) {
       return true;
     }
 
-    return (
-      this.users[index - 1]
-        ?.positionIndex !==
-      user.positionIndex
-    );
+    return this.users[index - 1]?.positionIndex !== user.positionIndex;
   }
 
-  getPositionGroupLabel(
-    user: TeamUser,
-  ): string {
+  getPositionGroupLabel(user: TeamUser): string {
     return (
       user.position?.trim() ||
-      this.team?.positionList[
-        user.positionIndex
-      ]?.trim() ||
+      this.team?.positionList[user.positionIndex]?.trim() ||
       'Sem posição definida'
     );
   }
 
-  onCommissionBackdropPointerDown(
-    event: PointerEvent,
-  ): void {
-    if (
-      event.target !==
-      event.currentTarget
-    ) {
+  onCommissionBackdropPointerDown(event: PointerEvent): void {
+    if (event.target !== event.currentTarget) {
       return;
     }
 

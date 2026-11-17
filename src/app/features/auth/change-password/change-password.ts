@@ -86,8 +86,7 @@ export class ChangePassword {
 
   get passwordsDoNotMatch(): boolean {
     return Boolean(
-      this.form.hasError('passwordMismatch') &&
-        this.form.controls.confirmPassword.touched,
+      this.form.hasError('passwordMismatch') && this.form.controls.confirmPassword.touched,
     );
   }
 
@@ -127,7 +126,7 @@ export class ChangePassword {
       .pipe(finalize(() => (this.isSubmitting = false)))
       .subscribe({
         next: () => {
-          this.auth.clearSession();
+          this.auth.clearSession({ broadcast: true });
 
           void this.router.navigate(['/login'], {
             replaceUrl: true,
@@ -140,21 +139,18 @@ export class ChangePassword {
           const backendMessage = this.getBackendMessage(error);
 
           if (this.isCurrentPasswordIncorrectError(backendMessage)) {
-            this.currentPasswordError =
-              backendMessage || 'A palavra-passe atual está incorreta.';
+            this.currentPasswordError = backendMessage || 'A palavra-passe atual está incorreta.';
             return;
           }
 
           if (this.isSamePasswordError(backendMessage)) {
             this.newPasswordError =
-              backendMessage ||
-              'A nova palavra-passe tem de ser diferente da atual.';
+              backendMessage || 'A nova palavra-passe tem de ser diferente da atual.';
             return;
           }
 
           this.toast.error(
-            backendMessage ||
-              'Não foi possível alterar a palavra-passe. Tente novamente.',
+            backendMessage || 'Não foi possível alterar a palavra-passe. Tente novamente.',
           );
         },
       });
@@ -174,12 +170,9 @@ export class ChangePassword {
         return null;
       }
 
-      return newPassword === confirmPassword
-        ? null
-        : { passwordMismatch: true };
+      return newPassword === confirmPassword ? null : { passwordMismatch: true };
     };
   }
-
 
   private isCurrentPasswordIncorrectError(message: string): boolean {
     return (
@@ -191,12 +184,10 @@ export class ChangePassword {
 
   private isSamePasswordError(message: string): boolean {
     return (
-      message ===
-        'A nova palavra-passe tem de ser diferente da palavra-passe atual.' ||
+      message === 'A nova palavra-passe tem de ser diferente da palavra-passe atual.' ||
       message === 'A nova palavra-passe tem de ser diferente da atual.' ||
       message === 'A nova password tem de ser diferente da atual.' ||
-      message ===
-        'New password must be different from the current password.'
+      message === 'New password must be different from the current password.'
     );
   }
 

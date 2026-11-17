@@ -52,18 +52,20 @@ export class Login {
     const params = this.route.snapshot.queryParamMap;
 
     if (params.get('passwordChanged') === 'true') {
-      this.successMessage =
-        'Password alterada com sucesso. Inicie sessão novamente.';
+      this.successMessage = 'Password alterada com sucesso. Inicie sessão novamente.';
     }
 
     if (params.get('sessionExpired') === 'true') {
-      this.infoMessage =
-        'A sua sessão expirou. Inicie sessão novamente.';
+      this.infoMessage = 'A sua sessão expirou. Inicie sessão novamente.';
     }
 
     if (params.get('sessionInvalidated') === 'true') {
+      this.infoMessage = 'A sua sessão terminou. Inicie sessão novamente.';
+    }
+
+    if (params.get('sessionRecovery') === 'true') {
       this.infoMessage =
-        'A sua sessão terminou. Inicie sessão novamente.';
+        'Não foi possível confirmar a sessão automaticamente. Verifique a ligação e tente novamente.';
     }
   }
 
@@ -92,6 +94,13 @@ export class Login {
           return;
         }
 
+        const returnUrl = this.getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+
+        if (returnUrl) {
+          void this.router.navigateByUrl(returnUrl);
+          return;
+        }
+
         const target = this.auth.roleIncludes(['Super Admin', 'DU'])
           ? ['/home/dashboard']
           : ['/home/my-dashboard'];
@@ -109,5 +118,16 @@ export class Login {
         this.isLoading = false;
       },
     });
+  }
+  private getSafeReturnUrl(returnUrl: string | null): string | null {
+    if (!returnUrl || !returnUrl.startsWith('/') || returnUrl.startsWith('//')) {
+      return null;
+    }
+
+    if (returnUrl.startsWith('/login')) {
+      return null;
+    }
+
+    return returnUrl;
   }
 }

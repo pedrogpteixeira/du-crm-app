@@ -47,10 +47,7 @@ export class ResetPassword {
 
   readonly form = this.fb.nonNullable.group(
     {
-      verificationCode: [
-        '',
-        [Validators.required, Validators.pattern(/^\d{6}$/)],
-      ],
+      verificationCode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       newPassword: [
         '',
         [
@@ -73,8 +70,7 @@ export class ResetPassword {
 
     if (!token) {
       this.invalidLink = true;
-      this.invalidLinkMessage =
-        'Este link de recuperação é inválido ou está incompleto.';
+      this.invalidLinkMessage = 'Este link de recuperação é inválido ou está incompleto.';
       return;
     }
 
@@ -112,8 +108,7 @@ export class ResetPassword {
 
   get passwordsDoNotMatch(): boolean {
     return Boolean(
-      this.form.hasError('passwordMismatch') &&
-        this.form.controls.confirmPassword.touched,
+      this.form.hasError('passwordMismatch') && this.form.controls.confirmPassword.touched,
     );
   }
 
@@ -153,8 +148,7 @@ export class ResetPassword {
 
     if (!this.resetToken) {
       this.invalidLink = true;
-      this.invalidLinkMessage =
-        'Este link de recuperação é inválido ou está incompleto.';
+      this.invalidLinkMessage = 'Este link de recuperação é inválido ou está incompleto.';
       return;
     }
 
@@ -176,7 +170,7 @@ export class ResetPassword {
           this.resetToken = null;
           this.resetSucceeded = true;
           this.form.reset();
-          this.auth.clearSession();
+          this.auth.clearSession({ broadcast: true });
         },
         error: (error: HttpErrorResponse) => {
           const backendMessage = this.getBackendMessage(error);
@@ -201,8 +195,7 @@ export class ResetPassword {
             return;
           }
 
-          this.requestError =
-            'Não foi possível alterar a palavra-passe. Tente novamente.';
+          this.requestError = 'Não foi possível alterar a palavra-passe. Tente novamente.';
         },
       });
   }
@@ -216,9 +209,7 @@ export class ResetPassword {
         return null;
       }
 
-      return newPassword === confirmPassword
-        ? null
-        : { passwordMismatch: true };
+      return newPassword === confirmPassword ? null : { passwordMismatch: true };
     };
   }
 
@@ -231,10 +222,7 @@ export class ResetPassword {
     return body.message?.trim() ?? '';
   }
 
-  private isInvalidRecoveryRequestError(
-    error: HttpErrorResponse,
-    message: string,
-  ): boolean {
+  private isInvalidRecoveryRequestError(error: HttpErrorResponse, message: string): boolean {
     if (error.status === 404 || error.status === 410) {
       return true;
     }
@@ -248,9 +236,7 @@ export class ResetPassword {
 
     const tokenError =
       code.includes('TOKEN') &&
-      (code.includes('EXPIRED') ||
-        code.includes('INVALID') ||
-        code.includes('USED'));
+      (code.includes('EXPIRED') || code.includes('INVALID') || code.includes('USED'));
 
     const invalidatedRecovery =
       (code.includes('RESET') || code.includes('RECOVERY')) &&
@@ -276,10 +262,7 @@ export class ResetPassword {
     );
   }
 
-  private isVerificationCodeError(
-    error: HttpErrorResponse,
-    message: string,
-  ): boolean {
+  private isVerificationCodeError(error: HttpErrorResponse, message: string): boolean {
     if (!error.error || typeof error.error !== 'object') {
       return false;
     }
@@ -300,10 +283,7 @@ export class ResetPassword {
   private getSafeBackendMessage(message: string): string {
     const normalizedMessage = message.toLocaleLowerCase('pt-PT');
 
-    if (
-      normalizedMessage.includes('tentativa') ||
-      normalizedMessage.includes('attempt')
-    ) {
+    if (normalizedMessage.includes('tentativa') || normalizedMessage.includes('attempt')) {
       return 'O link ou código de recuperação é inválido ou expirou.';
     }
 

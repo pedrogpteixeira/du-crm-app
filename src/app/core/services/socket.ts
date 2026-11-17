@@ -47,6 +47,42 @@ export interface AutosInvalidationEvent {
   timestamp: string;
 }
 
+export interface TeamChangedEvent {
+  action: 'upsert' | 'refresh';
+  teamId: string;
+  team?: {
+    id: string;
+    name: string;
+    registrationNumber?: number;
+    role: string;
+    positionList: string[];
+    active: boolean;
+    walletBalance?: number;
+  };
+  timestamp: string;
+}
+
+export interface UserChangedEvent {
+  action: 'upsert' | 'refresh' | 'delete';
+  userId: string;
+  changes?: {
+    name?: string;
+    role?: string;
+    active?: boolean;
+    profilePicture?: string;
+  };
+  changedFields?: string[];
+  timestamp: string;
+}
+
+export interface TeamMembershipChangedEvent {
+  action: 'added' | 'removed';
+  teamId: string;
+  userId: string;
+  positionIndex?: number;
+  timestamp: string;
+}
+
 export interface TicketSocketEvent extends TicketApiModel {
   ticketId?: string;
   id?: string;
@@ -226,19 +262,13 @@ export class SocketService {
     );
   }
 
-
   listenEzuB2BContractCreated(): Observable<EzuB2BContractSocketEvent> {
-    return this.createEventObservable<EzuB2BContractSocketEvent>(
-      'ezu-b2b-contract:created',
-    );
+    return this.createEventObservable<EzuB2BContractSocketEvent>('ezu-b2b-contract:created');
   }
 
   listenEzuB2BContractUpdated(): Observable<EzuB2BContractSocketEvent> {
-    return this.createEventObservable<EzuB2BContractSocketEvent>(
-      'ezu-b2b-contract:updated',
-    );
+    return this.createEventObservable<EzuB2BContractSocketEvent>('ezu-b2b-contract:updated');
   }
-
 
   listenNossaEnergiaB2BContractCreated(): Observable<NossaEnergiaB2BContractSocketEvent> {
     return this.createEventObservable<NossaEnergiaB2BContractSocketEvent>(
@@ -252,19 +282,13 @@ export class SocketService {
     );
   }
 
-
   listenAudaxB2BContractCreated(): Observable<AudaxB2BContractSocketEvent> {
-    return this.createEventObservable<AudaxB2BContractSocketEvent>(
-      'audax-b2b-contract:created',
-    );
+    return this.createEventObservable<AudaxB2BContractSocketEvent>('audax-b2b-contract:created');
   }
 
   listenAudaxB2BContractUpdated(): Observable<AudaxB2BContractSocketEvent> {
-    return this.createEventObservable<AudaxB2BContractSocketEvent>(
-      'audax-b2b-contract:updated',
-    );
+    return this.createEventObservable<AudaxB2BContractSocketEvent>('audax-b2b-contract:updated');
   }
-
 
   listenPlenitudeB2BContractCreated(): Observable<PlenitudeB2BContractSocketEvent> {
     return this.createEventObservable<PlenitudeB2BContractSocketEvent>(
@@ -278,17 +302,12 @@ export class SocketService {
     );
   }
 
-
   listenEndesaB2BContractCreated(): Observable<EndesaB2BContractSocketEvent> {
-    return this.createEventObservable<EndesaB2BContractSocketEvent>(
-      'endesa-b2b-contract:created',
-    );
+    return this.createEventObservable<EndesaB2BContractSocketEvent>('endesa-b2b-contract:created');
   }
 
   listenEndesaB2BContractUpdated(): Observable<EndesaB2BContractSocketEvent> {
-    return this.createEventObservable<EndesaB2BContractSocketEvent>(
-      'endesa-b2b-contract:updated',
-    );
+    return this.createEventObservable<EndesaB2BContractSocketEvent>('endesa-b2b-contract:updated');
   }
 
   listenGalpSolarContractCreated(): Observable<GalpSolarContractSocketEvent> {
@@ -365,6 +384,18 @@ export class SocketService {
 
   listenVodafoneContractUpdated() {
     return this.createEventObservable<VodafoneContractSocketEvent>('vodafone-contract:updated');
+  }
+
+  listenTeamsChanged(): Observable<TeamChangedEvent> {
+    return this.createEventObservable<TeamChangedEvent>('teams:changed');
+  }
+
+  listenUsersChanged(): Observable<UserChangedEvent> {
+    return this.createEventObservable<UserChangedEvent>('users:changed');
+  }
+
+  listenTeamMembershipChanged(): Observable<TeamMembershipChangedEvent> {
+    return this.createEventObservable<TeamMembershipChangedEvent>('teams:membership:changed');
   }
 
   listenAssignableUsersInvalidated(): Observable<AssignableUsersInvalidationEvent> {
@@ -444,7 +475,7 @@ export class SocketService {
 
     this.socket.on('auth:session-invalidated', () => {
       this.zone.run(() => {
-        this.auth.clearSession();
+        this.auth.clearSession({ broadcast: true });
 
         void this.router.navigate(['/login'], {
           replaceUrl: true,

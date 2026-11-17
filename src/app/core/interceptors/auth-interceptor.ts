@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, finalize, switchMap, throwError } from 'rxjs';
 
+import { environment } from '../../../environments/environment';
 import { PasswordPolicy } from '../models/password-policy';
 import { Auth } from '../services/auth';
 import { CriticalRequestService } from '../services/critical-request';
@@ -22,7 +23,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const criticalRequests = inject(CriticalRequestService);
 
-  if (auth.isPasswordExpired() && !isAllowedWhilePasswordExpired(req)) {
+  const isApiRequest = isBackendApiRequest(req.url);
+
+  if (isApiRequest && auth.isPasswordExpired() && !isAllowedWhilePasswordExpired(req)) {
     void router.navigate(['/change-password'], {
       replaceUrl: true,
     });
@@ -42,22 +45,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
   }
 
-  const isCriticalRequest = isCriticalMethod(req.method);
+  const isCriticalRequest = isApiRequest && isCriticalMethod(req.method);
 
   if (isCriticalRequest) {
     criticalRequests.begin();
   }
 
-  const requestWithCredentials = req.clone({
-    withCredentials: true,
-  });
+  const requestForBackend = isApiRequest ? req.clone({ withCredentials: true }) : req;
 
-  const authenticatedRequest = isPasswordRecoveryRequest(req.url)
-    ? requestWithCredentials
-    : addAccessToken(requestWithCredentials, auth.getAccessToken());
+  const authenticatedRequest =
+    !isApiRequest || isPasswordRecoveryRequest(req.url)
+      ? requestForBackend
+      : addAccessToken(requestForBackend, auth.getAccessToken());
 
   return next(authenticatedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (!isApiRequest) {
+        return throwError(() => error);
+      }
+
       if (isPasswordExpiredError(error)) {
         const body = error.error as PasswordExpiredErrorBody;
 
@@ -98,11 +104,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             );
           }
 
-          const retriedRequest = addAccessToken(requestWithCredentials, newAccessToken);
+          const retriedRequest = addAccessToken(requestForBackend, newAccessToken);
 
           return next(retriedRequest);
         }),
-
         catchError((refreshError: HttpErrorResponse) => {
           if (auth.isPasswordExpired()) {
             void router.navigate(['/change-password'], {
@@ -112,12 +117,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => refreshError);
           }
 
-          auth.clearSession();
+          if (auth.isDefinitiveSessionFailure(refreshError)) {
+            auth.clearSession();
 
-          void router.navigate(['/login'], {
-            replaceUrl: true,
-          });
+            const returnUrl = getRecoverableReturnUrl(router.url);
 
+            void router.navigate(['/login'], {
+              replaceUrl: true,
+              queryParams: {
+                sessionExpired: 'true',
+                ...(returnUrl ? { returnUrl } : {}),
+              },
+            });
+          }
+
+          // 409 REFRESH_CONCURRENT esgotado, 403, 429, 5xx e erros de rede
+          // não significam uma sessão revogada. O estado local é preservado e
+          // um pedido posterior pode tentar recuperar a sessão novamente.
           return throwError(() => refreshError);
         }),
       );
@@ -183,13 +199,31 @@ function isAuthRequest(url: string): boolean {
     url.includes('/api/auth/refresh') ||
     url.includes('/api/auth/logout') ||
     url.includes('/api/auth/logout-all') ||
+    // Uma password atual incorreta pode legitimamente devolver 401. Não
+    // transformar esse erro de validação num refresh/logout automático.
     url.includes('/api/auth/password')
   );
 }
 
 function isPasswordRecoveryRequest(url: string): boolean {
-  return (
-    url.includes('/api/auth/forgot-password') ||
-    url.includes('/api/auth/reset-password')
-  );
+  return url.includes('/api/auth/forgot-password') || url.includes('/api/auth/reset-password');
+}
+
+function isBackendApiRequest(url: string): boolean {
+  try {
+    const apiOrigin = new URL(environment.apiUrl, window.location.origin).origin;
+    const requestUrl = new URL(url, window.location.origin);
+
+    return requestUrl.origin === apiOrigin;
+  } catch {
+    return url.startsWith(environment.apiUrl) || url.startsWith('/api/');
+  }
+}
+
+function getRecoverableReturnUrl(currentUrl: string): string | null {
+  if (!currentUrl || currentUrl.startsWith('/login')) {
+    return null;
+  }
+
+  return currentUrl.startsWith('/') ? currentUrl : null;
 }

@@ -24,13 +24,7 @@ import { ImageCropperComponent, ImageCroppedEvent } from 'ngx-image-cropper';
 
 @Component({
   selector: 'app-profile',
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    ImageCropperComponent,
-    RouterLink,
-  ],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ImageCropperComponent, RouterLink],
   templateUrl: './profile.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './profile.scss',
@@ -86,22 +80,17 @@ export class Profile implements OnInit {
   user: AuthUser = this.getEmptyUser();
   editableUser: AuthUser = { ...this.user };
 
-  private readonly passwordPattern =
-    /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{7,}$/;
+  private readonly passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{7,}$/;
 
   readonly passwordForm = this.fb.group(
     {
-      currentPassword: this.fb.nonNullable.control('', [
-        Validators.required,
-      ]),
+      currentPassword: this.fb.nonNullable.control('', [Validators.required]),
       newPassword: this.fb.nonNullable.control('', [
         Validators.required,
         Validators.minLength(7),
         Validators.pattern(this.passwordPattern),
       ]),
-      confirmPassword: this.fb.nonNullable.control('', [
-        Validators.required,
-      ]),
+      confirmPassword: this.fb.nonNullable.control('', [Validators.required]),
     },
     {
       validators: this.passwordsMatchValidator(),
@@ -287,9 +276,7 @@ export class Profile implements OnInit {
     this.resetPasswordForm();
   }
 
-  togglePasswordVisibility(
-    field: 'current' | 'new' | 'confirm',
-  ): void {
+  togglePasswordVisibility(field: 'current' | 'new' | 'confirm'): void {
     if (field === 'current') {
       this.showCurrentPassword = !this.showCurrentPassword;
       return;
@@ -316,10 +303,7 @@ export class Profile implements OnInit {
       return;
     }
 
-    const {
-      currentPassword,
-      newPassword,
-    } = this.passwordForm.getRawValue();
+    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
 
     this.isChangingPassword = true;
 
@@ -340,7 +324,7 @@ export class Profile implements OnInit {
 
           // O backend revoga todas as sessões neste momento.
           // Limpamos apenas o estado local; não fazemos novo request de logout.
-          this.auth.clearSession();
+          this.auth.clearSession({ broadcast: true });
 
           this.router.navigate(['/login'], {
             replaceUrl: true,
@@ -350,26 +334,22 @@ export class Profile implements OnInit {
           });
         },
         error: (error) => {
-          const backendMessage =
-            error?.error?.message ?? '';
+          const backendMessage = error?.error?.message ?? '';
 
           if (this.isCurrentPasswordIncorrectError(backendMessage)) {
-            this.currentPasswordError =
-              backendMessage || 'A palavra-passe atual está incorreta.';
+            this.currentPasswordError = backendMessage || 'A palavra-passe atual está incorreta.';
             return;
           }
 
           if (this.isSamePasswordError(backendMessage)) {
             this.newPasswordError =
-              backendMessage ||
-              'A nova palavra-passe tem de ser diferente da atual.';
+              backendMessage || 'A nova palavra-passe tem de ser diferente da atual.';
             return;
           }
 
           this.showTemporaryMessage(
             'error',
-            backendMessage ||
-              'Não foi possível alterar a palavra-passe. Tente novamente.',
+            backendMessage || 'Não foi possível alterar a palavra-passe. Tente novamente.',
           );
         },
       });
@@ -404,18 +384,14 @@ export class Profile implements OnInit {
 
   private passwordsMatchValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const newPassword =
-        control.get('newPassword')?.value ?? '';
-      const confirmPassword =
-        control.get('confirmPassword')?.value ?? '';
+      const newPassword = control.get('newPassword')?.value ?? '';
+      const confirmPassword = control.get('confirmPassword')?.value ?? '';
 
       if (!newPassword || !confirmPassword) {
         return null;
       }
 
-      return newPassword === confirmPassword
-        ? null
-        : { passwordMismatch: true };
+      return newPassword === confirmPassword ? null : { passwordMismatch: true };
     };
   }
 
@@ -429,12 +405,10 @@ export class Profile implements OnInit {
 
   private isSamePasswordError(message: string): boolean {
     return (
-      message ===
-        'A nova palavra-passe tem de ser diferente da palavra-passe atual.' ||
+      message === 'A nova palavra-passe tem de ser diferente da palavra-passe atual.' ||
       message === 'A nova palavra-passe tem de ser diferente da atual.' ||
       message === 'A nova password tem de ser diferente da atual.' ||
-      message ===
-        'New password must be different from the current password.'
+      message === 'New password must be different from the current password.'
     );
   }
 

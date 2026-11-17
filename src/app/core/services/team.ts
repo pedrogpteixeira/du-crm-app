@@ -1,9 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import {
-  DestroyRef,
-  Injectable,
-  inject,
-} from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
@@ -19,7 +15,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { Auth } from './auth';
-import { SocketService } from './socket';
+import { SocketService, TeamChangedEvent, TeamsInvalidationEvent } from './socket';
 
 export interface Team {
   id: string;
@@ -27,6 +23,7 @@ export interface Team {
   role: string;
   positionList: string[];
   active: boolean;
+  registrationNumber?: number;
   walletBalance?: number;
 }
 
@@ -90,20 +87,22 @@ export class TeamService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly apiUrl = environment.apiUrl;
 
-  private readonly teamsStateSubject =
-    new BehaviorSubject<TeamsState>(INITIAL_TEAMS_STATE);
+  private readonly teamsStateSubject = new BehaviorSubject<TeamsState>(INITIAL_TEAMS_STATE);
 
   readonly teamsState$ = this.teamsStateSubject.asObservable();
 
   private teamsRequest$: Observable<Team[]> | null = null;
+  private readonly teamUsersRequests = new Map<string, Observable<TeamDetailResponse>>();
   private refreshTeamsAfterCurrentRequest = false;
   private hasObservedAuthenticatedSocketConnection = false;
+  private lastIncrementalTeamEventAt = 0;
 
   constructor() {
     this.hasObservedAuthenticatedSocketConnection =
       this.socketService.isConnected() && this.auth.isAuthenticated();
 
     this.observeAuthentication();
+    this.observeTeamsChanged();
     this.observeTeamsInvalidation();
     this.observeSocketReconnect();
   }
@@ -156,7 +155,6 @@ export class TeamService {
     if (this.teamsRequest$) {
       this.refreshTeamsAfterCurrentRequest = true;
     }
-
   }
 
   clearTeamsCache(): void {
@@ -164,38 +162,39 @@ export class TeamService {
     this.teamsStateSubject.next({ ...INITIAL_TEAMS_STATE });
   }
 
-  getTeamUsers(
-    teamId: string,
-  ): Observable<TeamDetailResponse> {
-    return this.http.get<TeamDetailResponse>(
-      `${this.apiUrl}/api/team-users/team/${teamId}`,
-    );
-  }
+  getTeamUsers(teamId: string): Observable<TeamDetailResponse> {
+    const normalizedTeamId = teamId.trim();
+    const existingRequest = this.teamUsersRequests.get(normalizedTeamId);
+    if (existingRequest) {
+      return existingRequest;
+    }
 
-  createTeam(
-    payload: CreateTeamRequest,
-  ): Observable<Team> {
-    return this.http
-      .post<Team>(
-        `${this.apiUrl}/api/teams`,
-        payload,
+    const request$ = this.http
+      .get<TeamDetailResponse>(
+        `${this.apiUrl}/api/team-users/team/${encodeURIComponent(normalizedTeamId)}`,
       )
       .pipe(
-        tap((team) => this.upsertTeamInCache(team)),
+        finalize(() => {
+          this.teamUsersRequests.delete(normalizedTeamId);
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
       );
+
+    this.teamUsersRequests.set(normalizedTeamId, request$);
+    return request$;
   }
 
-  setTeamActive(
-    teamId: string,
-    active: boolean,
-  ): Observable<Team> {
+  createTeam(payload: CreateTeamRequest): Observable<Team> {
+    return this.http
+      .post<Team>(`${this.apiUrl}/api/teams`, payload)
+      .pipe(tap((team) => this.upsertTeamInCache(team)));
+  }
+
+  setTeamActive(teamId: string, active: boolean): Observable<Team> {
     const payload: SetTeamActiveRequest = { active };
 
     return this.http
-      .patch<Team>(
-        `${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/active`,
-        payload,
-      )
+      .patch<Team>(`${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/active`, payload)
       .pipe(
         tap((team) => {
           this.upsertTeamInCache({
@@ -207,49 +206,31 @@ export class TeamService {
       );
   }
 
-  updateTeamPositions(
-    teamId: string,
-    positionList: string[],
-  ): Observable<Team> {
+  updateTeamPositions(teamId: string, positionList: string[]): Observable<Team> {
     const payload: UpdateTeamPositionsRequest = {
       positionList,
     };
 
     return this.http
-      .patch<Team>(
-        `${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/positions`,
-        payload,
-      )
+      .patch<Team>(`${this.apiUrl}/api/teams/${encodeURIComponent(teamId)}/positions`, payload)
       .pipe(
         tap((team) => {
           this.upsertTeamInCache({
             ...team,
             id: team?.id || teamId,
-            positionList: Array.isArray(team?.positionList)
-              ? team.positionList
-              : positionList,
+            positionList: Array.isArray(team?.positionList) ? team.positionList : positionList,
           });
         }),
       );
   }
 
-  addUserToTeam(
-    payload: AddUserToTeamRequest,
-  ): Observable<TeamUser> {
-    return this.http.post<TeamUser>(
-      `${this.apiUrl}/api/team-users`,
-      payload,
-    );
+  addUserToTeam(payload: AddUserToTeamRequest): Observable<TeamUser> {
+    return this.http.post<TeamUser>(`${this.apiUrl}/api/team-users`, payload);
   }
 
-  removeUserFromTeam(
-    teamId: string,
-    userId: string,
-  ): Observable<void> {
+  removeUserFromTeam(teamId: string, userId: string): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/api/team-users/team/${encodeURIComponent(
-        teamId,
-      )}/user/${encodeURIComponent(
+      `${this.apiUrl}/api/team-users/team/${encodeURIComponent(teamId)}/user/${encodeURIComponent(
         userId,
       )}`,
     );
@@ -272,83 +253,103 @@ export class TeamService {
       error: null,
     });
 
-    const request$ = this.http
-      .get<Team[]>(`${this.apiUrl}/api/teams`)
-      .pipe(
-        tap((teams) => {
-          this.teamsStateSubject.next({
-            teams: Array.isArray(teams) ? teams : [],
-            loading: true,
-            loaded: true,
-            error: null,
-            lastLoadedAt: new Date().toISOString(),
-          });
-        }),
-        catchError((error) => {
-          const currentState = this.teamsStateSubject.value;
+    const request$ = this.http.get<Team[]>(`${this.apiUrl}/api/teams`).pipe(
+      tap((teams) => {
+        this.teamsStateSubject.next({
+          teams: Array.isArray(teams) ? teams : [],
+          loading: true,
+          loaded: true,
+          error: null,
+          lastLoadedAt: new Date().toISOString(),
+        });
+      }),
+      catchError((error) => {
+        const currentState = this.teamsStateSubject.value;
 
-          this.teamsStateSubject.next({
-            ...currentState,
-            loading: true,
-            error: 'Não foi possível atualizar a lista de equipas.',
-          });
+        this.teamsStateSubject.next({
+          ...currentState,
+          loading: true,
+          error: 'Não foi possível atualizar a lista de equipas.',
+        });
 
-          return throwError(() => error);
-        }),
-        finalize(() => {
-          this.teamsRequest$ = null;
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.teamsRequest$ = null;
 
-          const currentState = this.teamsStateSubject.value;
-          this.teamsStateSubject.next({
-            ...currentState,
-            loading: false,
-          });
+        const currentState = this.teamsStateSubject.value;
+        this.teamsStateSubject.next({
+          ...currentState,
+          loading: false,
+        });
 
-          if (
-            this.refreshTeamsAfterCurrentRequest &&
-            this.auth.isAuthenticated()
-          ) {
-            this.refreshTeamsAfterCurrentRequest = false;
+        if (this.refreshTeamsAfterCurrentRequest && this.auth.isAuthenticated()) {
+          this.refreshTeamsAfterCurrentRequest = false;
 
-            queueMicrotask(() => {
-              this.refreshTeams().subscribe({
-                error: () => undefined,
-              });
+          queueMicrotask(() => {
+            this.refreshTeams().subscribe({
+              error: () => undefined,
             });
-          }
-        }),
-        shareReplay({
-          bufferSize: 1,
-          refCount: false,
-        }),
-      );
+          });
+        }
+      }),
+      shareReplay({
+        bufferSize: 1,
+        refCount: false,
+      }),
+    );
 
     this.teamsRequest$ = request$;
     return request$;
   }
 
   private observeAuthentication(): void {
-    this.auth.authenticationState$
+    this.auth.authenticationState$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
+      if (state === 'authenticated') {
+        this.hasObservedAuthenticatedSocketConnection = this.socketService.isConnected();
+
+        // Teams are used throughout the authenticated CRM (contracts,
+        // tickets, users, Autos, filters, etc.). Warm the shared cache as
+        // soon as the session is ready so later consumers do not wait for
+        // the first GET /teams.
+        this.ensureTeamsLoaded().subscribe({
+          error: () => undefined,
+        });
+
+        return;
+      }
+
+      if (state === 'unauthenticated') {
+        this.hasObservedAuthenticatedSocketConnection = false;
+        this.clearTeamsCache();
+      }
+    });
+  }
+
+  private observeTeamsChanged(): void {
+    this.socketService
+      .listenTeamsChanged()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((state) => {
-        if (state === 'authenticated') {
-          this.hasObservedAuthenticatedSocketConnection =
-            this.socketService.isConnected();
-
-          // Teams are used throughout the authenticated CRM (contracts,
-          // tickets, users, Autos, filters, etc.). Warm the shared cache as
-          // soon as the session is ready so later consumers do not wait for
-          // the first GET /teams.
-          this.ensureTeamsLoaded().subscribe({
-            error: () => undefined,
-          });
-
+      .subscribe((event) => {
+        if (!this.auth.isAuthenticated() || !event?.teamId) {
           return;
         }
 
-        if (state === 'unauthenticated') {
-          this.hasObservedAuthenticatedSocketConnection = false;
-          this.clearTeamsCache();
+        this.lastIncrementalTeamEventAt = Date.now();
+
+        if (event.action === 'upsert' && event.team) {
+          this.upsertTeamInCache({
+            ...event.team,
+            id: event.team.id || event.teamId,
+          });
+          return;
+        }
+
+        // A refresh event explicitly means the incremental payload is not
+        // sufficient. Reconcile the shared list once instead of doing it for
+        // every normal team mutation.
+        if (event.action === 'refresh') {
+          this.refreshTeamsInBackground();
         }
       });
   }
@@ -356,21 +357,32 @@ export class TeamService {
   private observeTeamsInvalidation(): void {
     this.socketService
       .listenTeamsInvalidated()
-      .pipe(
-        debounceTime(300),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => {
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
         if (!this.auth.isAuthenticated()) {
           return;
         }
 
-        // teams:invalidated is global. Mark the shared cache as stale and
-        // refresh it immediately in the background so every consumer sees the
-        // updated Team data even when the Teams page is not mounted.
+        if (this.shouldIgnoreLegacyInvalidation(event)) {
+          return;
+        }
+
         this.invalidateTeamsCache();
         this.refreshTeamsInBackground();
       });
+  }
+
+  private shouldIgnoreLegacyInvalidation(event: TeamsInvalidationEvent): boolean {
+    const reason = (event?.reason ?? '').toLowerCase();
+
+    if (/(import|bulk|wallet|balance|commission|reconcile)/.test(reason)) {
+      return false;
+    }
+
+    const coveredByIncrementalReason =
+      /(team|position|active|membership|member|user[_ -]?team)/.test(reason);
+
+    return coveredByIncrementalReason || Date.now() - this.lastIncrementalTeamEventAt < 1500;
   }
 
   private observeSocketReconnect(): void {
@@ -407,9 +419,7 @@ export class TeamService {
       return;
     }
 
-    const existingIndex = state.teams.findIndex(
-      (cachedTeam) => cachedTeam.id === team.id,
-    );
+    const existingIndex = state.teams.findIndex((cachedTeam) => cachedTeam.id === team.id);
 
     const teams = [...state.teams];
 

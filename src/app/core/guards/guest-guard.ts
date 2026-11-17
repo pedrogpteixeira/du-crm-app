@@ -1,8 +1,6 @@
 import { inject } from '@angular/core';
-import {
-  CanActivateFn,
-  Router,
-} from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
+import { map } from 'rxjs';
 
 import { Auth } from '../services/auth';
 
@@ -10,14 +8,22 @@ export const guestGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
 
-  const authenticationState = auth.getAuthenticationState();
-  const hasAccessToken = auth.getAccessToken() !== null;
+  const evaluateAccess = () => {
+    const authenticationState = auth.getAuthenticationState();
+    const hasAccessToken = auth.getAccessToken() !== null;
 
-  if (authenticationState === 'authenticated' && hasAccessToken) {
-    return auth.isPasswordExpired()
-      ? router.createUrlTree(['/change-password'])
-      : router.createUrlTree(['/home']);
+    if (authenticationState === 'authenticated' && hasAccessToken) {
+      return auth.isPasswordExpired()
+        ? router.createUrlTree(['/change-password'])
+        : router.createUrlTree(['/home']);
+    }
+
+    return true;
+  };
+
+  if (auth.getAuthenticationState() !== 'initializing') {
+    return evaluateAccess();
   }
 
-  return true;
+  return auth.initializeAuthentication().pipe(map(() => evaluateAccess()));
 };

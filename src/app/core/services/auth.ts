@@ -1,18 +1,23 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { DestroyRef, inject, Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 
 import {
   BehaviorSubject,
-  distinctUntilChanged,
   catchError,
+  defer,
+  distinctUntilChanged,
   finalize,
+  firstValueFrom,
+  from,
   map,
   Observable,
   of,
-  ReplaySubject,
+  shareReplay,
   switchMap,
   tap,
   throwError,
+  timer,
 } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -21,9 +26,7 @@ import { PasswordPolicy } from '../models/password-policy';
 import { AppTheme, ThemeService } from './theme';
 
 export type AuthenticationState =
-  | 'initializing'
-  | 'authenticated'
-  | 'unauthenticated';
+  'initializing' | 'authenticated' | 'unauthenticated' | 'recoverable-error';
 
 interface LoginResponse {
   accessToken: string;
@@ -35,6 +38,48 @@ interface RefreshResponse {
   accessToken: string;
   passwordPolicy?: PasswordPolicy;
 }
+
+interface AuthSyncTokenMessage {
+  type: 'token';
+  source: string;
+  accessToken: string;
+  passwordPolicy?: PasswordPolicy | null;
+  timestamp: number;
+}
+
+interface AuthSyncRefreshStartMessage {
+  type: 'refresh-start';
+  source: string;
+  timestamp: number;
+}
+
+interface AuthSyncTokenRequestMessage {
+  type: 'token-request';
+  source: string;
+  timestamp: number;
+}
+
+interface AuthSyncLogoutMessage {
+  type: 'logout';
+  source: string;
+  timestamp: number;
+}
+
+type AuthSyncMessage =
+  | AuthSyncTokenMessage
+  | AuthSyncTokenRequestMessage
+  | AuthSyncRefreshStartMessage
+  | AuthSyncLogoutMessage;
+
+interface BrowserLockManager {
+  request<T>(name: string, options: { mode: 'exclusive' }, callback: () => Promise<T>): Promise<T>;
+}
+
+const AUTH_BROADCAST_CHANNEL = 'certo-crm-auth';
+const AUTH_REFRESH_LOCK = 'certo-crm-auth-refresh';
+const REFRESH_CONCURRENT_CODE = 'REFRESH_CONCURRENT';
+const REFRESH_CONCURRENT_RETRY_DELAYS_MS = [300, 500] as const;
+const ACCESS_TOKEN_REFRESH_MARGIN_MS = 60_000;
 
 interface ChangePasswordResponse {
   message: string;
@@ -65,58 +110,57 @@ export class Auth {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
   private readonly themeService = inject(ThemeService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly instanceId = this.createInstanceId();
+  private authChannel: BroadcastChannel | null = null;
+  private peerRefreshStartedAt = 0;
+  private refreshRequest$: Observable<string> | null = null;
+  private accessTokenRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   private accessToken: string | null = null;
 
-  private readonly accessTokenSubject =
-    new BehaviorSubject<string | null>(null);
+  private readonly accessTokenSubject = new BehaviorSubject<string | null>(null);
 
-  readonly accessToken$ = this.accessTokenSubject
-    .asObservable()
-    .pipe(
-      distinctUntilChanged(),
-    );
+  readonly accessToken$ = this.accessTokenSubject.asObservable().pipe(distinctUntilChanged());
 
-  private refreshInProgress = false;
+  private readonly currentUserSubject = new BehaviorSubject<AuthUser | null>(null);
 
-  private refreshSubject =
-    new ReplaySubject<string>(1);
+  private readonly passwordPolicySubject = new BehaviorSubject<PasswordPolicy | null>(null);
 
-  private readonly currentUserSubject =
-    new BehaviorSubject<AuthUser | null>(null);
-
-  private readonly passwordPolicySubject =
-    new BehaviorSubject<PasswordPolicy | null>(null);
-
-  readonly passwordPolicy$ = this.passwordPolicySubject
-    .asObservable()
-    .pipe(distinctUntilChanged());
+  readonly passwordPolicy$ = this.passwordPolicySubject.asObservable().pipe(distinctUntilChanged());
 
   readonly passwordExpired$ = this.passwordPolicy$.pipe(
     map((policy) => policy?.expired === true),
     distinctUntilChanged(),
   );
 
-  private readonly authenticationStateSubject =
-    new BehaviorSubject<AuthenticationState>('initializing');
+  private readonly authenticationStateSubject = new BehaviorSubject<AuthenticationState>(
+    'initializing',
+  );
 
-  readonly authenticationState$ =
-    this.authenticationStateSubject
-      .asObservable()
-      .pipe(
-        distinctUntilChanged(),
-      );
+  readonly authenticationState$ = this.authenticationStateSubject
+    .asObservable()
+    .pipe(distinctUntilChanged());
 
   readonly currentUser$ = this.currentUserSubject.asObservable();
+
+  constructor() {
+    this.initializeCrossTabSync();
+
+    this.destroyRef.onDestroy(() => {
+      this.clearAccessTokenRefreshTimer();
+      this.authChannel?.close();
+      this.authChannel = null;
+    });
+  }
 
   // ---------------------------------------------------------------------------
   // Login
   // ---------------------------------------------------------------------------
 
-  login(
-    identifier: string,
-    password: string,
-  ): Observable<LoginResponse> {
+  login(identifier: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(
         `${this.apiUrl}/api/auth/signin`,
@@ -134,12 +178,12 @@ export class Auth {
           this.setCurrentUser(response.user);
           this.setPasswordPolicy(response.passwordPolicy ?? null);
           this.setAuthenticationState('authenticated');
+          this.broadcastCurrentToken();
 
           this.saveUserPreferences(response.user);
         }),
       );
   }
-
 
   // ---------------------------------------------------------------------------
   // Password
@@ -149,13 +193,9 @@ export class Auth {
     currentPassword: string;
     newPassword: string;
   }): Observable<ChangePasswordResponse> {
-    return this.http.patch<ChangePasswordResponse>(
-      `${this.apiUrl}/api/auth/password`,
-      payload,
-      {
-        withCredentials: true,
-      },
-    );
+    return this.http.patch<ChangePasswordResponse>(`${this.apiUrl}/api/auth/password`, payload, {
+      withCredentials: true,
+    });
   }
 
   forgotPassword(email: string): Observable<ForgotPasswordResponse> {
@@ -199,6 +239,82 @@ export class Auth {
   restoreSession(): Observable<boolean> {
     this.setAuthenticationState('initializing');
 
+    if (this.hasUsableAccessToken()) {
+      if (this.getCurrentUser()) {
+        this.setAuthenticationState('authenticated');
+        return of(true);
+      }
+
+      return this.loadCurrentUser().pipe(
+        map(() => true),
+        catchError((error: HttpErrorResponse) => {
+          if (error.status === 401) {
+            return this.restoreSessionWithRefresh();
+          }
+
+          this.setAuthenticationState('recoverable-error');
+          return of(false);
+        }),
+      );
+    }
+
+    return this.requestTokenFromPeer().pipe(
+      switchMap((peerToken) => {
+        if (!peerToken) {
+          return this.restoreSessionWithRefresh();
+        }
+
+        return this.loadCurrentUser().pipe(
+          map(() => true),
+          catchError((error: HttpErrorResponse) => {
+            if (error.status === 401) {
+              return this.restoreSessionWithRefresh();
+            }
+
+            this.setAuthenticationState('recoverable-error');
+            return of(false);
+          }),
+        );
+      }),
+    );
+  }
+
+  refresh(): Observable<string> {
+    if (this.refreshRequest$) {
+      return this.refreshRequest$;
+    }
+
+    const tokenAtStart = this.getAccessToken();
+
+    const request$ = defer(() => this.coordinateRefreshAcrossTabs(tokenAtStart)).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (this.isPasswordExpiredError(error)) {
+          this.markPasswordExpired(this.getPasswordPolicyFromError(error));
+          return throwError(() => error);
+        }
+
+        if (this.isDefinitiveSessionFailure(error)) {
+          this.clearSession();
+        } else if (!this.getAccessToken()) {
+          this.setAuthenticationState('recoverable-error');
+        }
+
+        return throwError(() => error);
+      }),
+      finalize(() => {
+        this.refreshRequest$ = null;
+      }),
+      shareReplay({
+        bufferSize: 1,
+        refCount: false,
+      }),
+    );
+
+    this.refreshRequest$ = request$;
+    return request$;
+  }
+
+  private restoreSessionWithRefresh(): Observable<boolean> {
     return this.refresh().pipe(
       switchMap(() => {
         if (this.isPasswordExpired()) {
@@ -208,26 +324,57 @@ export class Auth {
 
         return this.loadCurrentUser().pipe(map(() => true));
       }),
-
-      catchError((_error) => {
+      catchError((error: HttpErrorResponse) => {
         if (this.isPasswordExpired()) {
           this.setAuthenticationState('authenticated');
           return of(true);
         }
 
-        this.clearSession();
+        if (this.isDefinitiveSessionFailure(error)) {
+          this.clearSession();
+        } else {
+          this.setAuthenticationState('recoverable-error');
+        }
+
         return of(false);
       }),
     );
   }
 
-  refresh(): Observable<string> {
-    if (this.refreshInProgress) {
-      return this.refreshSubject.asObservable();
+  private coordinateRefreshAcrossTabs(tokenAtStart: string | null): Observable<string> {
+    const locks = this.getBrowserLockManager();
+
+    if (!locks) {
+      return this.waitForPeerRefresh(tokenAtStart).pipe(
+        switchMap((synchronizedToken) =>
+          synchronizedToken ? of(synchronizedToken) : this.performRefreshWithConcurrentRetry(),
+        ),
+      );
     }
 
-    this.refreshInProgress = true;
-    this.refreshSubject = new ReplaySubject<string>(1);
+    return from(
+      locks.request(AUTH_REFRESH_LOCK, { mode: 'exclusive' }, async () => {
+        const synchronizedToken = this.getAccessToken();
+
+        if (
+          synchronizedToken &&
+          synchronizedToken !== tokenAtStart &&
+          this.isAccessTokenValid(synchronizedToken, 5_000)
+        ) {
+          return synchronizedToken;
+        }
+
+        return firstValueFrom(this.performRefreshWithConcurrentRetry());
+      }),
+    );
+  }
+
+  private performRefreshWithConcurrentRetry(attempt = 0): Observable<string> {
+    this.broadcastAuthMessage({
+      type: 'refresh-start',
+      source: this.instanceId,
+      timestamp: Date.now(),
+    });
 
     return this.http
       .post<RefreshResponse>(
@@ -245,26 +392,34 @@ export class Auth {
             this.setPasswordPolicy(response.passwordPolicy);
           }
 
-          this.refreshSubject.next(response.accessToken);
-          this.refreshSubject.complete();
+          this.broadcastCurrentToken();
+
+          if (this.getCurrentUser()) {
+            this.setAuthenticationState('authenticated');
+          }
         }),
-
         map((response) => response.accessToken),
-
         catchError((error: HttpErrorResponse) => {
-          if (this.isPasswordExpiredError(error)) {
-            this.markPasswordExpired(this.getPasswordPolicyFromError(error));
-          } else {
-            this.clearSession();
+          if (
+            this.isConcurrentRefreshError(error) &&
+            attempt < REFRESH_CONCURRENT_RETRY_DELAYS_MS.length
+          ) {
+            const delayMs = REFRESH_CONCURRENT_RETRY_DELAYS_MS[attempt];
+
+            return timer(delayMs).pipe(
+              switchMap(() => {
+                const synchronizedToken = this.getAccessToken();
+
+                if (synchronizedToken && this.isAccessTokenValid(synchronizedToken, 5_000)) {
+                  return of(synchronizedToken);
+                }
+
+                return this.performRefreshWithConcurrentRetry(attempt + 1);
+              }),
+            );
           }
 
-          this.refreshSubject.error(error);
-
           return throwError(() => error);
-        }),
-
-        finalize(() => {
-          this.refreshInProgress = false;
         }),
       );
   }
@@ -276,7 +431,7 @@ export class Auth {
   logout(): void {
     const accessToken = this.getAccessToken();
 
-    this.clearSession();
+    this.clearSession({ broadcast: true });
 
     this.http
       .post<void>(
@@ -286,20 +441,17 @@ export class Auth {
           withCredentials: true,
           headers: accessToken
             ? {
-                Authorization:
-                  `Bearer ${accessToken}`,
+                Authorization: `Bearer ${accessToken}`,
               }
             : {},
         },
       )
-      .pipe(
-        catchError(() => of(undefined)),
-      )
+      .pipe(catchError(() => of(undefined)))
       .subscribe();
   }
 
   logoutAll(): void {
-    this.clearSession();
+    this.clearSession({ broadcast: true });
 
     this.http
       .post<void>(
@@ -309,9 +461,7 @@ export class Auth {
           withCredentials: true,
         },
       )
-      .pipe(
-        catchError(() => of(undefined)),
-      )
+      .pipe(catchError(() => of(undefined)))
       .subscribe();
   }
 
@@ -322,9 +472,11 @@ export class Auth {
   setAccessToken(accessToken: string): void {
     this.accessToken = accessToken;
     this.accessTokenSubject.next(accessToken);
+    this.scheduleAccessTokenRefresh(accessToken);
   }
 
   clearAccessToken(): void {
+    this.clearAccessTokenRefreshTimer();
     this.accessToken = null;
     this.accessTokenSubject.next(null);
   }
@@ -347,12 +499,9 @@ export class Auth {
 
   loadCurrentUser(): Observable<AuthUser> {
     return this.http
-      .get<AuthUser>(
-        `${this.apiUrl}/api/users/me`,
-        {
-          withCredentials: true,
-        },
-      )
+      .get<AuthUser>(`${this.apiUrl}/api/users/me`, {
+        withCredentials: true,
+      })
       .pipe(
         tap((user) => {
           this.setCurrentUser(user);
@@ -405,9 +554,7 @@ export class Auth {
   // ---------------------------------------------------------------------------
 
   initializeAuthentication(): Observable<boolean> {
-    if (
-      this.getAuthenticationState() !== 'initializing'
-    ) {
+    if (this.getAuthenticationState() !== 'initializing') {
       return of(this.isAuthenticated());
     }
 
@@ -418,24 +565,19 @@ export class Auth {
     return this.authenticationStateSubject.value;
   }
 
-  setAuthenticationState(
-    state: AuthenticationState,
-  ): void {
+  setAuthenticationState(state: AuthenticationState): void {
     this.authenticationStateSubject.next(state);
   }
 
   isAuthenticated(): boolean {
-    return (
-      this.getAuthenticationState() === 'authenticated' &&
-      this.getAccessToken() !== null
-    );
+    return this.getAuthenticationState() === 'authenticated' && this.getAccessToken() !== null;
   }
 
   // ---------------------------------------------------------------------------
   // Session cleanup
   // ---------------------------------------------------------------------------
 
-  clearSession(): void {
+  clearSession(options: { broadcast?: boolean } = {}): void {
     this.clearAccessToken();
     this.setCurrentUser(null);
     this.clearPasswordPolicy();
@@ -444,6 +586,295 @@ export class Auth {
     localStorage.removeItem('preferences');
     localStorage.removeItem('token');
     this.themeService.resetTheme();
+
+    if (options.broadcast) {
+      this.broadcastAuthMessage({
+        type: 'logout',
+        source: this.instanceId,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Refresh token/session coordination
+  // ---------------------------------------------------------------------------
+
+  isDefinitiveSessionFailure(error: HttpErrorResponse): boolean {
+    return error.status === 401 && !this.isPasswordExpiredError(error);
+  }
+
+  private isConcurrentRefreshError(error: HttpErrorResponse): boolean {
+    if (error.status !== 409 || !error.error || typeof error.error !== 'object') {
+      return false;
+    }
+
+    return (error.error as { code?: string }).code === REFRESH_CONCURRENT_CODE;
+  }
+
+  private hasUsableAccessToken(): boolean {
+    const token = this.getAccessToken();
+    return token !== null && this.isAccessTokenValid(token, 5_000);
+  }
+
+  private isAccessTokenValid(token: string, minimumRemainingMs = 0): boolean {
+    const expiresAt = this.getAccessTokenExpiry(token);
+
+    if (expiresAt === null) {
+      return false;
+    }
+
+    return expiresAt - Date.now() > minimumRemainingMs;
+  }
+
+  private getAccessTokenExpiry(token: string): number | null {
+    const parts = token.split('.');
+
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    try {
+      const payloadPart = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const paddedPayload = payloadPart.padEnd(
+        payloadPart.length + ((4 - (payloadPart.length % 4)) % 4),
+        '=',
+      );
+      const payload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+
+      return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private scheduleAccessTokenRefresh(token: string): void {
+    this.clearAccessTokenRefreshTimer();
+
+    const expiresAt = this.getAccessTokenExpiry(token);
+
+    if (expiresAt === null) {
+      return;
+    }
+
+    const delayMs = Math.max(1_000, expiresAt - Date.now() - ACCESS_TOKEN_REFRESH_MARGIN_MS);
+
+    this.accessTokenRefreshTimer = setTimeout(() => {
+      if (this.getAccessToken() !== token) {
+        return;
+      }
+
+      this.refresh().subscribe({
+        error: () => {
+          // Falhas temporárias preservam a sessão local. O próximo pedido
+          // autenticado volta a tentar renovar através do interceptor.
+        },
+      });
+    }, delayMs);
+  }
+
+  private clearAccessTokenRefreshTimer(): void {
+    if (this.accessTokenRefreshTimer === null) {
+      return;
+    }
+
+    clearTimeout(this.accessTokenRefreshTimer);
+    this.accessTokenRefreshTimer = null;
+  }
+
+  private requestTokenFromPeer(): Observable<string | null> {
+    if (!this.authChannel) {
+      return of(null);
+    }
+
+    return new Observable<string | null>((subscriber) => {
+      const timeoutId = setTimeout(() => {
+        subscriber.next(null);
+        subscriber.complete();
+      }, 200);
+
+      const subscription = this.accessToken$.subscribe((accessToken) => {
+        if (!accessToken || !this.isAccessTokenValid(accessToken, 5_000)) {
+          return;
+        }
+
+        clearTimeout(timeoutId);
+        subscriber.next(accessToken);
+        subscriber.complete();
+      });
+
+      this.broadcastAuthMessage({
+        type: 'token-request',
+        source: this.instanceId,
+        timestamp: Date.now(),
+      });
+
+      return () => {
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
+    });
+  }
+
+  private waitForPeerRefresh(tokenAtStart: string | null): Observable<string | null> {
+    const peerRefreshIsRecent = Date.now() - this.peerRefreshStartedAt <= 1_500;
+
+    if (!peerRefreshIsRecent) {
+      return of(null);
+    }
+
+    return new Observable<string | null>((subscriber) => {
+      const timeoutId = setTimeout(() => {
+        subscriber.next(null);
+        subscriber.complete();
+      }, 500);
+
+      const subscription = this.accessToken$.subscribe((accessToken) => {
+        if (
+          !accessToken ||
+          accessToken === tokenAtStart ||
+          !this.isAccessTokenValid(accessToken, 5_000)
+        ) {
+          return;
+        }
+
+        clearTimeout(timeoutId);
+        subscriber.next(accessToken);
+        subscriber.complete();
+      });
+
+      return () => {
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
+    });
+  }
+
+  private broadcastCurrentToken(): void {
+    const accessToken = this.getAccessToken();
+
+    if (!accessToken) {
+      return;
+    }
+
+    this.broadcastAuthMessage({
+      type: 'token',
+      source: this.instanceId,
+      accessToken,
+      passwordPolicy: this.getPasswordPolicy(),
+      timestamp: Date.now(),
+    });
+  }
+
+  private initializeCrossTabSync(): void {
+    if (typeof BroadcastChannel === 'undefined') {
+      return;
+    }
+
+    this.authChannel = new BroadcastChannel(AUTH_BROADCAST_CHANNEL);
+    this.authChannel.addEventListener('message', (event: MessageEvent<unknown>) => {
+      const message = this.parseAuthSyncMessage(event.data);
+
+      if (!message || message.source === this.instanceId) {
+        return;
+      }
+
+      if (message.type === 'token-request') {
+        if (this.hasUsableAccessToken()) {
+          this.broadcastCurrentToken();
+        }
+        return;
+      }
+
+      if (message.type === 'refresh-start') {
+        this.peerRefreshStartedAt = message.timestamp;
+        return;
+      }
+
+      if (message.type === 'token') {
+        this.setAccessToken(message.accessToken);
+
+        if (message.passwordPolicy !== undefined) {
+          this.setPasswordPolicy(message.passwordPolicy);
+        }
+
+        if (this.getCurrentUser()) {
+          this.setAuthenticationState('authenticated');
+        }
+
+        return;
+      }
+
+      this.clearSession();
+
+      void this.router.navigate(['/login'], {
+        replaceUrl: true,
+        queryParams: {
+          sessionInvalidated: 'true',
+        },
+      });
+    });
+  }
+
+  private parseAuthSyncMessage(value: unknown): AuthSyncMessage | null {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+
+    const candidate = value as Partial<AuthSyncMessage> & {
+      source?: unknown;
+      timestamp?: unknown;
+    };
+
+    if (
+      typeof candidate.type !== 'string' ||
+      typeof candidate.source !== 'string' ||
+      typeof candidate.timestamp !== 'number'
+    ) {
+      return null;
+    }
+
+    if (candidate.type === 'token-request') {
+      return candidate as AuthSyncTokenRequestMessage;
+    }
+
+    if (candidate.type === 'refresh-start') {
+      return candidate as AuthSyncRefreshStartMessage;
+    }
+
+    if (candidate.type === 'logout') {
+      return candidate as AuthSyncLogoutMessage;
+    }
+
+    if (
+      candidate.type === 'token' &&
+      typeof (candidate as Partial<AuthSyncTokenMessage>).accessToken === 'string'
+    ) {
+      return candidate as AuthSyncTokenMessage;
+    }
+
+    return null;
+  }
+
+  private broadcastAuthMessage(message: AuthSyncMessage): void {
+    this.authChannel?.postMessage(message);
+  }
+
+  private getBrowserLockManager(): BrowserLockManager | null {
+    if (typeof navigator === 'undefined') {
+      return null;
+    }
+
+    const locks = (navigator as Navigator & { locks?: BrowserLockManager }).locks;
+    return locks ?? null;
+  }
+
+  private createInstanceId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+
+    return `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
   // ---------------------------------------------------------------------------
@@ -454,15 +885,9 @@ export class Auth {
     const user = this.getCurrentUser();
     const role = user?.role || '';
 
-    const roles = Array.isArray(requiredRoles)
-      ? requiredRoles
-      : [requiredRoles];
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
 
-    return roles.some((requiredRole) =>
-      role
-        .toLowerCase()
-        .includes(requiredRole.toLowerCase()),
-    );
+    return roles.some((requiredRole) => role.toLowerCase().includes(requiredRole.toLowerCase()));
   }
 
   isSuperAdmin(): boolean {
@@ -477,9 +902,7 @@ export class Auth {
     return (error.error as { code?: string }).code === 'PASSWORD_EXPIRED';
   }
 
-  private getPasswordPolicyFromError(
-    error: HttpErrorResponse,
-  ): PasswordPolicy | null {
+  private getPasswordPolicyFromError(error: HttpErrorResponse): PasswordPolicy | null {
     if (!error.error || typeof error.error !== 'object') {
       return null;
     }
@@ -503,22 +926,16 @@ export class Auth {
     const normalizedPreferences = {
       ...preferences,
       contractsDefaultView:
-        preferences.contractsDefaultView ??
-        preferences.repsolContractsDefaultView ??
-        'table',
+        preferences.contractsDefaultView ?? preferences.repsolContractsDefaultView ?? 'table',
       contractDetailsCollapsedByDefault:
         preferences.contractDetailsCollapsedByDefault ??
         preferences.repsolContractDetailsCollapsedByDefault ??
         false,
-      contractLayout:
-        preferences.contractLayout === 'pro' ? 'pro' : 'light',
+      contractLayout: preferences.contractLayout === 'pro' ? 'pro' : 'light',
       theme: (preferences.theme === 'dark' ? 'dark' : 'light') as AppTheme,
     };
 
-    localStorage.setItem(
-      'preferences',
-      JSON.stringify(normalizedPreferences),
-    );
+    localStorage.setItem('preferences', JSON.stringify(normalizedPreferences));
 
     this.themeService.setTheme(normalizedPreferences.theme);
   }
