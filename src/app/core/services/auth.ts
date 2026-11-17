@@ -43,6 +43,7 @@ interface AuthSyncTokenMessage {
   type: 'token';
   source: string;
   accessToken: string;
+  user?: AuthUser | null;
   passwordPolicy?: PasswordPolicy | null;
   timestamp: number;
 }
@@ -117,6 +118,7 @@ export class Auth {
   private authChannel: BroadcastChannel | null = null;
   private peerRefreshStartedAt = 0;
   private refreshRequest$: Observable<string> | null = null;
+  private initializationRequest$: Observable<boolean> | null = null;
   private accessTokenRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
   private accessToken: string | null = null;
@@ -262,6 +264,11 @@ export class Auth {
       switchMap((peerToken) => {
         if (!peerToken) {
           return this.restoreSessionWithRefresh();
+        }
+
+        if (this.getCurrentUser()) {
+          this.setAuthenticationState('authenticated');
+          return of(true);
         }
 
         return this.loadCurrentUser().pipe(
@@ -558,7 +565,22 @@ export class Auth {
       return of(this.isAuthenticated());
     }
 
-    return this.restoreSession();
+    if (this.initializationRequest$) {
+      return this.initializationRequest$;
+    }
+
+    const request$ = defer(() => this.restoreSession()).pipe(
+      finalize(() => {
+        this.initializationRequest$ = null;
+      }),
+      shareReplay({
+        bufferSize: 1,
+        refCount: false,
+      }),
+    );
+
+    this.initializationRequest$ = request$;
+    return request$;
   }
 
   getAuthenticationState(): AuthenticationState {
@@ -761,6 +783,7 @@ export class Auth {
       type: 'token',
       source: this.instanceId,
       accessToken,
+      user: this.getCurrentUser(),
       passwordPolicy: this.getPasswordPolicy(),
       timestamp: Date.now(),
     });
@@ -792,11 +815,22 @@ export class Auth {
       }
 
       if (message.type === 'token') {
-        this.setAccessToken(message.accessToken);
+        if (message.user !== undefined) {
+          this.setCurrentUser(message.user);
+
+          if (message.user) {
+            this.saveUserPreferences(message.user);
+          }
+        }
 
         if (message.passwordPolicy !== undefined) {
           this.setPasswordPolicy(message.passwordPolicy);
         }
+
+        // Emitir o access token apenas depois de restaurar o utilizador.
+        // requestTokenFromPeer() observa accessToken$ e, desta forma, o guard
+        // já encontra o perfil disponível sem precisar de /api/users/me.
+        this.setAccessToken(message.accessToken);
 
         if (this.getCurrentUser()) {
           this.setAuthenticationState('authenticated');
