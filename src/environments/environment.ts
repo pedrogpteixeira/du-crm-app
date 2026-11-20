@@ -7,6 +7,8 @@ export const environment = {
   REPSOLID: 'cmp_njRqliQBpR',
   GALP_POWER_GAS_COMPANY_ID: 'cmp_Q5MgNAInW6',
   GALP_SOLAR_COMPANY_ID: 'cmp_qZUMPp-x7f',
+  EDP_POWER_GAS_COMPANY_ID: 'cmp_ijGIgzDUrA',
+  EDP_SOLAR_COMPANY_ID: 'cmp_yH50RBtMbI',
   PORTULOGOS_COMPANY_ID: 'cmp_2AH_yvQ8Wn',
   PORTULOGOS_B2B_COMPANY_ID: 'cmp_8rkornAQ4H',
   EZU_B2B_COMPANY_ID: 'cmp_cYTHohh7uo',
@@ -38,6 +40,16 @@ export const environment = {
     {
       id: 'cmp_qZUMPp-x7f',
       name: 'Galp Solar',
+      active: true,
+    },
+    {
+      id: 'cmp_ijGIgzDUrA',
+      name: 'EDP P&G',
+      active: true,
+    },
+    {
+      id: 'cmp_yH50RBtMbI',
+      name: 'EDP Solar',
       active: true,
     },
     {

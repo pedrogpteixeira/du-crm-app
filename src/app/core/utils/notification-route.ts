@@ -21,6 +21,8 @@ const CONTRACT_ROUTES: Record<
   'contracts/yes-energy': '/home/contracts/yes-energy',
   'contracts/galp-power-gas': '/home/contracts/galp-power-gas',
   'contracts/galp-solar': '/home/contracts/galp-solar',
+  'contracts/edp-power-gas': '/home/contracts/edp-power-gas',
+  'contracts/edp-solar': '/home/contracts/edp-solar',
   'contracts/iberdrola': '/home/contracts/iberdrola',
   'contracts/iberdrola-solar': '/home/contracts/iberdrola-solar',
   'contracts/meo-energias': '/home/contracts/meo-energias',

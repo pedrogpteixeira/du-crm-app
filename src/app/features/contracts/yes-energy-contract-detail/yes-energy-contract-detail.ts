@@ -1,5 +1,8 @@
 import { getContractCreateRouteByProvider } from '../../../core/config/contract-detail-route';
-import { storeContractDuplicateDraft } from '../../../core/utils/contract-duplicate';
+import {
+  isContractDuplicateAllowed,
+  storeContractDuplicateDraft,
+} from '../../../core/utils/contract-duplicate';
 import { ToastService } from '../../../core/services/toast';
 
 import {
@@ -562,6 +565,10 @@ export class YesEnergyContractDetail implements OnInit {
       !!this.contract &&
       canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
+  }
+
+  get canDuplicateContract(): boolean {
+    return !!this.contract && isContractDuplicateAllowed(this.contract.estado);
   }
 
   get canEditContract(): boolean {

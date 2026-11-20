@@ -892,6 +892,8 @@ export class TicketDetail implements OnInit {
       this.socketService.listenYesEnergyContractUpdated(),
       this.socketService.listenGalpPowerGasContractUpdated(),
       this.socketService.listenGalpSolarContractUpdated(),
+      this.socketService.listenEdpPowerGasContractUpdated(),
+      this.socketService.listenEdpSolarContractUpdated(),
       this.socketService.listenIberdrolaContractUpdated(),
       this.socketService.listenIberdrolaSolarContractUpdated(),
       this.socketService.listenMeoEnergiasContractUpdated(),

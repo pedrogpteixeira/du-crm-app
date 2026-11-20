@@ -108,6 +108,18 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
     companyName: 'Galp Solar',
     segment: 'galp-solar',
   },
+  {
+    companyId: environment.EDP_POWER_GAS_COMPANY_ID,
+    contractIdPrefix: 'epg_',
+    companyName: 'EDP P&G',
+    segment: 'edp-power-gas',
+  },
+  {
+    companyId: environment.EDP_SOLAR_COMPANY_ID,
+    contractIdPrefix: 'eps_',
+    companyName: 'EDP Solar',
+    segment: 'edp-solar',
+  },
 ];
 
 function resolveContractRouteConfig(

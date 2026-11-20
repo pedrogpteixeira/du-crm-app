@@ -36,7 +36,7 @@
 
       <div class="header-actions">
         <button
-          *ngIf="!isEditing"
+          *ngIf="canDuplicateContract && !isEditing"
           type="button"
           class="secondary-button duplicate-action-button"
           (click)="duplicateContract()"

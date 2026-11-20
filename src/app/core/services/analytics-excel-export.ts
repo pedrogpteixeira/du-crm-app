@@ -402,7 +402,7 @@ export class AnalyticsExcelExportService {
     provider: AnalyticsProviderId,
     period: AnalyticsPeriod,
   ): string {
-    const providerSlug = provider === 'galp-power-gas' ? 'galp-power-gas' : 'repsol';
+    const providerSlug = provider;
     const periodSlug: Record<AnalyticsPeriod, string> = {
       last7Days: 'ultimos-7-dias',
       last30Days: 'ultimos-30-dias',

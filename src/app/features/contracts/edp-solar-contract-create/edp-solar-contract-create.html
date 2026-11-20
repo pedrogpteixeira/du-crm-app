@@ -1,0 +1,390 @@
+<section class="create-contract-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb"> Contratos › EDP Solar › Novo contrato </span>
+
+      <h1>Novo contrato EDP Solar</h1>
+
+      <p>Preenche os dados necessários para criar um novo contrato EDP Solar.</p>
+    </div>
+  </header>
+
+  <!-- IDENTIFICAÇÃO -->
+
+  <article class="card">
+    <div class="section-title">Identificação do Cliente</div>
+
+    <div class="form-grid">
+      <label>
+        NIF do Cliente *
+
+        <div class="inline-field">
+          <input
+            type="tel"
+            [(ngModel)]="nif"
+            [disabled]="!!client"
+            appContractMask="nif"
+            appContractMaskPlaceholder=""
+          />
+
+          <button
+            type="button"
+            [disabled]="isCheckingClient || !!client"
+            (click)="checkClientByNif()"
+          >
+            {{ isCheckingClient ? 'A procurar...' : 'Verificar' }}
+          </button>
+        </div>
+      </label>
+
+      <div class="client-result" *ngIf="client">
+        <span> Cliente identificado </span>
+
+        <strong>
+          {{ client.name }}
+        </strong>
+
+        <small>
+          {{ client.id }}
+          · NIF {{ client.nif }}
+        </small>
+      </div>
+
+      <ng-container *ngIf="clientNotFound">
+        <p class="warning-message">
+          Cliente não encontrado. Preenche o nome para criar uma ficha de cliente.
+        </p>
+
+        <label>
+          Nome Cliente / Empresa *
+
+          <input type="text" [(ngModel)]="clientName" />
+        </label>
+
+        <div class="actions">
+          <button type="button" [disabled]="isCreatingClient" (click)="createClient()">
+            {{ isCreatingClient ? 'A criar cliente...' : 'Criar cliente' }}
+          </button>
+        </div>
+      </ng-container>
+    </div>
+  </article>
+
+  <ng-container *ngIf="client">
+    <!-- ATRIBUIÇÃO -->
+
+    <article class="card">
+      <div class="section-title">Atribuição</div>
+
+      <p class="error-message" *ngIf="assignmentErrorMessage">
+        {{ assignmentErrorMessage }}
+      </p>
+
+      <p class="muted" *ngIf="isLoadingAssignment">A carregar utilizadores e equipas...</p>
+
+      <div class="form-grid two-columns" *ngIf="!isLoadingAssignment">
+        <label>
+          Utilizador atribuído *
+
+          <select
+            [(ngModel)]="assignedUserId"
+            [disabled]="!canAssignOtherUsers()"
+            (ngModelChange)="onAssignedUserChange()"
+          >
+            <option value="" disabled>Selecionar utilizador</option>
+
+            <option *ngFor="let user of assignableUsers" [value]="user.id">
+              {{ user.name }} — {{ user.username }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Equipa *
+
+          <select
+            [ngModel]="selectedTeamIds[0] || ''"
+            [disabled]="!assignedUserId || !availableTeams.length"
+            (ngModelChange)="teamToAddId = $event; addSelectedTeam()"
+          >
+            <option value="" disabled>
+              {{ availableTeams.length ? 'Selecionar equipa' : 'Sem equipas disponíveis' }}
+            </option>
+
+            <option *ngFor="let team of availableTeams" [value]="team.id">
+              {{ team.name }} — {{ team.position }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <p class="assignment-helper">
+        Seleciona uma única equipa do utilizador atribuído. As equipas internas obrigatórias são
+        adicionadas automaticamente ao contrato.
+      </p>
+    </article>
+
+    <!-- DADOS CONTRATO -->
+
+    <article class="card">
+      <div class="section-title">Tipo de Segmento</div>
+      <div class="form-grid three-columns">
+        <label
+          >Contratação *<select [(ngModel)]="contractForm.contratacao">
+            <option *ngFor="let option of contratacaoOptions" [value]="option">{{ option }}</option>
+          </select></label
+        >
+        <label
+          >Tipo Segmento *<select [(ngModel)]="contractForm.tipoSegmento">
+            <option *ngFor="let option of tipoSegmentoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select></label
+        >
+        <label
+          >Tipo Produto *<select [(ngModel)]="contractForm.tipoProduto">
+            <option *ngFor="let option of tipoProdutoOptions" [value]="option">{{ option }}</option>
+          </select></label
+        >
+        <label>
+          Controle de Qualidade
+
+          <app-editable-select-combobox
+            [disabled]="!canManageQualityControl()"
+            [(ngModel)]="contractForm.controleQualidade"
+            [options]="qualityControlBackofficeOptions"
+            emptyOptionLabel="Sem seleção"
+          />
+        </label>
+        <label>
+          Código Registo C.E.
+          <input type="text" [value]="contractForm.codigoRegistoCE" readonly />
+        </label>
+        <label>
+          Nome Registo C.E.
+          <input type="text" [value]="contractForm.nomeRegistoCE" readonly />
+        </label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">Dados Cliente / Empresa</div>
+      <div class="form-grid two-columns">
+        <label>Nome Cliente / Empresa *<input type="text" [value]="client.name" readonly /></label>
+        <label>NIF *<input type="number" [value]="client.nif" readonly /></label>
+        <label
+          >Telefone *<input
+            type="tel"
+            [(ngModel)]="contractForm.telefone"
+            required
+            appContractMask="phone"
+            appContractMaskPlaceholder=""
+        /></label>
+        <label
+          >Email<input
+            type="email"
+            [(ngModel)]="contractForm.email"
+            appContractMask="email"
+            appContractMaskPlaceholder=""
+        /></label>
+        <label>CAE<input type="text" [(ngModel)]="contractForm.cae" /></label>
+        <label
+          >CRC<input
+            type="text"
+            [(ngModel)]="contractForm.crc"
+            appContractMask="crc"
+            appContractMaskPlaceholder=""
+        /></label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">Dados Morada / Faturação</div>
+      <div class="address-selection">
+        <label
+          >Morada Faturação - Seleção<select [(ngModel)]="contractForm.moradaFaturacaoSelecao">
+            <option *ngFor="let option of moradaFaturacaoOptions" [value]="option">
+              {{ option }}
+            </option>
+          </select></label
+        >
+      </div>
+      <div class="address-grid" [class.two-addresses]="shouldShowBillingAddress()">
+        <div class="address-block">
+          <label
+            >Morada Instalação<input
+              type="text"
+              placeholder="Rua"
+              [(ngModel)]="contractForm.moradaInstalacaoRua"
+          /></label>
+          <div class="address-row">
+            <input
+              type="text"
+              placeholder="Cidade"
+              [(ngModel)]="contractForm.moradaInstalacaoCidade"
+            /><input
+              type="text"
+              placeholder="Distrito"
+              [(ngModel)]="contractForm.moradaInstalacaoDistrito"
+            /><input
+              type="text"
+              placeholder="Código postal"
+              [(ngModel)]="contractForm.moradaInstalacaoCodigoPostal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
+            />
+          </div>
+          <input type="text" placeholder="País" [(ngModel)]="contractForm.moradaInstalacaoPais" />
+        </div>
+        <div class="address-block" *ngIf="shouldShowBillingAddress()">
+          <label
+            >Morada Faturação<input
+              type="text"
+              placeholder="Rua"
+              [(ngModel)]="contractForm.moradaFaturacaoRua"
+          /></label>
+          <div class="address-row">
+            <input
+              type="text"
+              placeholder="Cidade"
+              [(ngModel)]="contractForm.moradaFaturacaoCidade"
+            /><input
+              type="text"
+              placeholder="Distrito"
+              [(ngModel)]="contractForm.moradaFaturacaoDistrito"
+            /><input
+              type="text"
+              placeholder="Código postal"
+              [(ngModel)]="contractForm.moradaFaturacaoCodigoPostal"
+              appContractMask="postalCode"
+              appContractMaskPlaceholder="Código postal"
+            />
+          </div>
+          <input type="text" placeholder="País" [(ngModel)]="contractForm.moradaFaturacaoPais" />
+        </div>
+      </div>
+      <div class="form-grid three-columns billing-data-grid">
+        <label
+          >Fatura Eletrónica<select [(ngModel)]="contractForm.faturaEletronica">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select></label
+        >
+        <label
+          >Débito Direto<select [(ngModel)]="contractForm.debitoDireto">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select></label
+        >
+        <label>NIB<input type="text" [(ngModel)]="contractForm.nib" /></label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">Dados Produto</div>
+      <div class="form-grid two-columns">
+        <label
+          >Tipo de Painel *<input
+            type="text"
+            [(ngModel)]="contractForm.tipoPainel"
+            list="edp-solar-panel-suggestions"
+            autocomplete="off"
+            required /><datalist id="edp-solar-panel-suggestions">
+            <option *ngFor="let option of panelSuggestions" [value]="option"></option></datalist
+        ></label>
+        <label
+          >Microinversor<select [(ngModel)]="contractForm.microinversor">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select></label
+        >
+        <label
+          >Baterias<select [(ngModel)]="contractForm.baterias">
+            <option [ngValue]="false">Não</option>
+            <option [ngValue]="true">Sim</option>
+          </select></label
+        >
+        <label
+          >Número Painéis Solares *<input
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="contractForm.numeroPaineisSolares"
+        /></label>
+        <label
+          >Método de Pagamento<input
+            type="text"
+            [(ngModel)]="contractForm.metodoPagamento"
+            list="edp-solar-payment-suggestions"
+            autocomplete="off" /><datalist id="edp-solar-payment-suggestions">
+            <option
+              *ngFor="let option of paymentMethodSuggestions"
+              [value]="option"
+            ></option></datalist
+        ></label>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="section-title">Carregar Documentos</div>
+
+      <p class="muted">Seleciona os documentos que serão enviados depois da criação do contrato.</p>
+
+      <app-file-dropzone
+        [(files)]="selectedFiles"
+        [disabled]="isCreatingContract || isUploadingDocuments"
+      />
+
+      <p class="muted" *ngIf="isUploadingDocuments">A carregar documentos...</p>
+    </article>
+
+    <!-- OBSERVAÇÕES -->
+
+    <article class="card">
+      <div class="section-title">Observações / Tipo de Pendência</div>
+
+      <label>
+        Tipo de Pendência / Observações
+
+        <textarea rows="6" [(ngModel)]="contractForm.observacoes"></textarea>
+      </label>
+    </article>
+
+    <article class="card" *ngIf="canAccessInternalObservations">
+      <div class="section-title">Observações / Tipo de Pendência</div>
+
+      <p class="muted">Informação visível apenas para as equipas de Backoffice autorizadas.</p>
+
+      <label>
+        Observações internas
+
+        <textarea rows="6" [(ngModel)]="contractForm.observacoesInternas"></textarea>
+      </label>
+    </article>
+
+    <!-- ACTIONS -->
+
+    <div class="final-actions">
+      <button
+        type="button"
+        class="secondary"
+        routerLink="
+          /home/contracts/edp-solar
+        "
+        [disabled]="isCreatingContract"
+      >
+        Cancelar
+      </button>
+
+      <button type="button" [disabled]="isCreatingContract" (click)="createContract()">
+        {{
+          isUploadingDocuments
+            ? 'A carregar documentos...'
+            : isCreatingContract
+              ? 'A criar contrato...'
+              : 'Criar contrato'
+        }}
+      </button>
+    </div>
+  </ng-container>
+</section>

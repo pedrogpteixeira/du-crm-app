@@ -1,0 +1,342 @@
+<section class="contracts-page">
+  <header class="page-header">
+    <div>
+      <h1>Contratos EDP Solar</h1>
+
+      <p>Consulta e acompanha os contratos EDP Solar registados no CRM.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="view-toggle">
+        <button type="button" [class.active]="viewMode === 'table'" (click)="setViewMode('table')">
+          Tabela
+        </button>
+
+        <button
+          type="button"
+          [class.active]="viewMode === 'kanban'"
+          (click)="setViewMode('kanban')"
+        >
+          Estados
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="filters-toggle-button"
+        [class.is-active]="showFilters || hasActiveFilters()"
+        (click)="toggleFilters()"
+      >
+        <span class="material-symbols-rounded">filter_alt</span>
+        Filtros
+
+        <span class="filter-count" *ngIf="hasActiveFilters()">
+          {{ activeFilterCount }}
+        </span>
+      </button>
+
+      <button type="button" class="create-btn" routerLink="/home/contracts/edp-solar/create">
+        + Novo contrato
+      </button>
+    </div>
+  </header>
+  <section class="filters-card" *ngIf="showFilters">
+    <app-contract-list-filters
+      [fields]="filterFields"
+      [statuses]="statuses"
+      [(value)]="filters"
+      [appliedValue]="appliedFilters"
+      [loadedCount]="contracts.length"
+      [hasMore]="hasMoreInAnyState"
+      [isLoading]="isLoading"
+      (applyFilters)="applyFilters()"
+      (resetFilters)="clearFilters()"
+    ></app-contract-list-filters>
+  </section>
+
+  <div class="contracts-total-summary" *ngIf="!isLoading && !errorMessage">
+    <span class="material-symbols-rounded" aria-hidden="true">description</span>
+    <span>
+      <strong>{{ totalContracts }}</strong>
+      {{ totalContracts === 1 ? 'contrato encontrado' : 'contratos encontrados' }}
+      <small *ngIf="hasActiveFilters()">para os filtros aplicados</small>
+    </span>
+  </div>
+
+  <div class="card" *ngIf="viewMode === 'table'">
+    <div class="contract-table-toolbar" *ngIf="!isLoadingTable && !errorMessage && totalContracts > 0 && (exportSelection.manualCount > 0 || exportSelection.mode === 'filtered')">
+      <div class="contract-export-selection-summary">
+        <span class="material-symbols-rounded" aria-hidden="true">checklist</span>
+
+        <span *ngIf="exportSelection.mode === 'filtered'; else manualSelectionSummary">
+          <strong>Todos os {{ totalContracts }} contratos filtrados</strong> estão abrangidos pela seleção.
+        </span>
+
+        <ng-template #manualSelectionSummary>
+          <span *ngIf="exportSelection.manualCount; else noSelectionSummary">
+            <strong>{{ exportSelection.manualCount }}</strong>
+            {{ exportSelection.manualCount === 1 ? 'contrato selecionado' : 'contratos selecionados' }}.
+          </span>
+        </ng-template>
+
+        <ng-template #noSelectionSummary>
+          <span>Selecione contratos ou exporte todos os resultados dos filtros atuais.</span>
+        </ng-template>
+      </div>
+
+      <div class="contract-export-toolbar-actions">
+        <button
+          type="button"
+          class="select-filtered-action"
+          *ngIf="
+            exportSelection.mode === 'selected' &&
+            exportSelection.areAllVisibleSelected(filteredContracts) &&
+            totalContracts > filteredContracts.length
+          "
+          (click)="exportSelection.activateFiltered()"
+        >
+          Selecionar todos os {{ totalContracts }} contratos filtrados
+        </button>
+
+        <button
+          type="button"
+          *ngIf="exportSelection.manualCount || exportSelection.mode === 'filtered'"
+          (click)="exportSelection.clear()"
+        >
+          Limpar seleção
+        </button>
+
+        <details class="contract-selection-actions-menu" #selectionActionsMenu>
+          <summary class="contract-selection-actions-trigger">
+            <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
+            Ações
+            <span class="material-symbols-rounded contract-selection-actions-chevron" aria-hidden="true">expand_more</span>
+          </summary>
+
+          <div class="contract-selection-actions-popover" role="menu">
+            <button
+              type="button"
+              class="contract-selection-menu-item"
+              role="menuitem"
+              [disabled]="totalContracts <= 0"
+              (click)="selectionActionsMenu.open = false; exportSelection.openModal()"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">download</span>
+              <span>Exportar contratos</span>
+            </button>
+
+            <button
+              type="button"
+              class="contract-selection-menu-item contract-selection-menu-item--bulk"
+              role="menuitem"
+              *ngIf="canBulkUpdateContracts"
+              (click)="selectionActionsMenu.open = false; openBulkUpdateModal()"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">edit_square</span>
+              <span>Atualização em massa</span>
+            </button>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <div class="table-header contract-table-grid">
+      <label class="contract-selection-cell" title="Selecionar contratos apresentados">
+        <input
+          type="checkbox"
+          aria-label="Selecionar contratos apresentados"
+          [checked]="exportSelection.mode === 'filtered' || exportSelection.areAllVisibleSelected(filteredContracts)"
+          [indeterminate]="exportSelection.mode !== 'filtered' && exportSelection.isVisibleSelectionIndeterminate(filteredContracts)"
+          [disabled]="!filteredContracts.length || exportSelection.mode === 'filtered'"
+          (change)="exportSelection.toggleVisibleFromEvent(filteredContracts, $event)"
+        />
+      </label>
+
+      <div class="contract-table-data-grid">
+        <span>ID Contrato</span>
+      <span>Cliente / Empresa</span>
+      <span>NIF</span>
+      <span>Nome Registo C.E.</span>
+      <span>Contrato</span>
+      <span>Registo</span>
+      <span>Agendamento</span>
+      <span>Estado</span>
+      </div>
+    </div>
+
+    <p class="loading" *ngIf="isLoading">A carregar contratos...</p>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <div
+      class="contract-row contract-table-grid"
+      [class.is-filtered-selection]="exportSelection.mode === 'filtered'"
+      *ngFor="let contract of filteredContracts"
+    >
+      <label
+        class="contract-selection-cell"
+        [title]="exportSelection.isSelected(contract.id) ? 'Remover da seleção' : 'Selecionar contrato'"
+        (click)="$event.stopPropagation()"
+      >
+        <input
+          type="checkbox"
+          [checked]="exportSelection.mode === 'filtered' || exportSelection.isSelected(contract.id)"
+          [disabled]="exportSelection.mode === 'filtered'"
+          [attr.aria-label]="'Selecionar contrato ' + contract.id"
+          (click)="$event.stopPropagation()"
+          (change)="exportSelection.toggleFromEvent(contract.id, $event)"
+        />
+      </label>
+
+      <a
+        class="contract-row-link contract-table-data-grid"
+        [routerLink]="['/home/contracts/edp-solar', contract.id]"
+      >
+        <span>{{ contract.id }}</span>
+
+      <strong>{{ getValue(contract.nomeClienteEmpresa) }}</strong>
+
+      <span>{{ getValue(contract.nif) }}</span>
+
+      <span>{{ getValue(contract.nomeRegistoCE) }}</span>
+
+      <span>{{ formatListDate(contract.dataContrato) }}</span>
+
+      <span>{{ formatListDate(contract.dataRegisto) }}</span>
+
+      <span>{{ formatListDate(contract.dataAgendamento, true) }}</span>
+
+      <span class="status-badge" [ngClass]="getStatusClass(contract.estado)">
+        {{ contract.estado }}
+      </span>
+      </a>
+    </div>
+
+    <div class="table-pagination" *ngIf="!isLoadingTable && contracts.length">
+      <span class="table-loaded-count">
+        {{ contracts.length }} de {{ totalContracts }} contratos
+      </span>
+
+      <button
+        type="button"
+        class="table-load-more"
+        *ngIf="tableHasMore"
+        [disabled]="isLoadingMore"
+        (click)="loadMoreTable()"
+      >
+        {{ isLoadingMore ? 'A carregar...' : 'Ver mais' }}
+      </button>
+    </div>
+
+    <div
+      class="filtered-empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length && hasActiveFilters()"
+    >
+      <strong>Nenhum contrato encontrado</strong>
+      <span>Não existem contratos que correspondam aos filtros selecionados.</span>
+      <button type="button" (click)="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <p
+      class="empty-state"
+      *ngIf="!isLoading && !errorMessage && !contracts.length && !hasActiveFilters()"
+    >
+      Ainda não existem contratos EDP Solar.
+    </p>
+  </div>
+
+  <div class="kanban-wrapper" *ngIf="viewMode === 'kanban'">
+    <div class="kanban-board">
+      <section class="kanban-column" *ngFor="let status of visibleStatuses">
+        <header class="kanban-column-header" [ngClass]="getStatusClass(status)">
+          <span>
+            {{ status }}
+          </span>
+
+          <small> {{ getContractsByStatus(status).length }} </small>
+        </header>
+
+        <div class="kanban-list">
+          <a
+            class="kanban-card"
+            *ngFor="let contract of getContractsByStatus(status)"
+            [routerLink]="['/home/contracts/edp-solar', contract.id]"
+          >
+            <span class="contract-id">{{ contract.id }}</span>
+
+            <strong class="contract-client">
+              {{ getValue(contract.nomeClienteEmpresa) }}
+            </strong>
+
+            <span class="kanban-meta">
+              <span class="kanban-meta-label">NIF:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.nif) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--registration-name">
+              <span class="kanban-meta-label">Registo C.E.:</span>
+              <span class="kanban-meta-value">{{ getValue(contract.nomeRegistoCE) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Contrato:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataContrato) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Agendamento:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataAgendamento, true) }}</span>
+            </span>
+
+            <span class="kanban-meta kanban-meta--date">
+              <span class="kanban-meta-label">Registo:</span>
+              <span class="kanban-meta-value">{{ formatListDate(contract.dataRegisto) }}</span>
+            </span>
+          </a>
+
+          <p class="empty-column" *ngIf="!getContractsByStatus(status).length">
+            {{ hasActiveFilters() ? 'Sem contratos com os filtros atuais.' : 'Sem contratos.' }}
+          </p>
+
+          <p class="column-loading" *ngIf="isLoadingStatus(status)">A carregar mais contratos...</p>
+
+          <button
+            type="button"
+            class="kanban-load-more"
+            *ngIf="hasMoreForStatus(status)"
+            [disabled]="isLoadingStatus(status)"
+            (click)="loadMore(status)"
+          >
+            {{ isLoadingStatus(status) ? 'A carregar...' : 'Carregar mais' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <app-contract-export-modal
+    *ngIf="exportSelection.modalOpen"
+    [provider]="'edp-solar'"
+    [supplierLabel]="'EDP Solar'"
+    [manualSelectedIds]="exportSelection.selectedIdsArray"
+    [filteredTotal]="totalContracts"
+    [filters]="getExportFilters()"
+    [initialMode]="exportSelection.effectiveMode"
+    (close)="exportSelection.closeModal()"
+    (exported)="exportSelection.closeModal()"
+  ></app-contract-export-modal>
+
+  <app-contract-bulk-update-modal
+    *ngIf="bulkUpdateModalOpen && canBulkUpdateContracts"
+    [provider]="'edp-solar'"
+    [supplierLabel]="'EDP Solar'"
+    [manualSelectedIds]="exportSelection.selectedIdsArray"
+    [filteredTotal]="totalContracts"
+    [filters]="getExportFilters()"
+    [initialMode]="exportSelection.effectiveMode"
+    (close)="closeBulkUpdateModal()"
+    (completed)="markBulkUpdateCompleted()"
+  ></app-contract-bulk-update-modal>
+</section>

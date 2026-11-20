@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 export const SUPPLY_POINT_PREFLIGHT_PROVIDERS = [
   'repsol',
   'galp-power-gas',
+  'edp-power-gas',
   'iberdrola',
   'yes-energy',
   'meo-energias',

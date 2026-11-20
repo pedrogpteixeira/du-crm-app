@@ -17,6 +17,8 @@ export type ContractNotificationResource =
   | 'contracts/yes-energy'
   | 'contracts/galp-power-gas'
   | 'contracts/galp-solar'
+  | 'contracts/edp-power-gas'
+  | 'contracts/edp-solar'
   | 'contracts/iberdrola'
   | 'contracts/iberdrola-solar'
   | 'contracts/meo-energias'

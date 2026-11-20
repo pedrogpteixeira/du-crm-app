@@ -5,6 +5,7 @@ export type ContractExportProvider =
   | 'portulogos'
   | 'galp-power-gas'
   | 'galp-solar'
+  | 'edp-solar'
   | 'iberdrola'
   | 'iberdrola-solar'
   | 'yes-energy'

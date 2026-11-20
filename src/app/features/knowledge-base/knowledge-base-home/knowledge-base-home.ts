@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Company, CompanyService } from '../../../core/services/company';
@@ -9,10 +15,26 @@ type KnowledgeCompanyAction = 'campaigns' | 'support' | 'forms' | 'training';
 interface KnowledgeCompanyConfig {
   companyId: string;
   name: string;
+  branchLabel?: string;
+  cardLabel?: string;
   logo: string;
   supportFolderId: string;
   formsFolderId: string;
   trainingFolderId: string;
+}
+
+interface KnowledgeCompanyGroupDefinition {
+  id: string;
+  name: string;
+  logo: string;
+  companyIds: string[];
+}
+
+interface KnowledgeCompanyGroup {
+  id: string;
+  name: string;
+  logo: string;
+  companies: KnowledgeCompanyConfig[];
 }
 
 @Component({
@@ -29,6 +51,7 @@ export class KnowledgeBaseHome implements OnInit {
 
   isLoading = false;
   errorMessage = '';
+  selectedCompany: KnowledgeCompanyConfig | null = null;
 
   readonly companyConfigs: KnowledgeCompanyConfig[] = [
     {
@@ -42,6 +65,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_Q5MgNAInW6',
       name: 'Galp',
+      branchLabel: 'Galp Power & Gás',
+      cardLabel: 'Power & Gás',
       logo: 'assets/companies/knowledge-base-home/galp.png',
       supportFolderId: 'kfo_yoxtelc7hj',
       formsFolderId: 'kfo_dymwpxdy36',
@@ -50,6 +75,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_qZUMPp-x7f',
       name: 'Galp Solar',
+      branchLabel: 'Galp Solar',
+      cardLabel: 'Solar',
       logo: 'assets/companies/knowledge-base-home/galp-solar.png',
       supportFolderId: 'kfo_i1ojmovwne',
       formsFolderId: 'kfo_7myn0r3pil',
@@ -74,6 +101,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_JHtuvY63fm',
       name: 'Iberdrola',
+      branchLabel: 'Iberdrola',
+      cardLabel: 'Energia',
       logo: 'assets/companies/knowledge-base-home/iberdrola.png',
       supportFolderId: 'kfo_iabn8mqp2u',
       formsFolderId: 'kfo_fo6btqzxy4',
@@ -82,6 +111,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_FKsS04kTr7',
       name: 'Iberdrola Solar',
+      branchLabel: 'Iberdrola Solar',
+      cardLabel: 'Solar',
       logo: 'assets/companies/knowledge-base-home/iberdrola-solar.png',
       supportFolderId: 'kfo_kpcysylf4g',
       formsFolderId: 'kfo_eqkwzmdjba',
@@ -122,6 +153,8 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_2AH_yvQ8Wn',
       name: 'Portulogos',
+      branchLabel: 'Portulogos B2C',
+      cardLabel: 'B2C',
       logo: 'assets/companies/knowledge-base-home/portulogos.png',
       supportFolderId: 'kfo_meil5tyc3k',
       formsFolderId: 'kfo_tt767dkyph',
@@ -130,10 +163,32 @@ export class KnowledgeBaseHome implements OnInit {
     {
       companyId: 'cmp_8rkornAQ4H',
       name: 'Portulogos B2B',
+      branchLabel: 'Portulogos B2B',
+      cardLabel: 'B2B',
       logo: 'assets/companies/knowledge-base-home/portulogos.png',
       supportFolderId: 'kfo_wizci3939f',
       formsFolderId: 'kfo_is4rt939hz',
       trainingFolderId: 'kfo_ijnosgjmyr',
+    },
+    {
+      companyId: 'cmp_ijGIgzDUrA',
+      name: 'EDP P&G',
+      branchLabel: 'EDP Power & Gás',
+      cardLabel: 'Power & Gás',
+      logo: 'assets/companies/knowledge-base-home/edp-power-gas.png',
+      supportFolderId: '',
+      formsFolderId: '',
+      trainingFolderId: '',
+    },
+    {
+      companyId: 'cmp_yH50RBtMbI',
+      name: 'EDP Solar',
+      branchLabel: 'EDP Solar',
+      cardLabel: 'Solar',
+      logo: 'assets/companies/knowledge-base-home/edp-solar.png',
+      supportFolderId: '',
+      formsFolderId: '',
+      trainingFolderId: '',
     },
     {
       companyId: 'cmp_s4mjPGw-gJ',
@@ -161,8 +216,40 @@ export class KnowledgeBaseHome implements OnInit {
     },
   ];
 
+  private readonly groupDefinitions: KnowledgeCompanyGroupDefinition[] = [
+    {
+      id: 'galp',
+      name: 'Galp',
+      logo: 'assets/companies/knowledge-base-home/galp.png',
+      companyIds: ['cmp_Q5MgNAInW6', 'cmp_qZUMPp-x7f'],
+    },
+    {
+      id: 'iberdrola',
+      name: 'Iberdrola',
+      logo: 'assets/companies/knowledge-base-home/iberdrola.png',
+      companyIds: ['cmp_JHtuvY63fm', 'cmp_FKsS04kTr7'],
+    },
+    {
+      id: 'portulogos',
+      name: 'Portulogos',
+      logo: 'assets/companies/knowledge-base-home/portulogos.png',
+      companyIds: ['cmp_2AH_yvQ8Wn', 'cmp_8rkornAQ4H'],
+    },
+    {
+      id: 'edp',
+      name: 'EDP',
+      logo: 'assets/companies/knowledge-base-home/edp.png',
+      companyIds: ['cmp_ijGIgzDUrA', 'cmp_yH50RBtMbI'],
+    },
+  ];
+
   ngOnInit(): void {
     this.loadCompanies();
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
+    this.closeResourceModal();
   }
 
   loadCompanies(): void {
@@ -171,11 +258,10 @@ export class KnowledgeBaseHome implements OnInit {
 
     this.companyService.getCompanies().subscribe({
       next: (companies) => {
-        this.companies = companies.filter((company) => company.active);
+        this.companies = [...companies];
       },
       error: () => {
         this.errorMessage = 'Não foi possível carregar as empresas.';
-
         this.isLoading = false;
       },
       complete: () => {
@@ -184,18 +270,52 @@ export class KnowledgeBaseHome implements OnInit {
     });
   }
 
-  getVisibleCompanies(): KnowledgeCompanyConfig[] {
-    if (!this.companies.length) {
-      return this.companyConfigs;
+  getVisibleGroups(): KnowledgeCompanyGroup[] {
+    const visibleCompanies = this.getVisibleCompanies();
+    const groupedCompanyIds = new Set(this.groupDefinitions.flatMap((group) => group.companyIds));
+
+    const grouped = this.groupDefinitions
+      .map((group) => ({
+        id: group.id,
+        name: group.name,
+        logo: group.logo,
+        companies: group.companyIds
+          .map((companyId) => visibleCompanies.find((company) => company.companyId === companyId))
+          .filter((company): company is KnowledgeCompanyConfig => Boolean(company)),
+      }))
+      .filter((group) => group.companies.length > 0);
+
+    const standalone = visibleCompanies
+      .filter((company) => !groupedCompanyIds.has(company.companyId))
+      .map((company) => ({
+        id: company.companyId,
+        name: company.name,
+        logo: company.logo,
+        companies: [company],
+      }));
+
+    return [...grouped, ...standalone];
+  }
+
+  getBranchLabel(company: KnowledgeCompanyConfig): string {
+    return company.branchLabel ?? company.name;
+  }
+
+  getCardLabel(company: KnowledgeCompanyConfig, groupSize: number): string {
+    if (groupSize === 1) {
+      return 'Aceder aos recursos';
     }
 
-    return this.companyConfigs.filter((config) =>
-      this.companies.some(
-        (company) =>
-          company.id === config.companyId ||
-          company.name.trim().toLowerCase() === config.name.trim().toLowerCase(),
-      ),
-    );
+    return company.cardLabel ?? this.getBranchLabel(company);
+  }
+
+  openResourceModal(company: KnowledgeCompanyConfig): void {
+    this.errorMessage = '';
+    this.selectedCompany = company;
+  }
+
+  closeResourceModal(): void {
+    this.selectedCompany = null;
   }
 
   companyActionRoute(
@@ -232,11 +352,34 @@ export class KnowledgeBaseHome implements OnInit {
     action: KnowledgeCompanyAction,
   ): void {
     if (this.companyActionRoute(company, action)) {
+      this.closeResourceModal();
       return;
     }
 
     event.preventDefault();
     this.errorMessage = 'Ainda não existe uma pasta configurada para esta opção.';
+  }
+
+  trackGroup(_: number, group: KnowledgeCompanyGroup): string {
+    return group.id;
+  }
+
+  trackCompany(_: number, company: KnowledgeCompanyConfig): string {
+    return company.companyId;
+  }
+
+  private getVisibleCompanies(): KnowledgeCompanyConfig[] {
+    if (!this.companies.length) {
+      return this.companyConfigs;
+    }
+
+    return this.companyConfigs.filter((config) =>
+      this.companies.some(
+        (company) =>
+          company.id === config.companyId ||
+          company.name.trim().toLowerCase() === config.name.trim().toLowerCase(),
+      ),
+    );
   }
 
   private getFolderId(
@@ -246,10 +389,8 @@ export class KnowledgeBaseHome implements OnInit {
     switch (action) {
       case 'support':
         return company.supportFolderId;
-
       case 'forms':
         return company.formsFolderId;
-
       case 'training':
         return company.trainingFolderId;
     }
@@ -262,10 +403,8 @@ export class KnowledgeBaseHome implements OnInit {
     switch (action) {
       case 'support':
         return `${company.name} - Recursos`;
-
       case 'forms':
         return `${company.name} - Formulários de Adesão`;
-
       case 'training':
         return `${company.name} - Formações`;
     }

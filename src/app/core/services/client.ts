@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { canAccessB2BContracts, isRestrictedB2BCompany } from '../config/portulogos-b2b-access';
+import { canAccessEdp, isEdpCompany } from '../config/edp-access';
 import { Auth } from './auth';
 
 export type ClientContractProvider =
@@ -19,6 +20,8 @@ export type ClientContractProvider =
   | 'yes-energy'
   | 'galp-power-gas'
   | 'galp-solar'
+  | 'edp-power-gas'
+  | 'edp-solar'
   | 'iberdrola'
   | 'iberdrola-solar'
   | 'meo-energias'
@@ -84,15 +87,23 @@ export class ClientService {
       .get<ClientDetails>(`${this.apiUrl}/api/clients/${encodeURIComponent(clientId)}`)
       .pipe(
         map((client) => {
-          if (canAccessB2BContracts(this.auth.getCurrentUser())) {
-            return client;
-          }
+          const user = this.auth.getCurrentUser();
+          const canAccessB2B = canAccessB2BContracts(user);
+          const canAccessEdpContracts = canAccessEdp(user);
 
           return {
             ...client,
-            contracts: (client.contracts ?? []).filter(
-              (contract) => !isRestrictedB2BCompany(contract.companyId),
-            ),
+            contracts: (client.contracts ?? []).filter((contract) => {
+              if (isRestrictedB2BCompany(contract.companyId) && !canAccessB2B) {
+                return false;
+              }
+
+              if (isEdpCompany(contract.companyId) && !canAccessEdpContracts) {
+                return false;
+              }
+
+              return true;
+            }),
           };
         }),
       );

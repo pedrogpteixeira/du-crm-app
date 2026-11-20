@@ -20,7 +20,7 @@
 
   <nav class="sidebar-nav">
     <!-- CONTRATOS -->
-    <div class="nav-section contracts-section" *ngIf="canAccessB2CContracts() || canAccessPortulogosB2B()">
+    <div class="nav-section contracts-section" *ngIf="canAccessB2CContracts() || canAccessB2BContracts()">
       <span class="section-title">Contratos</span>
 
       <div class="contract-drawer" *ngIf="canAccessB2CContracts()">
@@ -82,6 +82,7 @@
             <span class="icon material-symbols-rounded">solar_power</span>
             <span class="label">Galp Solar</span>
           </a>
+
 
           <a
             *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
@@ -145,7 +146,7 @@
         </div>
       </div>
 
-      <div class="contract-drawer" *ngIf="canAccessPortulogosB2B()">
+      <div class="contract-drawer" *ngIf="canAccessB2BContracts()">
         <button
           class="contract-drawer-toggle"
           type="button"
@@ -166,6 +167,7 @@
           [class.open]="b2bContractsOpen"
         >
           <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/portulogos-b2b"
             routerLinkActive="active"
             title="Portulogos B2B"
@@ -175,6 +177,27 @@
           </a>
 
           <a
+            *ngIf="canAccessEdp()"
+            routerLink="/home/contracts/edp-power-gas"
+            routerLinkActive="active"
+            title="EDP P&G"
+          >
+            <span class="icon material-symbols-rounded">business_center</span>
+            <span class="label">EDP P&G</span>
+          </a>
+
+          <a
+            *ngIf="canAccessEdp()"
+            routerLink="/home/contracts/edp-solar"
+            routerLinkActive="active"
+            title="EDP Solar"
+          >
+            <span class="icon material-symbols-rounded">solar_power</span>
+            <span class="label">EDP Solar</span>
+          </a>
+
+          <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/ezu-b2b"
             routerLinkActive="active"
             title="Ezu B2B"
@@ -184,6 +207,7 @@
           </a>
 
           <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/nossa-energia-b2b"
             routerLinkActive="active"
             title="Nossa Energia B2B"
@@ -193,6 +217,7 @@
           </a>
 
           <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/audax-b2b"
             routerLinkActive="active"
             title="Audax B2B"
@@ -202,6 +227,7 @@
           </a>
 
           <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/plenitude-b2b"
             routerLinkActive="active"
             title="Plenitude B2B"
@@ -211,6 +237,7 @@
           </a>
 
           <a
+            *ngIf="canAccessPortulogosB2B()"
             routerLink="/home/contracts/endesa-b2b"
             routerLinkActive="active"
             title="Endesa B2B"

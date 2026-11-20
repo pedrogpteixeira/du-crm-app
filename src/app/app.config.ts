@@ -17,6 +17,7 @@ import { routes } from './app.routes';
 import { Auth } from './core/services/auth';
 import { SocketService } from './core/services/socket';
 import { authInterceptor } from './core/interceptors/auth-interceptor';
+import { companyActiveInterceptor } from './core/interceptors/company-active-interceptor';
 
 import { NotificationService } from './core/services/notification';
 import { SystemNoticeService } from './core/services/system-notice';
@@ -33,7 +34,7 @@ export const appConfig: ApplicationConfig = {
 
     provideRouter(routes, withPreloading(PreloadAllModules)),
 
-    provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
+    provideHttpClient(withXhr(), withInterceptors([companyActiveInterceptor, authInterceptor])),
 
     provideAppInitializer(() => {
       const themeService = inject(ThemeService);

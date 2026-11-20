@@ -5,6 +5,8 @@ import { guestGuard } from './core/guards/guest-guard';
 import { roleIncludesGuard } from './core/guards/role-includes-guard';
 import { emailFeatureGuard } from './core/guards/email-feature-guard';
 import { portulogosB2BAccessGuard } from './core/guards/portulogos-b2b-access-guard';
+import { edpAccessGuard } from './core/guards/edp-access-guard';
+import { companyActiveCreateGuard } from './core/guards/company-active-create-guard';
 
 export const routes: Routes = [
   {
@@ -163,7 +165,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/repsol/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Repsol'],
         },
@@ -196,7 +198,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/portulogos/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Portulogos'],
         },
@@ -226,7 +228,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/portulogos-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/portulogos-b2b-contract-create/portulogos-b2b-contract-create').then(
             (m) => m.PortulogosB2BContractCreate,
@@ -250,7 +252,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/ezu-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/ezu-b2b-contract-create/ezu-b2b-contract-create').then(
             (m) => m.EzuB2BContractCreate,
@@ -274,7 +276,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/nossa-energia-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/nossa-energia-b2b-contract-create/nossa-energia-b2b-contract-create').then(
             (m) => m.NossaEnergiaB2BContractCreate,
@@ -298,7 +300,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/audax-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/audax-b2b-contract-create/audax-b2b-contract-create').then(
             (m) => m.AudaxB2BContractCreate,
@@ -322,7 +324,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/plenitude-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/plenitude-b2b-contract-create/plenitude-b2b-contract-create').then(
             (m) => m.PlenitudeB2BContractCreate,
@@ -346,7 +348,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/endesa-b2b/create',
-        canActivate: [portulogosB2BAccessGuard],
+        canActivate: [portulogosB2BAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/endesa-b2b-contract-create/endesa-b2b-contract-create').then(
             (m) => m.EndesaB2BContractCreate,
@@ -371,7 +373,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/galp-power-gas/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
         loadComponent: () =>
           import('./features/contracts/galp-power-gas-contract-create/galp-power-gas-contract-create').then(
@@ -398,7 +400,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/galp-solar/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: { allowedRoles: ['Super Admin', 'DU', 'Galp'] },
         loadComponent: () =>
           import('./features/contracts/galp-solar-contract-create/galp-solar-contract-create').then(
@@ -415,6 +417,54 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'contracts/edp-power-gas',
+        canActivate: [edpAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-power-gas-contracts/edp-power-gas-contracts').then(
+            (m) => m.EdpPowerGasContracts,
+          ),
+      },
+      {
+        path: 'contracts/edp-power-gas/create',
+        canActivate: [edpAccessGuard, companyActiveCreateGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-power-gas-contract-create/edp-power-gas-contract-create').then(
+            (m) => m.EdpPowerGasContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/edp-power-gas/:id',
+        canActivate: [edpAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-power-gas-contract-detail/edp-power-gas-contract-detail').then(
+            (m) => m.EdpPowerGasContractDetail,
+          ),
+      },
+      {
+        path: 'contracts/edp-solar',
+        canActivate: [edpAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-solar-contracts/edp-solar-contracts').then(
+            (m) => m.EdpSolarContracts,
+          ),
+      },
+      {
+        path: 'contracts/edp-solar/create',
+        canActivate: [edpAccessGuard, companyActiveCreateGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-solar-contract-create/edp-solar-contract-create').then(
+            (m) => m.EdpSolarContractCreate,
+          ),
+      },
+      {
+        path: 'contracts/edp-solar/:id',
+        canActivate: [edpAccessGuard],
+        loadComponent: () =>
+          import('./features/contracts/edp-solar-contract-detail/edp-solar-contract-detail').then(
+            (m) => m.EdpSolarContractDetail,
+          ),
+      },
+      {
         path: 'contracts/wallbox',
         canActivate: [roleIncludesGuard],
         data: {
@@ -427,7 +477,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/wallbox/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Galp'],
         },
@@ -460,7 +510,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/yes-energy/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Yes Energy'],
         },
@@ -493,7 +543,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/iberdrola/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
@@ -530,7 +580,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/iberdrola-solar/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Iberdrola'],
         },
@@ -563,7 +613,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/meo-energias/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Meo Energia'],
         },
@@ -596,7 +646,7 @@ export const routes: Routes = [
       },
       {
         path: 'contracts/vodafone/create',
-        canActivate: [roleIncludesGuard],
+        canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
           allowedRoles: ['Super Admin', 'DU', 'Vodafone'],
         },

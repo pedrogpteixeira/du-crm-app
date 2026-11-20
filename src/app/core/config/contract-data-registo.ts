@@ -1,5 +1,7 @@
 import type { GalpPowerGasContractStatus } from '../services/galp-power-gas-contract';
 import type { GalpSolarContractStatus } from '../services/galp-solar-contract';
+import type { EdpPowerGasContractStatus } from '../services/edp-power-gas-contract';
+import type { EdpSolarContractStatus } from '../services/edp-solar-contract';
 import type { IberdrolaContractStatus } from '../services/iberdrola-contract';
 import type { IberdrolaSolarContractStatus } from '../services/iberdrola-solar-contract';
 import type { MeoEnergiasContractStatus } from '../services/meo-energias-contract';
@@ -25,6 +27,8 @@ export type DataRegistoProvider =
   | 'endesa-b2b'
   | 'galp-power-gas'
   | 'galp-solar'
+  | 'edp-power-gas'
+  | 'edp-solar'
   | 'wallbox'
   | 'yes-energy'
   | 'iberdrola'
@@ -42,6 +46,8 @@ interface DataRegistoTriggerStateMap {
   'endesa-b2b': readonly EndesaB2BContractStatus[];
   'galp-power-gas': readonly GalpPowerGasContractStatus[];
   'galp-solar': readonly GalpSolarContractStatus[];
+  'edp-power-gas': readonly EdpPowerGasContractStatus[];
+  'edp-solar': readonly EdpSolarContractStatus[];
   wallbox: readonly WallboxContractStatus[];
   'yes-energy': readonly YesEnergyContractStatus[];
   iberdrola: readonly IberdrolaContractStatus[];
@@ -60,6 +66,8 @@ export const DATA_REGISTO_TRIGGER_STATES: DataRegistoTriggerStateMap = {
   'endesa-b2b': ['Registo Plataforma Endesa'],
   'galp-power-gas': ['Registo Plataforma Galp'],
   'galp-solar': ['Proposta enviada'],
+  'edp-power-gas': ['Registo Plataforma EDP'],
+  'edp-solar': ['Proposta enviada'],
   wallbox: ['Registo Plataforma Galp'],
   'yes-energy': ['Pendente (ATR)'],
   iberdrola: ['BackOffice', 'Controle'],

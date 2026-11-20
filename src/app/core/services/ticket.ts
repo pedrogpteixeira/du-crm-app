@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { canAccessB2BContracts, isRestrictedB2BCompany } from '../config/portulogos-b2b-access';
+import { canAccessEdp, isEdpCompany } from '../config/edp-access';
 import { Auth } from './auth';
 import { ContractCancellationReason } from '../constants/contract-cancellation-reasons';
 
@@ -520,7 +521,17 @@ export class TicketService {
   }
 
   private canExposeTicketCompany(companyId: string): boolean {
-    return !isRestrictedB2BCompany(companyId) || canAccessB2BContracts(this.auth.getCurrentUser());
+    const user = this.auth.getCurrentUser();
+
+    if (isRestrictedB2BCompany(companyId) && !canAccessB2BContracts(user)) {
+      return false;
+    }
+
+    if (isEdpCompany(companyId) && !canAccessEdp(user)) {
+      return false;
+    }
+
+    return true;
   }
 
   private unwrapTicketList(response: TicketFollowerListResponse): TicketApiModel[] {

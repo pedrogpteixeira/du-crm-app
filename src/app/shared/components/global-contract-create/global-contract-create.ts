@@ -12,7 +12,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthUser } from '../../../core/models/auth-user';
 import { canAccessPortulogosB2B } from '../../../core/config/portulogos-b2b-access';
+import { canAccessEdp } from '../../../core/config/edp-access';
+import { getCompanyIdByContractProvider, getContractProviderFromCreateRoute } from '../../../core/config/contract-company';
 import { Auth } from '../../../core/services/auth';
+import { CompanyService } from '../../../core/services/company';
 
 type ContractCreateGroup = 'B2C' | 'B2B';
 
@@ -23,6 +26,7 @@ interface ContractCreateOption {
   icon: string;
   roles?: string[];
   requiresB2BAccess?: boolean;
+  requiresEdpAccess?: boolean;
 }
 
 const CONTRACT_CREATE_OPTIONS: readonly ContractCreateOption[] = [
@@ -53,6 +57,20 @@ const CONTRACT_CREATE_OPTIONS: readonly ContractCreateOption[] = [
     group: 'B2C',
     icon: 'solar_power',
     roles: ['Super Admin', 'DU', 'Galp'],
+  },
+  {
+    name: 'EDP P&G',
+    route: '/home/contracts/edp-power-gas/create',
+    group: 'B2B',
+    icon: 'description',
+    requiresEdpAccess: true,
+  },
+  {
+    name: 'EDP Solar',
+    route: '/home/contracts/edp-solar/create',
+    group: 'B2B',
+    icon: 'solar_power',
+    requiresEdpAccess: true,
   },
   {
     name: 'Wallbox',
@@ -148,6 +166,7 @@ const CONTRACT_CREATE_OPTIONS: readonly ContractCreateOption[] = [
 })
 export class GlobalContractCreate {
   private readonly auth = inject(Auth);
+  private readonly companyService = inject(CompanyService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly destroyRef = inject(DestroyRef);
@@ -156,6 +175,7 @@ export class GlobalContractCreate {
 
   isOpen = false;
   searchTerm = '';
+  private readonly companyActiveById = new Map<string, boolean>();
 
   constructor() {
     this.auth.currentUser$
@@ -167,6 +187,29 @@ export class GlobalContractCreate {
           this.close();
         }
       });
+
+    this.companyService.companies$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((companies) => {
+        this.companyActiveById.clear();
+        companies.forEach((company) => {
+          const companyId = company.domainId || company.id;
+          if (companyId) {
+            this.companyActiveById.set(companyId, company.active);
+          }
+        });
+
+        if (!this.availableOptions.length) {
+          this.close();
+        }
+      });
+
+    // Warm the shared company cache so inactive providers disappear from the
+    // create selector without each option issuing its own request.
+    this.companyService
+      .getCompanies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => undefined });
   }
 
   get availableOptions(): ContractCreateOption[] {
@@ -244,11 +287,21 @@ export class GlobalContractCreate {
   }
 
   private canAccessOption(option: ContractCreateOption): boolean {
-    if (option.requiresB2BAccess) {
-      return canAccessPortulogosB2B(this.user);
+    const hasPermission = option.requiresEdpAccess
+      ? canAccessEdp(this.user)
+      : option.requiresB2BAccess
+        ? canAccessPortulogosB2B(this.user)
+        : this.canAccessRoles(...(option.roles ?? []));
+
+    if (!hasPermission) {
+      return false;
     }
 
-    return this.canAccessRoles(...(option.roles ?? []));
+    const provider = getContractProviderFromCreateRoute(option.route);
+    const companyId = getCompanyIdByContractProvider(provider);
+
+    // Unknown/missing active data stays compatible with legacy API responses.
+    return !companyId || this.companyActiveById.get(companyId) !== false;
   }
 
   private canAccessRoles(...allowedRoles: string[]): boolean {

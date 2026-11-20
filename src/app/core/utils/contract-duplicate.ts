@@ -2,6 +2,22 @@ import type { ClientContractProvider, Client } from '../services/client';
 
 const DUPLICATE_CONTRACT_STORAGE_KEY = 'certo:contract-duplicate-draft';
 
+const DUPLICATE_BLOCKED_STATES = new Set([
+  'ativo',
+  'baixa',
+  'parcialmente baixa',
+  'anulado',
+  'cancelado',
+]);
+
+export function isContractDuplicateAllowed(status: unknown): boolean {
+  if (typeof status !== 'string') {
+    return true;
+  }
+
+  return !DUPLICATE_BLOCKED_STATES.has(status.trim().toLocaleLowerCase('pt-PT'));
+}
+
 interface StoredContractDuplicateDraft {
   provider: ClientContractProvider;
   contract: Record<string, unknown>;
@@ -54,6 +70,10 @@ function cloneBusinessFields(value: unknown, depth = 0): unknown {
   }
 
   return result;
+}
+
+export function clearContractDuplicateDraft(): void {
+  sessionStorage.removeItem(DUPLICATE_CONTRACT_STORAGE_KEY);
 }
 
 export function storeContractDuplicateDraft(

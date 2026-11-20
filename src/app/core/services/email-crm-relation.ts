@@ -8,6 +8,7 @@ import {
   isRestrictedB2BCompany,
   isRestrictedB2BProvider,
 } from '../config/portulogos-b2b-access';
+import { canAccessEdp, isEdpCompany, isEdpProvider } from '../config/edp-access';
 import { Auth } from './auth';
 import type { ClientContractProvider } from './client';
 import {
@@ -65,11 +66,19 @@ export class EmailCrmRelationService {
         this.extractArray(response, ['items', 'results', 'data'])
           .map((record) => this.normalizeContractSearch(record))
           .filter((item): item is EmailContractSearchResult => item !== null)
-          .filter(
-            (item) =>
-              !isRestrictedB2BProvider(item.provider) ||
-              canAccessB2BContracts(this.auth.getCurrentUser()),
-          ),
+          .filter((item) => {
+            const user = this.auth.getCurrentUser();
+
+            if (isRestrictedB2BProvider(item.provider) && !canAccessB2BContracts(user)) {
+              return false;
+            }
+
+            if (isEdpProvider(item.provider) && !canAccessEdp(user)) {
+              return false;
+            }
+
+            return true;
+          }),
       ),
     );
   }
@@ -82,11 +91,19 @@ export class EmailCrmRelationService {
         this.extractArray(response, ['items', 'results', 'data'])
           .map((record) => this.normalizeTicketSearch(record))
           .filter((item): item is EmailTicketSearchResult => item !== null)
-          .filter(
-            (item) =>
-              !isRestrictedB2BCompany(item.companyId) ||
-              canAccessB2BContracts(this.auth.getCurrentUser()),
-          ),
+          .filter((item) => {
+            const user = this.auth.getCurrentUser();
+
+            if (isRestrictedB2BCompany(item.companyId) && !canAccessB2BContracts(user)) {
+              return false;
+            }
+
+            if (isEdpCompany(item.companyId) && !canAccessEdp(user)) {
+              return false;
+            }
+
+            return true;
+          }),
       ),
     );
   }
@@ -256,6 +273,8 @@ export class EmailCrmRelationService {
       'yes-energy',
       'galp-power-gas',
       'galp-solar',
+      'edp-power-gas',
+      'edp-solar',
       'iberdrola',
       'iberdrola-solar',
       'meo-energias',

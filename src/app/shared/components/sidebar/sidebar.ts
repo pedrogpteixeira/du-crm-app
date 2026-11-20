@@ -16,6 +16,7 @@ import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
 import { AuthUser } from '../../../core/models/auth-user';
 import { canAccessPortulogosB2B as hasPortulogosB2BAccess } from '../../../core/config/portulogos-b2b-access';
+import { canAccessEdp as hasEdpAccess } from '../../../core/config/edp-access';
 
 @Component({
   selector: 'app-sidebar',
@@ -65,6 +66,14 @@ export class Sidebar {
 
   canAccessPortulogosB2B(): boolean {
     return hasPortulogosB2BAccess(this.user);
+  }
+
+  canAccessEdp(): boolean {
+    return hasEdpAccess(this.user);
+  }
+
+  canAccessB2BContracts(): boolean {
+    return this.canAccessPortulogosB2B() || this.canAccessEdp();
   }
 
   canAccessB2CContracts(): boolean {

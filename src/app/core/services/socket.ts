@@ -96,6 +96,10 @@ export interface GalpSolarContractSocketEvent extends ContractSocketBaseEvent {}
 
 export interface GalpPowerGasContractSocketEvent extends ContractSocketBaseEvent {}
 
+export interface EdpPowerGasContractSocketEvent extends ContractSocketBaseEvent {}
+
+export interface EdpSolarContractSocketEvent extends ContractSocketBaseEvent {}
+
 export interface RepsolContractSocketEvent extends ContractSocketBaseEvent {}
 
 export interface PortulogosContractSocketEvent extends ContractSocketBaseEvent {}
@@ -328,6 +332,26 @@ export class SocketService {
     return this.createEventObservable<GalpPowerGasContractSocketEvent>(
       'galp-power-gas-contract:updated',
     );
+  }
+
+  listenEdpPowerGasContractCreated(): Observable<EdpPowerGasContractSocketEvent> {
+    return this.createEventObservable<EdpPowerGasContractSocketEvent>(
+      'edp-power-gas-contract:created',
+    );
+  }
+
+  listenEdpPowerGasContractUpdated(): Observable<EdpPowerGasContractSocketEvent> {
+    return this.createEventObservable<EdpPowerGasContractSocketEvent>(
+      'edp-power-gas-contract:updated',
+    );
+  }
+
+  listenEdpSolarContractCreated(): Observable<EdpSolarContractSocketEvent> {
+    return this.createEventObservable<EdpSolarContractSocketEvent>('edp-solar-contract:created');
+  }
+
+  listenEdpSolarContractUpdated(): Observable<EdpSolarContractSocketEvent> {
+    return this.createEventObservable<EdpSolarContractSocketEvent>('edp-solar-contract:updated');
   }
 
   listenWallboxContractCreated() {
