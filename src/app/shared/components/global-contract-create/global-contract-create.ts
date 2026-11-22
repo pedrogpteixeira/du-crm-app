@@ -77,7 +77,7 @@ const CONTRACT_CREATE_OPTIONS: readonly ContractCreateOption[] = [
     route: '/home/contracts/wallbox/create',
     group: 'B2C',
     icon: 'ev_station',
-    roles: ['Super Admin', 'DU', 'Galp'],
+    roles: ['Super Admin'],
   },
   {
     name: 'Yes Energy',

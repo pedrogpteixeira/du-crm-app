@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { buildUniquePositionOptions, normalizeRoleName } from '../../core/utils/position-normalization';
 import { Auth } from '../../core/services/auth';
 import type { ContractLayout } from '../../core/services/preferences';
 import { SocketService } from '../../core/services/socket';
@@ -150,8 +151,8 @@ export class Users implements OnInit {
     );
   }
 
-  get selectedTeamPositions(): string[] {
-    return this.selectedCreateTeam?.positionList ?? [];
+  get selectedTeamPositions(): Array<{ index: number; label: string }> {
+    return buildUniquePositionOptions(this.selectedCreateTeam?.positionList);
   }
 
   ngOnInit(): void {
@@ -611,7 +612,7 @@ export class Users implements OnInit {
     this.availableRoles = Array.from(
       new Set(
         this.users
-          .map((user) => user.role?.trim())
+          .map((user) => normalizeRoleName(user.role))
           .filter((role): role is string => Boolean(role)),
       ),
     ).sort((first, second) =>

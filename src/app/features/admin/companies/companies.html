@@ -1,8 +1,8 @@
 <section class="companies-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb">Administração › Companies</span>
-      <h1>Companies</h1>
+      <span class="breadcrumb">Administração › Comercializadoras</span>
+      <h1>Comercializadoras</h1>
       <p>Configuração das comercializadoras disponíveis no CRM.</p>
     </div>
 
@@ -23,12 +23,12 @@
   <section class="companies-card">
     <div class="loading-state" *ngIf="isLoading">
       <span class="material-symbols-rounded spinning">progress_activity</span>
-      <span>A carregar Companies...</span>
+      <span>A carregar Comercializadoras...</span>
     </div>
 
     <div class="empty-state" *ngIf="!isLoading && !errorMessage && companies.length === 0">
       <span class="material-symbols-rounded">domain_disabled</span>
-      <span>Nenhuma Company encontrada.</span>
+      <span>Nenhuma Comercializadora encontrada.</span>
     </div>
 
     <ng-container *ngIf="!isLoading && companies.length > 0">
@@ -83,7 +83,7 @@
         <div>
           <span class="modal-eyebrow">Configuração</span>
           <h2>Editar {{ company.name }}</h2>
-          <p>Altera apenas o estado e a regra de reentrada desta Company.</p>
+          <p>Altera apenas o estado e a regra de reentrada desta Comercializadora.</p>
         </div>
 
         <button

@@ -16,6 +16,8 @@ import {
   getContractProviderName,
 } from '../../../core/config/contract-detail-route';
 import { getContractStatusColor } from '../../../core/config/contract-status-colors';
+import { canAccessWallbox } from '../../../core/config/wallbox-access';
+import { Auth } from '../../../core/services/auth';
 import {
   ClientContract,
   ClientDetails,
@@ -46,6 +48,7 @@ const CLOSED_CONTRACT_STATUSES = new Set([
 export class ClientDetail implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly clientService = inject(ClientService);
+  private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
 
   client: ClientDetails | null = null;
@@ -119,7 +122,12 @@ export class ClientDetail implements OnInit {
       .subscribe({
         next: (client) => {
           this.client = client;
-          this.contracts = sortContractsByUpdatedAtDesc(client.contracts ?? []);
+          const contracts = client.contracts ?? [];
+          this.contracts = sortContractsByUpdatedAtDesc(
+            canAccessWallbox(this.auth.getCurrentUser())
+              ? contracts
+              : contracts.filter((contract) => contract.provider !== 'wallbox'),
+          );
         },
         error: (error: HttpErrorResponse) => {
           this.client = null;

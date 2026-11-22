@@ -468,7 +468,7 @@ export const routes: Routes = [
         path: 'contracts/wallbox',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin', 'DU', 'Galp'],
+          allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
           import('./features/contracts/wallbox-contracts/wallbox-contracts').then(
@@ -479,7 +479,7 @@ export const routes: Routes = [
         path: 'contracts/wallbox/create',
         canActivate: [roleIncludesGuard, companyActiveCreateGuard],
         data: {
-          allowedRoles: ['Super Admin', 'DU', 'Galp'],
+          allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
           import('./features/contracts/wallbox-contract-create/wallbox-contract-create').then(
@@ -490,7 +490,7 @@ export const routes: Routes = [
         path: 'contracts/wallbox/:id',
         canActivate: [roleIncludesGuard],
         data: {
-          allowedRoles: ['Super Admin', 'DU', 'Galp'],
+          allowedRoles: ['Super Admin'],
         },
         loadComponent: () =>
           import('./features/contracts/wallbox-contract-detail/wallbox-contract-detail').then(
@@ -733,6 +733,14 @@ export const routes: Routes = [
           import('./features/simulator/proposal-preview/proposal-preview').then(
             (m) => m.ProposalPreview,
           ),
+      },
+      {
+        path: 'admin/backups',
+        canActivate: [roleIncludesGuard],
+        data: {
+          allowedRoles: ['Super Admin'],
+        },
+        loadComponent: () => import('./features/admin/backups/backups').then((m) => m.Backups),
       },
       {
         path: 'admin/market-regulatory-data',

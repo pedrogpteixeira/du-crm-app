@@ -1,0 +1,542 @@
+<section class="backups-page">
+  <header class="page-header">
+    <div>
+      <span class="breadcrumb">Administração › Backups e Recuperação</span>
+      <h1>Backups e Recuperação</h1>
+      <p>
+        Monitorização da proteção dos anexos Cloudflare R2 e da integração de snapshots MongoDB
+        Atlas.
+      </p>
+    </div>
+
+    <button type="button" class="refresh-btn" [disabled]="isRefreshing" (click)="refreshAll(true)">
+      <span class="material-symbols-rounded" [class.spinning]="isRefreshing">refresh</span>
+      {{ isRefreshing ? 'A atualizar...' : 'Atualizar' }}
+    </button>
+  </header>
+
+  <aside class="monitoring-note">
+    <span class="material-symbols-rounded">shield</span>
+    <div>
+      <strong>Monitorização administrativa</strong>
+      <p>
+        Esta área é apenas de consulta. Restauros, eliminações, backups manuais e configuração de
+        credenciais não são executados a partir do CRM.
+      </p>
+    </div>
+  </aside>
+
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Visão geral</span>
+        <h2>Estado da proteção</h2>
+      </div>
+    </div>
+
+    <div class="section-error" *ngIf="errors.overview">
+      <span class="material-symbols-rounded">warning</span>
+      <span>{{ errors.overview }}</span>
+    </div>
+
+    <div class="summary-grid" *ngIf="!loading.overview || overview || health; else summaryLoading">
+      <article class="summary-card primary-status">
+        <div class="summary-icon"><span class="material-symbols-rounded">verified_user</span></div>
+        <div>
+          <span class="summary-label">Estado geral</span>
+          <span class="status-badge" [attr.data-tone]="statusTone(overallStatus)">{{
+            statusLabel(overallStatus)
+          }}</span>
+          <small *ngIf="health?.fullyProtected === false || overview?.fullyProtected === false"
+            >A proteção integral ainda não está confirmada.</small
+          >
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <div class="summary-icon"><span class="material-symbols-rounded">cloud_done</span></div>
+        <div>
+          <span class="summary-label">Cloudflare R2</span>
+          <span class="status-badge" [attr.data-tone]="statusTone(r2Status)">{{
+            statusLabel(r2Status)
+          }}</span>
+          <small *ngIf="health?.r2?.ageHours != null"
+            >Última cópia há {{ health?.r2?.ageHours }} h</small
+          >
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <div class="summary-icon"><span class="material-symbols-rounded">database</span></div>
+        <div>
+          <span class="summary-label">MongoDB Atlas</span>
+          <span class="status-badge" [attr.data-tone]="statusTone(atlasStatus)">{{
+            statusLabel(atlasStatus)
+          }}</span>
+          <small *ngIf="atlasStatus === 'pending_upgrade'"
+            >Aguardar configuração da monitorização M10.</small
+          >
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <div class="summary-icon"><span class="material-symbols-rounded">schedule</span></div>
+        <div>
+          <span class="summary-label">Último backup R2</span>
+          <strong class="summary-value">{{ formatDate(latestR2Date) }}</strong>
+          <small *ngIf="latestRun?.runId">{{ latestRun?.runId }}</small>
+        </div>
+      </article>
+
+      <article class="summary-card">
+        <div class="summary-icon">
+          <span class="material-symbols-rounded">notifications_active</span>
+        </div>
+        <div>
+          <span class="summary-label">Alertas ativos</span>
+          <strong class="summary-value">{{ formatNumber(alertItems.length) }}</strong>
+          <small>{{ alertItems.length ? 'Ver detalhe abaixo' : 'Sem alertas reportados' }}</small>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #summaryLoading>
+      <div class="summary-grid">
+        <div class="skeleton-card" *ngFor="let item of [1, 2, 3, 4, 5]"></div>
+      </div>
+    </ng-template>
+  </section>
+
+  <section class="two-column-grid">
+    <article class="panel atlas-panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon material-symbols-rounded">database</span>
+          <div>
+            <span class="eyebrow">Base de dados</span>
+            <h2>MongoDB Atlas</h2>
+          </div>
+        </div>
+        <span class="status-badge" *ngIf="atlas" [attr.data-tone]="statusTone(atlasStatus)">{{
+          statusLabel(atlasStatus)
+        }}</span>
+      </header>
+
+      <div class="panel-loading" *ngIf="loading.atlas && !atlas">
+        <span class="material-symbols-rounded spinning">progress_activity</span> A carregar
+        monitorização Atlas...
+      </div>
+      <div class="section-error compact" *ngIf="errors.atlas">
+        <span class="material-symbols-rounded">warning</span><span>{{ errors.atlas }}</span>
+      </div>
+
+      <ng-container *ngIf="atlas">
+        <div
+          class="pending-state"
+          *ngIf="atlas.configured === false || atlas.status === 'pending_upgrade'"
+        >
+          <span class="material-symbols-rounded">hourglass_top</span>
+          <div>
+            <strong>Configuração pendente</strong>
+            <p>
+              {{
+                atlas.note ||
+                  'A monitorização de snapshots MongoDB Atlas ainda não está configurada.'
+              }}
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="metric-list"
+          *ngIf="atlas.configured !== false && atlas.status !== 'pending_upgrade'"
+        >
+          <div class="metric-row">
+            <span>Último snapshot</span
+            ><strong>{{
+              atlasLatestSnapshot
+                ? formatDate(atlasLatestSnapshot.completedAt || atlasLatestSnapshot.createdAt)
+                : '—'
+            }}</strong>
+          </div>
+          <div class="metric-row">
+            <span>Estado do snapshot</span><strong>{{ atlasLatestSnapshot?.status || '—' }}</strong>
+          </div>
+          <div class="metric-row" *ngIf="atlas.lastCheckedAt">
+            <span>Última monitorização</span><strong>{{ formatDate(atlas.lastCheckedAt) }}</strong>
+          </div>
+          <div class="metric-row" *ngIf="atlas.retention != null">
+            <span>Retenção</span><strong>{{ atlas.retention }}</strong>
+          </div>
+          <div class="metric-row" *ngIf="atlas.pitr != null">
+            <span>PITR</span
+            ><strong>{{
+              atlas.pitr === true ? 'Ativo' : atlas.pitr === false ? 'Inativo' : atlas.pitr
+            }}</strong>
+          </div>
+        </div>
+
+        <div class="snapshot-list" *ngIf="atlas.snapshots?.length">
+          <h3>Snapshots recentes</h3>
+          <div class="snapshot-row" *ngFor="let snapshot of atlas.snapshots | slice: 0 : 5">
+            <div>
+              <strong>{{ snapshot.snapshotId || snapshot.id || 'Snapshot' }}</strong
+              ><span>{{ formatDate(snapshot.completedAt || snapshot.createdAt) }}</span>
+            </div>
+            <span class="mini-status">{{ snapshot.status || '—' }}</span>
+          </div>
+        </div>
+      </ng-container>
+    </article>
+
+    <article class="panel r2-panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon material-symbols-rounded">cloud_sync</span>
+          <div>
+            <span class="eyebrow">Anexos</span>
+            <h2>Cloudflare R2</h2>
+          </div>
+        </div>
+        <span class="status-badge" [attr.data-tone]="statusTone(latestRun?.status || r2Status)">{{
+          statusLabel(latestRun?.status || r2Status)
+        }}</span>
+      </header>
+
+      <div class="empty-panel" *ngIf="!latestRun && !loading.overview && !loading.history">
+        <span class="material-symbols-rounded">cloud_off</span>
+        <strong>Nenhum backup disponível</strong>
+        <p>Ainda não existe uma execução concluída para apresentar.</p>
+      </div>
+
+      <div class="r2-metrics" *ngIf="latestRun as run">
+        <div class="metric-tile">
+          <span>Analisados</span><strong>{{ formatNumber(run.scanned) }}</strong>
+        </div>
+        <div class="metric-tile">
+          <span>Copiados</span><strong>{{ formatNumber(run.copied) }}</strong>
+        </div>
+        <div class="metric-tile">
+          <span>Reutilizados</span><strong>{{ formatNumber(run.reused) }}</strong>
+        </div>
+        <div class="metric-tile">
+          <span>Transferido</span><strong>{{ formatBytes(run.copiedBytes) }}</strong>
+        </div>
+        <div class="metric-tile">
+          <span>Duração</span><strong>{{ formatDuration(run.durationMs) }}</strong>
+        </div>
+        <div class="metric-tile">
+          <span>Conclusão</span><strong>{{ formatDate(run.completedAt) }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="two-column-grid">
+    <article class="panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon material-symbols-rounded">hard_drive</span>
+          <div>
+            <span class="eyebrow">Recovery bucket</span>
+            <h2>Armazenamento</h2>
+          </div>
+        </div>
+        <span class="measurement-chip" *ngIf="storage">{{
+          storage.partial === true || storage.complete === false
+            ? 'Medição parcial'
+            : 'Medição disponível'
+        }}</span>
+      </header>
+
+      <div class="panel-loading" *ngIf="loading.storage && !storage">
+        <span class="material-symbols-rounded spinning">progress_activity</span> A medir
+        armazenamento...
+      </div>
+      <div class="section-error compact" *ngIf="errors.storage">
+        <span class="material-symbols-rounded">warning</span><span>{{ errors.storage }}</span>
+      </div>
+
+      <div
+        class="empty-panel compact-empty"
+        *ngIf="!loading.storage && !hasStorageData && !errors.storage"
+      >
+        <span class="material-symbols-rounded">storage</span><strong>Medição indisponível</strong>
+        <p>O backend ainda não devolveu uma medição de armazenamento utilizável.</p>
+      </div>
+
+      <div class="storage-summary" *ngIf="hasStorageData">
+        <div>
+          <span>Espaço medido</span><strong>{{ formatBytes(storage?.totalBytes) }}</strong>
+        </div>
+        <div>
+          <span>Objetos</span><strong>{{ formatNumber(storage?.totalObjects) }}</strong>
+        </div>
+        <div>
+          <span>Data da medição</span><strong>{{ formatDate(storage?.measuredAt) }}</strong>
+        </div>
+      </div>
+
+      <div class="class-breakdown" *ngIf="storage?.classes?.length">
+        <div class="class-row" *ngFor="let item of storage?.classes">
+          <strong>{{ item.storageClass || 'Classe não identificada' }}</strong>
+          <span>{{ formatBytes(item.bytes) }}</span>
+          <small>{{ formatNumber(item.objects) }} objetos</small>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel cost-panel">
+      <header class="panel-header">
+        <div class="panel-title">
+          <span class="panel-icon material-symbols-rounded">payments</span>
+          <div>
+            <span class="eyebrow">Estimativa R2</span>
+            <h2>Custos de armazenamento</h2>
+          </div>
+        </div>
+      </header>
+
+      <div class="cost-value" *ngIf="monthlyCost != null; else noCost">
+        <span>Custo mensal estimado</span>
+        <strong>{{ formatUsd(monthlyCost) }}</strong>
+        <small *ngIf="!isCostComplete"
+          >Medição parcial — o valor não representa uma estimativa completa.</small
+        >
+      </div>
+      <ng-template #noCost
+        ><div class="empty-panel compact-empty">
+          <span class="material-symbols-rounded">price_check</span
+          ><strong>Estimativa indisponível</strong>
+          <p>Não existem dados suficientes para calcular um valor mensal fiável.</p>
+        </div></ng-template
+      >
+
+      <div class="class-breakdown" *ngIf="cost?.classes?.length">
+        <div class="class-row" *ngFor="let item of cost?.classes">
+          <strong>{{ item.storageClass || 'Classe' }}</strong>
+          <span>{{ formatUsd(item.monthlyUsd) }}</span>
+          <small *ngIf="item.pricePerGbMonth != null"
+            >{{ formatUsd(item.pricePerGbMonth) }} / GB-mês</small
+          >
+        </div>
+      </div>
+
+      <div class="estimate-note">
+        <span class="material-symbols-rounded">info</span>
+        <p>
+          {{
+            cost?.coverage ||
+              cost?.note ||
+              'Estimativa limitada ao armazenamento R2 medido. Não inclui MongoDB Atlas, Render, impostos, operações ou recuperação não contabilizada.'
+          }}
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <section class="section-block history-section">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Execuções</span>
+        <h2>Histórico de backups</h2>
+      </div>
+      <span class="result-count" *ngIf="!loading.history">{{ history.length }} registos</span>
+    </div>
+
+    <div class="panel-loading" *ngIf="loading.history && !history.length">
+      <span class="material-symbols-rounded spinning">progress_activity</span> A carregar
+      histórico...
+    </div>
+    <div class="section-error" *ngIf="errors.history">
+      <span class="material-symbols-rounded">warning</span><span>{{ errors.history }}</span>
+    </div>
+    <div class="empty-panel" *ngIf="!loading.history && !errors.history && !history.length">
+      <span class="material-symbols-rounded">history</span><strong>Sem execuções registadas</strong>
+      <p>O histórico ficará disponível após as primeiras execuções de backup.</p>
+    </div>
+
+    <div class="history-table-wrap" *ngIf="history.length">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Execução</th>
+            <th>Data</th>
+            <th>Estado</th>
+            <th>Analisados</th>
+            <th>Copiados</th>
+            <th>Reutilizados</th>
+            <th>Volume</th>
+            <th>Duração</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let run of history; trackBy: trackRun">
+            <td>
+              <strong>{{ run.runId || '—' }}</strong>
+            </td>
+            <td>{{ formatDate(run.startedAt || run.createdAt || run.completedAt) }}</td>
+            <td>
+              <span class="status-badge compact-badge" [attr.data-tone]="statusTone(run.status)">{{
+                statusLabel(run.status)
+              }}</span>
+            </td>
+            <td>{{ formatNumber(run.scanned) }}</td>
+            <td>{{ formatNumber(run.copied) }}</td>
+            <td>{{ formatNumber(run.reused) }}</td>
+            <td>{{ formatBytes(run.copiedBytes) }}</td>
+            <td>{{ formatDuration(run.durationMs) }}</td>
+            <td>
+              <button
+                type="button"
+                class="detail-btn"
+                [disabled]="!run.runId"
+                (click)="openRun(run)"
+              >
+                <span class="material-symbols-rounded">visibility</span>Detalhes
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section-block alerts-section">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Monitorização</span>
+        <h2>Alertas</h2>
+      </div>
+    </div>
+    <div class="no-alerts" *ngIf="!loading.overview && !alertItems.length">
+      <span class="material-symbols-rounded">check_circle</span>
+      <div>
+        <strong>Sem alertas reportados</strong>
+        <p>O endpoint de monitorização não devolveu alertas ativos.</p>
+      </div>
+    </div>
+    <div class="alerts-list" *ngIf="alertItems.length">
+      <article
+        class="alert-row"
+        *ngFor="let alert of alertItems"
+        [attr.data-tone]="alertTone(alert)"
+      >
+        <span class="material-symbols-rounded">{{
+          alertTone(alert) === 'danger'
+            ? 'error'
+            : alertTone(alert) === 'pending'
+              ? 'hourglass_top'
+              : 'warning'
+        }}</span>
+        <div>
+          <strong>{{ alertMessage(alert) }}</strong
+          ><small *ngIf="alertSource(alert) as source">{{ source }}</small>
+        </div>
+      </article>
+    </div>
+  </section>
+</section>
+
+<div
+  class="modal-backdrop"
+  *ngIf="selectedRunId"
+  (pointerdown)="onBackdropPointerDown($event)"
+  (pointerup)="onBackdropPointerUp($event)"
+  (pointercancel)="resetBackdropPointer()"
+>
+  <section
+    class="detail-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Detalhes da execução de backup"
+    (pointerdown)="onModalPointer($event)"
+    (pointerup)="onModalPointer($event)"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">Execução de backup</span>
+        <h2>{{ selectedRunId }}</h2>
+      </div>
+      <button
+        type="button"
+        class="modal-close"
+        [disabled]="detailLoading"
+        (click)="closeRunDetail()"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </header>
+    <div class="panel-loading modal-loading" *ngIf="detailLoading">
+      <span class="material-symbols-rounded spinning">progress_activity</span> A carregar
+      detalhes...
+    </div>
+    <div class="section-error" *ngIf="detailError">
+      <span class="material-symbols-rounded">warning</span><span>{{ detailError }}</span>
+    </div>
+    <ng-container *ngIf="selectedRun as run">
+      <div class="detail-grid">
+        <div>
+          <span>Estado</span
+          ><strong
+            ><span class="status-badge" [attr.data-tone]="statusTone(run.status)">{{
+              statusLabel(run.status)
+            }}</span></strong
+          >
+        </div>
+        <div>
+          <span>Início</span><strong>{{ formatDate(run.startedAt) }}</strong>
+        </div>
+        <div>
+          <span>Conclusão</span><strong>{{ formatDate(run.completedAt) }}</strong>
+        </div>
+        <div>
+          <span>Duração</span><strong>{{ formatDuration(run.durationMs) }}</strong>
+        </div>
+        <div>
+          <span>Objetos analisados</span><strong>{{ formatNumber(run.scanned) }}</strong>
+        </div>
+        <div>
+          <span>Objetos copiados</span><strong>{{ formatNumber(run.copied) }}</strong>
+        </div>
+        <div>
+          <span>Objetos reutilizados</span><strong>{{ formatNumber(run.reused) }}</strong>
+        </div>
+        <div>
+          <span>Volume copiado</span><strong>{{ formatBytes(run.copiedBytes) }}</strong>
+        </div>
+      </div>
+      <div class="detail-subsection" *ngIf="run.warnings?.length">
+        <h3>Avisos</h3>
+        <ul>
+          <li *ngFor="let item of run.warnings">{{ describeObject(item) }}</li>
+        </ul>
+      </div>
+      <div class="detail-subsection danger-section" *ngIf="run.errors?.length">
+        <h3>Erros</h3>
+        <ul>
+          <li *ngFor="let item of run.errors">{{ describeObject(item) }}</li>
+        </ul>
+      </div>
+      <div class="detail-subsection" *ngIf="objectEntries(run.limits).length">
+        <h3>Limites aplicados</h3>
+        <div class="key-values">
+          <div *ngFor="let item of objectEntries(run.limits)">
+            <span>{{ item.key }}</span
+            ><strong>{{ item.value }}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="detail-subsection" *ngIf="objectEntries(run.integrity).length">
+        <h3>Integridade</h3>
+        <div class="key-values">
+          <div *ngFor="let item of objectEntries(run.integrity)">
+            <span>{{ item.key }}</span
+            ><strong>{{ item.value }}</strong>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </section>
+</div>

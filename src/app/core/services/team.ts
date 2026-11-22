@@ -14,6 +14,7 @@ import {
 } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { normalizePositionList, normalizePositionName, normalizeRoleName } from '../utils/position-normalization';
 import { Auth } from './auth';
 import { SocketService, TeamChangedEvent, TeamsInvalidationEvent } from './socket';
 
@@ -174,6 +175,7 @@ export class TeamService {
         `${this.apiUrl}/api/team-users/team/${encodeURIComponent(normalizedTeamId)}`,
       )
       .pipe(
+        tap((response) => this.normalizeTeamDetailResponse(response)),
         finalize(() => {
           this.teamUsersRequests.delete(normalizedTeamId);
         }),
@@ -185,8 +187,14 @@ export class TeamService {
   }
 
   createTeam(payload: CreateTeamRequest): Observable<Team> {
+    const normalizedPayload: CreateTeamRequest = {
+      ...payload,
+      role: normalizeRoleName(payload.role),
+      positionList: normalizePositionList(payload.positionList),
+    };
+
     return this.http
-      .post<Team>(`${this.apiUrl}/api/teams`, payload)
+      .post<Team>(`${this.apiUrl}/api/teams`, normalizedPayload)
       .pipe(tap((team) => this.upsertTeamInCache(team)));
   }
 
@@ -207,8 +215,9 @@ export class TeamService {
   }
 
   updateTeamPositions(teamId: string, positionList: string[]): Observable<Team> {
+    const normalizedPositionList = normalizePositionList(positionList);
     const payload: UpdateTeamPositionsRequest = {
-      positionList,
+      positionList: normalizedPositionList,
     };
 
     return this.http
@@ -218,7 +227,9 @@ export class TeamService {
           this.upsertTeamInCache({
             ...team,
             id: team?.id || teamId,
-            positionList: Array.isArray(team?.positionList) ? team.positionList : positionList,
+            positionList: Array.isArray(team?.positionList)
+              ? normalizePositionList(team.positionList)
+              : normalizedPositionList,
           });
         }),
       );
@@ -256,7 +267,7 @@ export class TeamService {
     const request$ = this.http.get<Team[]>(`${this.apiUrl}/api/teams`).pipe(
       tap((teams) => {
         this.teamsStateSubject.next({
-          teams: Array.isArray(teams) ? teams : [],
+          teams: Array.isArray(teams) ? teams.map((team) => this.normalizeTeam(team)) : [],
           loading: true,
           loaded: true,
           error: null,
@@ -412,7 +423,33 @@ export class TeamService {
     });
   }
 
+  private normalizeTeam(team: Team): Team {
+    return {
+      ...team,
+      role: normalizeRoleName(team?.role),
+      positionList: normalizePositionList(team?.positionList),
+    };
+  }
+
+  private normalizeTeamDetailResponse(response: TeamDetailResponse): void {
+    if (!response) {
+      return;
+    }
+
+    response.team = this.normalizeTeam(response.team);
+    response.users = Array.isArray(response.users)
+      ? response.users.map((user) => ({
+          ...user,
+          role: normalizeRoleName(user.role),
+          position: normalizePositionName(
+            user.position || response.team.positionList[user.positionIndex],
+          ),
+        }))
+      : [];
+  }
+
   private upsertTeamInCache(team: Team): void {
+    team = this.normalizeTeam(team);
     const state = this.teamsStateSubject.value;
 
     if (!state.loaded) {

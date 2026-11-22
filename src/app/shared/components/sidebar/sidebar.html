@@ -20,7 +20,10 @@
 
   <nav class="sidebar-nav">
     <!-- CONTRATOS -->
-    <div class="nav-section contracts-section" *ngIf="canAccessB2CContracts() || canAccessB2BContracts()">
+    <div
+      class="nav-section contracts-section"
+      *ngIf="canAccessB2CContracts() || canAccessB2BContracts()"
+    >
       <span class="section-title">Contratos</span>
 
       <div class="contract-drawer" *ngIf="canAccessB2CContracts()">
@@ -33,9 +36,13 @@
           aria-controls="sidebar-contracts-b2c"
           title="Contratos B2C"
         >
-          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true">person</span>
+          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true"
+            >person</span
+          >
           <span class="drawer-label">B2C</span>
-          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true">expand_more</span>
+          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true"
+            >expand_more</span
+          >
         </button>
 
         <div
@@ -83,9 +90,8 @@
             <span class="label">Galp Solar</span>
           </a>
 
-
           <a
-            *ngIf="canAccessRoles('Super Admin', 'DU', 'Galp')"
+            *ngIf="canAccessWallbox()"
             routerLink="/home/contracts/wallbox"
             routerLinkActive="active"
             title="Wallbox"
@@ -156,9 +162,13 @@
           aria-controls="sidebar-contracts-b2b"
           title="Contratos B2B"
         >
-          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true">business_center</span>
+          <span class="drawer-leading-icon material-symbols-rounded" aria-hidden="true"
+            >business_center</span
+          >
           <span class="drawer-label">B2B</span>
-          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true">expand_more</span>
+          <span class="drawer-chevron material-symbols-rounded" aria-hidden="true"
+            >expand_more</span
+          >
         </button>
 
         <div
@@ -340,6 +350,16 @@
       >
         <span class="icon material-symbols-rounded">campaign</span>
         <span class="label">Avisos do Sistema</span>
+      </a>
+
+      <a
+        *ngIf="canAccessRoles('Super Admin')"
+        routerLink="/home/admin/backups"
+        routerLinkActive="active"
+        title="Backups e Recuperação"
+      >
+        <span class="icon material-symbols-rounded">backup</span>
+        <span class="label">Backups e Recuperação</span>
       </a>
     </div>
 

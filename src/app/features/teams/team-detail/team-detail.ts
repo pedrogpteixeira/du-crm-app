@@ -21,6 +21,7 @@ import { catchError, finalize, forkJoin, map, of } from 'rxjs';
 import { ToastService } from '../../../core/services/toast';
 
 import { environment } from '../../../../environments/environment';
+import { normalizePositionList, normalizePositionName } from '../../../core/utils/position-normalization';
 
 import { Auth } from '../../../core/services/auth';
 import { SocketService } from '../../../core/services/socket';
@@ -387,7 +388,7 @@ export class TeamDetail implements OnInit {
       return;
     }
 
-    const normalizedPositions = this.editablePositionList.map((position) => position.trim());
+    const normalizedPositions = normalizePositionList(this.editablePositionList);
 
     if (!normalizedPositions.length) {
       this.positionsErrorMessage = 'A hierarquia deve ter pelo menos um cargo.';
@@ -1756,8 +1757,8 @@ export class TeamDetail implements OnInit {
 
   getTeamUserPositionLabel(user: TeamUser): string {
     const position =
-      user.position?.trim() ||
-      this.team?.positionList[user.positionIndex]?.trim() ||
+      normalizePositionName(user.position) ||
+      normalizePositionName(this.team?.positionList[user.positionIndex]) ||
       'Sem posição selecionada';
 
     const teamRole = this.team?.role?.trim();
@@ -1847,8 +1848,8 @@ export class TeamDetail implements OnInit {
 
   getPositionGroupLabel(user: TeamUser): string {
     return (
-      user.position?.trim() ||
-      this.team?.positionList[user.positionIndex]?.trim() ||
+      normalizePositionName(user.position) ||
+      normalizePositionName(this.team?.positionList[user.positionIndex]) ||
       'Sem posição definida'
     );
   }

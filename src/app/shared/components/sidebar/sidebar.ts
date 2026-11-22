@@ -17,6 +17,7 @@ import { Auth } from '../../../core/services/auth';
 import { AuthUser } from '../../../core/models/auth-user';
 import { canAccessPortulogosB2B as hasPortulogosB2BAccess } from '../../../core/config/portulogos-b2b-access';
 import { canAccessEdp as hasEdpAccess } from '../../../core/config/edp-access';
+import { canAccessWallbox as hasWallboxAccess } from '../../../core/config/wallbox-access';
 
 @Component({
   selector: 'app-sidebar',
@@ -70,6 +71,10 @@ export class Sidebar {
 
   canAccessEdp(): boolean {
     return hasEdpAccess(this.user);
+  }
+
+  canAccessWallbox(): boolean {
+    return hasWallboxAccess(this.user);
   }
 
   canAccessB2BContracts(): boolean {

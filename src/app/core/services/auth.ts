@@ -22,6 +22,7 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { AuthUser } from '../models/auth-user';
+import { normalizeRoleName } from '../utils/position-normalization';
 import { PasswordPolicy } from '../models/password-policy';
 import { AppTheme, ThemeService } from './theme';
 
@@ -497,7 +498,14 @@ export class Auth {
   // ---------------------------------------------------------------------------
 
   setCurrentUser(user: AuthUser | null): void {
-    this.currentUserSubject.next(user);
+    this.currentUserSubject.next(
+      user
+        ? {
+            ...user,
+            role: normalizeRoleName(user.role),
+          }
+        : null,
+    );
   }
 
   getCurrentUser(): AuthUser | null {

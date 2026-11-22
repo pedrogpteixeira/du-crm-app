@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { Auth } from '../../core/services/auth';
+import { normalizePositionName, normalizeRoleName } from '../../core/utils/position-normalization';
 import {
   CreateTeamRequest,
   Team,
@@ -257,12 +258,12 @@ export class Teams implements OnInit {
       this.createTeamForm.name.trim();
 
     const role =
-      this.createTeamForm.role.trim();
+      normalizeRoleName(this.createTeamForm.role);
 
     const positionList =
       this.createTeamForm.positionList
         .map((position) =>
-          position.trim(),
+          normalizePositionName(position),
         )
         .filter(Boolean);
 
@@ -391,7 +392,7 @@ export class Teams implements OnInit {
       new Set(
         this.teams
           .map((team) =>
-            team.role?.trim(),
+            normalizeRoleName(team.role),
           )
           .filter(
             (role): role is string =>

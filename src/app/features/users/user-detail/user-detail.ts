@@ -22,6 +22,7 @@ import {
 
 import { environment } from '../../../../environments/environment';
 import { Auth } from '../../../core/services/auth';
+import { normalizeRoleName } from '../../../core/utils/position-normalization';
 import {
   ContractLayout,
   ContractsDefaultView,
@@ -207,7 +208,7 @@ export class UserDetail implements OnInit {
 
     const originalUser = this.user;
     const updatePayload = this.buildUpdateUserPayload(originalUser);
-    const normalizedRole = this.editUserForm.role.trim();
+    const normalizedRole = normalizeRoleName(this.editUserForm.role);
     const roleChanged = normalizedRole !== (originalUser.role ?? '');
     const hasProfileChanges = Object.keys(updatePayload).length > 0;
     const preferencesPayload = this.buildAdminPreferencesPayload();

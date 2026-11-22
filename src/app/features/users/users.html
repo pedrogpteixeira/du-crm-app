@@ -440,10 +440,10 @@
               </option>
 
               <option
-                *ngFor="let position of selectedTeamPositions; let index = index"
-                [ngValue]="index"
+                *ngFor="let position of selectedTeamPositions"
+                [ngValue]="position.index"
               >
-                {{ position }}
+                {{ position.label }}
               </option>
             </select>
           </label>

@@ -15,6 +15,7 @@ import {
 } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { normalizePositionName, normalizeRoleName } from '../utils/position-normalization';
 import { Auth } from './auth';
 import {
   AssignableUsersInvalidationEvent,
@@ -162,6 +163,7 @@ export class UserService {
     }
 
     const request$ = this.http.get<ProfileUser>(`${this.apiUrl}/${userId}`).pipe(
+      tap((user) => this.normalizeUserInPlace(user)),
       finalize(() => {
         this.userByIdRequests.delete(userId);
       }),
@@ -328,21 +330,30 @@ export class UserService {
   createUser(data: CreateUserRequest): Observable<ProfileUser> {
     return this.http
       .post<ProfileUser>(this.apiUrl, data)
-      .pipe(tap((user) => this.upsertUserInUsersCache(user)));
+      .pipe(
+        tap((user) => this.normalizeUserInPlace(user)),
+        tap((user) => this.upsertUserInUsersCache(user)),
+      );
   }
 
   updateUser(id: string, data: UpdateUserRequest): Observable<ProfileUser> {
     return this.http
       .patch<ProfileUser>(`${this.apiUrl}/${id}`, data)
-      .pipe(tap((user) => this.mergeUserIntoCaches(id, user)));
+      .pipe(
+        tap((user) => this.normalizeUserInPlace(user)),
+        tap((user) => this.mergeUserIntoCaches(id, user)),
+      );
   }
 
   updateUserRole(id: string, role: string): Observable<ProfileUser> {
-    const payload: UpdateUserRoleRequest = { role };
+    const payload: UpdateUserRoleRequest = { role: normalizeRoleName(role) };
 
     return this.http
       .patch<ProfileUser>(`${this.apiUrl}/${id}/role`, payload)
-      .pipe(tap((user) => this.mergeUserIntoCaches(id, user)));
+      .pipe(
+        tap((user) => this.normalizeUserInPlace(user)),
+        tap((user) => this.mergeUserIntoCaches(id, user)),
+      );
   }
 
   setUserActive(id: string, active: boolean): Observable<ProfileUser> {
@@ -385,7 +396,7 @@ export class UserService {
     const request$ = this.http.get<ProfileUser[]>(this.apiUrl).pipe(
       tap((users) => {
         this.usersStateSubject.next({
-          users: Array.isArray(users) ? users : [],
+          users: Array.isArray(users) ? users.map((user) => this.normalizeUser(user)) : [],
           loading: true,
           loaded: true,
           error: null,
@@ -452,7 +463,7 @@ export class UserService {
     const request$ = this.http.get<ProfileUser[]>(`${this.apiUrl}/assignable`).pipe(
       tap((users) => {
         this.assignableUsersStateSubject.next({
-          users: Array.isArray(users) ? users : [],
+          users: Array.isArray(users) ? users.map((user) => this.normalizeUser(user)) : [],
           loading: true,
           loaded: true,
           error: null,
@@ -817,7 +828,29 @@ export class UserService {
       });
   }
 
+  private normalizeUser(user: ProfileUser): ProfileUser {
+    return {
+      ...user,
+      role: normalizeRoleName(user?.role),
+      defaultTeam: user?.defaultTeam
+        ? { ...user.defaultTeam, position: normalizePositionName(user.defaultTeam.position) }
+        : null,
+      teams: Array.isArray(user?.teams)
+        ? user.teams.map((team) => ({ ...team, position: normalizePositionName(team.position) }))
+        : [],
+    };
+  }
+
+  private normalizeUserInPlace(user: ProfileUser): void {
+    if (!user) {
+      return;
+    }
+
+    Object.assign(user, this.normalizeUser(user));
+  }
+
   private upsertUserInUsersCache(user: ProfileUser): void {
+    user = this.normalizeUser(user);
     const state = this.usersStateSubject.value;
 
     if (!state.loaded) {
@@ -844,6 +877,10 @@ export class UserService {
   }
 
   private mergeUserIntoCaches(userId: string, user: Partial<ProfileUser>): void {
+    user = {
+      ...user,
+      ...(user.role !== undefined ? { role: normalizeRoleName(user.role) } : {}),
+    };
     this.patchUserInUsersCache(userId, user);
     this.patchUserInAssignableCache(userId, user);
   }
