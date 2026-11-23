@@ -1149,6 +1149,8 @@
 
         <article class="card observations-card">
           <app-observations-thread
+            provider="endesa-b2b"
+            [contractId]="contractId"
             title="Observações"
             [value]="contract.observacoes"
             [(draft)]="observationDraft"
@@ -1164,6 +1166,8 @@
           *ngIf="canAccessInternalObservations"
         >
           <app-observations-thread
+            provider="endesa-b2b"
+            [contractId]="contractId"
             title="Observações Internas"
             [value]="contract.observacoesInternas"
             [(draft)]="internalObservationDraft"

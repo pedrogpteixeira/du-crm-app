@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { catchError, finalize, map, of, switchMap } from 'rxjs';
 
 import {
   CurrentKnowledgeFolder,
@@ -15,12 +16,9 @@ import {
   KnowledgeFolder as KnowledgeFolderModel,
 } from '../../../core/services/knowledge-base';
 
-import {
-  Company,
-  CompanyService,
-} from '../../../core/services/company';
 
 import { Auth } from '../../../core/services/auth';
+import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 
 @Component({
   selector: 'app-knowledge-folder',
@@ -28,6 +26,7 @@ import { Auth } from '../../../core/services/auth';
     CommonModule,
     RouterLink,
     FormsModule,
+    FileDropzone,
   ],
   templateUrl: './knowledge-folder.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -40,8 +39,6 @@ export class KnowledgeFolder implements OnInit {
   private readonly knowledgeBaseService =
     inject(KnowledgeBaseService);
 
-  private readonly companyService =
-    inject(CompanyService);
 
   private readonly auth = inject(Auth);
 
@@ -57,11 +54,15 @@ export class KnowledgeFolder implements OnInit {
   selectedSupplier = '';
   selectedCompanyId = '';
 
-  companies: Company[] = [];
 
   isLoading = false;
   isDeleting = false;
   isCreatingArticle = false;
+  isUploadingArticleAttachments = false;
+
+  selectedArticleFiles: File[] = [];
+  createdArticleForAttachmentRetry: KnowledgeArticle | null = null;
+  articleAttachmentUploadFailed = false;
 
   canManageKnowledgeBase = false;
 
@@ -107,7 +108,6 @@ export class KnowledgeFolder implements OnInit {
         this.selectedSupplier;
     });
 
-    this.loadCompanies();
   }
 
   private initializePermissions(): void {
@@ -312,6 +312,12 @@ export class KnowledgeFolder implements OnInit {
   }
 
   closeCreateArticleModal(): void {
+    if (this.isCreatingArticle || this.isUploadingArticleAttachments) {
+      return;
+    }
+
+    const shouldRefresh = !!this.createdArticleForAttachmentRetry;
+
     this.showCreateArticleModal = false;
 
     this.newArticle = {
@@ -320,6 +326,27 @@ export class KnowledgeFolder implements OnInit {
       status: 'campaign_active',
       message: '',
     };
+
+    this.selectedArticleFiles = [];
+    this.createdArticleForAttachmentRetry = null;
+    this.articleAttachmentUploadFailed = false;
+    this.errorMessage = '';
+
+    if (shouldRefresh && this.folderId) {
+      this.loadFolderContents(this.folderId);
+    }
+  }
+
+  onArticleFilesChange(files: File[]): void {
+    if (this.isCreatingArticle || this.isUploadingArticleAttachments) {
+      return;
+    }
+
+    this.selectedArticleFiles = files;
+  }
+
+  get isArticleCreationBusy(): boolean {
+    return this.isCreatingArticle || this.isUploadingArticleAttachments;
   }
 
   createArticle(): void {
@@ -365,7 +392,10 @@ export class KnowledgeFolder implements OnInit {
       return;
     }
 
+    const filesToUpload = [...this.selectedArticleFiles];
+
     this.isCreatingArticle = true;
+    this.articleAttachmentUploadFailed = false;
     this.errorMessage = '';
 
     this.knowledgeBaseService
@@ -378,19 +408,95 @@ export class KnowledgeFolder implements OnInit {
           this.newArticle.message.trim(),
         createdBy: currentUser.id,
       })
+      .pipe(
+        switchMap((article) => {
+          this.isCreatingArticle = false;
+
+          if (!filesToUpload.length) {
+            return of({
+              article,
+              uploadFailed: false,
+            });
+          }
+
+          this.isUploadingArticleAttachments = true;
+
+          return this.knowledgeBaseService
+            .uploadArticleAttachments(article.id, filesToUpload)
+            .pipe(
+              map((updatedArticle) => ({
+                article: updatedArticle,
+                uploadFailed: false,
+              })),
+              catchError(() =>
+                of({
+                  article,
+                  uploadFailed: true,
+                }),
+              ),
+              finalize(() => {
+                this.isUploadingArticleAttachments = false;
+              }),
+            );
+        }),
+        finalize(() => {
+          this.isCreatingArticle = false;
+        }),
+      )
       .subscribe({
-        next: () => {
+        next: ({ article, uploadFailed }) => {
+          if (uploadFailed) {
+            this.createdArticleForAttachmentRetry = article;
+            this.articleAttachmentUploadFailed = true;
+            this.errorMessage =
+              'O artigo foi criado, mas não foi possível enviar os anexos. Podes tentar novamente sem criar outro artigo.';
+            return;
+          }
+
+          this.isCreatingArticle = false;
+          this.isUploadingArticleAttachments = false;
           this.closeCreateArticleModal();
           this.loadFolderContents(this.folderId!);
         },
         error: () => {
           this.errorMessage =
             'Não foi possível criar o artigo.';
-
-          this.isCreatingArticle = false;
         },
-        complete: () => {
-          this.isCreatingArticle = false;
+      });
+  }
+
+  retryArticleAttachments(): void {
+    if (
+      !this.createdArticleForAttachmentRetry?.id ||
+      !this.selectedArticleFiles.length ||
+      this.isArticleCreationBusy
+    ) {
+      return;
+    }
+
+    this.isUploadingArticleAttachments = true;
+    this.articleAttachmentUploadFailed = false;
+    this.errorMessage = '';
+
+    this.knowledgeBaseService
+      .uploadArticleAttachments(
+        this.createdArticleForAttachmentRetry.id,
+        this.selectedArticleFiles,
+      )
+      .pipe(
+        finalize(() => {
+          this.isUploadingArticleAttachments = false;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.isUploadingArticleAttachments = false;
+          this.closeCreateArticleModal();
+        },
+        error: () => {
+          this.articleAttachmentUploadFailed = true;
+          this.errorMessage =
+            'Não foi possível enviar os anexos. O artigo já está criado e podes tentar novamente.';
         },
       });
   }
@@ -408,24 +514,6 @@ export class KnowledgeFolder implements OnInit {
     ).format(new Date(date));
   }
 
-  loadCompanies(): void {
-    this.companyService
-      .getCompanies()
-      .subscribe({
-        next: (companies) => {
-          this.companies =
-            companies.filter(
-              (company) => company.active,
-            );
-
-          this.ensureSelectedSupplierExists();
-        },
-        error: () => {
-          this.errorMessage =
-            'Não foi possível carregar os fornecedores.';
-        },
-      });
-  }
 
   getSubfolderQueryParams(
     subfolder: KnowledgeFolderModel,
@@ -449,24 +537,4 @@ export class KnowledgeFolder implements OnInit {
     };
   }
 
-  private ensureSelectedSupplierExists(): void {
-    if (!this.selectedSupplier) {
-      return;
-    }
-
-    const supplierExists =
-      this.companies.some(
-        (company) =>
-          company.name
-            .trim()
-            .toLowerCase() ===
-          this.selectedSupplier
-            .trim()
-            .toLowerCase(),
-      );
-
-    if (!supplierExists) {
-      this.newArticle.supplier = '';
-    }
-  }
 }

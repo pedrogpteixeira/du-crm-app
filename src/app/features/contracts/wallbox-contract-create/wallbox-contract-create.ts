@@ -76,6 +76,7 @@ interface SegmentOption {
 import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
 
 @Component({
   selector: 'app-wallbox-contract-create',
@@ -130,7 +131,6 @@ export class WallboxContractCreate implements OnInit {
   isLoadingAssignment = false;
   assignmentErrorMessage = '';
 
-  canAccessInternalObservations = false;
 
   selectedFiles: File[] = [];
 
@@ -259,6 +259,10 @@ export class WallboxContractCreate implements OnInit {
     observacoes: '',
     observacoesInternas: '',
   };
+
+  get canAccessInternalObservations(): boolean {
+    return hasInternalObservationsAccess(this.auth.getCurrentUser());
+  }
 
   ngOnInit(): void {
     this.loadContractLayout();
@@ -754,15 +758,6 @@ export class WallboxContractCreate implements OnInit {
   }
 
   private resolveInternalObservationsAccess(user: ProfileUser): void {
-    const authorizedTeamIds = this.getRequiredTeamIds();
-
-    const userTeamIds =
-      (user as ProfileUserWithTeamPositions).teams?.map((team) => team.id).filter(Boolean) ?? [];
-
-    this.canAccessInternalObservations = userTeamIds.some((teamId) =>
-      authorizedTeamIds.includes(teamId),
-    );
-
     if (!this.canAccessInternalObservations) {
       this.contractForm.observacoesInternas = '';
     }

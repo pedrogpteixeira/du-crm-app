@@ -802,6 +802,8 @@
 
         <article class="card observations-card">
           <app-observations-thread
+            provider="iberdrola-solar"
+            [contractId]="contractId"
             title="Observações"
             [value]="contract.observacoes"
             [(draft)]="observationDraft"
@@ -817,6 +819,8 @@
           *ngIf="canAccessInternalObservations"
         >
           <app-observations-thread
+            provider="iberdrola-solar"
+            [contractId]="contractId"
             title="Observações Internas"
             [value]="contract.observacoesInternas"
             [(draft)]="internalObservationDraft"

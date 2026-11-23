@@ -57,6 +57,7 @@ interface ProfileUserWithTeamPositions extends ProfileUser {
 import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
 
 @Component({
   selector: 'app-galp-solar-contract-create',
@@ -110,7 +111,6 @@ export class GalpSolarContractCreate implements OnInit {
 
   assignmentErrorMessage = '';
 
-  canAccessInternalObservations = false;
 
   selectedFiles: File[] = [];
 
@@ -252,6 +252,10 @@ export class GalpSolarContractCreate implements OnInit {
 
     observacoesInternas: '',
   };
+
+  get canAccessInternalObservations(): boolean {
+    return hasInternalObservationsAccess(this.auth.getCurrentUser());
+  }
 
   ngOnInit(): void {
     this.loadAssignmentData();
@@ -705,15 +709,6 @@ export class GalpSolarContractCreate implements OnInit {
   }
 
   private resolveInternalObservationsAccess(user: ProfileUser): void {
-    const authorizedTeamIds = this.getRequiredTeamIds();
-
-    const userTeamIds =
-      (user as ProfileUserWithTeamPositions).teams?.map((team) => team.id).filter(Boolean) ?? [];
-
-    this.canAccessInternalObservations = userTeamIds.some((teamId) =>
-      authorizedTeamIds.includes(teamId),
-    );
-
     if (!this.canAccessInternalObservations) {
       this.contractForm.observacoesInternas = '';
     }

@@ -5,18 +5,30 @@
       <p *ngIf="internal">Apenas para utilização interna.</p>
     </div>
 
-    <span class="thread-count" *ngIf="entries.length">
-      {{ entries.length }}
+    <span class="thread-count" *ngIf="messageCount">
+      {{ messageCount }}
     </span>
   </header>
 
-  <div #threadBody class="thread-body" [class.empty]="!entries.length">
-    <ng-container *ngIf="entries.length; else emptyThread">
+  <div class="thread-feedback loading" *ngIf="usesApi && isLoadingMessages">
+    A carregar mensagens...
+  </div>
+
+  <div class="thread-feedback error" *ngIf="usesApi && messagesError">
+    <span>{{ messagesError }}</span>
+    <button type="button" class="link-button" (click)="retryLoad()">Tentar novamente</button>
+  </div>
+
+  <div class="thread-feedback error" *ngIf="operationError">
+    {{ operationError }}
+  </div>
+
+  <div #threadBody class="thread-body" [class.empty]="!messageCount && !isLoadingMessages">
+    <ng-container *ngIf="messageCount; else emptyThread">
       <article
-        class="thread-entry"
-        *ngFor="let entry of entries"
-        [class.own-entry]="isOwnEntry(entry)"
-        [class.legacy-entry]="!entry.isStructured"
+        class="thread-entry legacy-entry"
+        *ngFor="let entry of legacyEntries"
+        [class.own-entry]="isOwnLegacyEntry(entry)"
       >
         <div class="entry-avatar" aria-hidden="true">
           {{ getInitials(entry.author) }}
@@ -29,6 +41,101 @@
           </div>
 
           <p>{{ entry.message }}</p>
+          <small class="legacy-label">Histórico anterior</small>
+        </div>
+      </article>
+
+      <article
+        class="thread-entry"
+        *ngFor="let message of visibleMessages"
+        [class.own-entry]="isOwnMessage(message)"
+      >
+        <div class="entry-avatar" aria-hidden="true">
+          {{ getInitials(message.authorName) }}
+        </div>
+
+        <div class="entry-content">
+          <div class="entry-meta">
+            <strong>{{ message.authorName }}</strong>
+            <span class="entry-meta-right">
+              <small *ngIf="isEdited(message)" class="edited-label">Editada</small>
+              <time>{{ formatDateTime(message.createdAt) }}</time>
+            </span>
+          </div>
+
+          <ng-container *ngIf="editingId === message.id; else messageContent">
+            <textarea
+              class="edit-textarea"
+              rows="2"
+              [(ngModel)]="editDraft"
+              [ngModelOptions]="{ standalone: true }"
+              [disabled]="effectiveEditingMessageId === message.id"
+            ></textarea>
+
+            <div class="inline-actions">
+              <button
+                type="button"
+                class="link-button"
+                [disabled]="effectiveEditingMessageId === message.id"
+                (click)="cancelEdit()"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="save-edit-button"
+                [disabled]="!editDraft.trim() || effectiveEditingMessageId === message.id"
+                (click)="saveEdit(message)"
+              >
+                {{ effectiveEditingMessageId === message.id ? 'A guardar...' : 'Guardar' }}
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-template #messageContent>
+            <p>{{ message.content }}</p>
+
+            <div class="message-actions" *ngIf="canManageMessage(message)">
+              <ng-container *ngIf="confirmingDeleteId !== message.id; else deleteConfirmation">
+                <button
+                  type="button"
+                  class="link-button"
+                  [disabled]="!!effectiveEditingMessageId || !!effectiveDeletingMessageId"
+                  (click)="startEdit(message)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="link-button danger-link"
+                  [disabled]="!!effectiveEditingMessageId || !!effectiveDeletingMessageId"
+                  (click)="requestDelete(message)"
+                >
+                  Eliminar
+                </button>
+              </ng-container>
+
+              <ng-template #deleteConfirmation>
+                <span class="delete-confirmation-text">Eliminar esta mensagem?</span>
+                <button
+                  type="button"
+                  class="link-button"
+                  [disabled]="effectiveDeletingMessageId === message.id"
+                  (click)="cancelDelete()"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="link-button danger-link"
+                  [disabled]="effectiveDeletingMessageId === message.id"
+                  (click)="confirmDelete(message)"
+                >
+                  {{ effectiveDeletingMessageId === message.id ? 'A eliminar...' : 'Confirmar' }}
+                </button>
+              </ng-template>
+            </div>
+          </ng-template>
         </div>
       </article>
     </ng-container>
@@ -47,13 +154,16 @@
       rows="2"
       [ngModel]="draft"
       [ngModelOptions]="{ standalone: true }"
-      [disabled]="isSubmitting"
+      [disabled]="effectiveSubmitting"
       [placeholder]="placeholder"
+      [attr.maxlength]="5000"
       (ngModelChange)="onDraftInput($event)"
     ></textarea>
 
     <div class="composer-actions">
-      <small>O histórico existente é preservado automaticamente.</small>
+      <small>
+        {{ hasApiMessages ? 'Máximo de 5000 caracteres. A mensagem será publicada individualmente.' : 'O histórico existente é preservado automaticamente.' }}
+      </small>
 
       <button
         type="button"
@@ -61,7 +171,7 @@
         [disabled]="!canSend"
         (click)="submit()"
       >
-        {{ isSubmitting ? 'A enviar...' : 'Enviar' }}
+        {{ effectiveSubmitting ? 'A enviar...' : 'Enviar' }}
       </button>
     </div>
   </div>

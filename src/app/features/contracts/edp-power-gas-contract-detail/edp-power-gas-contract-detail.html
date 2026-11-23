@@ -1140,6 +1140,8 @@
 
         <article class="card observations-card">
           <app-observations-thread
+            provider="edp-power-gas"
+            [contractId]="contractId"
             title="Observações"
             [value]="contract.observacoes"
             [(draft)]="observationDraft"
@@ -1155,6 +1157,8 @@
           *ngIf="canAccessInternalObservations"
         >
           <app-observations-thread
+            provider="edp-power-gas"
+            [contractId]="contractId"
             title="Observações Internas"
             [value]="contract.observacoesInternas"
             [(draft)]="internalObservationDraft"

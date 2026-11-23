@@ -238,7 +238,7 @@
   class="modal-backdrop"
   *ngIf="showCreateArticleModal"
 >
-  <div class="modal">
+  <div class="modal article-create-modal">
     <h2>Criar artigo</h2>
 
     <label>
@@ -247,34 +247,10 @@
       <input
         type="text"
         [(ngModel)]="newArticle.name"
+        [disabled]="!!createdArticleForAttachmentRetry"
       />
     </label>
 
-    <label>
-      Fornecedor
-
-      <select
-        [(ngModel)]="
-          newArticle.supplier
-        "
-      >
-        <option
-          value=""
-          disabled
-        >
-          Selecionar fornecedor
-        </option>
-
-        <option
-          *ngFor="
-            let company of companies
-          "
-          [value]="company.name"
-        >
-          {{ company.name }}
-        </option>
-      </select>
-    </label>
 
     <label>
       Estado
@@ -283,6 +259,7 @@
         [(ngModel)]="
           newArticle.status
         "
+        [disabled]="!!createdArticleForAttachmentRetry"
       >
         <option
           value="campaign_active"
@@ -306,29 +283,74 @@
         [(ngModel)]="
           newArticle.message
         "
+        [disabled]="!!createdArticleForAttachmentRetry"
       ></textarea>
     </label>
+
+    <section class="article-attachments-section">
+      <div class="article-attachments-heading">
+        <strong>Anexos</strong>
+        <small>Opcional</small>
+      </div>
+
+      <app-file-dropzone
+        [files]="selectedArticleFiles"
+        [disabled]="isArticleCreationBusy"
+        title="Arrasta ficheiros para anexar ao artigo"
+        selectLabel="Selecionar ficheiros"
+        (filesChange)="onArticleFilesChange($event)"
+      ></app-file-dropzone>
+
+      <p class="article-upload-status" *ngIf="isUploadingArticleAttachments">
+        A enviar anexos...
+      </p>
+
+      <p class="article-upload-warning" *ngIf="articleAttachmentUploadFailed">
+        O artigo já foi criado. Os ficheiros selecionados continuam disponíveis para uma nova tentativa.
+      </p>
+    </section>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
 
     <div class="modal-actions">
       <button
         type="button"
         class="secondary"
+        [disabled]="isArticleCreationBusy"
         (click)="
           closeCreateArticleModal()
         "
       >
-        Cancelar
+        {{ createdArticleForAttachmentRetry ? 'Fechar' : 'Cancelar' }}
       </button>
 
       <button
+        *ngIf="!createdArticleForAttachmentRetry"
         type="button"
-        [disabled]="isCreatingArticle"
+        [disabled]="isArticleCreationBusy"
         (click)="createArticle()"
       >
         {{
           isCreatingArticle
             ? 'A criar...'
-            : 'Criar artigo'
+            : isUploadingArticleAttachments
+              ? 'A enviar anexos...'
+              : 'Criar artigo'
+        }}
+      </button>
+
+      <button
+        *ngIf="createdArticleForAttachmentRetry"
+        type="button"
+        [disabled]="isArticleCreationBusy || !selectedArticleFiles.length"
+        (click)="retryArticleAttachments()"
+      >
+        {{
+          isUploadingArticleAttachments
+            ? 'A enviar anexos...'
+            : 'Tentar enviar anexos novamente'
         }}
       </button>
     </div>

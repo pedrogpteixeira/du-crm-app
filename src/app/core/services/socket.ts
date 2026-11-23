@@ -83,6 +83,15 @@ export interface TeamMembershipChangedEvent {
   timestamp: string;
 }
 
+
+export interface ContractObservationMessageEvent {
+  provider: string;
+  contractId: string;
+  type: 'normal' | 'internal';
+  operation: 'created' | 'updated' | 'deleted';
+  messageId: string;
+}
+
 export interface TicketSocketEvent extends TicketApiModel {
   ticketId?: string;
   id?: string;
@@ -438,6 +447,13 @@ export class SocketService {
 
   listenConnected(): Observable<void> {
     return this.createEventObservable<void>('connect');
+  }
+
+
+  listenContractObservationMessage(): Observable<ContractObservationMessageEvent> {
+    return this.createEventObservable<ContractObservationMessageEvent>(
+      'contract:observation-message',
+    );
   }
 
   listenTicketCreated(): Observable<TicketSocketEvent> {

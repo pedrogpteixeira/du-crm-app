@@ -131,6 +131,7 @@ import { VisibleAttachmentsPipe } from '../../../shared/pipes/visible-attachment
 import { EditableSelectCombobox } from '../../../shared/components/editable-select-combobox/editable-select-combobox';
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
+import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
 
 
 @Component({
@@ -187,7 +188,6 @@ export class EdpSolarContractDetail implements OnInit {
   isEditing = false;
   isSuperAdmin = false;
   isRequiredTeamMember = false;
-  canAccessInternalObservations = false;
   private readonly toast = inject(ToastService);
   private dataAtivacaoBackendInvalid = false;
 
@@ -385,6 +385,10 @@ export class EdpSolarContractDetail implements OnInit {
       isContractEditExceptionUserId(this.currentUserId) ||
       (this.isSuperAdmin && this.canMutateContract)
     );
+  }
+
+  get canAccessInternalObservations(): boolean {
+    return hasInternalObservationsAccess(this.auth.getCurrentUser());
   }
 
   ngOnInit(): void {
@@ -1144,15 +1148,6 @@ export class EdpSolarContractDetail implements OnInit {
     if (!this.currentUserId) {
       return;
     }
-
-    const teamIds = currentUser?.teams?.map((team) => team.id ?? '').filter(Boolean) ?? [];
-
-    const authorizedTeamIds = [environment.EQUIPA_CRM_ID, environment.EQUIPA_DU_ID].filter(
-      (teamId): teamId is string => Boolean(teamId),
-    );
-
-    this.canAccessInternalObservations =
-      this.isSuperAdmin || teamIds.some((teamId) => authorizedTeamIds.includes(teamId));
 
     if (!this.canAccessInternalObservations) {
       this.internalObservationDraft = '';

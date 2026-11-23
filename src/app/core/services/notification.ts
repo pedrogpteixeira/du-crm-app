@@ -22,6 +22,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { environment } from '../../../environments/environment';
 import { Notification } from '../models/notification.model';
+import { canAccessInternalObservations } from '../utils/internal-observations-access';
 
 import { Auth } from './auth';
 import { SocketService } from './socket';
@@ -110,6 +111,7 @@ export class NotificationService {
 
         const unreadNotifications = notifications.filter(
           (notification) =>
+            this.canDisplayNotification(notification, currentUser) &&
             !notification.readBy?.includes(currentUser.id) &&
             !this.pendingReadIds.has(notification.id),
         );
@@ -267,7 +269,7 @@ export class NotificationService {
   handleNewNotification(notification: Notification): void {
     const currentUser = this.auth.getCurrentUser();
 
-    if (!currentUser?.id) {
+    if (!currentUser?.id || !this.canDisplayNotification(notification, currentUser)) {
       return;
     }
 
@@ -369,6 +371,17 @@ export class NotificationService {
     this.socketService.off('notifications:new', this.newNotificationHandler);
 
     this.socketService.on<Notification>('notifications:new', this.newNotificationHandler);
+  }
+
+  private canDisplayNotification(
+    notification: Notification,
+    currentUser: { role?: string | null },
+  ): boolean {
+    if (notification.title !== 'Observação interna atualizada') {
+      return true;
+    }
+
+    return canAccessInternalObservations(currentUser);
   }
 
   private sortNotifications(notifications: Notification[]): Notification[] {

@@ -459,3 +459,51 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.article-create-modal {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.article-attachments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.article-attachments-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #243646;
+
+  strong {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.article-upload-status,
+.article-upload-warning {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.article-upload-status {
+  color: #0369a1;
+}
+
+.article-upload-warning {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+}

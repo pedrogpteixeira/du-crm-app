@@ -419,3 +419,178 @@
   padding: 0 13px;
   font-size: 0.72rem;
 }
+
+/* Individual observation messages */
+.entry-meta-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.edited-label,
+.legacy-label {
+  color: #94a3b8;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.legacy-label {
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.message-actions,
+.inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.link-button,
+.save-edit-button {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.link-button {
+  padding: 3px 5px;
+  color: #64748b;
+}
+
+.link-button:hover:not(:disabled) {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.danger-link {
+  color: #b91c1c;
+}
+
+.danger-link:hover:not(:disabled) {
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+.link-button:disabled,
+.save-edit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.save-edit-button {
+  min-height: 28px;
+  padding: 0 10px;
+  background: #2563eb;
+  color: #fff;
+}
+
+.delete-confirmation-text {
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.edit-textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  padding: 7px 9px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.edit-textarea:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+}
+
+:host-context(.dark-theme) .observations-thread,
+:host-context(body.dark) .observations-thread {
+  border-color: #334155;
+  background: #111827;
+}
+
+:host-context(.dark-theme) .thread-header,
+:host-context(.dark-theme) .thread-composer,
+:host-context(body.dark) .thread-header,
+:host-context(body.dark) .thread-composer {
+  border-color: #273449;
+  background: #172033;
+}
+
+:host-context(.dark-theme) .thread-entry,
+:host-context(body.dark) .thread-entry {
+  border-color: #2b3a50;
+  background: #172033;
+}
+
+:host-context(.dark-theme) .thread-entry.own-entry,
+:host-context(body.dark) .thread-entry.own-entry {
+  border-color: #294b78;
+  background: #16263f;
+}
+
+:host-context(.dark-theme) .entry-meta strong,
+:host-context(.dark-theme) .entry-content p,
+:host-context(body.dark) .entry-meta strong,
+:host-context(body.dark) .entry-content p {
+  color: #e5edf8;
+}
+
+:host-context(.dark-theme) .edit-textarea,
+:host-context(body.dark) .edit-textarea {
+  border-color: #3b4b61;
+  background: #0f172a;
+  color: #e5edf8;
+}
+
+.thread-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 14px 0;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.thread-feedback.loading {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.thread-feedback.error {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+  color: #b42318;
+}
+
+:host-context(.dark-theme) .thread-feedback.loading,
+:host-context(.dark) .thread-feedback.loading {
+  background: rgba(30, 41, 59, 0.62);
+  color: #cbd5e1;
+}
+
+:host-context(.dark-theme) .thread-feedback.error,
+:host-context(.dark) .thread-feedback.error {
+  border-color: rgba(248, 113, 113, 0.36);
+  background: rgba(127, 29, 29, 0.16);
+  color: #fecaca;
+}
