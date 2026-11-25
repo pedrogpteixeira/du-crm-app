@@ -1,0 +1,25 @@
+<div class="delete-contract-backdrop" *ngIf="open" (click)="!isDeleting && cancel.emit()">
+  <section
+    class="delete-contract-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="delete-contract-title"
+    (click)="$event.stopPropagation()"
+  >
+    <h2 id="delete-contract-title">Eliminar contrato</h2>
+    <p>
+      Tem a certeza de que pretende eliminar
+      <strong>{{ contractName || 'este contrato' }}</strong>?
+    </p>
+    <p class="delete-contract-warning">Esta ação só será concluída depois da confirmação do servidor.</p>
+
+    <div class="delete-contract-actions">
+      <button type="button" class="secondary-button" [disabled]="isDeleting" (click)="cancel.emit()">
+        Cancelar
+      </button>
+      <button type="button" class="danger-button" [disabled]="isDeleting" (click)="confirm.emit()">
+        {{ isDeleting ? 'A eliminar...' : 'Eliminar contrato' }}
+      </button>
+    </div>
+  </section>
+</div>

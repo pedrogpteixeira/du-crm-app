@@ -353,6 +353,10 @@ export class RepsolContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/repsol/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<RepsolContractDetail> {
     const formData = new FormData();
 

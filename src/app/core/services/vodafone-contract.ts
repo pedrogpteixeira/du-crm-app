@@ -286,6 +286,10 @@ export class VodafoneContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/vodafone/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<VodafoneContractDetail> {
     const formData = new FormData();
 

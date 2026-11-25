@@ -357,6 +357,10 @@ export class MeoEnergiasContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/meo-energias/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<MeoEnergiasContractDetail> {
     const formData = new FormData();
 

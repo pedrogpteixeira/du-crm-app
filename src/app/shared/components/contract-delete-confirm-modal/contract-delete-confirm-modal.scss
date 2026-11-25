@@ -1,0 +1,74 @@
+:host {
+  display: contents;
+}
+
+.delete-contract-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--app-overlay);
+}
+
+.delete-contract-modal {
+  width: min(440px, 100%);
+  padding: 22px;
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  background: var(--app-surface-raised);
+  color: var(--app-text);
+  box-shadow: var(--app-shadow-md);
+}
+
+.delete-contract-modal h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.delete-contract-modal p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.delete-contract-warning {
+  margin-top: 8px !important;
+  color: var(--app-text-muted);
+  font-size: 0.86rem;
+}
+
+.delete-contract-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.secondary-button,
+.danger-button {
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-button {
+  border: 1px solid var(--app-border-strong);
+  background: transparent;
+  color: inherit;
+}
+
+.danger-button {
+  border: 1px solid var(--app-danger);
+  background: var(--app-danger);
+  color: #fff;
+}
+
+.secondary-button:disabled,
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

@@ -28,6 +28,16 @@
         >
           Duplicar
         </button>
+        <button
+          *ngIf="canDeleteContract && !isEditing"
+          type="button"
+          class="secondary-button delete-contract-action-button"
+          [disabled]="isDeletingContract"
+          (click)="requestDeleteContract()"
+        >
+          Eliminar
+        </button>
+
 
         <button
           *ngIf="canEditContract && !isEditing"
@@ -1184,4 +1194,13 @@
       </aside>
     </div>
   </ng-container>
+
+  <app-contract-delete-confirm-modal
+    [open]="showDeleteContractConfirm"
+    [isDeleting]="isDeletingContract"
+    [contractName]="contract?.nomeClienteEmpresa || ''"
+    (cancel)="cancelDeleteContract()"
+    (confirm)="confirmDeleteContract()"
+  ></app-contract-delete-confirm-modal>
+
 </section>

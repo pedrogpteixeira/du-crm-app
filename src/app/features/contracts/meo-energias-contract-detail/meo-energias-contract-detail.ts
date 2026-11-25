@@ -177,10 +177,14 @@ import { ContractFieldMaskDirective } from '../../../shared/directives/contract-
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
 
+import { hasSuperAdminContractDeleteAccess } from '../../../core/utils/contract-delete-access';
+import { ContractDeleteConfirmModal } from '../../../shared/components/contract-delete-confirm-modal/contract-delete-confirm-modal';
+
 
 @Component({
   selector: 'app-meo-energias-contract-detail',
   imports: [
+    ContractDeleteConfirmModal,
     EditableSelectCombobox,
     CommonModule,
     FormsModule,
@@ -222,6 +226,9 @@ export class MeoEnergiasContractDetail implements OnInit {
   private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
 
   contract: MeoEnergiasContractDetailModel | null = null;
+
+  showDeleteContractConfirm = false;
+  isDeletingContract = false;
 
   campaigns: Campaign[] = [];
 
@@ -562,6 +569,10 @@ export class MeoEnergiasContractDetail implements OnInit {
     );
   }
 
+  get canDeleteContract(): boolean {
+    return hasSuperAdminContractDeleteAccess(this.auth.getCurrentUser());
+  }
+
   get canDuplicateContract(): boolean {
     return !!this.contract && isContractDuplicateAllowed(this.contract.estado);
   }
@@ -834,6 +845,37 @@ export class MeoEnergiasContractDetail implements OnInit {
               : 'Não foi possível enviar a observação.',
           );
         },
+      });
+  }
+
+  requestDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contract || this.isDeletingContract) {
+      return;
+    }
+    this.showDeleteContractConfirm = true;
+  }
+
+  cancelDeleteContract(): void {
+    if (!this.isDeletingContract) {
+      this.showDeleteContractConfirm = false;
+    }
+  }
+
+  confirmDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contractId || this.isDeletingContract) {
+      return;
+    }
+    this.isDeletingContract = true;
+    this.meoEnergiasContractService.deleteContract(this.contractId)
+      .pipe(finalize(() => (this.isDeletingContract = false)))
+      .subscribe({
+        next: () => {
+          this.showDeleteContractConfirm = false;
+          this.router.navigate(['/home/contracts', 'meo-energias']);
+        },
+        error: (error) => this.showError(
+          error?.error?.message || 'Não foi possível eliminar o contrato.',
+        ),
       });
   }
 

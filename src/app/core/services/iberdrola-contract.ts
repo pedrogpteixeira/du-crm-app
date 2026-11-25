@@ -386,6 +386,10 @@ export class IberdrolaContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/iberdrola/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<IberdrolaContractDetail> {
     const formData = new FormData();
 

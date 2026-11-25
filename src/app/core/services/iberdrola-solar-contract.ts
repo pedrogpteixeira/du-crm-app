@@ -290,6 +290,10 @@ export class IberdrolaSolarContractService {
     return this.uploadAttachments(id, [file]);
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(id: string, files: File[]): Observable<IberdrolaSolarContract> {
     const formData = new FormData();
 

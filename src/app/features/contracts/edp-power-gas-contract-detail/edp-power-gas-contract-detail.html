@@ -19,7 +19,17 @@
         <p>EDP P&G · {{ contract.tipoProduto }} · {{ contract.tipoSegmento }}</p>
       </div>
 
-      <div class="header-actions" *ngIf="canEditContract">
+      <div class="header-actions" *ngIf="canEditContract || canDeleteContract">
+        <button
+          *ngIf="canDeleteContract && !isEditing"
+          type="button"
+          class="secondary-button delete-contract-action-button"
+          [disabled]="isDeletingContract"
+          (click)="requestDeleteContract()"
+        >
+          Eliminar
+        </button>
+
         <button
           *ngIf="!isEditing"
           type="button"
@@ -1258,4 +1268,13 @@
       </aside>
     </div>
   </ng-container>
+
+  <app-contract-delete-confirm-modal
+    [open]="showDeleteContractConfirm"
+    [isDeleting]="isDeletingContract"
+    [contractName]="contract?.nomeClienteEmpresa || ''"
+    (cancel)="cancelDeleteContract()"
+    (confirm)="confirmDeleteContract()"
+  ></app-contract-delete-confirm-modal>
+
 </section>

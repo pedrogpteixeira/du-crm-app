@@ -341,6 +341,10 @@ export class AudaxB2BContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<AudaxB2BContractDetail> {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file, file.name));

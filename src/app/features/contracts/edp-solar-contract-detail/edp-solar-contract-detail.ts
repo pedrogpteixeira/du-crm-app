@@ -133,10 +133,14 @@ import { ContractFieldMaskDirective } from '../../../shared/directives/contract-
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
 
+import { hasSuperAdminContractDeleteAccess } from '../../../core/utils/contract-delete-access';
+import { ContractDeleteConfirmModal } from '../../../shared/components/contract-delete-confirm-modal/contract-delete-confirm-modal';
+
 
 @Component({
   selector: 'app-edp-solar-contract-detail',
   imports: [
+    ContractDeleteConfirmModal,
     EditableSelectCombobox,
     CommonModule,
     FormsModule,
@@ -170,6 +174,9 @@ export class EdpSolarContractDetail implements OnInit {
   private ownSocketSuppressionTimer: ReturnType<typeof setTimeout> | null = null;
 
   contract: EdpSolarContract | null = null;
+
+  showDeleteContractConfirm = false;
+  isDeletingContract = false;
 
   observationDraft = '';
   internalObservationDraft = '';
@@ -374,6 +381,10 @@ export class EdpSolarContractDetail implements OnInit {
       !!this.contract &&
       canMutateContractByBusinessRule(this.contract.estado, this.isRequiredTeamMember)
     );
+  }
+
+  get canDeleteContract(): boolean {
+    return hasSuperAdminContractDeleteAccess(this.auth.getCurrentUser());
   }
 
   get canDuplicateContract(): boolean {
@@ -632,6 +643,37 @@ export class EdpSolarContractDetail implements OnInit {
               : 'Não foi possível enviar a observação.',
           );
         },
+      });
+  }
+
+  requestDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contract || this.isDeletingContract) {
+      return;
+    }
+    this.showDeleteContractConfirm = true;
+  }
+
+  cancelDeleteContract(): void {
+    if (!this.isDeletingContract) {
+      this.showDeleteContractConfirm = false;
+    }
+  }
+
+  confirmDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contractId || this.isDeletingContract) {
+      return;
+    }
+    this.isDeletingContract = true;
+    this.edpSolarContractService.deleteContract(this.contractId)
+      .pipe(finalize(() => (this.isDeletingContract = false)))
+      .subscribe({
+        next: () => {
+          this.showDeleteContractConfirm = false;
+          this.router.navigate(['/home/contracts', 'edp-solar']);
+        },
+        error: (error) => this.showError(
+          error?.error?.message || 'Não foi possível eliminar o contrato.',
+        ),
       });
   }
 

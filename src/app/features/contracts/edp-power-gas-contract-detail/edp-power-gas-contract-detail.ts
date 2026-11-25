@@ -158,10 +158,14 @@ import { EditableSelectCombobox } from '../../../shared/components/editable-sele
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
+import { hasSuperAdminContractDeleteAccess } from '../../../core/utils/contract-delete-access';
+import { ContractDeleteConfirmModal } from '../../../shared/components/contract-delete-confirm-modal/contract-delete-confirm-modal';
+
 
 @Component({
   selector: 'app-edp-power-gas-contract-detail',
   imports: [
+    ContractDeleteConfirmModal,
     EditableSelectCombobox,
     CommonModule,
     FormsModule,
@@ -196,6 +200,9 @@ export class EdpPowerGasContractDetail implements OnInit {
   private readonly router = inject(Router);
 
   contract: EdpPowerGasContractDetailModel | null = null;
+
+  showDeleteContractConfirm = false;
+  isDeletingContract = false;
   campaigns: Campaign[] = [];
 
   observationDraft = '';
@@ -525,6 +532,10 @@ export class EdpPowerGasContractDetail implements OnInit {
     );
   }
 
+  get canDeleteContract(): boolean {
+    return hasSuperAdminContractDeleteAccess(this.auth.getCurrentUser());
+  }
+
   get canEditContract(): boolean {
     return (
       isContractEditExceptionUserId(this.currentUserId) ||
@@ -787,6 +798,43 @@ export class EdpPowerGasContractDetail implements OnInit {
               ? 'Não foi possível enviar a observação interna.'
               : 'Não foi possível enviar a observação.',
           );
+        },
+      });
+  }
+
+  requestDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contract || this.isDeletingContract) {
+      return;
+    }
+
+    this.showDeleteContractConfirm = true;
+  }
+
+  cancelDeleteContract(): void {
+    if (this.isDeletingContract) {
+      return;
+    }
+
+    this.showDeleteContractConfirm = false;
+  }
+
+  confirmDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contractId || this.isDeletingContract) {
+      return;
+    }
+
+    this.isDeletingContract = true;
+
+    this.edpPowerGasContractService
+      .deleteContract(this.contractId)
+      .pipe(finalize(() => (this.isDeletingContract = false)))
+      .subscribe({
+        next: () => {
+          this.showDeleteContractConfirm = false;
+          this.router.navigate(['/home/contracts', 'edp-power-gas']);
+        },
+        error: (error) => {
+          this.showError(error?.error?.message || 'Não foi possível eliminar o contrato.');
         },
       });
   }

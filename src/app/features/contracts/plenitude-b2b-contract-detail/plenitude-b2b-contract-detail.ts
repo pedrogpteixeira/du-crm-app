@@ -163,10 +163,14 @@ import { EditableSelectCombobox } from '../../../shared/components/editable-sele
 import { ContractFieldMaskDirective } from '../../../shared/directives/contract-field-mask.directive';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { canAccessInternalObservations as hasInternalObservationsAccess } from '../../../core/utils/internal-observations-access';
+import { hasSuperAdminContractDeleteAccess } from '../../../core/utils/contract-delete-access';
+import { ContractDeleteConfirmModal } from '../../../shared/components/contract-delete-confirm-modal/contract-delete-confirm-modal';
+
 
 @Component({
   selector: 'app-plenitude-b2b-contract-detail',
   imports: [
+    ContractDeleteConfirmModal,
     EditableSelectCombobox,
     CommonModule,
     FormsModule,
@@ -201,6 +205,9 @@ export class PlenitudeB2BContractDetail implements OnInit {
   private readonly router = inject(Router);
 
   contract: PlenitudeB2BContractDetailModel | null = null;
+
+  showDeleteContractConfirm = false;
+  isDeletingContract = false;
   campaigns: Campaign[] = [];
 
   observationDraft = '';
@@ -530,6 +537,10 @@ export class PlenitudeB2BContractDetail implements OnInit {
     );
   }
 
+  get canDeleteContract(): boolean {
+    return hasSuperAdminContractDeleteAccess(this.auth.getCurrentUser());
+  }
+
   get canDuplicateContract(): boolean {
     return !!this.contract && isContractDuplicateAllowed(this.contract.estado);
   }
@@ -796,6 +807,43 @@ export class PlenitudeB2BContractDetail implements OnInit {
               ? 'Não foi possível enviar a observação interna.'
               : 'Não foi possível enviar a observação.',
           );
+        },
+      });
+  }
+
+  requestDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contract || this.isDeletingContract) {
+      return;
+    }
+
+    this.showDeleteContractConfirm = true;
+  }
+
+  cancelDeleteContract(): void {
+    if (this.isDeletingContract) {
+      return;
+    }
+
+    this.showDeleteContractConfirm = false;
+  }
+
+  confirmDeleteContract(): void {
+    if (!this.canDeleteContract || !this.contractId || this.isDeletingContract) {
+      return;
+    }
+
+    this.isDeletingContract = true;
+
+    this.plenitudeB2BContractService
+      .deleteContract(this.contractId)
+      .pipe(finalize(() => (this.isDeletingContract = false)))
+      .subscribe({
+        next: () => {
+          this.showDeleteContractConfirm = false;
+          this.router.navigate(['/home/contracts', 'plenitude-b2b']);
+        },
+        error: (error) => {
+          this.showError(error?.error?.message || 'Não foi possível eliminar o contrato.');
         },
       });
   }

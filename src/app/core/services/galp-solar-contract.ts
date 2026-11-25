@@ -261,6 +261,10 @@ export class GalpSolarContractService {
     return this.uploadAttachments(id, [file]);
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.baseUrl}/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(id: string, files: File[]): Observable<GalpSolarContract> {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file, file.name));

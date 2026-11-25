@@ -389,6 +389,10 @@ export class GalpPowerGasContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/galp-power-gas/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<GalpPowerGasContractDetail> {
     const formData = new FormData();
 

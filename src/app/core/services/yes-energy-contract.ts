@@ -391,6 +391,10 @@ export class YesEnergyContractService {
     );
   }
 
+  deleteContract(contractId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/contracts/yes-energy/${encodeURIComponent(contractId)}`);
+  }
+
   uploadAttachments(contractId: string, files: File[]): Observable<YesEnergyContractDetail> {
     const formData = new FormData();
 
