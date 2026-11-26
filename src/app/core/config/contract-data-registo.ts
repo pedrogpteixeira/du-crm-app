@@ -27,7 +27,7 @@ export type DataRegistoProvider =
   | 'endesa-b2b'
   | 'galp-power-gas'
   | 'galp-solar'
-  | 'edp-power-gas'
+  | 'edp'
   | 'edp-solar'
   | 'wallbox'
   | 'yes-energy'
@@ -46,7 +46,7 @@ interface DataRegistoTriggerStateMap {
   'endesa-b2b': readonly EndesaB2BContractStatus[];
   'galp-power-gas': readonly GalpPowerGasContractStatus[];
   'galp-solar': readonly GalpSolarContractStatus[];
-  'edp-power-gas': readonly EdpPowerGasContractStatus[];
+  'edp': readonly EdpPowerGasContractStatus[];
   'edp-solar': readonly EdpSolarContractStatus[];
   wallbox: readonly WallboxContractStatus[];
   'yes-energy': readonly YesEnergyContractStatus[];
@@ -66,7 +66,7 @@ export const DATA_REGISTO_TRIGGER_STATES: DataRegistoTriggerStateMap = {
   'endesa-b2b': ['Registo Plataforma Endesa'],
   'galp-power-gas': ['Registo Plataforma Galp'],
   'galp-solar': ['Proposta enviada'],
-  'edp-power-gas': ['Registo Plataforma EDP'],
+  'edp': ['Registo Plataforma EDP'],
   'edp-solar': ['Proposta enviada'],
   wallbox: ['Registo Plataforma Galp'],
   'yes-energy': ['Pendente (ATR)'],

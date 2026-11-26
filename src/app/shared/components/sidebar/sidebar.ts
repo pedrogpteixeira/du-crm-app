@@ -83,6 +83,7 @@ export class Sidebar {
 
   canAccessB2CContracts(): boolean {
     return (
+      this.canAccessEdp() ||
       this.canAccessRoles('Super Admin', 'DU', 'Portulogos') ||
       this.canAccessRoles('Super Admin', 'DU', 'Repsol') ||
       this.canAccessRoles('Super Admin', 'DU', 'Galp') ||

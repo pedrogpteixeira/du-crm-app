@@ -4,7 +4,7 @@ import type { AuthUser } from '../models/auth-user';
 export const EDP_POWER_GAS_COMPANY_ID = environment.EDP_POWER_GAS_COMPANY_ID;
 export const EDP_SOLAR_COMPANY_ID = environment.EDP_SOLAR_COMPANY_ID;
 
-export const EDP_POWER_GAS_PROVIDER = 'edp-power-gas' as const;
+export const EDP_POWER_GAS_PROVIDER = 'edp' as const;
 export const EDP_SOLAR_PROVIDER = 'edp-solar' as const;
 
 export const EDP_POWER_GAS_CONTRACT_PREFIX = 'epg_';

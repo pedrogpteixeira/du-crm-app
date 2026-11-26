@@ -286,6 +286,8 @@ export class NossaEnergiaB2BContractCreate implements OnInit {
 
     campanha: '',
     fidelizacao: '',
+    go: '',
+    consumo: '',
     antigaComercializadora: '',
     cpe: DEFAULT_CPE_PREFIX,
     cui: DEFAULT_CUI_PREFIX,
@@ -1192,6 +1194,10 @@ export class NossaEnergiaB2BContractCreate implements OnInit {
     this.addIfFilled(payload, 'campanha', campaign);
 
     this.addIfFilled(payload, 'fidelizacao', this.contractForm.fidelizacao);
+
+    this.addIfFilled(payload, 'go', this.contractForm.go);
+
+    this.addIfFilled(payload, 'consumo', this.contractForm.consumo);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 

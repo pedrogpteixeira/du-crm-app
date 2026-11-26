@@ -59,8 +59,8 @@ const CONTRACT_CREATE_OPTIONS: readonly ContractCreateOption[] = [
     roles: ['Super Admin', 'DU', 'Galp'],
   },
   {
-    name: 'EDP P&G',
-    route: '/home/contracts/edp-power-gas/create',
+    name: 'EDP',
+    route: '/home/contracts/edp/create',
     group: 'B2B',
     icon: 'description',
     requiresEdpAccess: true,

@@ -1,9 +1,9 @@
 <section class="create-contract-page">
   <header class="page-header">
     <div>
-      <span class="breadcrumb"> Contratos › EDP P&G › Novo contrato </span>
+      <span class="breadcrumb"> Contratos › EDP › Novo contrato </span>
 
-      <h1>Novo contrato EDP P&G</h1>
+      <h1>Novo contrato EDP</h1>
 
       <p>
         {{
@@ -525,6 +525,18 @@
               />
             </label>
           </div>
+
+          <div class="product-row product-row--two">
+            <label>
+              GO
+              <input type="text" [(ngModel)]="contractForm.go" />
+            </label>
+
+            <label>
+              Consumo
+              <input type="text" [(ngModel)]="contractForm.consumo" />
+            </label>
+          </div>
         </div>
 
         <div class="product-block" *ngIf="isProLayout()">
@@ -660,7 +672,7 @@
       <button
         type="button"
         class="secondary"
-        routerLink="/home/contracts/edp-power-gas"
+        routerLink="/home/contracts/edp"
         [disabled]="isPreflightLoading || isCreatingContract"
       >
         Cancelar

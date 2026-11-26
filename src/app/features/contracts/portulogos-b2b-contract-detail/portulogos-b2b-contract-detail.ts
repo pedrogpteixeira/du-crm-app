@@ -126,6 +126,8 @@ interface EditableContractForm {
   iban: string;
 
   fidelizacao: string;
+  go: string;
+  consumo: string;
   antigaComercializadora: string;
   cpe: string;
   cui: string;
@@ -1687,6 +1689,8 @@ export class PortulogosB2BContractDetail implements OnInit {
         iban: contract.iban ?? '',
 
         fidelizacao: contract.fidelizacao ?? '',
+        go: contract.go ?? '',
+        consumo: contract.consumo ?? '',
         antigaComercializadora: contract.antigaComercializadora ?? '',
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
@@ -1950,6 +1954,18 @@ export class PortulogosB2BContractDetail implements OnInit {
       this.editForm.fidelizacao,
       this.originalEditForm.fidelizacao,
     );
+    this.assignRawStringChangedValue(
+      payload,
+      'go',
+      this.editForm.go,
+      this.originalEditForm.go,
+    );
+    this.assignRawStringChangedValue(
+      payload,
+      'consumo',
+      this.editForm.consumo,
+      this.originalEditForm.consumo,
+    );
     this.assignChangedValue(
       payload,
       'antigaComercializadora',
@@ -1994,7 +2010,7 @@ export class PortulogosB2BContractDetail implements OnInit {
 
   private assignRawStringChangedValue(
     payload: UpdatePortulogosB2BContractRequest,
-    key: 'fidelizacao',
+    key: 'fidelizacao' | 'go' | 'consumo',
     currentValue: string,
     originalValue: string,
   ): void {
@@ -2106,6 +2122,8 @@ export class PortulogosB2BContractDetail implements OnInit {
       iban: '',
 
       fidelizacao: '',
+      go: '',
+      consumo: '',
       antigaComercializadora: '',
       cpe: '',
       cui: '',

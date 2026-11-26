@@ -63,6 +63,8 @@ export interface EzuB2BContract {
   tipoSegmento?: string;
   tipoProduto?: string;
   tipoTarifa?: string;
+  go?: string;
+  consumo?: string;
   user: EzuB2BContractListUser | null;
   nomeRegistoCE?: string;
   observacoes?: string;
@@ -161,6 +163,8 @@ export interface EzuB2BContractDetail {
   campaign: EzuB2BContractCampaign | null;
   campaigns?: Campaign[];
   fidelizacao?: string | null;
+  go?: string;
+  consumo?: string;
   antigaComercializadora: string;
 
   cpe: string;
@@ -234,6 +238,8 @@ export interface CreateEzuB2BContractRequest {
 
   campanha?: string;
   fidelizacao?: string;
+  go?: string;
+  consumo?: string;
   antigaComercializadora?: string;
 
   cpe?: string;

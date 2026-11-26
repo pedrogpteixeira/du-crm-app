@@ -345,13 +345,13 @@ export class SocketService {
 
   listenEdpPowerGasContractCreated(): Observable<EdpPowerGasContractSocketEvent> {
     return this.createEventObservable<EdpPowerGasContractSocketEvent>(
-      'edp-power-gas-contract:created',
+      'edp-contract:created',
     );
   }
 
   listenEdpPowerGasContractUpdated(): Observable<EdpPowerGasContractSocketEvent> {
     return this.createEventObservable<EdpPowerGasContractSocketEvent>(
-      'edp-power-gas-contract:updated',
+      'edp-contract:updated',
     );
   }
 

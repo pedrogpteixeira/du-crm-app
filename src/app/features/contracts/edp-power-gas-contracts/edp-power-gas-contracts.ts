@@ -158,7 +158,7 @@ export class EdpPowerGasContracts implements OnInit {
 
           this.resetLoadedContracts();
           this.errorMessage =
-            error?.error?.message || 'Não foi possível carregar os contratos EDP P&G.';
+            error?.error?.message || 'Não foi possível carregar os contratos EDP.';
         },
       });
   }
@@ -260,7 +260,7 @@ export class EdpPowerGasContracts implements OnInit {
 
           this.resetLoadedContracts();
           this.errorMessage =
-            error?.error?.message || 'Não foi possível carregar os contratos EDP P&G.';
+            error?.error?.message || 'Não foi possível carregar os contratos EDP.';
         },
       });
   }

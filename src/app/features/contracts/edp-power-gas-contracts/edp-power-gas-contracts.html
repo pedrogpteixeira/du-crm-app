@@ -1,9 +1,9 @@
 <section class="contracts-page">
   <header class="page-header">
     <div>
-      <h1>Contratos EDP P&G</h1>
+      <h1>Contratos EDP</h1>
 
-      <p>Consulta e acompanha os contratos EDP P&G registados no CRM.</p>
+      <p>Consulta e acompanha os contratos EDP registados no CRM.</p>
     </div>
 
     <div class="header-actions">
@@ -35,7 +35,7 @@
         </span>
       </button>
 
-      <button type="button" class="create-btn" routerLink="/home/contracts/edp-power-gas/create">
+      <button type="button" class="create-btn" routerLink="/home/contracts/edp/create">
         + Novo contrato
       </button>
     </div>
@@ -86,7 +86,7 @@
     <div class="contract-row contract-table-grid" *ngFor="let contract of filteredContracts">
       <a
         class="contract-row-link contract-table-data-grid"
-        [routerLink]="['/home/contracts/edp-power-gas', contract.id]"
+        [routerLink]="['/home/contracts/edp', contract.id]"
       >
         <span>{{ contract.id }}</span>
 
@@ -137,7 +137,7 @@
       class="empty-state"
       *ngIf="!isLoading && !errorMessage && !contracts.length && !hasActiveFilters()"
     >
-      Ainda não existem contratos EDP P&G.
+      Ainda não existem contratos EDP.
     </p>
   </div>
 
@@ -156,7 +156,7 @@
           <a
             class="kanban-card"
             *ngFor="let contract of getContractsByStatus(status)"
-            [routerLink]="['/home/contracts/edp-power-gas', contract.id]"
+            [routerLink]="['/home/contracts/edp', contract.id]"
           >
             <span class="contract-id">{{ contract.id }}</span>
 

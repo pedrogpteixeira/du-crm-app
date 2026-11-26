@@ -63,6 +63,8 @@ export interface NossaEnergiaB2BContract {
   tipoSegmento?: string;
   tipoProduto?: string;
   tipoTarifa?: string;
+  go?: string;
+  consumo?: string;
   user: NossaEnergiaB2BContractListUser | null;
   nomeRegistoCE?: string;
   observacoes?: string;
@@ -161,6 +163,8 @@ export interface NossaEnergiaB2BContractDetail {
   campaign: NossaEnergiaB2BContractCampaign | null;
   campaigns?: Campaign[];
   fidelizacao?: string | null;
+  go?: string;
+  consumo?: string;
   antigaComercializadora: string;
 
   cpe: string;
@@ -234,6 +238,8 @@ export interface CreateNossaEnergiaB2BContractRequest {
 
   campanha?: string;
   fidelizacao?: string;
+  go?: string;
+  consumo?: string;
   antigaComercializadora?: string;
 
   cpe?: string;

@@ -20,7 +20,7 @@ export type ClientContractProvider =
   | 'yes-energy'
   | 'galp-power-gas'
   | 'galp-solar'
-  | 'edp-power-gas'
+  | 'edp'
   | 'edp-solar'
   | 'iberdrola'
   | 'iberdrola-solar'

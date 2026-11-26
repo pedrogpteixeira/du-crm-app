@@ -417,7 +417,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'contracts/edp-power-gas',
+        path: 'contracts/edp',
         canActivate: [edpAccessGuard],
         loadComponent: () =>
           import('./features/contracts/edp-power-gas-contracts/edp-power-gas-contracts').then(
@@ -425,7 +425,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'contracts/edp-power-gas/create',
+        path: 'contracts/edp/create',
         canActivate: [edpAccessGuard, companyActiveCreateGuard],
         loadComponent: () =>
           import('./features/contracts/edp-power-gas-contract-create/edp-power-gas-contract-create').then(
@@ -433,7 +433,7 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'contracts/edp-power-gas/:id',
+        path: 'contracts/edp/:id',
         canActivate: [edpAccessGuard],
         loadComponent: () =>
           import('./features/contracts/edp-power-gas-contract-detail/edp-power-gas-contract-detail').then(

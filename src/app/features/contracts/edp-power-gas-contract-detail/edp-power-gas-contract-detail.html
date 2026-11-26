@@ -8,7 +8,7 @@
 
   <ng-container *ngIf="contract">
     <div class="breadcrumb">
-      <a routerLink="/home/contracts/edp-power-gas">EDP P&G</a>
+      <a routerLink="/home/contracts/edp">EDP</a>
       <span>›</span>
       <strong>{{ contract.nomeClienteEmpresa }}</strong>
     </div>
@@ -16,7 +16,7 @@
     <header class="page-header">
       <div>
         <h1>{{ contract.nomeClienteEmpresa }}</h1>
-        <p>EDP P&G · {{ contract.tipoProduto }} · {{ contract.tipoSegmento }}</p>
+        <p>EDP · {{ contract.tipoProduto }} · {{ contract.tipoSegmento }}</p>
       </div>
 
       <div class="header-actions" *ngIf="canEditContract || canDeleteContract">
@@ -950,6 +950,28 @@
                     </ng-template>
                   </label>
                 </div>
+
+                <div class="product-row product-row--two">
+                  <label>
+                    GO
+                    <input *ngIf="isEditing; else goView" type="text" [(ngModel)]="editForm.go" />
+                    <ng-template #goView>
+                      <strong>{{ getValue(contract.go) }}</strong>
+                    </ng-template>
+                  </label>
+
+                  <label>
+                    Consumo
+                    <input
+                      *ngIf="isEditing; else consumoView"
+                      type="text"
+                      [(ngModel)]="editForm.consumo"
+                    />
+                    <ng-template #consumoView>
+                      <strong>{{ getValue(contract.consumo) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
               </div>
 
               <div class="product-block">
@@ -1150,7 +1172,7 @@
 
         <article class="card observations-card">
           <app-observations-thread
-            provider="edp-power-gas"
+            provider="edp"
             [contractId]="contractId"
             title="Observações"
             [value]="contract.observacoes"
@@ -1167,7 +1189,7 @@
           *ngIf="canAccessInternalObservations"
         >
           <app-observations-thread
-            provider="edp-power-gas"
+            provider="edp"
             [contractId]="contractId"
             title="Observações Internas"
             [value]="contract.observacoesInternas"

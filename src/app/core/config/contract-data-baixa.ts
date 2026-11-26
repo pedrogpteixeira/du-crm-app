@@ -8,7 +8,7 @@ export type DataBaixaProvider =
   | 'plenitude-b2b'
   | 'endesa-b2b'
   | 'galp-power-gas'
-  | 'edp-power-gas'
+  | 'edp'
   | 'yes-energy'
   | 'iberdrola'
   | 'meo-energias';
@@ -50,7 +50,7 @@ const PROVIDERS_WITH_PARTIAL_TERMINATION = new Set<DataBaixaProvider>([
   'plenitude-b2b',
   'endesa-b2b',
   'galp-power-gas',
-  'edp-power-gas',
+  'edp',
   'yes-energy',
   'iberdrola',
 ]);

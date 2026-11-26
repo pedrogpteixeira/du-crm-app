@@ -44,7 +44,7 @@ export const environment = {
     },
     {
       id: 'cmp_ijGIgzDUrA',
-      name: 'EDP P&G',
+      name: 'EDP',
       active: true,
     },
     {

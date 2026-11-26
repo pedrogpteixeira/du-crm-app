@@ -111,8 +111,8 @@ const CONTRACT_ROUTE_CONFIGS: readonly ContractRouteConfig[] = [
   {
     companyId: environment.EDP_POWER_GAS_COMPANY_ID,
     contractIdPrefix: 'epg_',
-    companyName: 'EDP P&G',
-    segment: 'edp-power-gas',
+    companyName: 'EDP',
+    segment: 'edp',
   },
   {
     companyId: environment.EDP_SOLAR_COMPANY_ID,

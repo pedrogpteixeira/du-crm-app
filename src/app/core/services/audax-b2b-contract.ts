@@ -63,6 +63,8 @@ export interface AudaxB2BContract {
   tipoSegmento?: string;
   tipoProduto?: string;
   tipoTarifa?: string;
+  go?: string;
+  consumo?: string;
   user: AudaxB2BContractListUser | null;
   nomeRegistoCE?: string;
   observacoes?: string;
@@ -161,6 +163,8 @@ export interface AudaxB2BContractDetail {
   campaign: AudaxB2BContractCampaign | null;
   campaigns?: Campaign[];
   fidelizacao?: string | null;
+  go?: string;
+  consumo?: string;
   antigaComercializadora: string;
 
   cpe: string;
@@ -234,6 +238,8 @@ export interface CreateAudaxB2BContractRequest {
 
   campanha?: string;
   fidelizacao?: string;
+  go?: string;
+  consumo?: string;
   antigaComercializadora?: string;
 
   cpe?: string;

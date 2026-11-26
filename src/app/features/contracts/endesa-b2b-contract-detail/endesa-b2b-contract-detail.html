@@ -959,6 +959,28 @@
                     </ng-template>
                   </label>
                 </div>
+
+                <div class="product-row product-row--two">
+                  <label>
+                    GO
+                    <input *ngIf="isEditing; else goView" type="text" [(ngModel)]="editForm.go" />
+                    <ng-template #goView>
+                      <strong>{{ getValue(contract.go) }}</strong>
+                    </ng-template>
+                  </label>
+
+                  <label>
+                    Consumo
+                    <input
+                      *ngIf="isEditing; else consumoView"
+                      type="text"
+                      [(ngModel)]="editForm.consumo"
+                    />
+                    <ng-template #consumoView>
+                      <strong>{{ getValue(contract.consumo) }}</strong>
+                    </ng-template>
+                  </label>
+                </div>
               </div>
 
               <div class="product-block">

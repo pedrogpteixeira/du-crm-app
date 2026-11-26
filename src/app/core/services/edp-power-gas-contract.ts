@@ -63,6 +63,8 @@ export interface EdpPowerGasContract {
   tipoSegmento?: string;
   tipoProduto?: string;
   tipoTarifa?: string;
+  go?: string;
+  consumo?: string;
   user: EdpPowerGasContractListUser | null;
   nomeRegistoCE?: string;
   observacoes?: string;
@@ -161,6 +163,8 @@ export interface EdpPowerGasContractDetail {
   campaign: EdpPowerGasContractCampaign | null;
   campaigns?: Campaign[];
   fidelizacao?: string | null;
+  go?: string;
+  consumo?: string;
   antigaComercializadora: string;
 
   cpe: string;
@@ -234,6 +238,8 @@ export interface CreateEdpPowerGasContractRequest {
 
   campanha?: string;
   fidelizacao?: string;
+  go?: string;
+  consumo?: string;
   antigaComercializadora?: string;
 
   cpe?: string;
@@ -288,7 +294,7 @@ export type EdpPowerGasContractList = ContractListItemBase<EdpPowerGasContractSt
 export class EdpPowerGasContractService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
-  private readonly baseUrl = `${this.apiUrl}/api/contracts/edp-power-gas`;
+  private readonly baseUrl = `${this.apiUrl}/api/contracts/edp`;
 
   readonly companyId = EDP_POWER_GAS_COMPANY_ID;
 

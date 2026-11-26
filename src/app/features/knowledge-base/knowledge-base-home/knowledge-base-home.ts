@@ -174,9 +174,9 @@ export class KnowledgeBaseHome implements OnInit {
     },
     {
       companyId: 'cmp_ijGIgzDUrA',
-      name: 'EDP P&G',
-      branchLabel: 'EDP Power & Gás',
-      cardLabel: 'Power & Gás',
+      name: 'EDP',
+      branchLabel: 'EDP',
+      cardLabel: 'Energia',
       logo: 'assets/companies/knowledge-base-home/edp.png',
       supportFolderId: '',
       formsFolderId: '',

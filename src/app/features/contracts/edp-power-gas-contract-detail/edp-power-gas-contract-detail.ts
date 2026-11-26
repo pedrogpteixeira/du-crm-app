@@ -121,6 +121,8 @@ interface EditableContractForm {
   iban: string;
 
   fidelizacao: string;
+  go: string;
+  consumo: string;
   antigaComercializadora: string;
   cpe: string;
   cui: string;
@@ -379,7 +381,7 @@ export class EdpPowerGasContractDetail implements OnInit {
 
   get isDataRegistoRequired(): boolean {
     const estado = this.isEditing ? this.editForm.estado : this.contract?.estado;
-    return requiresDataRegisto('edp-power-gas', estado);
+    return requiresDataRegisto('edp', estado);
   }
 
   get isDataRegistoMissing(): boolean {
@@ -394,7 +396,7 @@ export class EdpPowerGasContractDetail implements OnInit {
     const dataBaixaCUI = this.isEditing ? this.editForm.dataBaixaCUI : this.contract?.dataBaixaCUI;
 
     return getTerminationDateValidation(
-      'edp-power-gas',
+      'edp',
       estado,
       tipoProduto,
       dataBaixaCPE,
@@ -710,7 +712,7 @@ export class EdpPowerGasContractDetail implements OnInit {
           this.initializeEditForm(contract);
         },
         error: () => {
-          this.showError('Não foi possível carregar o contrato EDP P&G.');
+          this.showError('Não foi possível carregar o contrato EDP.');
         },
       });
   }
@@ -831,7 +833,7 @@ export class EdpPowerGasContractDetail implements OnInit {
       .subscribe({
         next: () => {
           this.showDeleteContractConfirm = false;
-          this.router.navigate(['/home/contracts', 'edp-power-gas']);
+          this.router.navigate(['/home/contracts', 'edp']);
         },
         error: (error) => {
           this.showError(error?.error?.message || 'Não foi possível eliminar o contrato.');
@@ -1153,7 +1155,7 @@ export class EdpPowerGasContractDetail implements OnInit {
           this.showError(
             error?.error?.details?.join(' ') ||
               error?.error?.message ||
-              'Não foi possível atualizar o contrato EDP P&G.',
+              'Não foi possível atualizar o contrato EDP.',
           );
         },
       });
@@ -1184,7 +1186,7 @@ export class EdpPowerGasContractDetail implements OnInit {
 
   private validateTerminationDateRequirement(): boolean {
     const validation = getTerminationDateValidation(
-      'edp-power-gas',
+      'edp',
       this.editForm.estado,
       this.editForm.tipoProduto,
       this.editForm.dataBaixaCPE,
@@ -1205,7 +1207,7 @@ export class EdpPowerGasContractDetail implements OnInit {
 
   private validateDataRegistoRequirement(): boolean {
     if (
-      !requiresDataRegisto('edp-power-gas', this.editForm.estado) ||
+      !requiresDataRegisto('edp', this.editForm.estado) ||
       hasDataRegistoValue(this.editForm.dataRegisto)
     ) {
       return true;
@@ -1665,6 +1667,8 @@ export class EdpPowerGasContractDetail implements OnInit {
         iban: contract.iban ?? '',
 
         fidelizacao: contract.fidelizacao ?? '',
+        go: contract.go ?? '',
+        consumo: contract.consumo ?? '',
         antigaComercializadora: contract.antigaComercializadora ?? '',
         cpe: contract.cpe?.trim() || DEFAULT_CPE_PREFIX,
         cui: contract.cui?.trim() || DEFAULT_CUI_PREFIX,
@@ -1928,6 +1932,18 @@ export class EdpPowerGasContractDetail implements OnInit {
       this.editForm.fidelizacao,
       this.originalEditForm.fidelizacao,
     );
+    this.assignRawStringChangedValue(
+      payload,
+      'go',
+      this.editForm.go,
+      this.originalEditForm.go,
+    );
+    this.assignRawStringChangedValue(
+      payload,
+      'consumo',
+      this.editForm.consumo,
+      this.originalEditForm.consumo,
+    );
     this.assignChangedValue(
       payload,
       'antigaComercializadora',
@@ -1972,7 +1988,7 @@ export class EdpPowerGasContractDetail implements OnInit {
 
   private assignRawStringChangedValue(
     payload: UpdateEdpPowerGasContractRequest,
-    key: 'fidelizacao',
+    key: 'fidelizacao' | 'go' | 'consumo',
     currentValue: string,
     originalValue: string,
   ): void {
@@ -2084,6 +2100,8 @@ export class EdpPowerGasContractDetail implements OnInit {
       iban: '',
 
       fidelizacao: '',
+      go: '',
+      consumo: '',
       antigaComercializadora: '',
       cpe: '',
       cui: '',

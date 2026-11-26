@@ -525,6 +525,18 @@
               />
             </label>
           </div>
+
+          <div class="product-row product-row--two">
+            <label>
+              GO
+              <input type="text" [(ngModel)]="contractForm.go" />
+            </label>
+
+            <label>
+              Consumo
+              <input type="text" [(ngModel)]="contractForm.consumo" />
+            </label>
+          </div>
         </div>
 
         <div class="product-block" *ngIf="isProLayout()">

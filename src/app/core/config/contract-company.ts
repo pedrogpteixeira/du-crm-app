@@ -13,7 +13,7 @@ export const CONTRACT_COMPANY_IDS: Readonly<Record<ClientContractProvider, strin
   'yes-energy': 'cmp_1GdwakqCnA',
   'galp-power-gas': 'cmp_Q5MgNAInW6',
   'galp-solar': 'cmp_qZUMPp-x7f',
-  'edp-power-gas': 'cmp_ijGIgzDUrA',
+  edp: 'cmp_ijGIgzDUrA',
   'edp-solar': 'cmp_yH50RBtMbI',
   iberdrola: 'cmp_JHtuvY63fm',
   'iberdrola-solar': 'cmp_FKsS04kTr7',

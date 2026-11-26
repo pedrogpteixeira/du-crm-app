@@ -69,7 +69,7 @@ export class DashboardPendenciesService {
 
   private provider(value: unknown): ClientContractProvider | null {
     const provider = this.text(value) as ClientContractProvider;
-    return ['repsol','portulogos','portulogos-b2b','ezu-b2b','nossa-energia-b2b','audax-b2b','plenitude-b2b','endesa-b2b','wallbox','yes-energy','galp-power-gas','galp-solar','edp-power-gas','edp-solar','iberdrola','iberdrola-solar','meo-energias','vodafone'].includes(provider) ? provider : null;
+    return ['repsol','portulogos','portulogos-b2b','ezu-b2b','nossa-energia-b2b','audax-b2b','plenitude-b2b','endesa-b2b','wallbox','yes-energy','galp-power-gas','galp-solar','edp','edp-solar','iberdrola','iberdrola-solar','meo-energias','vodafone'].includes(provider) ? provider : null;
   }
 
   private text(value: unknown): string { return typeof value === 'string' ? value.trim() : ''; }

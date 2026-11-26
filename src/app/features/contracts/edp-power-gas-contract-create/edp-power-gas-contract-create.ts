@@ -285,6 +285,8 @@ export class EdpPowerGasContractCreate implements OnInit {
 
     campanha: '',
     fidelizacao: '',
+    go: '',
+    consumo: '',
     antigaComercializadora: '',
     cpe: DEFAULT_CPE_PREFIX,
     cui: DEFAULT_CUI_PREFIX,
@@ -899,7 +901,7 @@ export class EdpPowerGasContractCreate implements OnInit {
     this.successMessage = '';
 
     this.contractPreflightService
-      .preflightContract('edp-power-gas', preflightPayload)
+      .preflightContract('edp', preflightPayload)
       .pipe(
         finalize(() => {
           this.isPreflightLoading = false;
@@ -956,7 +958,7 @@ export class EdpPowerGasContractCreate implements OnInit {
     this.navigateAfterPostCreateWarning = false;
 
     if (contractId && shouldNavigate) {
-      this.router.navigate(['/home/contracts/edp-power-gas', contractId]);
+      this.router.navigate(['/home/contracts/edp', contractId]);
     }
   }
 
@@ -1036,14 +1038,14 @@ export class EdpPowerGasContractCreate implements OnInit {
             return;
           }
 
-          this.router.navigate(['/home/contracts/edp-power-gas', contract.id]);
+          this.router.navigate(['/home/contracts/edp', contract.id]);
         },
 
         error: (error) => {
           this.errorMessage =
             error?.error?.details?.join(' ') ||
             error?.error?.message ||
-            'Não foi possível criar o contrato EDP P&G.';
+            'Não foi possível criar o contrato EDP.';
         },
 
         complete: () => {
@@ -1165,6 +1167,10 @@ export class EdpPowerGasContractCreate implements OnInit {
     this.addIfFilled(payload, 'campanha', campaign);
 
     this.addIfFilled(payload, 'fidelizacao', this.contractForm.fidelizacao);
+
+    this.addIfFilled(payload, 'go', this.contractForm.go);
+
+    this.addIfFilled(payload, 'consumo', this.contractForm.consumo);
 
     this.addIfFilled(payload, 'observacoes', this.buildInitialObservation());
 
